@@ -24,8 +24,8 @@ export function SpeakerPortrait({ name, url, className, sizes = "(min-width: 102
     <div className={cn("relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-navy-700 via-navy to-midnight", className)} aria-hidden={!name}>
       <div aria-hidden className="grid-lines absolute inset-0 opacity-70" />
       <svg aria-hidden viewBox="0 0 200 200" className="absolute inset-0 h-full w-full opacity-60">
-        <circle cx="100" cy="100" r="70" fill="none" stroke="#39D5F2" strokeOpacity="0.25" />
-        <circle cx="100" cy="100" r="45" fill="none" stroke="#8578F9" strokeOpacity="0.3" strokeDasharray="3 5" />
+        <circle cx="100" cy="100" r="70" fill="none" stroke="#C9D8EC" strokeOpacity="0.25" />
+        <circle cx="100" cy="100" r="45" fill="none" stroke="#9FB4D4" strokeOpacity="0.3" strokeDasharray="3 5" />
       </svg>
       <span className="relative font-display text-4xl font-semibold tracking-tight text-paper/80">{name ? initials(name) : "?"}</span>
     </div>

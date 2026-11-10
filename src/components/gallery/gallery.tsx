@@ -60,7 +60,7 @@ export function Gallery({ assets }: { assets: GalleryAsset[] }) {
       {years.length > 1 && (
         <div role="group" aria-label="Filter by conference year" className="mb-8 flex flex-wrap gap-2">
           {[null, ...years].map((y) => (
-            <button key={y ?? "all"} type="button" aria-pressed={year === y} onClick={() => setYear(y)} className={cn("min-h-10 rounded-full px-4 text-sm font-medium", year === y ? "bg-navy text-paper" : "border border-navy/15 bg-white text-ink")}>
+            <button key={y ?? "all"} type="button" aria-pressed={year === y} onClick={() => setYear(y)} className={cn("min-h-10 rounded-[3px] px-4 text-sm font-medium", year === y ? "bg-navy text-paper" : "border border-navy/15 bg-white text-ink")}>
               {y ?? "All years"}
             </button>
           ))}
@@ -124,7 +124,7 @@ export function Gallery({ assets }: { assets: GalleryAsset[] }) {
             </div>
             <div className="p-6 text-center">
               <p className="mx-auto max-w-2xl text-paper/85">{current.caption}</p>
-              {current.credit && <p className="mt-1 text-xs text-paper/50">Photo: {current.credit}</p>}
+              {current.credit && <p className="mt-1 text-xs text-paper/65">Photo: {current.credit}</p>}
             </div>
           </motion.div>
         )}

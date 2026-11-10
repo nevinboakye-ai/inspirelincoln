@@ -43,9 +43,9 @@ export default async function AbstractAdminPage({ params }: { params: Promise<{ 
             <dl className="grid gap-4 text-sm sm:grid-cols-2">
               {[
                 ["Presenting author", a.presenting_author], ["Email", a.email], ["University", a.university], ["Programme and year", a.programme_year],
-                ["Co-authors", a.co_authors || "—"], ["Category", a.category], ["Preference", a.presentation_preference || "—"],
+                ["Co-authors", a.co_authors || "Not set"], ["Category", a.category], ["Preference", a.presentation_preference || "Not set"],
                 ["Showcase consent", a.consent_showcase ? "Yes" : "No"],
-                ["Submitted", a.submitted_at ? new Date(a.submitted_at).toLocaleString("en-GB", { timeZone: "Europe/London", dateStyle: "medium", timeStyle: "short" }) : "—"],
+                ["Submitted", a.submitted_at ? new Date(a.submitted_at).toLocaleString("en-GB", { timeZone: "Europe/London", dateStyle: "medium", timeStyle: "short" }) : "Not set"],
               ].map(([k, v]) => (
                 <div key={k}><dt className="font-semibold text-ink">{k}</dt><dd className="mt-0.5 whitespace-pre-line break-words text-slate-700">{v}</dd></div>
               ))}
@@ -53,7 +53,7 @@ export default async function AbstractAdminPage({ params }: { params: Promise<{ 
             {fileUrl && <a href={fileUrl} className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-electric-600"><FileDown aria-hidden className="size-4" /> Download supporting file (link valid 10 minutes)</a>}
             <div className="mt-6 space-y-5 border-t border-navy/10 pt-6">
               {ABSTRACT_SECTIONS.map((k) => (
-                <section key={k}><h3 className="font-semibold capitalize text-ink">{k}</h3><p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-slate-700">{a[k] || "—"}</p></section>
+                <section key={k}><h3 className="font-semibold capitalize text-ink">{k}</h3><p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-slate-700">{a[k] || "Not provided"}</p></section>
               ))}
             </div>
           </Panel>
@@ -63,9 +63,9 @@ export default async function AbstractAdminPage({ params }: { params: Promise<{ 
                 {rows.map((r) => (
                   <tr key={r.id}>
                     <td className="px-4 py-3 font-medium text-ink">{r.reviewer}<span className="block text-xs font-normal text-slate">{r.review ? (r.review.status === "submitted" ? "Submitted" : "Draft") : "Not started"}</span></td>
-                    {(criteria ?? []).map((c) => <td key={c.id} className="px-4 py-3 text-slate-700">{r.review?.status === "submitted" ? r.review.scores[c.id] ?? "—" : "—"}</td>)}
-                    <td className="px-4 py-3 font-semibold">{r.review?.status === "submitted" ? weighted(r.review.scores).toFixed(0) : "—"}</td>
-                    <td className="px-4 py-3 capitalize text-slate-700">{r.review?.status === "submitted" ? r.review.recommendation ?? "—" : "—"}</td>
+                    {(criteria ?? []).map((c) => <td key={c.id} className="px-4 py-3 text-slate-700">{r.review?.status === "submitted" ? r.review.scores[c.id] ?? "Not set" : "Not set"}</td>)}
+                    <td className="px-4 py-3 font-semibold">{r.review?.status === "submitted" ? weighted(r.review.scores).toFixed(0) : "Not set"}</td>
+                    <td className="px-4 py-3 capitalize text-slate-700">{r.review?.status === "submitted" ? r.review.recommendation ?? "Not set" : "Not set"}</td>
                     <td className="px-2 py-3"><UnassignButton abstractId={a.id} assignmentId={r.id} name={r.reviewer} /></td>
                   </tr>
                 ))}

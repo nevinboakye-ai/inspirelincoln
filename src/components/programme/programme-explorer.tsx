@@ -33,12 +33,12 @@ import { cn } from "@/lib/cn";
 import { SITE_URL } from "@/lib/site";
 
 export const CATEGORY_META: Record<SessionCategory, { icon: typeof Mic2; colour: string; soft: string }> = {
-  keynote: { icon: Mic2, colour: "#3478F6", soft: "bg-electric/10 text-electric-700" },
-  research: { icon: FlaskConical, colour: "#0EA5C6", soft: "bg-cyan/15 text-[#0b6577]" },
-  workshop: { icon: Presentation, colour: "#8578F9", soft: "bg-violet/12 text-[#4b3fc4]" },
+  keynote: { icon: Mic2, colour: "#3A5F94", soft: "bg-electric/10 text-electric-700" },
+  research: { icon: FlaskConical, colour: "#5B7FB0", soft: "bg-cyan/15 text-[#28506E]" },
+  workshop: { icon: Presentation, colour: "#9FB4D4", soft: "bg-violet/12 text-[#2E4A7A]" },
   networking: { icon: Users, colour: "#12805C", soft: "bg-success/10 text-success" },
-  break: { icon: Coffee, colour: "#66758C", soft: "bg-paper-200 text-slate-700" },
-  closing: { icon: PartyPopper, colour: "#071426", soft: "bg-navy/10 text-navy" },
+  break: { icon: Coffee, colour: "#66717F", soft: "bg-paper-200 text-slate-700" },
+  closing: { icon: PartyPopper, colour: "#1A3154", soft: "bg-navy/10 text-navy" },
 };
 
 type View = "timeline" | "cards" | "agenda";
@@ -209,7 +209,7 @@ export function ProgrammeExplorer({ sessions, speakers, workshops, rooms, editio
                 role="tab"
                 aria-selected={view === v}
                 onClick={() => changeView(v)}
-                className={cn("relative flex min-h-10 items-center gap-2 rounded-full px-4 text-sm font-medium transition-colors", view === v ? "text-paper" : "text-slate-700 hover:text-ink")}
+                className={cn("relative flex min-h-10 items-center gap-2 rounded-[3px] px-4 text-sm font-medium transition-colors", view === v ? "text-paper" : "text-slate-700 hover:text-ink")}
               >
                 {view === v && <motion.span layoutId="view-pill" className="absolute inset-0 rounded-full bg-navy" transition={{ type: "spring", stiffness: 500, damping: 40 }} />}
                 <Icon aria-hidden className="relative size-4" />
@@ -298,7 +298,7 @@ export function ProgrammeExplorer({ sessions, speakers, workshops, rooms, editio
         <div className="flex flex-wrap items-center gap-3">
           {provisional && <PlaceholderTag>Provisional programme</PlaceholderTag>}
           {view === "agenda" && savedSessions.length > 0 && (
-            <button type="button" onClick={exportAgenda} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-navy px-4 text-sm font-medium text-paper hover:bg-navy-700">
+            <button type="button" onClick={exportAgenda} className="inline-flex min-h-10 items-center gap-2 rounded-[3px] bg-navy px-4 text-sm font-medium text-paper hover:bg-navy-700">
               <CalendarPlus aria-hidden className="size-4" /> Export to calendar
             </button>
           )}
@@ -345,7 +345,7 @@ export function ProgrammeExplorer({ sessions, speakers, workshops, rooms, editio
             <li key={g.key} className="relative grid gap-4 pb-8 sm:grid-cols-[6.5rem_1fr]">
               <div className="sm:sticky sm:top-[calc(var(--header-h)+9rem)] sm:self-start">
                 {g.label ? (
-                  <p className="font-display text-2xl font-semibold tabular-nums text-ink">{g.label}</p>
+                  <p className="font-ui text-2xl font-semibold tabular-nums text-ink">{g.label}</p>
                 ) : (
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate">In order</p>
                 )}
@@ -393,7 +393,7 @@ function EmptyState({ view, onClear, filtersActive }: { view: View; onClear: () 
           : "Try removing a filter or searching for something broader."}
       </p>
       {filtersActive && (
-        <button type="button" onClick={onClear} className="mt-6 rounded-full bg-navy px-5 py-2.5 text-sm font-medium text-paper">
+        <button type="button" onClick={onClear} className="mt-6 rounded-[3px] bg-navy px-5 py-2.5 text-sm font-medium text-paper">
           Clear filters
         </button>
       )}
@@ -442,7 +442,7 @@ function SessionMetaLine({ session, location }: { session: Session; location: st
     <span className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate">
       <span className="flex items-center gap-1.5">
         <Clock aria-hidden className="size-3.5" />
-        {session.startsAt ? `${formatTime(session.startsAt)}${session.endsAt ? `–${formatTime(session.endsAt)}` : ""}` : "Time TBC"}
+        {session.startsAt ? `${formatTime(session.startsAt)}${session.endsAt ? ` to ${formatTime(session.endsAt)}` : ""}` : "Time TBC"}
         {mins ? ` · ${formatDuration(mins)}` : ""}
       </span>
       <span className="flex items-center gap-1.5">
@@ -460,7 +460,7 @@ function SessionRow({ session, onOpen, speakerById, location, conflict, parallel
   return (
     <div
       className={cn(
-        "group relative flex items-start gap-4 overflow-hidden rounded-lg border bg-white p-5 transition-[border-color,box-shadow] hover:border-navy/25 hover:shadow-[0_16px_40px_-24px_rgba(7,20,38,0.4)]",
+        "group relative flex items-start gap-4 overflow-hidden rounded-lg border bg-white p-5 transition-[border-color,box-shadow] hover:border-navy/25 hover:shadow-[0_16px_40px_-24px_rgba(26,49,84,0.4)]",
         conflict ? "border-warning/50" : "border-navy/10",
         session.category === "break" && "bg-paper-200/60",
       )}
@@ -496,7 +496,7 @@ function SessionCard(props: ItemProps) {
   const Icon = meta.icon;
   const names = session.speakerIds.map((id) => speakerById.get(id)?.fullName).filter(Boolean);
   return (
-    <div className={cn("group relative flex h-full flex-col rounded-lg border bg-white p-6 transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:shadow-[0_24px_48px_-28px_rgba(7,20,38,0.45)]", conflict ? "border-warning/50" : "border-navy/10")}>
+    <div className={cn("group relative flex h-full flex-col rounded-lg border bg-white p-6 transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:shadow-[0_24px_48px_-28px_rgba(26,49,84,0.45)]", conflict ? "border-warning/50" : "border-navy/10")}>
       <div className="flex items-start justify-between gap-4">
         <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold", meta.soft)}>
           <Icon aria-hidden className="size-3.5" />
@@ -599,7 +599,7 @@ function SessionDetail({
         <dl className="grid grid-cols-2 gap-4 text-sm">
           <div className="rounded-md bg-paper p-4">
             <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate">Time</dt>
-            <dd className="mt-1 font-medium text-ink">{session.startsAt ? `${formatTime(session.startsAt)}${session.endsAt ? `–${formatTime(session.endsAt)}` : ""}` : "To be confirmed"}</dd>
+            <dd className="mt-1 font-medium text-ink">{session.startsAt ? `${formatTime(session.startsAt)}${session.endsAt ? ` to ${formatTime(session.endsAt)}` : ""}` : "To be confirmed"}</dd>
           </div>
           <div className="rounded-md bg-paper p-4">
             <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate">Duration</dt>
@@ -609,6 +609,13 @@ function SessionDetail({
             <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate">Location</dt>
             <dd className="mt-1 font-medium text-ink">{room ? room.name : "To be confirmed"}</dd>
             {room?.directions && <dd className="mt-1 text-slate-700">{room.directions}</dd>}
+            {room && (
+              <dd className="mt-2">
+                <a href={`/map?room=${encodeURIComponent(room.id)}`} className="text-sm font-semibold text-electric-600 underline decoration-electric-600/30 underline-offset-4 hover:decoration-electric-600">
+                  Find it on the campus map
+                </a>
+              </dd>
+            )}
           </div>
           <div className="rounded-md bg-paper p-4">
             <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate">Capacity</dt>
@@ -631,11 +638,11 @@ function SessionDetail({
             onClick={addToCalendar}
             disabled={!session.startsAt || !session.endsAt}
             title={!session.startsAt ? "Available once the time is confirmed" : undefined}
-            className="flex min-h-11 items-center gap-2 rounded-full border border-navy/15 px-4 text-sm font-medium text-ink hover:border-navy/40 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex min-h-11 items-center gap-2 rounded-[3px] border border-navy/15 px-4 text-sm font-medium text-ink hover:border-navy/40 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <CalendarPlus aria-hidden className="size-4" /> Add to calendar
           </button>
-          <button type="button" onClick={share} className="flex min-h-11 items-center gap-2 rounded-full border border-navy/15 px-4 text-sm font-medium text-ink hover:border-navy/40">
+          <button type="button" onClick={share} className="flex min-h-11 items-center gap-2 rounded-[3px] border border-navy/15 px-4 text-sm font-medium text-ink hover:border-navy/40">
             <Link2 aria-hidden className="size-4" /> Share
           </button>
         </div>

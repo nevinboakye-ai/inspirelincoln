@@ -1,6 +1,6 @@
 # Testing report
 
-Date: 10 November 2026. Branch: `site-v1`.
+Date: 10 November 2026. Branches: `site-v1`, then `site-v2` (redesign and campus map).
 
 Everything below was run against a production build (`next build` + `next start`) connected to a
 local Supabase stack (Supabase CLI, Postgres 17, the same migration and seed as production).
@@ -13,11 +13,11 @@ Nothing has yet been tested against the live Supabase project or on Vercel; see
 | --- | --- | --- |
 | Type check (strict) | `npm run typecheck` | Pass, no errors |
 | Lint | `npm run lint` | Pass, 0 errors. 14 warnings from React Compiler advisory rules (effects that read browser-only state after hydration, deliberately) |
-| Unit tests | `npm test` | 12/12 pass: UK time zone conversion (GMT and BST), admin date round-trip, agenda conflict detection, abstract word limits and consent rules, category validation, iCalendar output and escaping, CSV quoting and formula-injection protection |
+| Unit tests | `npm test` | 16/16 pass: campus map distances, walking times and directions links, seed map places never half-pinned; UK time zone conversion (GMT and BST), admin date round-trip, agenda conflict detection, abstract word limits and consent rules, category validation, iCalendar output and escaping, CSV quoting and formula-injection protection |
 | Production build | `npm run build` | Pass. Public pages are static with timed revalidation; portal, review and admin are server-rendered per request |
 | Row level security | `psql -f supabase/tests/rls.test.sql` | ALL RLS TESTS PASSED, on plain Postgres 16 and on the real Supabase stack (run in a rolled-back transaction) |
-| Accessibility (axe-core, WCAG 2.0/2.1/2.2 A and AA rules) | 27 pages, signed out and signed in as admin, reduced motion | 0 violations after fixes (see below) |
-| Mobile layout (iPhone 13 emulation) | 12 pages incl. portal, review, admin | No horizontal overflow |
+| Accessibility (axe-core, WCAG 2.0/2.1/2.2 A and AA rules) | 30 pages including /map and the admin map editor, signed out and signed in as admin, reduced motion | 0 violations after fixes (see below) |
+| Mobile layout (iPhone 13 emulation) | 16 pages incl. portal, review, admin, campus map | No horizontal overflow |
 
 The RLS suite covers 29 checks plus several expected-failure cases, including: anonymous visitors can read published content only
 and can submit contact enquiries but not read them; delegates see only their own registration,
@@ -49,6 +49,9 @@ admins; the contact form is rate-limited per email address.
 | Check-in desk: valid code checks in, repeat scan shows "already checked in", invalid code rejected | Pass |
 | Admin sees the poster, audit log entries and user list | Pass |
 | Guest submits the contact form; stored, with a message that email delivery isn't active yet | Pass |
+| Campus map: pins render, "Where am I?" shows your position and distance, selecting a place shows its sessions and directions; `?place=` and `?room=` links open a place | Pass (map tiles stubbed, as the test machine cannot reach the tile server) |
+| Admin pins a place by clicking the map, saves; a half-entered pin is rejected; "Remove pin" clears it | Pass |
+| Update script `supabase/updates/2026-11-10-programme-committee-map.sql` applied twice to a seeded database | Pass, no duplicates |
 
 Earlier in the build the public pages were checked visually at desktop and mobile sizes (home,
 programme, conference, about), and the programme's agenda, filters, search and calendar export were
@@ -83,3 +86,5 @@ These need the real services and can't be verified from the development environm
 6. A manual pass with a screen reader (VoiceOver or NVDA) and keyboard-only navigation of the
    programme and forms. Automated checks catch only part of WCAG.
 7. Lighthouse performance on the Vercel deployment.
+8. The campus map with real tiles on a phone on campus, and pinning the Ross Lucas Medical Sciences
+   Building in Admin, Map places (it has no published coordinates, so it is not pinned yet).

@@ -5,9 +5,9 @@ import { Reveal } from "@/components/motion/reveal";
 import { cn } from "@/lib/cn";
 
 const PILLARS = [
-  { key: "discover", title: "Discover", body: "Explore emerging research and ideas, from the lab bench to the bedside and beyond.", colour: "#39D5F2" },
-  { key: "connect", title: "Connect", body: "Build relationships with clinicians, researchers and peers who share your curiosity.", colour: "#3478F6" },
-  { key: "advance", title: "Advance", body: "Develop the skills and confidence to contribute to medicine through research.", colour: "#8578F9" },
+  { key: "discover", title: "Discover", body: "Explore emerging research and ideas, from the lab bench to the bedside and beyond.", colour: "#C9D8EC" },
+  { key: "connect", title: "Connect", body: "Build relationships with clinicians, researchers and peers who share your curiosity.", colour: "#3A5F94" },
+  { key: "advance", title: "Advance", body: "Develop the skills and confidence to contribute to medicine through research.", colour: "#9FB4D4" },
 ] as const;
 
 function PillarVisual({ kind, active, colour }: { kind: (typeof PILLARS)[number]["key"]; active: boolean; colour: string }) {
@@ -53,7 +53,7 @@ function PillarVisual({ kind, active, colour }: { kind: (typeof PILLARS)[number]
           />
         ))}
         {nodes.map(([x, y], i) => (
-          <motion.circle key={i} cx={x} cy={y} r={i === 5 ? 7 : 5} fill={i === 5 ? colour : "#071426"} stroke={colour} strokeWidth={1.5} animate={{ scale: active ? [1, 1.25, 1] : 1 }} transition={{ duration: 0.8, delay: i * 0.08 }} />
+          <motion.circle key={i} cx={x} cy={y} r={i === 5 ? 7 : 5} fill={i === 5 ? colour : "#1A3154"} stroke={colour} strokeWidth={1.5} animate={{ scale: active ? [1, 1.25, 1] : 1 }} transition={{ duration: 0.8, delay: i * 0.08 }} />
         ))}
       </svg>
     );
@@ -99,7 +99,7 @@ export function Intro() {
             <p className="eyebrow mb-6 flex items-center gap-3 text-electric-600">
               <span aria-hidden className="h-px w-8 bg-electric-600/50" /> About INSPIRE
             </p>
-            <h2 id="intro-title" className="text-display-lg font-semibold text-ink">
+            <h2 id="intro-title" className="text-display-lg font-normal text-ink">
               More than a conference.{" "}
               <span className="text-slate">A platform for the next generation of medical research.</span>
             </h2>
@@ -126,17 +126,17 @@ export function Intro() {
                 onMouseLeave={() => setActive(null)}
                 className={cn(
                   "group relative flex h-full flex-col overflow-hidden rounded-lg border bg-white p-8 transition-[border-color,box-shadow,transform] duration-500",
-                  active === i ? "-translate-y-1 border-navy/20 shadow-[0_24px_60px_-28px_rgba(7,20,38,0.35)]" : "border-navy/10",
+                  active === i ? "-translate-y-1 border-navy/20 shadow-[0_24px_60px_-28px_rgba(26,49,84,0.35)]" : "border-navy/10",
                 )}
               >
                 <div className="flex items-baseline justify-between">
-                  <span className="font-display text-sm text-slate">0{i + 1}</span>
+                  <span className="font-ui text-sm text-slate">0{i + 1}</span>
                   <span aria-hidden className="h-px w-16" style={{ background: p.colour }} />
                 </div>
                 <div className="mt-6 h-32 rounded-md bg-navy p-3">
                   <PillarVisual kind={p.key} active={active === i} colour={p.colour} />
                 </div>
-                <h3 className="mt-8 text-display-sm font-semibold text-ink">{p.title}</h3>
+                <h3 className="mt-8 text-display-sm font-medium text-ink">{p.title}</h3>
                 <p className="mt-3 leading-relaxed text-slate-700">{p.body}</p>
               </div>
              </Reveal>

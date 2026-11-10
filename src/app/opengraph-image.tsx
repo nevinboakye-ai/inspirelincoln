@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { getEdition } from "@/lib/data/content";
 
@@ -9,16 +11,15 @@ export const revalidate = 3600;
 export default async function OgImage() {
   const e = await getEdition();
   const date = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/London" }).format(new Date(`${e.date}T12:00:00Z`));
-  const dots = Array.from({ length: 40 }, (_, i) => ({ x: (i * 197) % 1200, y: (i * 131) % 630, r: 2 + (i % 3) }));
+  const crest = `data:image/png;base64,${(await readFile(join(process.cwd(), "public/brand/crest-white.png"))).toString("base64")}`;
   return new ImageResponse(
     (
-      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 72, background: "linear-gradient(135deg,#040B16 0%,#071426 55%,#0b1d35 100%)", color: "#F7F9FC", position: "relative", fontFamily: "sans-serif" }}>
-        {dots.map((d, i) => (
-          <div key={i} style={{ position: "absolute", left: d.x, top: d.y, width: d.r * 2, height: d.r * 2, borderRadius: 99, background: i % 3 === 0 ? "#8578F9" : "#39D5F2", opacity: 0.5 }} />
-        ))}
-        <div style={{ display: "flex", fontSize: 26, letterSpacing: 8, color: "#39D5F2" }}>{`INSPIRE ${e.year}`}</div>
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 72, background: "linear-gradient(135deg,#0C182C 0%,#1A3154 55%,#14284A 100%)", color: "#F8F6F0", position: "relative", fontFamily: "sans-serif" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- rendered by ImageResponse, not the browser */}
+        <img src={crest} alt="" width={290} height={340} style={{ position: "absolute", right: 72, top: 145 }} />
+        <div style={{ display: "flex", fontSize: 26, letterSpacing: 8, color: "#C9D8EC" }}>{`INSPIRE ${e.year}`}</div>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", fontSize: 76, fontWeight: 700, lineHeight: 1, letterSpacing: -2 }}>{e.theme}</div>
+          <div style={{ display: "flex", fontSize: 68, fontWeight: 700, lineHeight: 1.05, letterSpacing: -2, maxWidth: 720 }}>{e.theme}</div>
           <div style={{ display: "flex", fontSize: 30, marginTop: 28, color: "rgba(247,249,252,0.75)" }}>{`${date} · ${e.venueName}`}</div>
         </div>
         <div style={{ display: "flex", fontSize: 22, color: "rgba(247,249,252,0.6)" }}>National Medical Research Conference</div>

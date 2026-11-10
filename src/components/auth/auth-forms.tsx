@@ -15,7 +15,7 @@ function Status({ state }: { state: AuthState }) {
 
 function Submit({ pending, children }: { pending: boolean; children: React.ReactNode }) {
   return (
-    <button type="submit" disabled={pending} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-navy font-display font-semibold text-paper hover:bg-navy-700 disabled:opacity-60">
+    <button type="submit" disabled={pending} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-[3px] bg-navy font-ui font-semibold text-paper hover:bg-navy-700 disabled:opacity-60">
       {pending && <Loader2 aria-hidden className="size-4 animate-spin" />}
       {children}
     </button>

@@ -135,7 +135,7 @@ export function SiteHeader({
                         aria-controls={`mega-${i}`}
                         onClick={() => setOpenGroup(openGroup === i ? null : i)}
                         className={cn(
-                          "relative flex min-h-11 items-center gap-1 whitespace-nowrap rounded-full px-4 text-[0.9rem] font-medium transition-colors",
+                          "relative flex min-h-11 items-center gap-1 whitespace-nowrap rounded-[3px] px-4 text-[0.9rem] font-medium transition-colors",
                           openGroup === i || active ? "text-paper" : "text-paper/70 hover:text-paper",
                         )}
                       >
@@ -159,7 +159,7 @@ export function SiteHeader({
                   <Link
                     href="/contact"
                     className={cn(
-                      "relative flex min-h-11 items-center rounded-full px-4 text-[0.9rem] font-medium transition-colors",
+                      "relative flex min-h-11 items-center rounded-[3px] px-4 text-[0.9rem] font-medium transition-colors",
                       isActive(pathname, "/contact") ? "text-paper" : "text-paper/70 hover:text-paper",
                     )}
                   >
@@ -176,7 +176,7 @@ export function SiteHeader({
               <button
                 type="button"
                 onClick={openCommandPalette}
-                className="flex min-h-11 items-center gap-2 rounded-full border border-white/12 px-3 text-sm text-paper/70 transition-colors hover:border-white/30 hover:text-paper"
+                className="flex min-h-11 items-center gap-2 rounded-[3px] border border-white/12 px-3 text-sm text-paper/70 transition-colors hover:border-white/30 hover:text-paper"
                 aria-label="Search the site"
               >
                 <Search aria-hidden className="size-4" />
@@ -184,14 +184,14 @@ export function SiteHeader({
               </button>
               <Link
                 href="/portal"
-                className="hidden min-h-11 items-center gap-2 whitespace-nowrap rounded-full px-3 text-sm font-medium text-paper/80 transition-colors hover:text-paper xl:flex"
+                className="hidden min-h-11 items-center gap-2 whitespace-nowrap rounded-[3px] px-3 text-sm font-medium text-paper/80 transition-colors hover:text-paper xl:flex"
               >
                 <UserRound aria-hidden className="size-4" />
                 My Conference
               </Link>
               <Link
                 href="/conference#registration"
-                className="hidden min-h-11 items-center gap-1.5 rounded-full bg-cyan px-5 font-display text-sm font-semibold text-midnight transition-[background-color,box-shadow] hover:bg-cyan-300 hover:shadow-[0_8px_32px_-8px_rgba(57,213,242,0.6)] sm:flex"
+                className="hidden min-h-11 items-center gap-1.5 rounded-[3px] bg-cyan px-5 font-ui text-sm font-semibold text-midnight transition-[background-color,box-shadow] hover:bg-cyan-300 hover:shadow-[0_8px_32px_-8px_rgba(201,216,236,0.6)] sm:flex"
               >
                 Register
                 <ArrowUpRight aria-hidden className="size-4" />
@@ -349,7 +349,7 @@ function MobileNav({ open, onClose, pathname, year }: { open: boolean; onClose: 
                     onClick={onClose}
                     aria-current={isActive(pathname, l.href) ? "page" : undefined}
                     className={cn(
-                      "flex min-h-12 items-baseline gap-4 border-b border-white/[0.07] py-2 font-display text-[1.75rem] font-medium tracking-tight sm:text-4xl",
+                      "flex min-h-12 items-baseline gap-4 border-b border-white/[0.07] py-2 font-ui text-[1.75rem] font-medium tracking-tight sm:text-4xl",
                       isActive(pathname, l.href) ? "text-cyan" : "text-paper",
                     )}
                   >
@@ -361,10 +361,10 @@ function MobileNav({ open, onClose, pathname, year }: { open: boolean; onClose: 
             </ul>
           </nav>
           <div className="container-page relative grid shrink-0 gap-3 pb-8 pt-2 sm:grid-cols-3">
-            <Link href="/conference#registration" onClick={onClose} className="flex min-h-12 items-center justify-center rounded-full bg-cyan font-display font-semibold text-midnight">
+            <Link href="/conference#registration" onClick={onClose} className="flex min-h-12 items-center justify-center rounded-[3px] bg-cyan font-ui font-semibold text-midnight">
               Register for {year}
             </Link>
-            <Link href="/portal" onClick={onClose} className="flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/20 font-display font-medium">
+            <Link href="/portal" onClick={onClose} className="flex min-h-12 items-center justify-center gap-2 rounded-[3px] border border-white/20 font-ui font-medium">
               <UserRound aria-hidden className="size-4" /> My Conference
             </Link>
             <button
@@ -373,7 +373,7 @@ function MobileNav({ open, onClose, pathname, year }: { open: boolean; onClose: 
                 onClose();
                 setTimeout(openCommandPalette, 300);
               }}
-              className="flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/20 font-display font-medium"
+              className="flex min-h-12 items-center justify-center gap-2 rounded-[3px] border border-white/20 font-ui font-medium"
             >
               <Search aria-hidden className="size-4" /> Search
             </button>

@@ -21,9 +21,18 @@ end $$;
 create or replace function pg_temp.expect(ok boolean, msg text) returns void language plpgsql as $$
 begin if not ok then raise exception 'FAILED: %', msg; end if; raise notice 'ok - %', msg; end $$;
 
+select set_config('t.published_sessions', (select count(*) from public.sessions where published)::text, false);
+insert into public.map_places (slug, name, kind, published) values ('rls-hidden-place', 'Hidden place', 'building', false);
+
 -- 1. Anonymous visitors
 select pg_temp.as_user(null);
-select pg_temp.expect((select count(*) from public.sessions) = 9, 'anon reads published sessions');
+select pg_temp.expect((select count(*) from public.sessions) = current_setting('t.published_sessions')::int and current_setting('t.published_sessions')::int > 0, 'anon reads published sessions');
+select pg_temp.expect((select count(*) from public.map_places) > 0, 'anon reads published map places');
+select pg_temp.expect((select count(*) from public.map_places where slug = 'rls-hidden-place') = 0, 'anon cannot see unpublished map places');
+do $$ begin
+  insert into public.map_places (slug, name) values ('rls-anon-place', 'Anon place');
+  raise exception 'FAILED: anon added a map place';
+exception when insufficient_privilege then raise notice 'ok - anon cannot add map places'; end $$;
 select pg_temp.expect((select count(*) from public.contact_enquiries) = 0, 'anon cannot read enquiries');
 insert into public.contact_enquiries (name, email, category, subject, message, consent) values ('Test Person', 'x@example.test', 'general', 'Hello there', 'This is a sufficiently long message.', true);
 select pg_temp.expect((select count(*) from public.profiles) = 0, 'anon cannot read profiles');
@@ -173,7 +182,9 @@ reset role;
 select set_config('request.jwt.claim.sub', '', false);
 update public.profiles set role = 'editor' where id = '00000000-0000-0000-0000-00000000000d';
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
-update public.sessions set title = title || '' where slug = 'welcome-and-opening';
+update public.sessions set title = title || '' where slug = 'welcome-and-housekeeping';
+update public.map_places set lat = 53.2277, lng = -0.5500 where slug = 'rls-hidden-place';
+select pg_temp.expect((select lat from public.map_places where slug = 'rls-hidden-place') = 53.2277, 'editors can pin map places');
 select pg_temp.expect((select count(*) from public.abstracts) = 0, 'editors cannot read abstracts');
 select pg_temp.expect((select count(*) from public.contact_enquiries) = 0, 'editors cannot read enquiries');
 reset role;

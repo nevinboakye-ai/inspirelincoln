@@ -14,14 +14,14 @@ export function HistoryTimeline({ events }: { events: TimelineEvent[] }) {
       {events.map((e) => (
         <li key={e.id} className="relative">
           <span aria-hidden className="absolute -left-[2.85rem] top-1.5 size-3.5 rounded-full border-2 border-cyan bg-midnight" />
-          <p className="font-display text-sm font-semibold tracking-[0.14em] text-cyan">{e.year}</p>
+          <p className="font-ui text-sm font-semibold tracking-[0.14em] text-cyan">{e.year}</p>
           <h3 className="mt-2 font-display text-2xl font-medium">{e.title}</h3>
           <p className="mt-2 max-w-2xl text-paper/65">{e.description}</p>
         </li>
       ))}
       <li className="relative">
         <span aria-hidden className="absolute -left-[2.85rem] top-1.5 size-3.5 rounded-full border-2 border-dashed border-paper/40 bg-midnight" />
-        <p className="font-display text-sm font-semibold tracking-[0.14em] text-paper/65">Earlier years</p>
+        <p className="font-ui text-sm font-semibold tracking-[0.14em] text-paper/65">Earlier years</p>
         <p className="mt-2 max-w-2xl text-paper/55">
           INSPIRE has a history spanning more than a decade. Earlier conferences will be added here as their details are verified.
         </p>

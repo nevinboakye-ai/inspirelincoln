@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BookOpen, CalendarCog, ClipboardList, FileSearch, Gauge, Image as ImageIcon, Inbox, LayoutList, Megaphone, MessageSquareQuote,
-  Mic, Presentation, QrCode, ScrollText, Settings2, Ticket, Users, Wrench, Building2, History, HelpCircle, Library, DoorOpen, Archive, Scale,
+  Mic, Presentation, QrCode, ScrollText, Settings2, Ticket, Users, Wrench, Building2, History, HelpCircle, Library, DoorOpen, Archive, Scale, MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { UserRole } from "@/lib/types";
@@ -17,6 +17,7 @@ const GROUPS: { title: string; admin?: boolean; links: { href: string; label: st
       { href: "/admin/content/speakers", label: "Speakers", icon: Mic },
       { href: "/admin/content/workshops", label: "Workshops", icon: Wrench },
       { href: "/admin/content/rooms", label: "Rooms", icon: DoorOpen },
+      { href: "/admin/content/map", label: "Map places", icon: MapPin },
     ],
   },
   {
@@ -60,7 +61,7 @@ export function AdminNav({ role }: { role: UserRole }) {
   const isAdmin = role === "admin";
   return (
     <nav aria-label="Admin" className="min-w-0 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
-      <p className="mb-4 flex items-center gap-2 font-display text-sm font-semibold uppercase tracking-wider text-slate"><LayoutList aria-hidden className="size-4" /> Admin · <span className="capitalize">{role}</span></p>
+      <p className="mb-4 flex items-center gap-2 font-ui text-sm font-semibold uppercase tracking-wider text-slate"><LayoutList aria-hidden className="size-4" /> Admin · <span className="capitalize">{role}</span></p>
       <div className="flex gap-6 overflow-x-auto pb-2 lg:block lg:space-y-6 lg:overflow-visible">
         {GROUPS.filter((g) => !g.admin || isAdmin).map((g) => (
           <div key={g.title} className="shrink-0">

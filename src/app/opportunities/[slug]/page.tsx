@@ -31,7 +31,7 @@ export default async function OpportunityPage({ params }: { params: Promise<{ sl
             <ArrowLeft aria-hidden className="size-4" /> All opportunities
           </Link>
           <p className="eyebrow mt-8 text-cyan">{o.category}</p>
-          <h1 className="mt-4 text-display-md font-semibold">{o.title}</h1>
+          <h1 className="mt-4 text-display-md font-normal">{o.title}</h1>
           {o.organisation && <p className="mt-3 text-lg text-paper/70">{o.organisation}</p>}
           {o.isExample && <div className="mt-4"><PlaceholderTag dark>Example listing</PlaceholderTag></div>}
         </div>
@@ -55,7 +55,7 @@ export default async function OpportunityPage({ params }: { params: Promise<{ sl
           </div>
           <div className="mt-10 flex flex-wrap gap-3">
             {o.url && (
-              <a href={o.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center gap-2 rounded-full bg-navy px-6 font-display font-semibold text-paper hover:bg-navy-700">
+              <a href={o.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center gap-2 rounded-[3px] bg-navy px-6 font-ui font-semibold text-paper hover:bg-navy-700">
                 Apply on the organiser&apos;s site <ExternalLink aria-hidden className="size-4" />
               </a>
             )}

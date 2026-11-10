@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 function cell(v: unknown, col: string) {
   if (typeof v === "boolean") return v ? <Badge tone={col === "published" || col === "verified" ? "success" : "electric"}>Yes</Badge> : <span className="text-slate">No</span>;
-  if (v == null || v === "") return <span className="text-slate">—</span>;
+  if (v == null || v === "") return <span className="text-slate">Not set</span>;
   if (col.endsWith("_at") && typeof v === "string") return new Date(v).toLocaleString("en-GB", { timeZone: "Europe/London", dateStyle: "medium", timeStyle: "short" });
   return String(v);
 }
@@ -42,7 +42,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
       {error && <p role="alert" className="mb-4 text-sm text-danger">Could not load records. Check that the database migration has been applied.</p>}
       <form role="search" className="mb-4 flex max-w-md gap-2">
         <label htmlFor="q" className="sr-only">Search {entity.label}</label>
-        <input id="q" name="q" defaultValue={sp.q} placeholder={`Search ${entity.label.toLowerCase()}…`} className="min-h-11 flex-1 rounded-full border border-navy/15 bg-white px-4 text-sm" />
+        <input id="q" name="q" defaultValue={sp.q} placeholder={`Search ${entity.label.toLowerCase()}…`} className="min-h-11 flex-1 rounded-[3px] border border-navy/15 bg-white px-4 text-sm" />
         <button className={btn.secondary}>Search</button>
       </form>
       <Table

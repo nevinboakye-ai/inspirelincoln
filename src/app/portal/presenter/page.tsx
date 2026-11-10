@@ -44,8 +44,8 @@ export default async function PresenterPage() {
         <div className="rounded-xl border border-navy/10 bg-white p-6 sm:p-8">
           <p className="text-slate-700">You haven&apos;t submitted an abstract yet.</p>
           <div className="mt-4 flex flex-wrap gap-3">
-            {edition.abstractConfig.submissionsOpen && <Link href="/portal/abstracts/new" className="inline-flex min-h-11 items-center rounded-full bg-navy px-5 text-sm font-semibold text-paper">Submit an abstract</Link>}
-            <Link href="/research" className="inline-flex min-h-11 items-center rounded-full border border-navy/15 px-5 text-sm font-semibold text-ink">About research at INSPIRE</Link>
+            {edition.abstractConfig.submissionsOpen && <Link href="/portal/abstracts/new" className="inline-flex min-h-11 items-center rounded-[3px] bg-navy px-5 text-sm font-semibold text-paper">Submit an abstract</Link>}
+            <Link href="/research" className="inline-flex min-h-11 items-center rounded-[3px] border border-navy/15 px-5 text-sm font-semibold text-ink">About research at INSPIRE</Link>
           </div>
         </div>
       )}

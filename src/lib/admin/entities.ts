@@ -5,7 +5,9 @@
  */
 export type FieldType =
   | "text" | "textarea" | "number" | "boolean" | "select" | "date" | "time"
-  | "datetime" | "lines" | "links" | "image" | "url" | "relation" | "speakers";
+  | "datetime" | "lines" | "links" | "image" | "url" | "relation" | "speakers"
+  /** A map pin: writes the `lat` and `lng` columns together. */
+  | "location";
 
 export interface FieldDef {
   name: string;
@@ -212,6 +214,25 @@ export const ENTITIES: EntityDef[] = [
       { name: "photo_url", label: "Photo", type: "image" },
       { name: "bio", label: "Biography", type: "textarea", wide: true },
       { name: "links", label: "Links", type: "links", hint: "One per line as Label | https://…" },
+      published, sort,
+    ],
+  },
+  {
+    key: "map", table: "map_places", label: "Map places", singular: "map place",
+    description: "Places on the campus map at /map. Only pin a place once you know exactly where it is; unpinned places are listed as \"location to be confirmed\". Link a place to a room to show that room's sessions on the map.",
+    titleField: "name", listColumns: ["kind", "code", "lat", "location_confirmed", "published"], orderBy: [{ column: "sort" }, { column: "name" }],
+    revalidate: ["/map", "/today"],
+    fields: [
+      { name: "name", label: "Name", type: "text", required: true },
+      { name: "slug", label: "URL slug", type: "text", required: true, hint: "Used in links such as /map?place=inb." },
+      { name: "code", label: "Building or room code", type: "text", hint: "e.g. INB or LMS005" },
+      { name: "kind", label: "Type", type: "select", required: true, options: opts(["venue", "Conference venue"], ["room", "Room or spot inside a building"], ["building", "Other campus building"], ["landmark", "Landmark"], ["amenity", "Facility (toilets, food, parking)"]) },
+      { name: "description", label: "Description", type: "textarea", wide: true },
+      { name: "location", label: "Location on the map", type: "location", wide: true, hint: "Click the map or drag the pin. Rooms can be left unpinned to use their building's pin." },
+      { name: "parent_id", label: "Inside building", type: "relation", relation: { table: "map_places", label: "name" } },
+      { name: "room_id", label: "Programme room", type: "relation", relation: { table: "rooms", label: "name", editionScoped: true }, hint: "Sessions in this room are listed for this place." },
+      { name: "directions", label: "Directions on the day", type: "textarea", wide: true },
+      { name: "location_confirmed", label: "Location confirmed for the conference", type: "boolean" },
       published, sort,
     ],
   },

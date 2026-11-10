@@ -46,7 +46,7 @@ export function Countdown({
     return (
       <div className={cn("flex flex-wrap items-center gap-4", className)}>
         <p className="font-display text-lg text-paper/80">INSPIRE {year} has concluded. Thank you to everyone who took part.</p>
-        <Link href="/gallery" className="inline-flex items-center gap-2 rounded-full border border-cyan/40 px-5 py-2.5 text-sm font-semibold text-cyan hover:bg-cyan/10">
+        <Link href="/gallery" className="inline-flex items-center gap-2 rounded-[3px] border border-cyan/40 px-5 py-2.5 text-sm font-semibold text-cyan hover:bg-cyan/10">
           Explore INSPIRE {year} highlights <ArrowRight aria-hidden className="size-4" />
         </Link>
       </div>
@@ -56,7 +56,7 @@ export function Countdown({
   if (phase === "live") {
     return (
       <div className={cn("flex flex-wrap items-center gap-4", className)}>
-        <span className="inline-flex items-center gap-2 rounded-full bg-cyan/15 px-4 py-2 text-sm font-semibold text-cyan">
+        <span className="inline-flex items-center gap-2 rounded-[3px] bg-cyan/15 px-4 py-2 text-sm font-semibold text-cyan">
           <span className="size-2 animate-pulse-soft rounded-full bg-cyan" /> Happening today
         </span>
         <Link href="/today" className="inline-flex items-center gap-2 text-sm font-semibold text-paper hover:text-cyan">
@@ -83,16 +83,13 @@ export function Countdown({
       <p className="sr-only" aria-live="off">
         {summary}
       </p>
-      <div aria-hidden className="flex items-end gap-2 sm:gap-3">
-        {units.map((u, i) => (
-          <div key={u.label} className="flex items-end gap-2 sm:gap-3">
-            <div className="min-w-[3.6rem] rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-2 text-center backdrop-blur-sm sm:min-w-[4.75rem] sm:px-3 sm:py-3">
-              <span className="block font-display text-[1.75rem] font-medium tabular-nums leading-none tracking-tight text-paper sm:text-[2.5rem]">
-                {u.value == null ? "--" : String(u.value).padStart(2, "0")}
-              </span>
-              <span className="mt-1.5 block text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-paper/65 sm:text-[0.65rem]">{u.label}</span>
-            </div>
-            {i < units.length - 1 && <span className="pb-6 font-display text-xl text-paper/25 sm:pb-8">:</span>}
+      <div aria-hidden className="grid grid-cols-4 divide-x divide-white/15 border-y border-white/15">
+        {units.map((u) => (
+          <div key={u.label} className="px-3 py-4 first:pl-0 sm:px-5">
+            <span className="block font-display text-[2.25rem] font-light tabular-nums leading-none text-paper sm:text-[3.25rem]">
+              {u.value == null ? "--" : String(u.value).padStart(2, "0")}
+            </span>
+            <span className="mt-2 block font-ui text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-paper/65 sm:text-[0.65rem]">{u.label}</span>
           </div>
         ))}
       </div>

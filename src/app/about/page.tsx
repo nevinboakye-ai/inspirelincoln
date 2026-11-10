@@ -38,7 +38,7 @@ export default async function AboutPage() {
         visual={
           <svg aria-hidden viewBox="0 0 600 600" className="absolute -right-24 top-1/2 h-[140%] -translate-y-1/2 opacity-30">
             {Array.from({ length: 7 }, (_, i) => (
-              <circle key={i} cx="300" cy="300" r={60 + i * 34} fill="none" stroke={i % 2 ? "#8578F9" : "#39D5F2"} strokeOpacity={0.6 - i * 0.06} strokeDasharray={i % 3 === 0 ? "2 8" : undefined} />
+              <circle key={i} cx="300" cy="300" r={60 + i * 34} fill="none" stroke={i % 2 ? "#9FB4D4" : "#C9D8EC"} strokeOpacity={0.6 - i * 0.06} strokeDasharray={i % 3 === 0 ? "2 8" : undefined} />
             ))}
           </svg>
         }
@@ -123,7 +123,7 @@ export default async function AboutPage() {
 
       <section aria-labelledby="leadership-title" className="bg-white py-24 sm:py-32">
         <div className="container-page">
-          <SectionHeading eyebrow="Leadership" title={<span id="leadership-title">The INSPIRE committee</span>} intro="The students and clinicians who organise INSPIRE." />
+          <SectionHeading eyebrow="Leadership" title={<span id="leadership-title">The INSPIRE committee</span>} intro="The team who organise INSPIRE, from programme to prizes." />
           <div className="mt-12">
             <CommitteeDirectory members={committee} />
           </div>

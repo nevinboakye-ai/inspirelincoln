@@ -6,11 +6,11 @@ type Variant = "primary" | "secondary" | "ghost" | "light" | "outline-dark" | "d
 type Size = "sm" | "md" | "lg";
 
 const base =
-  "group/btn relative inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-full font-display font-medium tracking-[-0.01em] transition-[background-color,color,border-color,box-shadow,transform] duration-300 ease-[var(--ease-out-expo)] disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]";
+  "group/btn relative inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-[3px] font-ui font-medium tracking-[-0.01em] transition-[background-color,color,border-color,box-shadow,transform] duration-300 ease-[var(--ease-out-expo)] disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]";
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-cyan text-midnight shadow-[0_0_0_0_rgba(57,213,242,0)] hover:bg-cyan-300 hover:shadow-[0_8px_32px_-8px_rgba(57,213,242,0.6)]",
+    "bg-cyan text-midnight shadow-[0_0_0_0_rgba(201,216,236,0)] hover:bg-cyan-300 hover:shadow-[0_8px_32px_-8px_rgba(201,216,236,0.6)]",
   secondary:
     "border border-white/20 bg-white/5 text-paper backdrop-blur-sm hover:border-white/40 hover:bg-white/10",
   ghost: "text-paper/80 hover:bg-white/5 hover:text-paper",

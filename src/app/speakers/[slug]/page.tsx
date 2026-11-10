@@ -45,14 +45,14 @@ export default async function SpeakerPage({ params }: { params: Promise<{ slug: 
               <ArrowLeft aria-hidden className="size-4" /> All speakers
             </Link>
             {s.specialty && <p className="eyebrow mt-8 text-cyan">{s.specialty}</p>}
-            <h1 className="mt-4 text-display-lg font-semibold">{s.fullName}</h1>
+            <h1 className="mt-4 text-display-lg font-normal">{s.fullName}</h1>
             {s.credentials && <p className="mt-2 text-lg text-paper/60">{s.credentials}</p>}
             <p className="mt-6 text-xl text-paper/80">{[s.position, s.institution].filter(Boolean).join(", ")}</p>
             {s.links.length > 0 && (
               <ul className="mt-8 flex flex-wrap gap-3">
                 {s.links.map((l) => (
                   <li key={l.url}>
-                    <a href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 px-5 text-sm font-medium hover:border-white/40">
+                    <a href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-[3px] border border-white/20 px-5 text-sm font-medium hover:border-white/40">
                       {l.label} <ExternalLink aria-hidden className="size-4" />
                     </a>
                   </li>

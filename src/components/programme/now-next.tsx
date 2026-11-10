@@ -31,7 +31,7 @@ export function NowNext({ sessions }: { sessions: Session[] }) {
     <Link href={`/programme?session=${s.slug}`} className="block rounded-lg border border-white/10 bg-white/[0.04] p-5 transition-colors hover:border-cyan/40">
       <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-cyan">
         {live && <Radio aria-hidden className="size-3.5 animate-pulse-soft" />}
-        {formatTime(s.startsAt!)}–{formatTime(s.endsAt!)} · {SESSION_CATEGORY_LABEL[s.category]}
+        {formatTime(s.startsAt!)} to {formatTime(s.endsAt!)} · {SESSION_CATEGORY_LABEL[s.category]}
       </span>
       <span className="mt-2 block font-display text-xl font-medium">{s.title}</span>
     </Link>
@@ -40,11 +40,11 @@ export function NowNext({ sessions }: { sessions: Session[] }) {
   return (
     <div className="grid gap-8 lg:grid-cols-2" aria-live="polite">
       <div>
-        <h2 className="eyebrow text-paper/50">Happening now</h2>
+        <h2 className="eyebrow text-paper/65">Happening now</h2>
         <div className="mt-4 space-y-3">{current.length ? current.map((s) => <Card key={s.id} s={s} live />) : <p className="text-paper/60">No sessions are running right now.</p>}</div>
       </div>
       <div>
-        <h2 className="eyebrow text-paper/50">Up next</h2>
+        <h2 className="eyebrow text-paper/65">Up next</h2>
         <div className="mt-4 space-y-3">{next.length ? next.map((s) => <Card key={s.id} s={s} />) : <p className="text-paper/60">That&apos;s everything for today.</p>}</div>
       </div>
     </div>

@@ -2,9 +2,9 @@ import type { Workshop } from "@/lib/types";
 import { cn } from "@/lib/cn";
 
 export const ACCENT_HEX: Record<Workshop["accent"], string> = {
-  electric: "#3478F6",
-  cyan: "#39D5F2",
-  violet: "#8578F9",
+  electric: "#3A5F94",
+  cyan: "#C9D8EC",
+  violet: "#9FB4D4",
 };
 
 /**
@@ -26,7 +26,7 @@ export function WorkshopMotif({ motif, accent, className }: { motif: Workshop["m
               width={96}
               height={120}
               rx={6}
-              fill="#071426"
+              fill="#1A3154"
               stroke={c}
               strokeOpacity={0.25 + i * 0.2}
               className={cn(common, "group-hover:translate-x-[var(--dx)]")}
@@ -63,7 +63,7 @@ export function WorkshopMotif({ motif, accent, className }: { motif: Workshop["m
             const row = Math.floor(i / 3);
             const filled = [0, 4, 5, 7].includes(i);
             return (
-              <rect key={i} x={66 + col * 38} y={22 + row * 40} width={30} height={30} rx={6} fill={filled ? c : "#071426"} fillOpacity={filled ? 0.85 : 1} stroke={c} strokeOpacity={0.45} className={cn(common, !filled && "group-hover:fill-[var(--c)]")} style={{ ["--c" as string]: `${c}55` }} />
+              <rect key={i} x={66 + col * 38} y={22 + row * 40} width={30} height={30} rx={6} fill={filled ? c : "#1A3154"} fillOpacity={filled ? 0.85 : 1} stroke={c} strokeOpacity={0.45} className={cn(common, !filled && "group-hover:fill-[var(--c)]")} style={{ ["--c" as string]: `${c}55` }} />
             );
           })}
         </g>

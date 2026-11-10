@@ -31,9 +31,9 @@ export function Panel({ title, children, className = "", actions }: { title?: st
 }
 
 export const btn = {
-  primary: "inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-navy px-5 text-sm font-semibold text-paper hover:bg-navy-700 disabled:opacity-60",
-  secondary: "inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-navy/15 bg-white px-5 text-sm font-semibold text-ink hover:border-navy/40 disabled:opacity-60",
-  danger: "inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-danger/30 px-5 text-sm font-semibold text-danger hover:bg-danger/[0.05] disabled:opacity-60",
+  primary: "inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] bg-navy px-5 text-sm font-semibold text-paper hover:bg-navy-700 disabled:opacity-60",
+  secondary: "inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] border border-navy/15 bg-white px-5 text-sm font-semibold text-ink hover:border-navy/40 disabled:opacity-60",
+  danger: "inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] border border-danger/30 px-5 text-sm font-semibold text-danger hover:bg-danger/[0.05] disabled:opacity-60",
 };
 
 export function Flash({ children }: { children: ReactNode }) {

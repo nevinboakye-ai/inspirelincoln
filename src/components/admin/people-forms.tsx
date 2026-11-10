@@ -8,7 +8,7 @@ import { Field, inputClass } from "@/components/forms/field";
 import { ResultBanner } from "@/components/portal/profile-forms";
 import { btn } from "./ui";
 
-const small = "min-h-10 rounded-full border border-navy/15 bg-white px-3 text-sm";
+const small = "min-h-10 rounded-[3px] border border-navy/15 bg-white px-3 text-sm";
 
 /** A compact select that saves on change. */
 function AutoSelect({ action, hidden, name, value, options, label }: { action: (s: ActionResult, f: FormData) => Promise<ActionResult>; hidden: Record<string, string>; name: string; value: string; options: [string, string][]; label: string }) {
@@ -43,7 +43,7 @@ export function DeleteEnquiry({ id }: { id: string }) {
     <form action={act} onSubmit={(e) => { if (!confirm("Delete this enquiry permanently?")) e.preventDefault(); }}>
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="intent" value="delete" />
-      <button disabled={pending} className="min-h-10 rounded-full px-3 text-sm font-medium text-danger hover:bg-danger/[0.05]">Delete</button>
+      <button disabled={pending} className="min-h-10 rounded-[3px] px-3 text-sm font-medium text-danger hover:bg-danger/[0.05]">Delete</button>
       {state?.error && <span role="alert" className="text-xs text-danger">{state.error}</span>}
     </form>
   );

@@ -120,7 +120,7 @@ export function ContactForm({ initialCategory, active }: { initialCategory?: Enq
         )}
       </div>
 
-      <button type="submit" disabled={isSubmitting || !active} className="inline-flex min-h-14 items-center gap-2 rounded-full bg-navy px-8 font-display font-semibold text-paper transition-colors hover:bg-navy-700 disabled:opacity-60">
+      <button type="submit" disabled={isSubmitting || !active} className="inline-flex min-h-14 items-center gap-2 rounded-[3px] bg-navy px-8 font-ui font-semibold text-paper transition-colors hover:bg-navy-700 disabled:opacity-60">
         {isSubmitting ? <Loader2 aria-hidden className="size-4 animate-spin" /> : <Send aria-hidden className="size-4" />}
         {isSubmitting ? "Sending…" : "Send message"}
       </button>

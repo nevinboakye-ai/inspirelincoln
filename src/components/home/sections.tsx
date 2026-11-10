@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, BookOpenCheck, Coffee, FlaskConical, Mic2, PartyPopper, Presentation, Users } from "lucide-react";
 import type { Edition, Resource, Session, Speaker, Workshop } from "@/lib/types";
@@ -7,7 +8,6 @@ import { CountUp } from "@/components/visual/count-up";
 import { WorkshopMotif, ACCENT_HEX } from "@/components/visual/workshop-motif";
 import { PlaceholderTag } from "@/components/ui/badge";
 import { formatTime } from "@/lib/time";
-import { NeuralField } from "@/components/visual/neural-field";
 import { SpeakerCarousel } from "./speaker-carousel";
 
 /* ---------------- D: At a glance ---------------- */
@@ -26,7 +26,7 @@ export function AtAGlance({ edition, workshopCount }: { edition: Edition; worksh
             <p className="eyebrow mb-4 flex items-center gap-3 text-electric-600">
               <span aria-hidden className="h-px w-8 bg-electric-600/50" /> At a glance
             </p>
-            <h2 id="glance-title" className="text-display-md font-semibold text-ink">
+            <h2 id="glance-title" className="text-display-md font-normal text-ink">
               INSPIRE {edition.year} in numbers
             </h2>
           </Reveal>
@@ -46,7 +46,7 @@ export function AtAGlance({ edition, workshopCount }: { edition: Edition; worksh
               </p>
               <p className="mt-4 font-display text-lg font-medium text-ink">{s.label}</p>
               <p className="mt-1 text-sm text-slate">{s.note}</p>
-              <span aria-hidden className="mt-6 block h-1 w-12 rounded-full" style={{ background: ["#39D5F2", "#3478F6", "#8578F9", "#071426"][i] }} />
+              <span aria-hidden className="mt-6 block h-1 w-12 rounded-full" style={{ background: ["#C9D8EC", "#3A5F94", "#9FB4D4", "#1A3154"][i] }} />
             </StaggerItem>
           ))}
         </Stagger>
@@ -75,7 +75,7 @@ export function ProgrammePreview({ sessions }: { sessions: Session[] }) {
           <p className="eyebrow mb-4 flex items-center gap-3 text-electric-600">
             <span aria-hidden className="h-px w-8 bg-electric-600/50" /> Programme
           </p>
-          <h2 id="programme-title" className="text-display-md font-semibold text-ink">
+          <h2 id="programme-title" className="text-display-md font-normal text-ink">
             The shape of the day
           </h2>
           <p className="mt-6 text-lg leading-relaxed text-slate-700">
@@ -87,7 +87,7 @@ export function ProgrammePreview({ sessions }: { sessions: Session[] }) {
               <PlaceholderTag>Provisional: times to be confirmed</PlaceholderTag>
             </div>
           )}
-          <Link href="/programme" className="group mt-8 inline-flex min-h-12 items-center gap-2 rounded-full bg-navy px-6 font-display font-medium text-paper hover:bg-navy-700">
+          <Link href="/programme" className="group mt-8 inline-flex min-h-12 items-center gap-2 rounded-[3px] bg-navy px-6 font-ui font-medium text-paper hover:bg-navy-700">
             Open the full programme <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </Reveal>
@@ -139,11 +139,11 @@ export function SpeakersSection({ speakers }: { speakers: Speaker[] }) {
             <p className="eyebrow mb-4 flex items-center gap-3 text-cyan">
               <span aria-hidden className="h-px w-8 bg-cyan/60" /> Speakers
             </p>
-            <h2 id="speakers-title" className="text-display-md font-semibold">
+            <h2 id="speakers-title" className="text-display-md font-normal">
               Voices from research and practice
             </h2>
           </Reveal>
-          <Link href="/speakers" className="group inline-flex items-center gap-2 font-display font-medium text-cyan">
+          <Link href="/speakers" className="group inline-flex items-center gap-2 font-ui font-medium text-cyan">
             All speakers <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
@@ -162,7 +162,7 @@ export function WorkshopGrid({ workshops, compact = false }: { workshops: Worksh
           <Reveal delay={(i % 3) * 0.08} className="h-full">
             <Link
               href={`/workshops/${w.slug}`}
-              className="group relative flex h-full flex-col overflow-hidden rounded-lg border border-navy/10 bg-white transition-[transform,box-shadow,border-color] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-1.5 hover:border-navy/20 hover:shadow-[0_32px_64px_-32px_rgba(7,20,38,0.45)]"
+              className="group relative flex h-full flex-col overflow-hidden rounded-lg border border-navy/10 bg-white transition-[transform,box-shadow,border-color] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-1.5 hover:border-navy/20 hover:shadow-[0_32px_64px_-32px_rgba(26,49,84,0.45)]"
             >
               <div className="relative h-44 overflow-hidden bg-navy">
                 <div aria-hidden className="grid-lines absolute inset-0 opacity-70" />
@@ -172,7 +172,7 @@ export function WorkshopGrid({ workshops, compact = false }: { workshops: Worksh
                   style={{ background: ACCENT_HEX[w.accent] }}
                 />
                 <WorkshopMotif motif={w.motif} accent={w.accent} className="relative" />
-                <span className="absolute left-5 top-4 font-display text-sm font-medium text-paper/60">Workshop {String(w.number).padStart(2, "0")}</span>
+                <span className="absolute left-5 top-4 font-ui text-sm font-medium text-paper/60">Workshop {String(w.number).padStart(2, "0")}</span>
               </div>
               <div className="flex flex-1 flex-col p-6">
                 <h3 className="font-display text-xl font-semibold text-ink">{w.title}</h3>
@@ -192,7 +192,7 @@ export function WorkshopGrid({ workshops, compact = false }: { workshops: Worksh
                 )}
                 <div className="mt-auto flex items-center justify-between pt-6">
                   <span className="text-xs text-slate">{w.facilitator ? `Led by ${w.facilitator}` : "Facilitator to be announced"}</span>
-                  <span className="inline-flex items-center gap-1.5 font-display text-sm font-semibold text-electric-600">
+                  <span className="inline-flex items-center gap-1.5 font-ui text-sm font-semibold text-electric-600">
                     Explore Workshop <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
                   </span>
                 </div>
@@ -214,12 +214,12 @@ export function WorkshopsSection({ workshops }: { workshops: Workshop[] }) {
             <p className="eyebrow mb-4 flex items-center gap-3 text-electric-600">
               <span aria-hidden className="h-px w-8 bg-electric-600/50" /> Workshops
             </p>
-            <h2 id="workshops-title" className="text-display-md font-semibold text-ink">
+            <h2 id="workshops-title" className="text-display-md font-normal text-ink">
               Six workshops. Learn by doing.
             </h2>
             <p className="mt-5 text-lg text-slate-700">Small-group, clinician-led sessions designed around practical skills you can use straight away.</p>
           </Reveal>
-          <Link href="/workshops" className="group inline-flex items-center gap-2 font-display font-medium text-electric-600">
+          <Link href="/workshops" className="group inline-flex items-center gap-2 font-ui font-medium text-electric-600">
             All workshops <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
@@ -244,7 +244,7 @@ export function ResearchSection({ edition }: { edition: Edition }) {
           <p className="eyebrow mb-4 flex items-center gap-3 text-electric-600">
             <span aria-hidden className="h-px w-8 bg-electric-600/50" /> Student research
           </p>
-          <h2 id="research-title" className="text-display-lg font-semibold text-ink">
+          <h2 id="research-title" className="text-display-lg font-normal text-ink">
             Your Research Deserves to Be Seen.
           </h2>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-700">
@@ -285,7 +285,7 @@ export function ResearchSection({ edition }: { edition: Edition }) {
                   </li>
                 ))}
               </ul>
-              <Link href="/research#presenters" className="mt-8 inline-flex items-center gap-2 font-display font-semibold text-cyan">
+              <Link href="/research#presenters" className="mt-8 inline-flex items-center gap-2 font-ui font-semibold text-cyan">
                 Presenter guidance <ArrowRight aria-hidden className="size-4" />
               </Link>
             </div>
@@ -312,7 +312,7 @@ export function BeyondSection({ resources }: { resources: Resource[] }) {
           <p className="eyebrow mb-4 flex items-center gap-3 text-electric-600">
             <span aria-hidden className="h-px w-8 bg-electric-600/50" /> Beyond the conference
           </p>
-          <h2 id="beyond-title" className="text-display-md font-semibold text-ink">
+          <h2 id="beyond-title" className="text-display-md font-normal text-ink">
             A community, all year round
           </h2>
           <p className="mt-6 text-lg leading-relaxed text-slate-700">
@@ -355,23 +355,23 @@ export function FinalCta({ edition }: { edition: Edition }) {
   return (
     <section aria-labelledby="cta-title" className="surface-midnight noise relative isolate overflow-hidden py-32 sm:py-40">
       <div aria-hidden className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_70%_at_50%_100%,rgba(52,120,246,0.35),transparent_70%)]" />
-        <NeuralField density={0.7} />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_70%_at_50%_100%,rgba(58,95,148,0.35),transparent_70%)]" />
+        <Image src="/brand/crest-white.png" alt="" width={338} height={397} className="absolute left-1/2 top-1/2 h-[120%] w-auto -translate-x-1/2 -translate-y-1/2 opacity-[0.04]" />
       </div>
       <div className="container-page relative text-center">
         <Reveal>
           <p className="eyebrow text-cyan">INSPIRE {edition.year} · {edition.venueName}</p>
-          <h2 id="cta-title" className="mx-auto mt-6 max-w-5xl text-display-xl font-semibold">
-            BE PART OF WHAT <span className="bg-gradient-to-r from-cyan to-violet-300 bg-clip-text text-transparent">COMES NEXT.</span>
+          <h2 id="cta-title" className="mx-auto mt-6 max-w-5xl text-display-xl font-normal">
+            Be part of <span className="italic font-light text-cyan">what comes next.</span>
           </h2>
           <p className="mx-auto mt-8 max-w-xl text-lg text-paper/70">
             Whether you are presenting your first poster or simply curious about research, there is a place for you at INSPIRE.
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <Link href="/conference#registration" className="inline-flex min-h-14 items-center gap-2 rounded-full bg-cyan px-8 font-display font-semibold text-midnight transition-[background-color,box-shadow] hover:bg-cyan-300 hover:shadow-[0_12px_40px_-10px_rgba(57,213,242,0.7)]">
+            <Link href="/conference#registration" className="inline-flex min-h-14 items-center gap-2 rounded-[3px] bg-cyan px-8 font-ui font-semibold text-midnight transition-[background-color,box-shadow] hover:bg-cyan-300 hover:shadow-[0_12px_40px_-10px_rgba(201,216,236,0.7)]">
               Registration information <ArrowRight aria-hidden className="size-4" />
             </Link>
-            <Link href="/conference" className="inline-flex min-h-14 items-center rounded-full border border-white/20 bg-white/5 px-8 font-display font-medium backdrop-blur-sm hover:border-white/40">
+            <Link href="/conference" className="inline-flex min-h-14 items-center rounded-[3px] border border-white/20 bg-white/5 px-8 font-ui font-medium backdrop-blur-sm hover:border-white/40">
               Conference details
             </Link>
           </div>

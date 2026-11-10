@@ -51,14 +51,14 @@ export default async function AbstractsAdmin({ searchParams }: { searchParams: P
       />
       <form className="mb-4 flex flex-wrap gap-2" role="search">
         <label className="sr-only" htmlFor="q">Search</label>
-        <input id="q" name="q" defaultValue={sp.q} placeholder="Search title, reference, author…" className="min-h-11 min-w-56 flex-1 rounded-full border border-navy/15 bg-white px-4 text-sm" />
+        <input id="q" name="q" defaultValue={sp.q} placeholder="Search title, reference, author…" className="min-h-11 min-w-56 flex-1 rounded-[3px] border border-navy/15 bg-white px-4 text-sm" />
         <label className="sr-only" htmlFor="status">Status</label>
-        <select id="status" name="status" defaultValue={sp.status ?? ""} className="min-h-11 rounded-full border border-navy/15 bg-white px-4 text-sm">
+        <select id="status" name="status" defaultValue={sp.status ?? ""} className="min-h-11 rounded-[3px] border border-navy/15 bg-white px-4 text-sm">
           <option value="">All statuses</option>
           {Object.entries(ABSTRACT_STATUS_LABEL).filter(([k]) => k !== "draft").map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>
         <label className="sr-only" htmlFor="category">Category</label>
-        <select id="category" name="category" defaultValue={sp.category ?? ""} className="min-h-11 rounded-full border border-navy/15 bg-white px-4 text-sm">
+        <select id="category" name="category" defaultValue={sp.category ?? ""} className="min-h-11 rounded-[3px] border border-navy/15 bg-white px-4 text-sm">
           <option value="">All categories</option>
           {categories.map((c) => <option key={c}>{c}</option>)}
         </select>
@@ -78,7 +78,7 @@ export default async function AbstractsAdmin({ searchParams }: { searchParams: P
               <td className="px-4 py-3 text-slate-700">{r.presenting_author}<span className="block text-xs text-slate">{r.university}</span></td>
               <td className="px-4 py-3"><Badge tone={st.tone}>{st.label}</Badge></td>
               <td className="px-4 py-3 text-slate-700">{s.done} / {s.assigned}</td>
-              <td className="px-4 py-3 font-semibold text-ink">{s.avg === null ? <span className="font-normal text-slate">—</span> : s.avg.toFixed(0)}</td>
+              <td className="px-4 py-3 font-semibold text-ink">{s.avg === null ? <span className="font-normal text-slate">Not set</span> : s.avg.toFixed(0)}</td>
             </tr>
           );
         })}

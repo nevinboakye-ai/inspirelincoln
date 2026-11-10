@@ -9,6 +9,8 @@ import type {
   Edition,
   Faq,
   GalleryAsset,
+  MapPlace,
+  MapPlaceKind,
   Opportunity,
   Partner,
   Resource,
@@ -309,6 +311,32 @@ export const getCommittee = cache(async (): Promise<CommitteeMember[]> => {
     bio: str(r.bio),
     photoUrl: str(r.photo_url),
     links: Array.isArray(r.links) ? r.links : [],
+  }));
+});
+
+export const getMapPlaces = cache(async (): Promise<MapPlace[]> => {
+  const db = createPublicClient();
+  if (!db) return seed.seedMapPlaces;
+  const { data, error } = await db.from("map_places").select("*").eq("published", true).order("sort").order("name");
+  if (error) {
+    logError("map_places", error);
+    // Before the map migration is applied, fall back to the bundled places.
+    return seed.seedMapPlaces;
+  }
+  const num = (v: unknown) => (v == null ? null : Number(v));
+  return (data ?? []).map((r) => ({
+    id: String(r.id),
+    slug: String(r.slug),
+    name: String(r.name),
+    code: str(r.code),
+    kind: String(r.kind) as MapPlaceKind,
+    description: String(r.description ?? ""),
+    lat: num(r.lat),
+    lng: num(r.lng),
+    parentId: str(r.parent_id),
+    roomId: str(r.room_id),
+    directions: str(r.directions),
+    locationConfirmed: Boolean(r.location_confirmed),
   }));
 });
 

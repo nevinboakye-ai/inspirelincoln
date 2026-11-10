@@ -45,15 +45,15 @@ export default async function WorkshopPage({ params }: { params: Promise<{ slug:
             <Link href="/workshops" className="inline-flex items-center gap-2 text-sm text-paper/60 hover:text-paper">
               <ArrowLeft aria-hidden className="size-4" /> All workshops
             </Link>
-            <p className="eyebrow mt-8" style={{ color: accent }}>
+            <p className="eyebrow mt-8 text-cyan">
               Workshop {String(w.number).padStart(2, "0")}
             </p>
-            <h1 className="mt-4 text-display-lg font-semibold">{w.title}</h1>
+            <h1 className="mt-4 text-display-lg font-normal">{w.title}</h1>
             <p className="mt-4 font-display text-xl text-paper/70">{w.strapline}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <SaveWorkshopButton id={w.id} title={w.title} />
               {session && (
-                <Link href={`/programme?session=${session.slug}`} className="inline-flex min-h-12 items-center gap-2 rounded-full border border-white/20 px-6 font-display font-medium hover:border-white/40">
+                <Link href={`/programme?session=${session.slug}`} className="inline-flex min-h-12 items-center gap-2 rounded-[3px] border border-white/20 px-6 font-ui font-medium hover:border-white/40">
                   View in programme
                 </Link>
               )}
@@ -77,7 +77,7 @@ export default async function WorkshopPage({ params }: { params: Promise<{ slug:
                 <h2 className="eyebrow text-electric-600">Topics may include</h2>
                 <ul className="mt-4 flex flex-wrap gap-2">
                   {w.topics.map((t) => (
-                    <li key={t} className="rounded-full border border-navy/15 bg-white px-4 py-2 text-sm font-medium text-ink">
+                    <li key={t} className="rounded-[3px] border border-navy/15 bg-white px-4 py-2 text-sm font-medium text-ink">
                       {t}
                     </li>
                   ))}
@@ -91,7 +91,7 @@ export default async function WorkshopPage({ params }: { params: Promise<{ slug:
               <ol className="mt-6 space-y-3">
                 {w.outcomes.map((o, i) => (
                   <li key={o} className="flex gap-4 rounded-lg border border-navy/10 bg-white p-5">
-                    <span className="font-display text-lg font-semibold" style={{ color: accent === "#39D5F2" ? "#0b6577" : accent === "#3478F6" ? "#1f5fd6" : "#5a4ccf" }}>
+                    <span className="font-display text-lg font-semibold" style={{ color: accent === "#C9D8EC" ? "#28506E" : accent === "#3A5F94" ? "#2A4B7C" : "#34507E" }}>
                       {String(i + 1).padStart(2, "0")}
                     </span>
                     <span className="text-slate-700">{o}</span>
@@ -113,7 +113,7 @@ export default async function WorkshopPage({ params }: { params: Promise<{ slug:
                 {[
                   { icon: Users, label: "Intended audience", value: w.audience || "All delegates" },
                   { icon: UserRound, label: "Facilitator", value: w.facilitator ?? "To be announced" },
-                  { icon: Clock, label: "Time", value: session?.startsAt ? `${formatTime(session.startsAt)}${session.endsAt ? `–${formatTime(session.endsAt)}` : ""}` : "To be confirmed" },
+                  { icon: Clock, label: "Time", value: session?.startsAt ? `${formatTime(session.startsAt)}${session.endsAt ? ` to ${formatTime(session.endsAt)}` : ""}` : "To be confirmed" },
                   { icon: MapPin, label: "Room", value: room?.name ?? "To be confirmed" },
                   { icon: Users, label: "Capacity", value: w.capacity ? `${w.capacity} places` : "To be confirmed" },
                 ].map((d) => (

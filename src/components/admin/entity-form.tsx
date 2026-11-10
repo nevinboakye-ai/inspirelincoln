@@ -8,6 +8,7 @@ import { Field, inputClass } from "@/components/forms/field";
 import { ResultBanner } from "@/components/portal/profile-forms";
 import { toZonedInputValue } from "@/lib/time";
 import { btn } from "./ui";
+import { LocationPicker } from "./location-picker";
 import { cn } from "@/lib/cn";
 
 function initialValue(f: FieldDef, v: unknown): string {
@@ -31,6 +32,17 @@ function Input({ f, row, relations, error }: { f: FieldDef; row: Record<string, 
         <input type="checkbox" name={f.name} defaultChecked={row ? Boolean(v) : f.name === "is_provisional"} className="size-5 accent-electric-600" /> {f.label}
       </label>
     );
+  if (f.type === "location") {
+    const num = (k: string) => (row?.[k] == null ? null : Number(row[k]));
+    return (
+      <fieldset className="sm:col-span-2">
+        <legend className="text-sm font-semibold text-ink">{f.label}</legend>
+        {f.hint && <p className="mb-3 mt-1 text-sm text-slate">{f.hint}</p>}
+        <LocationPicker lat={num("lat")} lng={num("lng")} error={error} />
+        {error && <p className="mt-2 text-sm font-medium text-danger">{error}</p>}
+      </fieldset>
+    );
+  }
   const control = (() => {
     switch (f.type) {
       case "textarea":
@@ -40,7 +52,7 @@ function Input({ f, row, relations, error }: { f: FieldDef; row: Record<string, 
       case "select":
         return (
           <select {...common} defaultValue={initialValue(f, v) || (f.required ? f.options?.[0]?.value : "")} className={inputClass}>
-            {!f.required && <option value="">—</option>}
+            {!f.required && <option value="">None</option>}
             {f.options?.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         );
@@ -74,7 +86,7 @@ function Input({ f, row, relations, error }: { f: FieldDef; row: Record<string, 
               <img src={preview} alt="" className="h-32 w-auto rounded-md border border-navy/10 object-cover" />
             )}
             <input {...common} type="url" defaultValue={initialValue(f, v)} onChange={(e) => setPreview(e.target.value)} placeholder="https://… or upload below" className={inputClass} />
-            <input name={`${f.name}__file`} type="file" accept="image/jpeg,image/png,image/webp,image/avif" aria-label={`Upload ${f.label.toLowerCase()}`} className="block w-full text-sm text-slate-700 file:mr-4 file:min-h-10 file:rounded-full file:border-0 file:bg-navy file:px-4 file:font-semibold file:text-paper" />
+            <input name={`${f.name}__file`} type="file" accept="image/jpeg,image/png,image/webp,image/avif" aria-label={`Upload ${f.label.toLowerCase()}`} className="block w-full text-sm text-slate-700 file:mr-4 file:min-h-10 file:rounded-[3px] file:border-0 file:bg-navy file:px-4 file:font-semibold file:text-paper" />
           </div>
         );
       case "number":
@@ -129,7 +141,7 @@ export function DeleteEntity({ entityKey, id, singular }: { entityKey: string; i
       {confirm ? (
         <>
           <span className="text-sm text-slate-700">Delete this {singular} permanently?</span>
-          <button type="submit" disabled={pending} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-danger px-5 text-sm font-semibold text-white">Delete</button>
+          <button type="submit" disabled={pending} className="inline-flex min-h-11 items-center gap-2 rounded-[3px] bg-danger px-5 text-sm font-semibold text-white">Delete</button>
           <button type="button" onClick={() => setConfirm(false)} className={btn.secondary}>Cancel</button>
         </>
       ) : (

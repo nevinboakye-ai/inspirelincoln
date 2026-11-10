@@ -61,7 +61,7 @@ export function SpeakerCarousel({ speakers }: { speakers: Speaker[] }) {
         ))}
       </ul>
       <div className="mt-6 flex items-center justify-between gap-4">
-        <p className="text-sm text-paper/50">
+        <p className="text-sm text-paper/65">
           {speakers.length === 0 ? "Speakers will appear here once confirmed by the conference team." : `${speakers.length} confirmed speaker${speakers.length === 1 ? "" : "s"}`}
         </p>
         <div className="flex gap-2">

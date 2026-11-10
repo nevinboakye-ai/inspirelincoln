@@ -183,7 +183,7 @@ export function CommandPalette() {
                       close();
                       router.push(answer.href);
                     }}
-                    className="mt-5 inline-flex items-center gap-2 rounded-full bg-cyan px-5 py-2.5 text-sm font-semibold text-midnight"
+                    className="mt-5 inline-flex items-center gap-2 rounded-[3px] bg-cyan px-5 py-2.5 text-sm font-semibold text-midnight"
                   >
                     {answer.linkLabel} <ArrowRight className="size-4" />
                   </button>
@@ -193,7 +193,7 @@ export function CommandPalette() {
                 </div>
               ) : (
                 <ul id={listId} role="listbox" aria-label="Search results">
-                  {!index && !error && <li className="p-6 text-center text-sm text-paper/50">Loading…</li>}
+                  {!index && !error && <li className="p-6 text-center text-sm text-paper/65">Loading…</li>}
                   {error && <li className="p-6 text-center text-sm text-paper/60">Search is unavailable right now.</li>}
                   {index && !query && (
                     <li role="presentation" className="eyebrow px-3 pb-2 pt-3 text-paper/65">
@@ -233,7 +233,7 @@ export function CommandPalette() {
                               </span>
                               <span className="min-w-0 flex-1">
                                 <span className="block truncate text-[0.95rem]">{opt.item.title}</span>
-                                {opt.item.summary && <span className="block truncate text-sm text-paper/50">{opt.item.summary}</span>}
+                                {opt.item.summary && <span className="block truncate text-sm text-paper/65">{opt.item.summary}</span>}
                               </span>
                             </>
                           )}

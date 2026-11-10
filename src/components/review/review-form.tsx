@@ -37,7 +37,7 @@ export function ReviewForm({
         <div className="space-y-6">
           {criteria.map((c) => (
             <fieldset key={c.id}>
-              <legend className="font-semibold text-ink">{c.label} <span className="font-normal text-slate">(0–{c.maxScore}{c.weight !== 1 ? `, weight ${c.weight}` : ""})</span></legend>
+              <legend className="font-semibold text-ink">{c.label} <span className="font-normal text-slate">(0 to {c.maxScore}{c.weight !== 1 ? `, weight ${c.weight}` : ""})</span></legend>
               {c.description && <p className="mt-1 text-sm text-slate-700">{c.description}</p>}
               <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label={c.label}>
                 {Array.from({ length: c.maxScore + 1 }, (_, n) => (
@@ -70,10 +70,10 @@ export function ReviewForm({
         </Field>
         {!isLocked && (
           <div className="flex flex-wrap gap-3">
-            <button type="submit" name="intent" value="draft" disabled={pending} className="inline-flex min-h-12 items-center gap-2 rounded-full border border-navy/20 px-6 font-display font-semibold text-ink hover:border-navy/40 disabled:opacity-60">
+            <button type="submit" name="intent" value="draft" disabled={pending} className="inline-flex min-h-12 items-center gap-2 rounded-[3px] border border-navy/20 px-6 font-ui font-semibold text-ink hover:border-navy/40 disabled:opacity-60">
               {pending ? <Loader2 aria-hidden className="size-4 animate-spin" /> : <Save aria-hidden className="size-4" />} Save draft
             </button>
-            <button type="submit" name="intent" value="submit" disabled={pending} className="inline-flex min-h-12 items-center gap-2 rounded-full bg-navy px-6 font-display font-semibold text-paper hover:bg-navy-700 disabled:opacity-60">
+            <button type="submit" name="intent" value="submit" disabled={pending} className="inline-flex min-h-12 items-center gap-2 rounded-[3px] bg-navy px-6 font-ui font-semibold text-paper hover:bg-navy-700 disabled:opacity-60">
               <Send aria-hidden className="size-4" /> Submit review
             </button>
           </div>
