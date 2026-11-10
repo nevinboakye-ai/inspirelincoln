@@ -11,6 +11,7 @@ export function SiteFooter({ edition }: { edition: Edition }) {
   const year = new Date().getFullYear();
   return (
     <footer className="surface-midnight relative overflow-hidden pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
+      <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
 
       <div className="container-page relative pb-8 pt-10 sm:pb-10 sm:pt-20">
         <div className="grid gap-8 sm:gap-12 lg:grid-cols-12">

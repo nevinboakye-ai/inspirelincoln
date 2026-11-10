@@ -63,14 +63,14 @@ export function Hero({
 
         <div className="grid items-center gap-8 pb-4 pt-7 sm:gap-12 sm:pb-16 sm:pt-16 lg:grid-cols-12 lg:gap-8 lg:pb-24">
           <m.div style={{ y: textY }} className="lg:col-span-7">
-            <p className="eyebrow text-cyan">INSPIRE {year}</p>
+            <p className="eyebrow text-gold">INSPIRE {year}</p>
             <h1 id="hero-title" className="mt-4 text-display-xl font-normal sm:mt-6">
               <span className="block overflow-hidden pb-[0.08em]">
                 <span className="enter-rise block [animation-delay:50ms]">{lead}</span>
               </span>
               {rest && (
                 <span className="block overflow-hidden pb-[0.12em]">
-                  <span className="enter-rise block text-[0.58em] font-light italic leading-[1.05] text-cyan [animation-delay:150ms]">
+                  <span className="enter-rise block text-[0.58em] font-light italic leading-[1.05] text-gold-300 [animation-delay:150ms]">
                     {rest}
                   </span>
                 </span>

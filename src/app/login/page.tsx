@@ -12,7 +12,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   return (
     <AuthShell
       title="Log in to My Hub"
-      intro={error === "link" ? "That link has expired or was already used. Please log in, or request a new link." : "Your ticket, agenda, presentation and the delegate network."}
+      intro={error === "link" ? "That link has expired or was already used. Please log in, or request a new link." : "Your Delegate Card, agenda, presentation and the delegate network."}
       footer={
         <>
           Not on the delegate list?{" "}

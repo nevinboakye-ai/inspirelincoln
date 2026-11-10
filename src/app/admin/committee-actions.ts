@@ -87,13 +87,43 @@ const broadcastSchema = z.object({
   body: z.string().trim().min(10, "Write your message.").max(10000),
   purpose: z.enum(["service", "marketing"]),
   types: z.array(z.enum(ACCOUNT_TYPES as [AccountType, ...AccountType[]])).min(1, "Choose at least one group."),
-  statuses: z.array(z.enum(["pending", "approved", "waitlisted", "declined"])).min(1, "Choose at least one account status."),
+  statuses: z.array(z.enum(["pending", "approved", "waitlisted", "declined"])),
+  includeSelected: z.boolean(),
   intent: z.enum(["preview", "test", "send"]),
 });
 
 export type BroadcastResult = (ActionResult & { count?: number }) | null;
 
-/** Group email from the president or vice president to chosen account types. */
+type Recipient = { email: string; full_name: string | null; joined: boolean };
+
+function senderLine(profile: { fullName: string | null; accountStatus: string; accountType: AccountType; committeePosition: string | null }) {
+  return [profile.fullName, profile.accountStatus === "approved" ? (profile.accountType === "president" ? "President" : profile.accountType === "vice_president" ? "Vice president" : profile.committeePosition) : null]
+    .filter(Boolean)
+    .join(", ");
+}
+
+/**
+ * The email itself. People on the selected list who haven't set up an
+ * account get a button to do it, and a footnote saying why they're hearing from us.
+ */
+function buildEmail(o: { subject: string; body: string; purpose: "service" | "marketing" | "direct"; sender: string; name: string | null; joined: boolean }) {
+  const paragraphs = o.body.split(/\n{2,}/).map((para) => escapeHtml(para).replace(/\n/g, "<br>"));
+  return renderEmail({
+    siteUrl: SITE_URL,
+    preheader: o.body.slice(0, 120),
+    eyebrow: o.purpose === "marketing" ? "News from INSPIRE" : o.purpose === "direct" ? "A message from INSPIRE" : "Conference update",
+    heading: o.subject,
+    paragraphs: [`Hello ${escapeHtml(o.name?.split(" ")[0] || "there")},`, ...paragraphs, o.sender ? `${escapeHtml(o.sender)}<br>On behalf of the INSPIRE committee` : "The INSPIRE committee"],
+    cta: o.joined ? undefined : { label: "Set up your account", url: `${SITE_URL}/auth/activate` },
+    footnote: !o.joined
+      ? "You're receiving this because you were selected to attend INSPIRE. Set up your account with this email address to see your Delegate Card."
+      : o.purpose === "marketing"
+        ? `You're receiving this because you asked for news about INSPIRE events. <a href="${SITE_URL}/portal/profile" style="color:#1a3154;">Stop these emails</a>.`
+        : "You're receiving this because you have an INSPIRE account and it's about the conference.",
+  });
+}
+
+/** Group email to chosen account types, optionally including selected delegates who haven't joined yet. */
 export async function sendBroadcast(_: BroadcastResult, form: FormData): Promise<BroadcastResult> {
   const { db, user, profile } = await requireAccess("send_email", "/admin/email");
   const parsed = broadcastSchema.safeParse({
@@ -102,6 +132,7 @@ export async function sendBroadcast(_: BroadcastResult, form: FormData): Promise
     purpose: form.get("purpose"),
     types: form.getAll("types"),
     statuses: form.getAll("statuses"),
+    includeSelected: form.get("includeSelected") === "on",
     intent: form.get("intent"),
   });
   if (!parsed.success) {
@@ -110,38 +141,41 @@ export async function sendBroadcast(_: BroadcastResult, form: FormData): Promise
     return { ok: false, error: "Please check the highlighted fields.", fieldErrors: fe };
   }
   const v = parsed.data;
+  // Selected people haven't agreed to news, so they only get conference updates.
+  const withSelected = v.includeSelected && v.purpose === "service";
+  if (!v.statuses.length && !withSelected) return { ok: false, error: "Please check the highlighted fields.", fieldErrors: { statuses: "Choose at least one account status, or include selected delegates." } };
 
-  // Marketing and news only go to people who opted in.
-  const { data: people, error } = await db.rpc("broadcast_recipients", { types: v.types, statuses: v.statuses, marketing_only: v.purpose === "marketing" });
-  if (error) return { ok: false, error: "Could not load the recipients." };
-  const recipients = ((people ?? []) as { email: string; full_name: string | null }[]).filter((p) => p.email);
+  const [accounts, selected] = await Promise.all([
+    v.statuses.length
+      ? db.rpc("broadcast_recipients", { types: v.types, statuses: v.statuses, marketing_only: v.purpose === "marketing" })
+      : Promise.resolve({ data: [], error: null }),
+    withSelected ? db.rpc("selected_recipients", { types: v.types }) : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (accounts.error || selected.error) return { ok: false, error: "Could not load the recipients." };
+  const seen = new Set<string>();
+  const recipients: Recipient[] = [];
+  for (const [rows, joined] of [[accounts.data, true], [selected.data, false]] as const)
+    for (const r of (rows ?? []) as { email: string; full_name: string | null }[]) {
+      const e = r.email?.toLowerCase();
+      if (e && !seen.has(e)) (seen.add(e), recipients.push({ email: e, full_name: r.full_name, joined }));
+    }
+  const waiting = recipients.filter((r) => !r.joined).length;
 
-  if (v.intent === "preview") return { ok: true, count: recipients.length, message: `${recipients.length} ${recipients.length === 1 ? "person" : "people"} will receive this.` };
+  if (v.intent === "preview")
+    return {
+      ok: true,
+      count: recipients.length,
+      message: `${recipients.length} ${recipients.length === 1 ? "person" : "people"} will receive this${waiting ? `, including ${waiting} selected ${waiting === 1 ? "delegate who hasn't" : "delegates who haven't"} set up an account yet` : ""}.`,
+    };
 
-  const sender = [profile.fullName, profile.accountStatus === "approved" ? (profile.accountType === "president" ? "President" : profile.accountType === "vice_president" ? "Vice president" : profile.committeePosition) : null]
-    .filter(Boolean)
-    .join(", ");
-  const paragraphs = v.body.split(/\n{2,}/).map((para) => escapeHtml(para).replace(/\n/g, "<br>"));
-  const build = (name: string | null) =>
-    renderEmail({
-      siteUrl: SITE_URL,
-      preheader: v.body.slice(0, 120),
-      eyebrow: v.purpose === "marketing" ? "News from INSPIRE" : "Conference update",
-      heading: v.subject,
-      paragraphs: [`Hello ${escapeHtml(name?.split(" ")[0] || "there")},`, ...paragraphs, sender ? `${escapeHtml(sender)}<br>On behalf of the INSPIRE committee` : "The INSPIRE committee"],
-      footnote:
-        v.purpose === "marketing"
-          ? `You're receiving this because you asked for news about INSPIRE events. <a href="${SITE_URL}/portal/profile" style="color:#1a3154;">Stop these emails</a>.`
-          : "You're receiving this because you have an INSPIRE account and it's about the conference.",
-    });
-
+  const sender = senderLine(profile);
   if (v.intent === "test") {
-    const ok = await sendEmail({ to: user.email!, subject: `[Test] ${v.subject}`, ...build(profile.fullName) });
+    const ok = await sendEmail({ to: user.email!, subject: `[Test] ${v.subject}`, ...buildEmail({ ...v, sender, name: profile.fullName, joined: true }) });
     return ok ? { ok: true, message: `A test has been sent to ${user.email}.` } : { ok: false, error: "Email isn't set up yet. Add the Resend settings in Vercel first." };
   }
 
   if (!recipients.length) return { ok: false, error: "Nobody matches those groups." };
-  const delivered = await sendBatch(recipients.map((r) => ({ to: r.email, subject: v.subject, ...build(r.full_name) })));
+  const delivered = await sendBatch(recipients.map((r) => ({ to: r.email, subject: v.subject, ...buildEmail({ ...v, sender, name: r.full_name, joined: r.joined }) })));
   await db.from("email_broadcasts").insert({
     sent_by: user.id,
     sender_name: sender,
@@ -150,10 +184,56 @@ export async function sendBroadcast(_: BroadcastResult, form: FormData): Promise
     purpose: v.purpose,
     audience_types: v.types,
     audience_statuses: v.statuses,
+    include_selected: withSelected,
     recipient_count: recipients.length,
     delivered_count: delivered,
   });
   revalidatePath("/admin/email");
   if (!delivered) return { ok: false, error: "Nothing was sent. Check that email is set up in Vercel." };
   return { ok: true, message: `Sent to ${delivered} of ${recipients.length} people.` };
+}
+
+const directSchema = z.object({
+  to: z.string().trim().toLowerCase().email("Choose who to email."),
+  subject: z.string().trim().min(3, "Write a subject.").max(160),
+  body: z.string().trim().min(10, "Write your message.").max(10000),
+  intent: z.enum(["test", "send"]),
+});
+
+/** Email one delegate. Only people with an account or on the selected list can be chosen. */
+export async function sendDirectEmail(_: ActionResult, form: FormData): Promise<ActionResult> {
+  const { db, user, profile } = await requireAccess("send_email", "/admin/email");
+  const parsed = directSchema.safeParse(Object.fromEntries(form));
+  if (!parsed.success) {
+    const fe: Record<string, string> = {};
+    for (const i of parsed.error.issues) fe[String(i.path[0])] ??= i.message;
+    return { ok: false, error: "Please check the highlighted fields.", fieldErrors: fe };
+  }
+  const v = parsed.data;
+  const { data, error } = await db.rpc("email_directory");
+  if (error) return { ok: false, error: "Could not load the delegate list." };
+  const person = ((data ?? []) as { email: string; full_name: string | null; joined: boolean }[]).find((p) => p.email === v.to);
+  if (!person) return { ok: false, fieldErrors: { to: "Choose someone from the list. You can only email delegates and people on the selected list." } };
+  const sender = senderLine(profile);
+  const content = buildEmail({ subject: v.subject, body: v.body, purpose: "direct", sender, name: person.full_name, joined: person.joined });
+
+  if (v.intent === "test") {
+    const ok = await sendEmail({ to: user.email!, subject: `[Test] ${v.subject}`, ...content });
+    return ok ? { ok: true, message: `A test has been sent to ${user.email}.` } : { ok: false, error: "Email isn't set up yet. Add the Resend settings in Vercel first." };
+  }
+  const ok = await sendEmail({ to: person.email, subject: v.subject, replyTo: user.email ?? undefined, ...content });
+  await db.from("email_broadcasts").insert({
+    sent_by: user.id,
+    sender_name: sender,
+    subject: v.subject,
+    body: v.body,
+    purpose: "service",
+    audience_types: [],
+    audience_statuses: [],
+    recipient_email: person.email,
+    recipient_count: 1,
+    delivered_count: ok ? 1 : 0,
+  });
+  revalidatePath("/admin/email");
+  return ok ? { ok: true, message: `Sent to ${person.full_name || person.email}.` } : { ok: false, error: "Nothing was sent. Check that email is set up in Vercel." };
 }

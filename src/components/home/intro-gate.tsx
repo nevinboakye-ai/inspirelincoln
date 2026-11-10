@@ -87,7 +87,7 @@ export function IntroGate({ edition }: { edition: Edition }) {
               </div>
             </div>
 
-            <p className="gate-eyebrow enter-up eyebrow mt-8 text-cyan [animation-delay:600ms] sm:mt-14">
+            <p className="gate-eyebrow enter-up eyebrow mt-8 text-gold [animation-delay:600ms] sm:mt-14">
               INSPIRE {edition.year}<span className="hidden sm:inline"> · National Medical Research Conference</span>
             </p>
             <h2 id="gate-title" className="mt-3 text-[2.6rem] font-normal leading-[1.02] sm:mt-5 sm:text-display-lg">
@@ -96,7 +96,7 @@ export function IntroGate({ edition }: { edition: Edition }) {
               </span>
               {rest && (
                 <span className="block overflow-hidden pb-[0.12em]">
-                  <span className="enter-rise block text-[0.6em] font-light italic leading-[1.1] text-cyan [animation-delay:780ms]">{rest}</span>
+                  <span className="enter-rise block text-[0.6em] font-light italic leading-[1.1] text-gold-300 [animation-delay:780ms]">{rest}</span>
                 </span>
               )}
             </h2>
@@ -119,7 +119,7 @@ export function IntroGate({ edition }: { edition: Edition }) {
                 pathLength={1}
                 className="gate-tracer"
                 d="M0 30 h150 l8 -6 l8 6 h16 l6 8 l9 -32 l10 40 l7 -16 h22 q12 -12 24 0 h340"
-                stroke="#eef4fc"
+                stroke="#e6c97f"
                 strokeWidth="2.25"
                 strokeLinejoin="round"
                 vectorEffect="non-scaling-stroke"
@@ -160,7 +160,7 @@ export function IntroGate({ edition }: { edition: Edition }) {
                   Go to My Hub
                   <LayoutDashboard aria-hidden className="size-5 text-cyan transition-transform duration-300 group-hover:translate-x-1" />
                 </span>
-                <span className="text-xs text-paper/70 sm:text-sm">You&apos;re logged in. Your ticket, agenda and dashboard</span>
+                <span className="text-xs text-paper/70 sm:text-sm">You&apos;re logged in. Your Delegate Card, agenda and dashboard</span>
               </Link>
             </div>
             <p className="gate-guest enter-fade mt-4 text-sm sm:mt-6 text-paper/70 [animation-delay:1250ms]">

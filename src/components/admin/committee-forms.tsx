@@ -1,7 +1,7 @@
 "use client";
 import { useActionState, useState } from "react";
 import { Loader2, Send } from "lucide-react";
-import { giveFeedback, reviewAccount, sendBroadcast, type BroadcastResult } from "@/app/admin/committee-actions";
+import { giveFeedback, reviewAccount, sendBroadcast, sendDirectEmail, type BroadcastResult } from "@/app/admin/committee-actions";
 import type { ActionResult } from "@/app/portal/actions";
 import { ResultBanner } from "@/components/portal/profile-forms";
 import { Field, inputClass } from "@/components/forms/field";
@@ -96,9 +96,10 @@ export function FeedbackForm({ submissionId }: { submissionId: string }) {
   );
 }
 
-export function BroadcastForm({ counts }: { counts: Partial<Record<AccountType, number>> }) {
+export function BroadcastForm({ counts, selected }: { counts: Partial<Record<AccountType, number>>; selected: number }) {
   const [state, action, pending] = useActionState<BroadcastResult, FormData>(sendBroadcast, null);
   const [confirming, setConfirming] = useState(false);
+  const [purpose, setPurpose] = useState<"service" | "marketing">("service");
   const fe = (k: string) => state?.fieldErrors?.[k];
   return (
     <form onSubmit={submitWithoutReset(action)} className="space-y-6" onChange={() => setConfirming(false)}>
@@ -126,16 +127,27 @@ export function BroadcastForm({ counts }: { counts: Partial<Record<AccountType, 
           ))}
         </div>
         {fe("statuses") && <p className="mt-2 text-sm font-medium text-danger">{fe("statuses")}</p>}
+        <label className={cn("mt-3 flex gap-3 rounded-[3px] border border-dashed p-3 text-sm", purpose === "service" ? "border-gold-600/60 bg-gold/10" : "border-navy/15 bg-white opacity-60")}>
+          <input type="checkbox" name="includeSelected" disabled={purpose !== "service"} className="mt-0.5 size-4 accent-navy" />
+          <span>
+            <span className="block font-semibold text-ink">Also send to selected delegates who haven&apos;t set up an account yet ({selected})</span>
+            <span className="text-slate-700">
+              {purpose === "service"
+                ? "Uses the email on the selected list. Their copy includes a button to set up their account. Only people in the groups ticked above are included."
+                : "Only for conference updates. News and promotion only go to people who opted in."}
+            </span>
+          </span>
+        </label>
       </fieldset>
       <fieldset>
         <legend className="mb-2 text-sm font-semibold text-ink">What kind of email is this?</legend>
         <div className="grid gap-2 sm:grid-cols-2">
           <label className="flex gap-3 rounded-[3px] border border-navy/15 bg-white p-3 text-sm">
-            <input type="radio" name="purpose" value="service" defaultChecked className="mt-0.5 size-4 accent-navy" />
+            <input type="radio" name="purpose" value="service" checked={purpose === "service"} onChange={() => setPurpose("service")} className="mt-0.5 size-4 accent-navy" />
             <span><span className="block font-semibold text-ink">Conference update</span><span className="text-slate-700">Practical information about INSPIRE 2026, such as times, rooms or changes. Goes to everyone selected.</span></span>
           </label>
           <label className="flex gap-3 rounded-[3px] border border-navy/15 bg-white p-3 text-sm">
-            <input type="radio" name="purpose" value="marketing" className="mt-0.5 size-4 accent-navy" />
+            <input type="radio" name="purpose" value="marketing" checked={purpose === "marketing"} onChange={() => setPurpose("marketing")} className="mt-0.5 size-4 accent-navy" />
             <span><span className="block font-semibold text-ink">News or promotion</span><span className="text-slate-700">Future events, sponsors or anything promotional. By law this only goes to people who opted in.</span></span>
           </label>
         </div>
@@ -163,6 +175,86 @@ export function BroadcastForm({ counts }: { counts: Partial<Record<AccountType, 
         )}
       </div>
       {confirming && <p className="text-sm text-slate-700">Emails can&apos;t be recalled once sent. Check the recipient count first.</p>}
+    </form>
+  );
+}
+
+type DirectoryPerson = { email: string; full_name: string | null; detail: string; joined: boolean };
+
+/** Email one person: an account holder or someone on the selected list. */
+export function DirectEmailForm({ people }: { people: DirectoryPerson[] }) {
+  const [state, action, pending] = useActionState<ActionResult, FormData>(sendDirectEmail, null);
+  const [query, setQuery] = useState("");
+  const [to, setTo] = useState<DirectoryPerson | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const fe = (k: string) => state?.fieldErrors?.[k];
+  const q = query.trim().toLowerCase();
+  const matches = q.length < 2 ? [] : people.filter((p) => [p.full_name, p.email, p.detail].some((v) => v?.toLowerCase().includes(q))).slice(0, 8);
+  return (
+    <form onSubmit={submitWithoutReset(action)} className="space-y-5" onChange={() => setConfirming(false)}>
+      <ResultBanner state={state} />
+      <input type="hidden" name="to" value={to?.email ?? ""} />
+      {to ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[3px] border border-navy/15 bg-paper p-3">
+          <div className="min-w-0">
+            <p className="font-semibold text-ink">{to.full_name || to.email}</p>
+            <p className="break-all text-sm text-slate-700">{to.email} · {to.detail}</p>
+          </div>
+          <button type="button" onClick={() => { setTo(null); setQuery(""); }} className="min-h-10 px-3 text-sm font-semibold text-electric-600">Change</button>
+        </div>
+      ) : (
+        <Field id="direct-to" label="To" required error={fe("to")} hint="Search by name, email or university.">
+          <div className="relative">
+            <input
+              id="direct-to"
+              role="combobox"
+              aria-expanded={matches.length > 0}
+              aria-controls="direct-to-list"
+              aria-autocomplete="list"
+              autoComplete="off"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className={inputClass}
+            />
+            {matches.length > 0 && (
+              <ul id="direct-to-list" role="listbox" className="absolute inset-x-0 top-full z-10 mt-1 max-h-72 overflow-auto rounded-[3px] border border-navy/15 bg-white shadow-lg">
+                {matches.map((p) => (
+                  <li key={p.email} role="option" aria-selected={false}>
+                    <button type="button" onClick={() => setTo(p)} className="block w-full px-4 py-2.5 text-left text-sm hover:bg-paper focus-visible:bg-paper">
+                      <span className="block font-medium text-ink">{p.full_name || p.email}</span>
+                      <span className="block break-all text-xs text-slate">{p.email} · {p.detail}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </Field>
+      )}
+      {to && !to.joined && (
+        <p className="text-sm text-slate-700">They haven&apos;t set up an account yet, so their email includes a button to do it.</p>
+      )}
+      <Field id="direct-subject" label="Subject" required error={fe("subject")}>
+        <input id="direct-subject" name="subject" maxLength={160} className={inputClass} />
+      </Field>
+      <Field id="direct-body" label="Message" required error={fe("body")} hint="Plain text. We add a greeting with their first name and your sign-off. Replies come to your email.">
+        <textarea id="direct-body" name="body" rows={6} maxLength={10000} className={inputClass} />
+      </Field>
+      <div className="flex flex-wrap items-center gap-2">
+        <button name="intent" value="test" disabled={pending} className={btn.secondary}>Send me a test</button>
+        {confirming ? (
+          <>
+            <button name="intent" value="send" disabled={pending || !to} className={btn.primary}>
+              {pending ? <Loader2 aria-hidden className="size-4 animate-spin" /> : <Send aria-hidden className="size-4" />} Yes, send to {to?.full_name?.split(" ")[0] || "them"}
+            </button>
+            <button type="button" onClick={() => setConfirming(false)} className="min-h-11 px-3 text-sm font-medium text-slate-700">Cancel</button>
+          </>
+        ) : (
+          <button type="button" onClick={() => setConfirming(true)} disabled={pending || !to} className={btn.primary}>
+            <Send aria-hidden className="size-4" /> Send
+          </button>
+        )}
+      </div>
     </form>
   );
 }

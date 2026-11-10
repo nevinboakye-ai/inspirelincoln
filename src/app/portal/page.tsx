@@ -64,7 +64,7 @@ export default async function PortalHome({ searchParams }: { searchParams: Promi
       <header className="relative overflow-hidden rounded-xl bg-midnight p-6 text-paper sm:p-8">
         <img src="/brand/crest-white.png" alt="" aria-hidden className="pointer-events-none absolute -bottom-10 -right-6 h-48 w-auto opacity-[0.07]" />
         <div className="relative">
-          <p className="eyebrow text-cyan">{ACCOUNT_TYPE_LABEL[profile.accountType]}</p>
+          <p className="eyebrow text-gold">{ACCOUNT_TYPE_LABEL[profile.accountType]}</p>
           <h1 className="mt-3 font-display text-3xl sm:text-4xl">Hello{profile.fullName ? `, ${profile.fullName.split(" ")[0]}` : ""}</h1>
           <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-paper/75">
             <span className="flex items-center gap-2"><CalendarDays aria-hidden className="size-4 text-cyan" /> {formatEventDate(edition.date)}</span>
@@ -75,27 +75,41 @@ export default async function PortalHome({ searchParams }: { searchParams: Promi
 
       {/* Account status and ticket */}
       {status === "approved" ? (
-        <Card title="Your ticket" icon={Ticket}>
-          {ticket ? (
-            <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
-              <figure className="w-56 shrink-0 sm:w-44">
-                <div className="rounded-md border border-navy/10 bg-white p-2" dangerouslySetInnerHTML={{ __html: qr! }} role="img" aria-label="Your check-in QR code" />
-                <figcaption className="mt-2 text-center font-mono text-[0.65rem] text-slate">{registration!.checkin_token.slice(0, 8).toUpperCase()}</figcaption>
-              </figure>
-              <div className="space-y-3 text-center sm:text-left">
-                <Badge tone="success">{registration!.checked_in_at ? "Checked in" : "Confirmed"}</Badge>
-                <p className="text-slate-700">
-                  {registration!.checked_in_at
+        <section aria-labelledby="card-title" className="relative overflow-hidden rounded-xl bg-midnight p-5 text-paper ring-1 ring-gold/40 sm:p-7">
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-gold-600 via-gold-300 to-gold-600" />
+          <img src="/brand/crest-white.png" alt="" aria-hidden className="pointer-events-none absolute -right-8 -top-6 h-44 w-auto opacity-[0.06]" />
+          <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center">
+            <div className="min-w-0 flex-1">
+              <h2 id="card-title" className="flex items-center gap-2 font-ui text-xs font-semibold uppercase tracking-[0.18em] text-gold">
+                <Ticket aria-hidden className="size-4" /> Your Delegate Card
+              </h2>
+              <p className="mt-4 font-display text-2xl leading-tight sm:text-3xl">{profile.fullName ?? profile.email}</p>
+              <p className="mt-1 text-sm text-paper/75">{[profile.institution, profile.yearOfStudy].filter(Boolean).join(" · ") || ACCOUNT_TYPE_LABEL[profile.accountType]}</p>
+              <p className="mt-4 flex flex-wrap gap-2">
+                <span className="inline-flex items-center rounded-full bg-gold/15 px-3 py-1 text-xs font-semibold text-gold-300 ring-1 ring-inset ring-gold/40">{ACCOUNT_TYPE_LABEL[profile.accountType]}</span>
+                {ticket && (
+                  <span className="inline-flex items-center rounded-full bg-white/8 px-3 py-1 text-xs font-medium text-paper/85 ring-1 ring-inset ring-white/15">
+                    {registration!.checked_in_at ? "Checked in" : "Confirmed"}
+                  </span>
+                )}
+              </p>
+              <p className="mt-4 max-w-md text-sm text-paper/75">
+                {ticket
+                  ? registration!.checked_in_at
                     ? "You're checked in. Enjoy the conference."
-                    : "Show this code at registration on the day. Turn your screen brightness up to make it quicker to scan."}
-                </p>
-                <p className="text-xs text-slate">The code holds a reference number only, no personal details.</p>
-              </div>
+                    : "Show the code at registration on the day. Turn your screen brightness up to make it quicker to scan."
+                  : "Your place is confirmed. Your check-in code will appear here shortly."}
+              </p>
             </div>
-          ) : (
-            <p className="text-slate-700">Your account is approved. Your ticket will appear here shortly.</p>
-          )}
-        </Card>
+            {ticket && (
+              <figure className="mx-auto w-48 shrink-0 sm:mx-0 sm:w-40">
+                <div className="rounded-md bg-white p-2 ring-2 ring-gold/50" dangerouslySetInnerHTML={{ __html: qr! }} role="img" aria-label="Your check-in QR code" />
+                <figcaption className="mt-2 text-center font-mono text-[0.65rem] text-paper/60">{registration!.checkin_token.slice(0, 8).toUpperCase()}</figcaption>
+              </figure>
+            )}
+          </div>
+          {ticket && <p className="relative mt-4 text-xs text-paper/55">The code holds a reference number only, no personal details.</p>}
+        </section>
       ) : (
         <section className="rounded-xl border border-navy/10 bg-white p-5 sm:p-7" aria-labelledby="status-title">
           <div className="flex items-start gap-4">

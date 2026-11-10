@@ -46,7 +46,7 @@ const PURPOSES: { what: string; why: string; basis: string; kept: string }[] = [
     kept: "As for your account",
   },
   {
-    what: "Your ticket and check-in time",
+    what: "Your Delegate Card and check-in time",
     why: "To let you in on the day and know who is in the building in an emergency",
     basis: "Contract, and legitimate interests in safety",
     kept: "Until 31 March 2027",
@@ -99,6 +99,7 @@ const PROCESSORS: { name: string; does: string; where: string }[] = [
   { name: "Supabase", does: "Database, sign-in and private file storage", where: REGION ? `${REGION}` : "The region chosen for our project, shown here once confirmed" },
   { name: "Vercel", does: "Hosts the website", where: "USA, with public pages cached worldwide" },
   { name: "Resend", does: "Sends our emails, including sign-up and password emails", where: "USA" },
+  { name: "Microsoft", does: "Shows PowerPoint and Word slides to committee reviewers who choose to preview them, using a private link that expires within 30 minutes", where: "EU and USA" },
   { name: "CARTO and OpenStreetMap", does: "Map images on the campus map. They receive your IP address when the map loads", where: "EU and USA" },
 ];
 
@@ -254,7 +255,7 @@ export default function PrivacyPage() {
               <li>Everything is encrypted when it travels over the internet, and stored data is encrypted at rest.</li>
               <li>Passwords are stored only as secure hashes. Nobody at INSPIRE can see your password.</li>
               <li>Slides and posters are kept in private storage. Download links expire after 30 minutes.</li>
-              <li>Your ticket&apos;s QR code holds a random reference number only, never your name or email.</li>
+              <li>Your Delegate Card&apos;s QR code holds a random reference number only, never your name or email.</li>
               <li>Changes made in the committee dashboard are logged, and the log records which fields changed, not their contents.</li>
             </ul>
             <p>If something goes wrong that puts your data at risk, we&apos;ll tell the Information Commissioner&apos;s Office within 72 hours where required, and tell you if there&apos;s a high risk to you.</p>

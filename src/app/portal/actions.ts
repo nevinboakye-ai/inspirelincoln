@@ -288,3 +288,11 @@ export async function recordSubmission(input: z.input<typeof recordSchema>): Pro
   revalidatePath("/portal", "layout");
   return { ok: true, message: data.version > 1 ? `Version ${data.version} submitted. The committee has been sent your update.` : "Submitted. The committee will review it and reply here." };
 }
+
+/** Opens or closes the delegate network for everyone. Site owner only. */
+export async function setNetworkOpen(form: FormData) {
+  const { db, user, profile } = await requireUser("/portal/network");
+  if (!profile.access.owner) return;
+  await db.from("site_switches").upsert({ key: "network_open", enabled: form.get("open") === "on", updated_by: user.id, updated_at: new Date().toISOString() });
+  revalidatePath("/portal/network");
+}

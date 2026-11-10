@@ -30,6 +30,11 @@
   --color-success: #0e6f4f;
   --color-warning: #a8570c;
   --color-danger: #c42b3b;
+  /* Gold accent, used sparingly: calls to action, highlights and rules. */
+  --color-gold: #d4af5a;
+  --color-gold-300: #e6c97f;
+  --color-gold-600: #a5802a;
+  --color-gold-700: #7a5c14;
 
   --font-display: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
   --font-ui: var(--font-inter), ui-sans-serif, system-ui, sans-serif;

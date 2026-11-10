@@ -60,7 +60,7 @@ function Registration({ edition }: { edition: Edition }) {
               Register
             </Link>
           )}
-          <Link href="/login" className="order-first inline-flex min-h-14 items-center gap-2 rounded-[3px] bg-cyan px-7 font-ui font-semibold text-midnight hover:bg-cyan-300">
+          <Link href="/login" className="order-first inline-flex min-h-14 items-center gap-2 rounded-[3px] bg-gold px-7 font-ui font-semibold text-midnight hover:bg-gold-300">
             Log in <ArrowRight aria-hidden className="size-4" />
           </Link>
         </div>
@@ -84,7 +84,7 @@ export default async function ConferencePage() {
         eyebrow={`${edition.name} · ${dateLabel}`}
         title={
           <>
-            Venue, travel <span className="italic text-cyan">and FAQs</span>
+            Venue, travel <span className="italic text-gold-300">and FAQs</span>
           </>
         }
         intro="Everything you need to get to Lincoln Medical School and make the most of the day."

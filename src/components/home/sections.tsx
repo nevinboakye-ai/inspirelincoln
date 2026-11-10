@@ -17,7 +17,7 @@ export function AtAGlance({ edition }: { edition: Edition; workshopCount?: numbe
   const items = [
     { href: "/programme", icon: CalendarDays, title: "Programme", body: "Every session, with times and rooms" },
     { href: "/map", icon: MapPin, title: "Campus map", body: "Find your building and room" },
-    { href: "/portal", icon: LayoutDashboard, title: "My Hub", body: "Your ticket, agenda and account" },
+    { href: "/portal", icon: LayoutDashboard, title: "My Hub", body: "Your Delegate Card, agenda and network" },
     { href: "/conference", icon: HelpCircle, title: "Venue & FAQs", body: "Travel, access and questions" },
   ];
   return (
@@ -211,13 +211,13 @@ export function FinalCta({ edition }: { edition: Edition }) {
           <p className="eyebrow text-cyan">INSPIRE {edition.year} · {edition.venueName}</p>
           <h2 id="cta-title" className="mx-auto mt-6 max-w-5xl text-display-xl font-normal">
             <MaskRise>Be part of</MaskRise>
-            <MaskRise delay={0.12}><span className="italic font-light text-cyan">what comes next.</span></MaskRise>
+            <MaskRise delay={0.12}><span className="italic font-light text-gold-300">what comes next.</span></MaskRise>
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-paper/70 sm:mt-8 sm:text-lg">
             Whether you are presenting your first poster or simply curious about research, there is a place for you at INSPIRE.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3 sm:mt-10">
-            <Link href="/login" className="shine group inline-flex min-h-14 items-center gap-2 rounded-[3px] bg-cyan px-8 font-ui font-semibold text-midnight transition-[background-color,box-shadow] hover:bg-cyan-300 hover:shadow-[0_12px_40px_-10px_rgba(201,216,236,0.7)]">
+            <Link href="/login" className="shine group inline-flex min-h-14 items-center gap-2 rounded-[3px] bg-gold px-8 font-ui font-semibold text-midnight transition-[background-color,box-shadow] hover:bg-gold-300 hover:shadow-[0_12px_40px_-10px_rgba(212,175,90,0.6)]">
               Log in <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link href="/conference" className="inline-flex min-h-14 items-center rounded-[3px] border border-white/20 bg-white/5 px-8 font-ui font-medium backdrop-blur-sm hover:border-white/40">

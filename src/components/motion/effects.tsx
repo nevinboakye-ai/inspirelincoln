@@ -52,7 +52,7 @@ export function ScrollProgress() {
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 220, damping: 40, restDelta: 0.001 });
   if (/^\/(admin|portal|map|login|signup|auth|review)/.test(path)) return null;
-  return <m.div aria-hidden style={{ scaleX }} className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-0.5 origin-left bg-gradient-to-r from-electric via-cyan to-violet" />;
+  return <m.div aria-hidden style={{ scaleX }} className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-0.5 origin-left bg-gradient-to-r from-electric via-cyan to-gold" />;
 }
 
 /** Moves its children gently against the scroll for depth. */
@@ -77,7 +77,7 @@ export function ScrollLine({ className }: { className?: string }) {
   return (
     <span ref={ref} aria-hidden className={cn("absolute w-px", className)}>
       <span className="absolute inset-0 bg-navy/10" />
-      <m.span style={{ scaleY: reduce ? 1 : scaleY }} className="absolute inset-0 origin-top bg-gradient-to-b from-electric via-cyan to-violet" />
+      <m.span style={{ scaleY: reduce ? 1 : scaleY }} className="absolute inset-0 origin-top bg-gradient-to-b from-electric via-cyan to-gold" />
     </span>
   );
 }
@@ -114,7 +114,7 @@ export function PulseLine({ className }: { className?: string }) {
       <path
         d={d}
         pathLength={1}
-        stroke="#e8f0fb"
+        stroke="#e6c97f"
         strokeWidth="2"
         vectorEffect="non-scaling-stroke"
         strokeLinecap="round"

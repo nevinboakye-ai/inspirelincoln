@@ -31,14 +31,14 @@ export function accountDecisionEmail(opts: {
           ? `You can now upload your ${type === "oral_presenter" ? "slides" : "poster"} from your account. The committee will review it and send you feedback.`
           : committee
             ? "You now have access to the committee dashboard from your account."
-            : "Your ticket and check-in code are waiting in your account. Show the code at registration on the day.",
+            : "Your Delegate Card and check-in code are waiting in My Hub. Show the code at registration on the day.",
         ...noteBlock,
       ],
       details: [
         { label: "Date", value: "Saturday 21 November 2026" },
         { label: "Venue", value: "Lincoln Medical School, University of Lincoln" },
       ],
-      cta: { label: presenter ? "Upload your file" : committee ? "Open the dashboard" : "View your ticket", url: `${siteUrl}${presenter ? "/portal/submission" : committee ? "/admin" : "/portal"}` },
+      cta: { label: presenter ? "Upload your file" : committee ? "Open the dashboard" : "View your Delegate Card", url: `${siteUrl}${presenter ? "/portal/submission" : committee ? "/admin" : "/portal"}` },
     });
     return { subject: "Your INSPIRE account is approved", ...m };
   }

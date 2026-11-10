@@ -131,7 +131,7 @@ export function SiteHeader({ edition, ribbon }: { edition: { year: number; date:
               )}
               <Link
                 href={member ? "/portal" : "/login"}
-                className="hidden min-h-11 items-center gap-1.5 rounded-[3px] bg-cyan px-5 font-ui text-sm font-semibold text-midnight transition-colors hover:bg-cyan-300 sm:flex"
+                className="hidden min-h-11 items-center gap-1.5 rounded-[3px] bg-gold px-5 font-ui text-sm font-semibold text-midnight transition-colors hover:bg-gold-300 sm:flex"
               >
                 {member ? (
                   <>
@@ -276,7 +276,7 @@ function MobileMenu({ open, onClose, pathname, member }: { open: boolean; onClos
             </ul>
           </nav>
           <div className="container-page shrink-0 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] pt-2">
-            <Link href={member ? "/portal" : "/login"} onClick={onClose} className="flex min-h-12 items-center justify-center gap-2 rounded-[3px] bg-cyan font-ui font-semibold text-midnight">
+            <Link href={member ? "/portal" : "/login"} onClick={onClose} className="flex min-h-12 items-center justify-center gap-2 rounded-[3px] bg-gold font-ui font-semibold text-midnight">
               {member ? <><LayoutDashboard aria-hidden className="size-4" /> My Hub</> : <><UserRound aria-hidden className="size-4" /> Log in</>}
             </Link>
             {!member && (
