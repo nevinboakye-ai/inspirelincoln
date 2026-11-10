@@ -8,6 +8,7 @@ import { EditShortcut } from "@/components/layout/edit-shortcut";
 import { ViewAsBanner } from "@/components/layout/view-as-banner";
 import { ScrollProgress } from "@/components/motion/effects";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { VisitCounter } from "@/components/layout/visit-counter";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { getAnnouncements, getEdition, getSiteOpen } from "@/lib/data/content";
 
@@ -65,6 +66,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </main>
           <SiteFooter edition={edition} siteOpen={siteOpen} />
           <EditShortcut />
+          <VisitCounter />
           <Suspense fallback={null}>
             <ViewAsBanner />
           </Suspense>

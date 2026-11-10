@@ -1,7 +1,8 @@
 import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { after } from "next/server";
+import { createClient, createSessionClient, getViewAs } from "@/lib/supabase/server";
 import type { AccountStatus, AccountType, UserRole } from "@/lib/types";
 import { accessFor, accessFromCaps, effectiveRole, type Access, type Capability } from "@/lib/accounts";
 
@@ -80,6 +81,14 @@ export const getCurrentUser = cache(async () => {
     siteRole: base.role,
     access,
   };
+  // Note when they were last active (the database only writes every five
+  // minutes). Never while the site owner is viewing as someone else.
+  after(async () => {
+    try {
+      if (await getViewAs()) return;
+      await (await createSessionClient())?.rpc("touch_last_seen");
+    } catch {}
+  });
   return { user, profile, db };
 });
 

@@ -93,6 +93,18 @@ const PURPOSES: { what: string; why: string; basis: string; kept: string }[] = [
     basis: "Legitimate interests in security, and our duty to keep data secure",
     kept: "24 months",
   },
+  {
+    what: "When you last signed in and last used your account",
+    why: "So the committee can see who has set up their account before the day and help anyone who hasn't",
+    basis: "Legitimate interests in running the conference and supporting attendees",
+    kept: "Until you delete your account",
+  },
+  {
+    what: "Anonymous visit statistics: the page viewed, the website you came from, the type of device and the country",
+    why: "To understand how many people use the website and which pages help them. We don't use cookies for this. Your connection and browser are turned into a one-way code with a key that changes every day and is then deleted, so you can't be recognised across days, and your IP address is never stored. If your browser sends Do Not Track or Global Privacy Control, you aren't counted",
+    basis: "Legitimate interests in running and improving the website",
+    kept: "13 months",
+  },
 ];
 
 const PROCESSORS: { name: string; does: string; where: string }[] = [
@@ -280,7 +292,7 @@ export default function PrivacyPage() {
             <h2 id="cookies">9. Cookies and storage</h2>
             <p>
               We use only what the site needs to work: a sign-in cookie that keeps you logged in, and storage in your browser that remembers sessions
-              you&apos;ve saved. We don&apos;t use analytics, advertising or tracking cookies, so we don&apos;t need to ask for cookie consent. Read the{" "}
+              you&apos;ve saved. We don&apos;t use analytics, advertising or tracking cookies, so we don&apos;t need to ask for cookie consent. We count visits without cookies, as explained in section 2. Read the{" "}
               <Link href="/cookies">cookie policy</Link> for details.
             </p>
 

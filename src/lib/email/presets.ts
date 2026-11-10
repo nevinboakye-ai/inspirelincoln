@@ -1,5 +1,5 @@
 import type { AccountStatus, AccountType } from "@/lib/types";
-import { ROSTER_TYPES } from "@/lib/accounts";
+import { COMMITTEE_TYPES, ROSTER_TYPES } from "@/lib/accounts";
 
 /**
  * Ready-made emails for the committee, based on the committee's own drafts.
@@ -212,6 +212,31 @@ A quick reminder that the deadline to submit your poster for INSPIRE 2026 is Fri
 Please log in to My Hub at {website} and upload a digital copy of your poster under My submission. Your login details are below. If you haven't logged in before, you'll be asked to choose your own password first.
 
 Please also bring a printed copy of your poster on Saturday 21st November. Both portrait and landscape orientations are accepted.
+
+${QUESTIONS}
+
+${SIGN_OFF}`,
+  },
+  {
+    id: "committee-login",
+    name: "Committee: log in before the conference",
+    use: "For the executive and supporting committee. Thanks everyone, includes login details and asks them to check their access before the day.",
+    subject: "INSPIRE 2026 is nearly here: please log in to your committee account",
+    audience: { types: [...COMMITTEE_TYPES], statuses: ["approved"], includeSelected: false },
+    login: true,
+    body: `Dear {first_name},
+
+Thank you for everything you've put into INSPIRE 2026 so far. The time and effort the whole committee has given has got us to this point, and it really shows. We're very grateful.
+
+The conference is now just around the corner, on Saturday 21st November at Lincoln Medical School, University of Lincoln, so we'd like everyone to be set up on the website before the day.
+
+What we'd like you to do
+1. ${LOG_IN}
+2. Check your details in My Hub, including your committee position, and add any access or dietary needs so we can plan for you too.
+3. Open the committee dashboard from My Hub and make sure you can see the areas for your role. Depending on your role, this is where you review slides and posters, keep track of accounts and presenter attendance, update the website, and check delegates in on the day by scanning the QR code on their Delegate Card.
+4. If anything doesn't look right, or you can't see something you need, let us know this week rather than on the day.
+
+Thank you again for all your hard work. We can't wait to see it come together in Lincoln.
 
 ${QUESTIONS}
 
