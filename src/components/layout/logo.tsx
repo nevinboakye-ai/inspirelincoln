@@ -26,7 +26,7 @@ export function Logo({
       />
       {!compact && (
         <span className="flex flex-col leading-none">
-          <span className="font-display text-[1.35rem] font-medium tracking-[0.02em]">Inspire</span>
+          <span className="whitespace-nowrap font-display text-[1.15rem] sm:text-[1.35rem] font-medium tracking-[0.02em]">Inspire Lincoln 2026</span>
           <span className="mt-1 hidden font-ui text-[0.58rem] font-semibold uppercase tracking-[0.26em] opacity-70 sm:block">
             Medical Research Conference
           </span>

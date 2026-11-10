@@ -82,7 +82,8 @@ export function Lanyard(p: LanyardProps) {
             animate={reduce ? undefined : { rotate: [0, 0.9, 0, -0.9, 0] }}
             transition={reduce ? undefined : { duration: 7, repeat: Infinity, ease: "easeInOut", delay: 2.4 }}
           >
-            <svg aria-hidden viewBox="0 0 300 170" className="-mb-3 block w-full overflow-visible">
+            {/* A short neck that fades in from above, so it never runs up into the page header. */}
+            <svg aria-hidden viewBox="0 50 300 120" className="-mb-3 block w-full overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_45%)]">
               <defs>
                 <linearGradient id={`${strapId}-r`} x1="0" x2="1">
                   <stop offset="0" stopColor="#14284a" />
@@ -160,7 +161,7 @@ function Face({ hidden, back, children, className }: { hidden: boolean; back?: b
   );
 }
 
-function Front({ year, theme, name, detail, role, tone, dateLabel, venue, countdown, long, hidden, sheen }: LanyardProps & { long: boolean; hidden: boolean; sheen: ReturnType<typeof useMotionTemplate> | null }) {
+function Front({ year, name, detail, role, tone, dateLabel, venue, countdown, long, hidden, sheen }: LanyardProps & { long: boolean; hidden: boolean; sheen: ReturnType<typeof useMotionTemplate> | null }) {
   return (
     <Face hidden={hidden} className="bg-ivory text-ink ring-1 ring-black/5">
       <div className="relative bg-midnight px-6 pb-5 pt-10 text-paper">
@@ -177,8 +178,10 @@ function Front({ year, theme, name, detail, role, tone, dateLabel, venue, countd
       </div>
       <div aria-hidden className="lanyard-foil h-1.5" />
       <div className="px-6 pt-5">
-        <p className="font-ui text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-gold-700">{theme}</p>
-        <p className={cn("mt-4 font-display leading-[1.05] text-ink", long ? "text-[1.6rem]" : "text-[2.05rem]")}>{name}</p>
+        <p className="font-ui text-[0.62rem] font-semibold uppercase leading-relaxed tracking-[0.18em] text-gold-700">
+          Congratulations! You&apos;re attending INSPIRE Lincoln {year}
+        </p>
+        <p className={cn("mt-3 font-display leading-[1.05] text-ink", long ? "text-[1.6rem]" : "text-[2.05rem]")}>{name}</p>
         {detail && <p className="mt-2 text-sm leading-snug text-slate-700">{detail}</p>}
       </div>
       {countdown && (
@@ -196,12 +199,13 @@ function Front({ year, theme, name, detail, role, tone, dateLabel, venue, countd
   );
 }
 
-function Back({ year, qr, reference, checkedIn, hidden }: LanyardProps & { hidden: boolean }) {
+function Back({ year, theme, qr, reference, checkedIn, hidden }: LanyardProps & { hidden: boolean }) {
   return (
     <Face back hidden={hidden} className="bg-midnight text-paper ring-1 ring-gold/40">
       <div aria-hidden className="lanyard-grid pointer-events-none absolute inset-0 opacity-[0.12]" />
       <div className="relative flex h-full flex-col items-center px-6 pb-6 pt-11 text-center">
         <p className="font-ui text-[0.62rem] font-semibold uppercase tracking-[0.24em] text-gold">Check-in · INSPIRE {year}</p>
+        <p className="mt-1.5 text-[0.7rem] leading-snug text-paper/60">{theme}</p>
         {qr ? (
           <>
             <div className="relative mt-5 w-[78%]">
