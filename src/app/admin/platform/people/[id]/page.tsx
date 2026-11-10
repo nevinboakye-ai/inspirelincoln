@@ -5,6 +5,7 @@ import { Crown, UserCheck } from "lucide-react";
 import { requireAccess } from "@/lib/auth";
 import { AdminHeader } from "@/components/admin/ui";
 import { PersonAccess } from "@/components/admin/platform-forms";
+import { ViewAsButton } from "@/components/admin/view-as";
 import { Badge } from "@/components/ui/badge";
 import { Notice } from "@/components/ui/notice";
 import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES, CAPABILITIES, DEFAULT_RULES, type Capability } from "@/lib/accounts";
@@ -54,6 +55,7 @@ export default async function PersonAccessPage({ params }: { params: Promise<{ i
             {role === "admin" ? <Badge tone="violet"><Crown aria-hidden className="size-3" /> Site owner</Badge> : <Badge tone="violet">{ACCOUNT_TYPE_LABEL[type]}</Badge>}
             <Badge tone={st.tone}>{st.label}</Badge>
             {person.committee_position && <Badge>{person.committee_position}</Badge>}
+            {role !== "admin" && <ViewAsButton id={person.id} name={name} back={`/admin/platform/people/${person.id}`} />}
           </div>
         }
       />

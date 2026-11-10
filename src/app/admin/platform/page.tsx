@@ -8,6 +8,8 @@ import { getSwitches, SWITCHES, type SwitchKey } from "@/lib/switches";
 import { setSwitch } from "@/app/admin/platform/actions";
 import { AdminHeader, Panel } from "@/components/admin/ui";
 import { AccessMatrix } from "@/components/admin/platform-forms";
+import { ViewAsPicker } from "@/components/admin/view-as";
+import { viewAsAvailable } from "@/lib/view-as-seal";
 import { Badge } from "@/components/ui/badge";
 import { Notice } from "@/components/ui/notice";
 import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES, CAPABILITIES, CAPABILITY_LABEL, DEFAULT_RULES, type Capability } from "@/lib/accounts";
@@ -152,6 +154,8 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
           <Shortcut href="/admin/settings" icon={Settings2} title="Conference settings" note="Status, registration, deadlines and modes" />
         </div>
       </section>
+
+      <ViewAsPicker people={people} types={[...ACCOUNT_TYPES].reverse()} available={viewAsAvailable()} />
 
       <section aria-labelledby="matrix" className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-3">

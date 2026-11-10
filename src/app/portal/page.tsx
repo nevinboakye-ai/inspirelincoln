@@ -3,6 +3,7 @@ import QRCode from "qrcode";
 import {
   ArrowRight,
   CalendarDays,
+  Check,
   Clock,
   Gauge,
   HeartHandshake,
@@ -22,6 +23,9 @@ import { formatEventDate } from "@/lib/time";
 import { Badge } from "@/components/ui/badge";
 import { Notice } from "@/components/ui/notice";
 import { SavedAgenda } from "@/components/portal/saved-agenda";
+import { Lanyard, type LanyardTone } from "@/components/portal/lanyard";
+import { Countdown, HubItem, HubStagger, ReadinessRing } from "@/components/portal/hub-motion";
+import { MaskRise } from "@/components/motion/effects";
 import {
   ACCOUNT_STATUS_LABEL,
   ACCOUNT_TYPE_LABEL,
@@ -29,7 +33,7 @@ import {
   SUBMISSION_STATUS_LABEL,
   submissionKindFor,
 } from "@/lib/accounts";
-import type { SubmissionStatus } from "@/lib/types";
+import type { AccountType, SubmissionStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +50,7 @@ function Card({
 }) {
   return (
     <section
-      className={`rounded-xl border border-navy/10 bg-white p-5 sm:p-7 ${className}`}
+      className={`rounded-xl border border-navy/10 bg-white p-5 transition-shadow duration-300 hover:shadow-[0_14px_34px_-22px_rgba(14,27,49,0.45)] sm:p-7 ${className}`}
     >
       <h2 className="flex items-center gap-2 font-display text-xl text-ink">
         <Icon aria-hidden className="size-5 text-electric-600" /> {title}
@@ -55,6 +59,8 @@ function Card({
     </section>
   );
 }
+
+const TONE: Partial<Record<AccountType, LanyardTone>> = { delegate: "delegate", poster_presenter: "poster", oral_presenter: "oral" };
 
 const linkBtn =
   "inline-flex min-h-12 items-center justify-center gap-2 rounded-[3px] px-5 font-ui text-sm font-semibold";
@@ -130,6 +136,23 @@ export default async function PortalHome({
     ? SUBMISSION_STATUS_LABEL[latestSub.status as SubmissionStatus]
     : null;
 
+  const firstName = profile.fullName?.split(" ")[0];
+  const steps = [
+    { label: "Account approved", done: status === "approved", href: null as string | null },
+    { label: "Your details", done: Boolean(profile.fullName && profile.institution), href: "/portal/profile" },
+    { label: "A short bio for your profile", done: Boolean(profile.bio), href: "/portal/profile#bio" },
+    ...(kind
+      ? [{
+          label: latestSub?.status === "changes_requested" ? `Update your ${SUBMISSION_LABEL[kind].noun} (feedback waiting)` : `Upload your ${SUBMISSION_LABEL[kind].noun}`,
+          done: Boolean(latestSub) && latestSub!.status !== "changes_requested",
+          href: "/portal/submission",
+        }]
+      : []),
+  ];
+  const doneCount = steps.filter((x) => x.done).length;
+  const needsGiven = Boolean(profile.accessibilityNeeds || profile.dietaryRequirements);
+  const lanyard = status === "approved" && showCard;
+
   return (
     <div className="space-y-5 sm:space-y-6">
       {sp.denied && (
@@ -142,301 +165,247 @@ export default async function PortalHome({
         </Notice>
       )}
 
-      <header className="relative overflow-hidden rounded-xl bg-midnight p-6 text-paper sm:p-8">
-        <img
-          src="/brand/crest-white.png"
-          alt=""
-          aria-hidden
-          className="pointer-events-none absolute -bottom-10 -right-6 h-48 w-auto opacity-[0.07]"
-        />
-        <div className="relative">
-          <p className="eyebrow text-gold">
-            {ACCOUNT_TYPE_LABEL[profile.accountType]}
-          </p>
-          <h1 className="mt-3 font-display text-3xl sm:text-4xl">
-            Hello{profile.fullName ? `, ${profile.fullName.split(" ")[0]}` : ""}
-          </h1>
-          <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-paper/75">
-            <span className="flex items-center gap-2">
-              <CalendarDays aria-hidden className="size-4 text-cyan" />{" "}
-              {formatEventDate(edition.date)}
-            </span>
-            <span className="flex items-center gap-2">
-              <MapPin aria-hidden className="size-4 text-cyan" />{" "}
-              {edition.venueName}
-            </span>
-          </p>
+      <header className="relative isolate overflow-hidden rounded-2xl bg-midnight px-6 py-8 text-paper sm:px-9 sm:py-10">
+        <span aria-hidden className="hub-orb -left-16 -top-20 size-72 bg-navy-600/70" />
+        <span aria-hidden className="hub-orb -bottom-24 right-[-4rem] size-80 bg-gold/25 [animation-delay:-6s]" />
+        <span aria-hidden className="hub-orb left-1/2 top-1/3 size-52 bg-cyan/15 [animation-delay:-11s]" />
+        <div aria-hidden className="lanyard-grid pointer-events-none absolute inset-0 opacity-25" />
+        <img src="/brand/crest-white.png" alt="" aria-hidden className="pointer-events-none absolute -bottom-12 -right-8 h-56 w-auto opacity-[0.06]" />
+        <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            <p className="eyebrow text-gold">{ACCOUNT_TYPE_LABEL[profile.accountType]} · INSPIRE {edition.year}</p>
+            <h1 className="mt-3 font-display text-4xl leading-[1.05] sm:text-5xl">
+              <MaskRise onMount>Hello{firstName ? `, ${firstName}` : ""}</MaskRise>
+            </h1>
+            <p className="mt-3 max-w-xl text-paper/75">{edition.theme}</p>
+            <p className="mt-5 flex flex-wrap gap-x-5 gap-y-1 text-sm text-paper/75">
+              <span className="flex items-center gap-2">
+                <CalendarDays aria-hidden className="size-4 text-cyan" /> {formatEventDate(edition.date)}
+              </span>
+              <span className="flex items-center gap-2">
+                <MapPin aria-hidden className="size-4 text-cyan" /> {edition.venueName}
+              </span>
+            </p>
+          </div>
+          <Countdown date={edition.date} time={edition.startTime} />
         </div>
       </header>
 
-      {/* Account status and ticket */}
-      {status === "approved" && !showCard ? (
-        <section className="flex items-center gap-4 rounded-xl border border-success/25 bg-success/[0.06] p-5 sm:p-6">
-          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-success/15 text-success">
-            <Ticket aria-hidden className="size-5" />
-          </span>
-          <div>
-            <h2 className="font-semibold text-ink">Your place is confirmed</h2>
-            <p className="text-sm text-slate-700">
-              Use My Hub to get your presentation and profile ready before the
-              day.
-            </p>
-          </div>
-        </section>
-      ) : status === "approved" ? (
-        <section
-          aria-labelledby="card-title"
-          className="relative overflow-hidden rounded-xl bg-midnight p-5 text-paper ring-1 ring-gold/40 sm:p-7"
-        >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-gold-600 via-gold-300 to-gold-600"
-          />
-          <img
-            src="/brand/crest-white.png"
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute -right-8 -top-6 h-44 w-auto opacity-[0.06]"
-          />
-          <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center">
-            <div className="min-w-0 flex-1">
-              <h2
-                id="card-title"
-                className="flex items-center gap-2 font-ui text-xs font-semibold uppercase tracking-[0.18em] text-gold"
-              >
-                <Ticket aria-hidden className="size-4" /> Your Delegate Card
-              </h2>
-              {!switches.delegate_card && (
-                <p className="mt-2 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs text-paper/80">
-                  Only you can see this. Turn it on in the Platform dashboard.
-                </p>
-              )}
-              <p className="mt-4 font-display text-2xl leading-tight sm:text-3xl">
-                {profile.fullName ?? profile.email}
-              </p>
-              <p className="mt-1 text-sm text-paper/75">
-                {[profile.institution, profile.yearOfStudy]
-                  .filter(Boolean)
-                  .join(" · ") || ACCOUNT_TYPE_LABEL[profile.accountType]}
-              </p>
-              <p className="mt-4 flex flex-wrap gap-2">
-                <span className="inline-flex items-center rounded-full bg-gold/15 px-3 py-1 text-xs font-semibold text-gold-300 ring-1 ring-inset ring-gold/40">
-                  {ACCOUNT_TYPE_LABEL[profile.accountType]}
+      <HubStagger className="grid gap-5 sm:gap-6 xl:grid-cols-[minmax(0,1fr)_20.5rem] xl:items-start">
+        <div className="min-w-0 space-y-5 sm:space-y-6">
+          {status === "approved" && !showCard ? (
+            <HubItem>
+              <section className="flex items-center gap-4 rounded-xl border border-success/25 bg-success/[0.06] p-5 sm:p-6">
+                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-success/15 text-success">
+                  <Ticket aria-hidden className="size-5" />
                 </span>
-                {ticket && (
-                  <span className="inline-flex items-center rounded-full bg-white/8 px-3 py-1 text-xs font-medium text-paper/85 ring-1 ring-inset ring-white/15">
-                    {registration!.checked_in_at ? "Checked in" : "Confirmed"}
-                  </span>
-                )}
-              </p>
-              <p className="mt-4 max-w-md text-sm text-paper/75">
-                {ticket
-                  ? registration!.checked_in_at
-                    ? "You're checked in. Enjoy the conference."
-                    : "Show the code at registration on the day. Turn your screen brightness up to make it quicker to scan."
-                  : "Your place is confirmed. Your check-in code will appear here shortly."}
-              </p>
-            </div>
-            {ticket && (
-              <figure className="mx-auto w-48 shrink-0 sm:mx-0 sm:w-40">
-                <div
-                  className="rounded-md bg-white p-2 ring-2 ring-gold/50"
-                  dangerouslySetInnerHTML={{ __html: qr! }}
-                  role="img"
-                  aria-label="Your check-in QR code"
-                />
-                <figcaption className="mt-2 text-center font-mono text-[0.65rem] text-paper/60">
-                  {registration!.checkin_token.slice(0, 8).toUpperCase()}
-                </figcaption>
-              </figure>
-            )}
-          </div>
-          {ticket && (
-            <p className="relative mt-4 text-xs text-paper/55">
-              The code holds a reference number only, no personal details.
-            </p>
-          )}
-        </section>
-      ) : (
-        <section
-          className="rounded-xl border border-navy/10 bg-white p-5 sm:p-7"
-          aria-labelledby="status-title"
-        >
-          <div className="flex items-start gap-4">
-            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-paper-200">
-              {status === "pending" ? (
-                <Hourglass aria-hidden className="size-5 text-navy" />
-              ) : status === "waitlisted" ? (
-                <Clock aria-hidden className="size-5 text-[#7a4a00]" />
-              ) : (
-                <XCircle aria-hidden className="size-5 text-danger" />
-              )}
-            </span>
-            <div className="min-w-0">
-              <h2 id="status-title" className="font-display text-xl text-ink">
-                {status === "pending"
-                  ? "We're reviewing your account"
-                  : status === "waitlisted"
-                    ? "You're on the waitlist"
-                    : "Your account wasn't approved"}
-              </h2>
-              <Badge tone={s.tone} className="mt-2">
-                {s.label}
-              </Badge>
-              <p className="mt-3 text-slate-700">
-                {status === "pending"
-                  ? "The executive committee checks every new account. We'll email you as soon as yours is approved."
-                  : status === "waitlisted"
-                    ? `Places are full right now.${waitPos ? ` You're number ${waitPos} in the queue.` : ""} If a place opens up, we'll approve your account and email you straight away.`
-                    : "If you think this is a mistake, please get in touch and we'll take another look."}
-              </p>
-              {profile.reviewNote && (
-                <p className="mt-3 rounded-md bg-paper p-3 text-sm text-ink">
-                  Note from the committee: {profile.reviewNote}
-                </p>
-              )}
-              {status === "declined" && (
-                <Link
-                  href="/contact"
-                  className={`${linkBtn} mt-4 border border-navy/15 text-ink`}
-                >
-                  Contact the committee
-                </Link>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Presenters */}
-      {kind && (
-        <Card
-          title={kind === "slides" ? "Your slides" : "Your poster"}
-          icon={UploadCloud}
-        >
-          {latestSub ? (
-            <div className="space-y-3">
-              <p className="font-medium text-ink">{latestSub.title}</p>
-              <p className="flex flex-wrap items-center gap-2 text-sm text-slate-700">
-                <Badge tone={subStatus!.tone}>{subStatus!.label}</Badge> Version{" "}
-                {latestSub.version}
-              </p>
-            </div>
-          ) : (
-            <p className="text-slate-700">
-              {status === "approved"
-                ? `You haven't uploaded your ${SUBMISSION_LABEL[kind].noun} yet.`
-                : `You can upload your ${SUBMISSION_LABEL[kind].noun} once your account is approved.`}
-            </p>
-          )}
-          <Link
-            href="/portal/submission"
-            className={`${linkBtn} mt-4 w-full bg-navy text-paper sm:w-auto`}
-          >
-            {latestSub
-              ? latestSub.status === "changes_requested"
-                ? "See feedback and upload a new version"
-                : "View submission"
-              : `Upload ${SUBMISSION_LABEL[kind].noun}`}{" "}
-            <ArrowRight aria-hidden className="size-4" />
-          </Link>
-        </Card>
-      )}
-
-      {/* Site owner */}
-      {profile.access.owner && (
-        <Link
-          href="/admin/platform"
-          className="group flex items-center gap-4 rounded-xl border border-cyan/40 bg-midnight p-5 text-paper transition-colors hover:border-cyan sm:p-6"
-        >
-          <Gauge aria-hidden className="size-6 shrink-0 text-cyan" />
-          <span className="min-w-0 flex-1">
-            <span className="block font-display text-xl">
-              Platform dashboard
-            </span>
-            <span className="block text-sm text-paper/75">
-              Who can see and do what, committee profiles, accounts and
-              submissions
-            </span>
-          </span>
-          <ArrowRight
-            aria-hidden
-            className="size-5 shrink-0 transition-transform group-hover:translate-x-1"
-          />
-        </Link>
-      )}
-
-      {/* Committee */}
-      {profile.access.committee && (
-        <Link
-          href="/admin"
-          className="flex items-center gap-4 rounded-xl bg-navy p-5 text-paper sm:p-6"
-        >
-          <LayoutDashboard aria-hidden className="size-6 shrink-0 text-cyan" />
-          <span className="min-w-0 flex-1">
-            <span className="block font-display text-xl">
-              Committee dashboard
-            </span>
-            <span className="block text-sm text-paper/75">
-              Accounts, slides and posters, and editing the website
-            </span>
-          </span>
-          <ArrowRight aria-hidden className="size-5 shrink-0" />
-        </Link>
-      )}
-
-      {focus ? (
-        <Card title="Your profile" icon={UserRound}>
-          <p className="text-slate-700">
-            Check your details, add a short bio and LinkedIn, and tell us about
-            any access or dietary needs.
-          </p>
-          <Link
-            href="/portal/profile"
-            className={`${linkBtn} mt-4 w-full bg-navy text-paper sm:w-auto`}
-          >
-            Go to your profile <ArrowRight aria-hidden className="size-4" />
-          </Link>
-        </Card>
-      ) : (
-        <div className="grid gap-5 sm:gap-6 xl:grid-cols-2">
-          <Card title="My agenda" icon={CalendarDays}>
-            <SavedAgenda sessions={sessions} workshops={workshops} />
-          </Card>
-
-          {(announcements?.length ?? 0) > 0 && (
-            <Card title="Announcements" icon={Megaphone}>
-              <ul className="space-y-3">
-                {announcements!.map((a) => (
-                  <li key={a.id} className="rounded-md bg-paper p-4">
-                    <p className="font-medium text-ink">{a.title}</p>
-                    {a.body && (
-                      <p className="mt-1 text-sm text-slate-700">{a.body}</p>
+                <div>
+                  <h2 className="font-semibold text-ink">Your place is confirmed</h2>
+                  <p className="text-sm text-slate-700">Use My Hub to get your presentation and profile ready before the day.</p>
+                </div>
+              </section>
+            </HubItem>
+          ) : status !== "approved" ? (
+            <HubItem>
+              <section className="rounded-xl border border-navy/10 bg-white p-5 sm:p-7" aria-labelledby="status-title">
+                <div className="flex items-start gap-4">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-full bg-paper-200">
+                    {status === "pending" ? (
+                      <Hourglass aria-hidden className="size-5 text-navy" />
+                    ) : status === "waitlisted" ? (
+                      <Clock aria-hidden className="size-5 text-[#7a4a00]" />
+                    ) : (
+                      <XCircle aria-hidden className="size-5 text-danger" />
                     )}
-                  </li>
-                ))}
-              </ul>
-            </Card>
+                  </span>
+                  <div className="min-w-0">
+                    <h2 id="status-title" className="font-display text-xl text-ink">
+                      {status === "pending" ? "We're reviewing your account" : status === "waitlisted" ? "You're on the waitlist" : "Your account wasn't approved"}
+                    </h2>
+                    <Badge tone={s.tone} className="mt-2">{s.label}</Badge>
+                    <p className="mt-3 text-slate-700">
+                      {status === "pending"
+                        ? "The executive committee checks every new account. We'll email you as soon as yours is approved."
+                        : status === "waitlisted"
+                          ? `Places are full right now.${waitPos ? ` You're number ${waitPos} in the queue.` : ""} If a place opens up, we'll approve your account and email you straight away.`
+                          : "If you think this is a mistake, please get in touch and we'll take another look."}
+                    </p>
+                    {profile.reviewNote && <p className="mt-3 rounded-md bg-paper p-3 text-sm text-ink">Note from the committee: {profile.reviewNote}</p>}
+                    {status === "declined" && (
+                      <Link href="/contact" className={`${linkBtn} mt-4 border border-navy/15 text-ink`}>Contact the committee</Link>
+                    )}
+                  </div>
+                </div>
+              </section>
+            </HubItem>
+          ) : null}
+
+          <HubItem>
+            <section aria-labelledby="ready-h" className="rounded-xl border border-navy/10 bg-white p-5 sm:p-7">
+              <div className="flex items-center gap-5">
+                <ReadinessRing done={doneCount} total={steps.length} />
+                <div className="min-w-0">
+                  <h2 id="ready-h" className="font-display text-xl text-ink">
+                    {doneCount === steps.length ? "You're all set for the day" : "Get ready for INSPIRE"}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-700">
+                    {doneCount === steps.length ? "Everything we need is in. See you on the day." : `${steps.length - doneCount} ${steps.length - doneCount === 1 ? "thing" : "things"} left to do.`}
+                  </p>
+                </div>
+              </div>
+              <ol className="mt-5 divide-y divide-navy/5 border-t border-navy/5">
+                {steps.map((x) => {
+                  const inner = (
+                    <>
+                      <span className={`grid size-7 shrink-0 place-items-center rounded-full ${x.done ? "bg-success text-white" : "border-2 border-navy/15 text-transparent"}`}>
+                        <Check aria-hidden className="size-4" />
+                      </span>
+                      <span className={`min-w-0 flex-1 ${x.done ? "text-slate-700" : "font-semibold text-ink"}`}>
+                        {x.label}
+                        <span className="sr-only">{x.done ? ", done" : ", to do"}</span>
+                      </span>
+                      {x.href && !x.done && <ArrowRight aria-hidden className="size-4 shrink-0 text-slate transition-transform group-hover:translate-x-1" />}
+                    </>
+                  );
+                  return (
+                    <li key={x.label}>
+                      {x.href && !x.done ? (
+                        <Link href={x.href} className="group flex min-h-12 items-center gap-3 py-2.5 text-sm">{inner}</Link>
+                      ) : (
+                        <span className="flex min-h-12 items-center gap-3 py-2.5 text-sm">{inner}</span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+              <p className="mt-3 text-xs text-slate">
+                Optional: {needsGiven ? "thank you for telling us about your access or dietary needs." : "tell us about any access or dietary needs."}{" "}
+                <Link href="/portal/profile#needs" className="font-semibold text-electric-600 underline underline-offset-4">{needsGiven ? "Review" : "Add them"}</Link>
+              </p>
+            </section>
+          </HubItem>
+
+          {kind && (
+            <HubItem>
+              <Card title={kind === "slides" ? "Your slides" : "Your poster"} icon={UploadCloud}>
+                {latestSub ? (
+                  <div className="space-y-3">
+                    <p className="font-medium text-ink">{latestSub.title}</p>
+                    <p className="flex flex-wrap items-center gap-2 text-sm text-slate-700">
+                      <Badge tone={subStatus!.tone}>{subStatus!.label}</Badge> Version {latestSub.version}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-slate-700">
+                    {status === "approved"
+                      ? `You haven't uploaded your ${SUBMISSION_LABEL[kind].noun} yet.`
+                      : `You can upload your ${SUBMISSION_LABEL[kind].noun} once your account is approved.`}
+                  </p>
+                )}
+                <Link href="/portal/submission" className={`${linkBtn} mt-4 w-full bg-navy text-paper sm:w-auto`}>
+                  {latestSub
+                    ? latestSub.status === "changes_requested"
+                      ? "See feedback and upload a new version"
+                      : "View submission"
+                    : `Upload ${SUBMISSION_LABEL[kind].noun}`}{" "}
+                  <ArrowRight aria-hidden className="size-4" />
+                </Link>
+              </Card>
+            </HubItem>
           )}
 
-          <Card title="Access and dietary needs" icon={HeartHandshake}>
-            <p className="text-slate-700">
-              {profile.accessibilityNeeds || profile.dietaryRequirements
-                ? "Thank you. The committee has your details for the day."
-                : "Tell us about anything that would make the day easier for you, such as step-free access, a quiet space or dietary needs."}
-            </p>
-            <Link
-              href="/portal/profile#needs"
-              className="mt-3 inline-flex min-h-11 items-center gap-2 font-semibold text-electric-600"
-            >
-              {profile.accessibilityNeeds || profile.dietaryRequirements
-                ? "Review your details"
-                : "Add your needs"}{" "}
-              <ArrowRight aria-hidden className="size-4" />
-            </Link>
-          </Card>
+          {profile.access.owner && (
+            <HubItem>
+              <Link href="/admin/platform" className="group flex items-center gap-4 rounded-xl border border-cyan/40 bg-midnight p-5 text-paper transition-colors hover:border-cyan sm:p-6">
+                <Gauge aria-hidden className="size-6 shrink-0 text-cyan" />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display text-xl">Platform dashboard</span>
+                  <span className="block text-sm text-paper/75">Site switches, view as anyone, who can do what, accounts and submissions</span>
+                </span>
+                <ArrowRight aria-hidden className="size-5 shrink-0 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </HubItem>
+          )}
+
+          {profile.access.committee && (
+            <HubItem>
+              <Link href="/admin" className="group flex items-center gap-4 rounded-xl bg-navy p-5 text-paper sm:p-6">
+                <LayoutDashboard aria-hidden className="size-6 shrink-0 text-cyan" />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display text-xl">Committee dashboard</span>
+                  <span className="block text-sm text-paper/75">Accounts, slides and posters, and editing the website</span>
+                </span>
+                <ArrowRight aria-hidden className="size-5 shrink-0 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </HubItem>
+          )}
+
+          {focus ? (
+            <HubItem>
+              <Card title="Your profile" icon={UserRound}>
+                <p className="text-slate-700">Check your details, add a short bio and LinkedIn, and tell us about any access or dietary needs.</p>
+                <Link href="/portal/profile" className={`${linkBtn} mt-4 w-full bg-navy text-paper sm:w-auto`}>
+                  Go to your profile <ArrowRight aria-hidden className="size-4" />
+                </Link>
+              </Card>
+            </HubItem>
+          ) : (
+            <div className="grid gap-5 sm:gap-6 2xl:grid-cols-2">
+              <HubItem>
+                <Card title="My agenda" icon={CalendarDays}>
+                  <SavedAgenda sessions={sessions} workshops={workshops} />
+                </Card>
+              </HubItem>
+              {(announcements?.length ?? 0) > 0 && (
+                <HubItem>
+                  <Card title="Announcements" icon={Megaphone}>
+                    <ul className="space-y-3">
+                      {announcements!.map((a) => (
+                        <li key={a.id} className="rounded-md bg-paper p-4">
+                          <p className="font-medium text-ink">{a.title}</p>
+                          {a.body && <p className="mt-1 text-sm text-slate-700">{a.body}</p>}
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                </HubItem>
+              )}
+              <HubItem>
+                <Card title="Access and dietary needs" icon={HeartHandshake}>
+                  <p className="text-slate-700">
+                    {needsGiven
+                      ? "Thank you. The committee has your details for the day."
+                      : "Tell us about anything that would make the day easier for you, such as step-free access, a quiet space or dietary needs."}
+                  </p>
+                  <Link href="/portal/profile#needs" className="mt-3 inline-flex min-h-11 items-center gap-2 font-semibold text-electric-600">
+                    {needsGiven ? "Review your details" : "Add your needs"} <ArrowRight aria-hidden className="size-4" />
+                  </Link>
+                </Card>
+              </HubItem>
+            </div>
+          )}
         </div>
-      )}
+
+        {lanyard && (
+          <aside aria-labelledby="lanyard-h" className="order-first xl:sticky xl:top-28 xl:order-last">
+            <h2 id="lanyard-h" className="sr-only">Your INSPIRE {edition.year} lanyard</h2>
+            <Lanyard
+              year={edition.year}
+              theme={edition.theme}
+              name={profile.fullName ?? profile.email}
+              detail={[profile.institution, profile.yearOfStudy].filter(Boolean).join(" · ") || null}
+              role={TONE[profile.accountType] ? ACCOUNT_TYPE_LABEL[profile.accountType] : profile.committeePosition || ACCOUNT_TYPE_LABEL[profile.accountType]}
+              tone={TONE[profile.accountType] ?? "committee"}
+              dateLabel={formatEventDate(edition.date, { weekday: "short", month: "short" })}
+              venue={edition.venueName}
+              qr={qr}
+              reference={ticket ? registration!.checkin_token.slice(0, 8).toUpperCase() : null}
+              checkedIn={Boolean(ticket && registration!.checked_in_at)}
+              previewNote={!switches.delegate_card ? "Only you can see this card for now. Turn on the Delegate card switch in the Platform dashboard to show it to everyone." : null}
+            />
+          </aside>
+        )}
+      </HubStagger>
     </div>
   );
 }
