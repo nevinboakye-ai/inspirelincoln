@@ -87,7 +87,7 @@ export default async function ConferencePage() {
             Venue, travel <span className="italic text-gold-300">and FAQs</span>
           </>
         }
-        intro="Everything you need to get to Lincoln Medical School and make the most of the day."
+        intro="Everything you need to get to the Brayford Pool campus and make the most of the day."
       >
         <dl className="mt-12 grid max-w-4xl gap-px overflow-hidden rounded-lg border border-white/10 bg-white/10 sm:grid-cols-3">
           {[
@@ -164,8 +164,9 @@ export default async function ConferencePage() {
                 team.
               </TravelCard>
               <TravelCard icon={MapPin} title="On the day">
-                Most of the day is in the Ross Lucas Medical Sciences Building. One group of oral presentations is in the Isaac
-                Newton Building. The campus map shows both, with rooms added as they are confirmed.
+                Registration and the main lecture theatre are in the Isaac Newton Building. One group of oral presentations is in
+                LMS005, in the Ross Lucas Medical Sciences Building. The campus map shows both, with rooms added as they are
+                confirmed.
               </TravelCard>
             </div>
           </div>
