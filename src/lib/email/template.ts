@@ -52,6 +52,9 @@ function stripTags(s: string) {
     .replace(/&#39;/g, "'");
 }
 
+/** Shown in every email so people know where to go if something goes wrong. */
+export const HELP_EMAIL = "inspiresoc@lincolnsu.com";
+
 export function renderEmail(c: EmailContent): { html: string; text: string } {
   const crest = `${c.siteUrl}/brand/crest-white.png`;
   const p = (html: string) =>
@@ -108,6 +111,12 @@ export function renderEmail(c: EmailContent): { html: string; text: string } {
         ${details}
         ${button}
         ${c.footnote ? `<p style="margin:0 0 24px;font-family:${SANS};font-size:13px;line-height:1.5;color:${C.slate};">${c.footnote}</p>` : ""}
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr>
+          <td style="background:${C.paper};border-left:3px solid ${C.navy};padding:14px 16px;font-family:${SANS};font-size:14px;line-height:1.5;color:${C.ink};">
+            <strong>Need help?</strong> If anything isn't working or you have a question, email us at
+            <a href="mailto:${HELP_EMAIL}" style="color:${C.navy};font-weight:600;">${HELP_EMAIL}</a> and we'll get back to you.
+          </td>
+        </tr></table>
       </td></tr>
       <tr><td style="background:${C.navy};padding:24px 32px;border-radius:0 0 3px 3px;">
         <p style="margin:0;font-family:${SERIF};font-style:italic;font-size:16px;color:${C.paper};">Digital Health: From Innovation to Evidence</p>
@@ -134,6 +143,8 @@ export function renderEmail(c: EmailContent): { html: string; text: string } {
     ...(c.details?.length ? [""] : []),
     ...(c.cta ? [`${c.cta.label}: ${c.cta.url}`, ""] : []),
     ...(c.footnote ? [stripTags(c.footnote), ""] : []),
+    `Need help? If anything isn't working or you have a question, email us at ${HELP_EMAIL} and we'll get back to you.`,
+    "",
     "Saturday 21 November 2026, Lincoln Medical School, University of Lincoln",
     `${c.siteUrl}  ·  Privacy: ${c.siteUrl}/privacy`,
   ].join("\n");
