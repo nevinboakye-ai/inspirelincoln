@@ -10,7 +10,7 @@ import { PersonDetailsForm } from "@/components/admin/person-forms";
 import { ViewAsButton } from "@/components/admin/view-as";
 import { Badge } from "@/components/ui/badge";
 import { Notice } from "@/components/ui/notice";
-import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, COMMITTEE_TYPES, SUBMISSION_LABEL, SUBMISSION_STATUS_LABEL } from "@/lib/accounts";
+import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, COMMITTEE_TYPES, SUBMISSION_LABEL, SUBMISSION_STATUS_LABEL, rolesLabel, rolesOf } from "@/lib/accounts";
 import { emailConfigured } from "@/lib/email/resend";
 import type { AccountStatus, AccountType, SubmissionKind, SubmissionStatus } from "@/lib/types";
 
@@ -37,7 +37,8 @@ export default async function PersonPage({ params, searchParams }: { params: Pro
   const { data: p } = await db
     .from("profiles")
     .select(
-      "id, role, email, full_name, institution, programme, year_of_study, career_stage, committee_position, presentation_title, heard_about, account_type, account_status, review_note, reviewed_at, created_at, photo_opt_out, marketing_opt_in, bio, linkedin_url",
+      // "*" also brings extra_types once setup file 21 has been run.
+      "*",
     )
     .eq("id", id)
     .maybeSingle();
@@ -57,6 +58,7 @@ export default async function PersonPage({ params, searchParams }: { params: Pro
   ]);
 
   const type = p.account_type as AccountType;
+  const extra = (p.extra_types ?? []) as AccountType[];
   const status = p.account_status as AccountStatus;
   const st = ACCOUNT_STATUS_LABEL[status];
   const name = p.full_name || p.email;
@@ -75,7 +77,9 @@ export default async function PersonPage({ params, searchParams }: { params: Pro
             {ownerAccount ? (
               <Badge tone="violet"><Crown aria-hidden className="size-3" /> Site owner</Badge>
             ) : (
-              <Badge tone="violet">{ACCOUNT_TYPE_LABEL[type]}</Badge>
+              rolesOf(type, extra).map((t) => (
+                <Badge key={t} tone="violet">{ACCOUNT_TYPE_LABEL[t]}</Badge>
+              ))
             )}
             <Badge tone={st.tone}>{st.label}</Badge>
             {p.id === user.id && <Badge>You</Badge>}
@@ -124,7 +128,7 @@ export default async function PersonPage({ params, searchParams }: { params: Pro
                     presentationTitle: p.presentation_title,
                   }}
                   canChangeEmail={profile.access.owner}
-                  committee={COMMITTEE_TYPES.includes(type)}
+                  committee={rolesOf(type, extra).some((t) => COMMITTEE_TYPES.includes(t))}
                 />
               )}
             </Panel>
@@ -132,11 +136,11 @@ export default async function PersonPage({ params, searchParams }: { params: Pro
 
           {!locked && (
             <section id="type" className="scroll-mt-28">
-              <Panel title="Account type">
+              <Panel title="Roles">
                 <p className="-mt-2 mb-4 text-sm text-slate-700">
-                  Move {name.split(" ")[0]} between delegate, presenter, the supporting committee teams and the executive committee. Their approval stays as it is.
+                  Give {name.split(" ")[0]} every role they hold, such as vice president and Academic Team, or a committee member who is also presenting a poster. Their approval stays as it is.
                 </p>
-                <AccountTypePicker id={p.id} type={type} status={status} canLead={profile.access.leadership} name={name} />
+                <AccountTypePicker id={p.id} type={type} extra={extra} status={status} canLead={profile.access.leadership} name={name} />
               </Panel>
             </section>
           )}
@@ -144,7 +148,7 @@ export default async function PersonPage({ params, searchParams }: { params: Pro
           <section id="decision" className="scroll-mt-28">
             <Panel title="Account decision">
               <p className="mb-4 text-sm text-slate-700">
-                Currently <strong className="text-ink">{st.label.toLowerCase()}</strong> as {ACCOUNT_TYPE_LABEL[type].toLowerCase()}.
+                Currently <strong className="text-ink">{st.label.toLowerCase()}</strong> as {rolesLabel(rolesOf(type, extra)).toLowerCase()}.
                 {p.review_note ? ` Last note: “${p.review_note}”` : ""}
                 {p.reviewed_at ? ` (${when(p.reviewed_at)}).` : ""}
               </p>
@@ -168,7 +172,7 @@ export default async function PersonPage({ params, searchParams }: { params: Pro
                   key={p.email}
                   people={[]}
                   locked
-                  initial={{ email: p.email.toLowerCase(), full_name: p.full_name, detail: [p.institution, ACCOUNT_TYPE_LABEL[type]].filter(Boolean).join(" · "), joined: true }}
+                  initial={{ email: p.email.toLowerCase(), full_name: p.full_name, detail: [p.institution, rolesLabel(rolesOf(type, extra))].filter(Boolean).join(" · "), joined: true }}
                 />
                 {(emails?.length ?? 0) > 0 && (
                   <div className="mt-6 border-t border-navy/10 pt-4">

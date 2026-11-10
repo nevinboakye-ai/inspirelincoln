@@ -3,7 +3,7 @@ import { submitWithoutReset } from "@/lib/use-action-form";
 import { useActionState, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { deleteAccount, saveNeeds, setPreference, updateProfile, type ActionResult } from "@/app/portal/actions";
-import { CAREER_STAGES, COMMITTEE_TYPES, submissionKindFor } from "@/lib/accounts";
+import { CAREER_STAGES, COMMITTEE_TYPES, hasRole, presenterKindOf } from "@/lib/accounts";
 import { Field, inputClass } from "@/components/forms/field";
 import type { Profile } from "@/lib/auth";
 
@@ -17,8 +17,8 @@ export function ResultBanner({ state }: { state: ActionResult }) {
 export function ProfileForm({ profile }: { profile: Profile }) {
   const [state, action, pending] = useActionState(updateProfile, null);
   const fe = (k: string) => state?.fieldErrors?.[k];
-  const committee = COMMITTEE_TYPES.includes(profile.accountType);
-  const presenter = Boolean(submissionKindFor(profile.accountType));
+  const committee = hasRole(profile, ...COMMITTEE_TYPES);
+  const presenter = Boolean(presenterKindOf(profile));
   return (
     <form onSubmit={submitWithoutReset(action)} noValidate className="space-y-5">
       <ResultBanner state={state} />

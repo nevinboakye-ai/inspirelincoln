@@ -7,7 +7,7 @@ import { formatEventDate } from "@/lib/time";
 import { Badge } from "@/components/ui/badge";
 import { SubmissionUpload } from "@/components/portal/submission-upload";
 import { FeedbackThread } from "@/components/portal/submission-ui";
-import { ACCOUNT_STATUS_LABEL, SUBMISSION_FILES, SUBMISSION_LABEL, SUBMISSION_STATUS_LABEL, submissionKindFor } from "@/lib/accounts";
+import { ACCOUNT_STATUS_LABEL, SUBMISSION_FILES, SUBMISSION_LABEL, SUBMISSION_STATUS_LABEL, presenterKindOf } from "@/lib/accounts";
 import type { SubmissionStatus } from "@/lib/types";
 
 export const metadata: Metadata = { title: "My submission" };
@@ -17,7 +17,7 @@ const when = (d: string) => new Date(d).toLocaleString("en-GB", { timeZone: "Eur
 
 export default async function SubmissionPage() {
   const { db, user, profile } = await requireUser("/portal/submission");
-  const kind = submissionKindFor(profile.accountType);
+  const kind = presenterKindOf(profile);
 
   if (!kind) {
     return (

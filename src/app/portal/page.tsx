@@ -32,7 +32,10 @@ import {
   ACCOUNT_TYPE_LABEL,
   SUBMISSION_LABEL,
   SUBMISSION_STATUS_LABEL,
-  submissionKindFor,
+  hasRole,
+  presenterKindOf,
+  rolesLabel,
+  rolesOf,
 } from "@/lib/accounts";
 import type { AccountType, SubmissionStatus } from "@/lib/types";
 
@@ -83,7 +86,7 @@ export default async function PortalHome({
   const focus =
     !switches.site_open && !profile.access.committee && !profile.access.owner;
   const { edition, sessions, workshops } = await getConferenceBundle();
-  const kind = submissionKindFor(profile.accountType);
+  const kind = presenterKindOf(profile);
   const status = profile.accountStatus;
   // Approved oral and poster presenters confirm whether they'll be there to present.
   const presenting = Boolean(kind) && status === "approved";
@@ -176,7 +179,7 @@ export default async function PortalHome({
         <Notice tone="warning">You don&apos;t have access to that area.</Notice>
       )}
       {sp.password && <Notice>Your password has been updated.</Notice>}
-      {profile.accountType === "oral_waitlist" && status === "approved" && (
+      {hasRole(profile, "oral_waitlist") && status === "approved" && (
         <Notice title="You're on the waiting list for an oral presentation">
           Your delegate place is confirmed. If a presentation slot opens up, the committee will be in touch and your hub will change to let you upload your slides.
         </Notice>
@@ -201,7 +204,7 @@ export default async function PortalHome({
           <img src="/brand/crest-white.png" alt="" aria-hidden className="pointer-events-none absolute -bottom-12 -right-8 h-56 w-auto opacity-[0.06]" />
           <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="min-w-0">
-              <p className="eyebrow text-gold">{ACCOUNT_TYPE_LABEL[profile.accountType]} · INSPIRE {edition.year}</p>
+              <p className="eyebrow text-gold">{rolesLabel(rolesOf(profile.accountType, profile.extraTypes))} · INSPIRE {edition.year}</p>
               <h1 className="mt-3 font-display text-4xl leading-[1.05] sm:text-5xl">
                 <MaskRise onMount>Hello{firstName ? `, ${firstName}` : ""}</MaskRise>
               </h1>

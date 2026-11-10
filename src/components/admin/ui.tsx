@@ -42,7 +42,7 @@ export function Flash({ children }: { children: ReactNode }) {
 
 export function Table({ head, children, empty }: { head: string[]; children: ReactNode; empty?: ReactNode }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-navy/10 bg-white">
+    <div className="relative overflow-x-auto rounded-xl border border-navy/10 bg-white">
       <table className="w-full min-w-[640px] text-left text-sm">
         <thead className="border-b border-navy/10 bg-paper text-xs uppercase tracking-wider text-slate">
           <tr>{head.map((h) => <th key={h} scope="col" className="px-4 py-3 font-semibold">{h}</th>)}</tr>

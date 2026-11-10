@@ -25,7 +25,7 @@ export default async function SelectedPersonPage({ params }: { params: Promise<{
 
   const { data: r } = await db
     .from("delegate_roster")
-    .select("id, email, full_name, institution, year_of_study, account_type, presentation_title, note, added_at")
+    .select("*")
     .eq("id", id)
     .maybeSingle();
   if (!r) notFound();
@@ -77,6 +77,7 @@ export default async function SelectedPersonPage({ params }: { params: Promise<{
                 institution: r.institution,
                 yearOfStudy: r.year_of_study,
                 accountType: r.account_type,
+                extraTypes: r.extra_types ?? [],
                 presentationTitle: r.presentation_title,
                 note: r.note,
               }}

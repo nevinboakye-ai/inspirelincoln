@@ -5,7 +5,7 @@ import { addRosterEntry } from "@/app/admin/people-actions";
 import { submitWithoutReset } from "@/lib/use-action-form";
 import { Field, inputClass } from "@/components/forms/field";
 import { ResultBanner } from "@/components/portal/profile-forms";
-import { TypeOptions } from "./type-select";
+import { RoleCheckboxes } from "./roles";
 
 export function RosterAddForm({ canLead }: { canLead: boolean }) {
   const [state, action, pending] = useActionState(addRosterEntry, null);
@@ -25,11 +25,12 @@ export function RosterAddForm({ canLead }: { canLead: boolean }) {
       <Field id="r-year" label="Year">
         <input id="r-year" name="year" placeholder="e.g. Year 2" className={inputClass} />
       </Field>
-      <Field id="r-type" label="Type">
-        <select id="r-type" name="accountType" defaultValue="delegate" className={inputClass}>
-          <TypeOptions canLead={canLead} />
-        </select>
-      </Field>
+      <fieldset className="sm:col-span-2">
+        <legend className="mb-2 block text-sm font-semibold text-ink">
+          Roles <span className="text-danger">*</span>
+        </legend>
+        <RoleCheckboxes initial={["delegate"]} canLead={canLead} compact />
+      </fieldset>
       <div className="flex items-end">
         <button type="submit" disabled={pending} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[3px] bg-navy px-6 font-ui font-semibold text-paper hover:bg-navy-700 disabled:opacity-60">
           {pending && <Loader2 aria-hidden className="size-4 animate-spin" />} Add to the list

@@ -4,9 +4,9 @@ import { ArrowRight, Mail } from "lucide-react";
 import { requireAccess } from "@/lib/auth";
 import { AdminHeader } from "@/components/admin/ui";
 import { AccountReviewForm } from "@/components/admin/committee-forms";
-import { InlineTypeSelect } from "@/components/admin/type-select";
+import { RolesButton } from "@/components/admin/roles";
 import { Badge } from "@/components/ui/badge";
-import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_GROUPS, ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES } from "@/lib/accounts";
+import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_GROUPS, ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES, rolesOf } from "@/lib/accounts";
 import type { AccountStatus, AccountType } from "@/lib/types";
 import { cn } from "@/lib/cn";
 
@@ -44,15 +44,21 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
 
   let q = db
     .from("profiles")
-    .select("id, role, email, full_name, institution, programme, career_stage, committee_position, presentation_title, heard_about, account_type, account_status, review_note, reviewed_at, created_at, photo_opt_out")
+    // "*" also brings extra_types once setup file 21 has been run.
+    .select("*")
     .order(DECIDING.includes(status) ? "created_at" : "full_name", { ascending: true })
     .limit(2000);
   if (status !== "all") q = q.eq("account_status", status);
-  if (type) q = q.eq("account_type", type);
   const { data } = await q;
   const canEmail = profile.access.can.send_email;
   const term = sp.q?.trim().toLowerCase();
-  const rows = (data ?? []).filter((p) => !term || [p.full_name, p.email, p.institution, p.committee_position].some((v) => v?.toLowerCase().includes(term)));
+  const rolesFor = (p: { account_type: string; extra_types?: string[] | null }) => rolesOf(p.account_type as AccountType, (p.extra_types ?? []) as AccountType[]);
+  // A type filter matches anyone who holds that role, as their main role or an extra one.
+  const rows = (data ?? []).filter(
+    (p) =>
+      (!type || rolesFor(p).includes(type)) &&
+      (!term || [p.full_name, p.email, p.institution, p.committee_position].some((v) => v?.toLowerCase().includes(term))),
+  );
 
   const canLead = profile.access.leadership;
   /** The owner's account is only changed by the owner, and only leadership changes their own type. */
@@ -64,7 +70,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
     <div className="space-y-6">
       <AdminHeader
         title="Accounts"
-        description="Everyone who registers appears here first. Approving an account confirms their place and switches on presenter or committee access. Change anyone's account type from its dropdown. It saves straight away. Select a name to edit their details or email them."
+        description="Everyone who registers appears here first. Approving an account confirms their place and switches on presenter or committee access. Use the roles button to give anyone one or more roles, for example vice president and Academic Team. Select a name to edit their details or email them."
       />
 
       <nav aria-label="Account status" className="-mx-4 overflow-x-auto px-4">
@@ -95,7 +101,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
 
       {roster && (
         <p className="text-sm text-slate-700">
-          {roster.length} people are on the selected delegate list. They appear here, already approved, once they set up their account. You can set their account type before then, including committee teams.{" "}
+          {roster.length} people are on the selected delegate list. They appear here, already approved, once they set up their account. You can set their roles before then, including committee teams.{" "}
           <Link href="/admin/accounts/roster" className="font-semibold text-electric-600 underline underline-offset-4">See the full list</Link>
         </p>
       )}
@@ -136,9 +142,9 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     {canChange(p) ? (
-                      <InlineTypeSelect id={p.id} type={t} kind="account" canLead={canLead} name={p.full_name || p.email} />
+                      <RolesButton id={p.id} kind="account" main={t} extra={p.extra_types} canLead={canLead} name={p.full_name || p.email} />
                     ) : (
-                      <Badge tone="violet">{ACCOUNT_TYPE_LABEL[t]}</Badge>
+                      rolesFor(p).map((r) => <Badge key={r} tone="violet">{ACCOUNT_TYPE_LABEL[r]}</Badge>)
                     )}
                     <Badge tone={s.tone}>{s.label}</Badge>
                   </div>
@@ -186,14 +192,14 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
         </ul>
       ) : (
         rows.length > 0 && (
-          <div className="overflow-x-auto rounded-xl border border-navy/10 bg-white">
+          <div className="relative overflow-x-auto rounded-xl border border-navy/10 bg-white">
             <table className="w-full min-w-[40rem] text-left text-sm">
-              <caption className="sr-only">{TABS.find((t) => t.status === status)?.label}, {rows.length} shown. Change anyone&apos;s type with its dropdown, or select a name to see and edit their account.</caption>
+              <caption className="sr-only">{TABS.find((t) => t.status === status)?.label}, {rows.length} shown. Change anyone&apos;s roles with the button in the Roles column, or select a name to see and edit their account.</caption>
               <thead className="border-b border-navy/10 bg-paper text-xs uppercase tracking-wide text-slate">
                 <tr>
                   <th scope="col" className="px-4 py-3 font-semibold">Name</th>
                   <th scope="col" className="px-4 py-3 font-semibold">University</th>
-                  <th scope="col" className="px-4 py-3 font-semibold">Type</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Roles</th>
                   {status === "all" && <th scope="col" className="px-4 py-3 font-semibold">Status</th>}
                   <th scope="col" className="px-4 py-3"><span className="sr-only">Actions</span></th>
                 </tr>
@@ -213,9 +219,11 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
                       <td className="px-4 py-3 text-slate-700">{p.institution}</td>
                       <td className="px-4 py-3">
                         {canChange(p) ? (
-                          <InlineTypeSelect id={p.id} type={p.account_type as AccountType} kind="account" canLead={canLead} name={p.full_name || p.email} />
+                          <RolesButton id={p.id} kind="account" main={p.account_type as AccountType} extra={p.extra_types} canLead={canLead} name={p.full_name || p.email} />
                         ) : (
-                          <Badge tone={p.account_type === "delegate" ? "neutral" : "violet"}>{ACCOUNT_TYPE_LABEL[p.account_type as AccountType]}</Badge>
+                          <span className="flex flex-wrap gap-1">
+                            {rolesFor(p).map((r) => <Badge key={r} tone={r === "delegate" ? "neutral" : "violet"}>{ACCOUNT_TYPE_LABEL[r]}</Badge>)}
+                          </span>
                         )}
                         {p.committee_position && <span className="mt-1 block text-xs text-slate">{p.committee_position}</span>}
                       </td>

@@ -3,26 +3,26 @@ import { requireAccess } from "@/lib/auth";
 import { AdminHeader } from "@/components/admin/ui";
 import { Badge } from "@/components/ui/badge";
 import { RosterAddForm } from "@/components/admin/roster-form";
-import { InlineTypeSelect } from "@/components/admin/type-select";
+import { RolesButton } from "@/components/admin/roles";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { ACCOUNT_TYPE_LABEL } from "@/lib/accounts";
+import { ACCOUNT_TYPE_LABEL, rolesOf } from "@/lib/accounts";
 import type { AccountType } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Selected delegates" };
 export const dynamic = "force-dynamic";
 
-type Row = { id: string; email: string; full_name: string; institution: string | null; year_of_study: string | null; account_type: AccountType; presentation_title: string | null; note: string | null };
+type Row = { id: string; email: string; full_name: string; institution: string | null; year_of_study: string | null; account_type: AccountType; presentation_title: string | null; note: string | null; extra_types?: AccountType[] | null };
 
 export default async function RosterPage({ searchParams }: { searchParams: Promise<{ q?: string; show?: string; removed?: string }> }) {
   const sp = await searchParams;
   const { db, user, profile } = await requireAccess("review_accounts", "/admin/accounts/roster");
   const canLead = profile.access.leadership;
   const [{ data, error }, { data: accounts }] = await Promise.all([
-    db.from("delegate_roster").select("id, email, full_name, institution, year_of_study, account_type, presentation_title, note").order("full_name").limit(2000),
-    db.from("profiles").select("id, email, account_type, role").limit(5000),
+    db.from("delegate_roster").select("*").order("full_name").limit(2000),
+    db.from("profiles").select("*").limit(5000),
   ]);
-  type Account = { id: string; email: string; account_type: AccountType; role: string | null };
+  type Account = { id: string; email: string; account_type: AccountType; extra_types?: AccountType[] | null; role: string | null };
   const byEmail = new Map(((accounts ?? []) as Account[]).map((a) => [a.email.toLowerCase(), a]));
   const accountId = new Map([...byEmail].map(([e, a]) => [e, a.id]));
   const joined = new Set(accountId.keys());
@@ -41,7 +41,7 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
       <AdminHeader
         back={{ href: "/admin/accounts", label: "Accounts" }}
         title="Selected delegates"
-        description="People on this list are approved as soon as they set up their account with this email, so they never wait for review. Set anyone's account type from its dropdown, including committee teams, and they'll have it from the moment they sign up. Anyone else who registers still appears in Accounts for review."
+        description="People on this list are approved as soon as they set up their account with this email, so they never wait for review. Give anyone one or more roles from the Roles column, including committee teams, and they'll have them from the moment they sign up. Anyone else who registers still appears in Accounts for review."
       />
 
       {sp.removed && <p role="status" className="rounded-md border border-success/25 bg-success/[0.06] p-4 text-sm font-medium text-success">Removed from the selected list.</p>}
@@ -82,14 +82,14 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
             <button className="min-h-11 rounded-[3px] border border-navy/15 bg-white px-4 text-sm font-semibold text-ink">Filter</button>
           </form>
 
-          <div className="overflow-x-auto rounded-xl border border-navy/10 bg-white">
+          <div className="relative overflow-x-auto rounded-xl border border-navy/10 bg-white">
             <table className="w-full min-w-[44rem] text-left text-sm">
-              <caption className="sr-only">Selected delegates, {rows.length} shown. Each type dropdown saves as soon as you change it.</caption>
+              <caption className="sr-only">Selected delegates, {rows.length} shown. Each roles button opens a dialog to change that person&apos;s roles.</caption>
               <thead className="border-b border-navy/10 bg-paper text-xs uppercase tracking-wide text-slate">
                 <tr>
                   <th scope="col" className="px-4 py-3 font-semibold">Name</th>
                   <th scope="col" className="px-4 py-3 font-semibold">University and year</th>
-                  <th scope="col" className="px-4 py-3 font-semibold">Type</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Roles</th>
                   <th scope="col" className="px-4 py-3 font-semibold">Account</th>
                   <th scope="col" className="px-4 py-3"><span className="sr-only">Actions</span></th>
                 </tr>
@@ -109,11 +109,13 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
                         // Once they've signed up, the dropdown changes their account rather than the list entry.
                         if (a)
                           return (a.role !== "admin" || profile.access.owner) && (a.id !== user.id || canLead) ? (
-                            <InlineTypeSelect id={a.id} type={a.account_type} kind="account" canLead={canLead} name={r.full_name} />
+                            <RolesButton id={a.id} kind="account" main={a.account_type} extra={a.extra_types} canLead={canLead} name={r.full_name} />
                           ) : (
-                            <Badge tone="violet">{ACCOUNT_TYPE_LABEL[a.account_type]}</Badge>
+                            <span className="flex flex-wrap gap-1">
+                              {rolesOf(a.account_type, a.extra_types).map((t) => <Badge key={t} tone="violet">{ACCOUNT_TYPE_LABEL[t]}</Badge>)}
+                            </span>
                           );
-                        return <InlineTypeSelect id={r.id} type={r.account_type} kind="roster" canLead={canLead} name={r.full_name} />;
+                        return <RolesButton id={r.id} kind="roster" main={r.account_type} extra={r.extra_types} canLead={canLead} name={r.full_name} />;
                       })()}
                       {r.presentation_title && <span className="mt-1 block max-w-xs text-xs text-slate">{r.presentation_title}</span>}
                     </td>

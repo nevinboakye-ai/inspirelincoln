@@ -21,6 +21,8 @@ export interface Profile {
   photoOptOut: boolean;
   marketingOptIn: boolean;
   accountType: AccountType;
+  /** Roles held as well as the main one, for example a committee member who is also presenting. */
+  extraTypes: AccountType[];
   accountStatus: AccountStatus;
   reviewNote: string | null;
   bio: string | null;
@@ -71,6 +73,7 @@ export const getCurrentUser = cache(async () => {
     photoOptOut: Boolean(p?.photo_opt_out),
     marketingOptIn: Boolean(p?.marketing_opt_in),
     accountType: base.accountType,
+    extraTypes: (((p?.extra_types as AccountType[] | null) ?? []) as AccountType[]).filter((t) => t !== base.accountType),
     accountStatus: base.accountStatus,
     reviewNote: p?.review_note ?? null,
     bio: p?.bio ?? null,
