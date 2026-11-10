@@ -4,6 +4,7 @@ import { ArrowRight, Mail } from "lucide-react";
 import { requireAccess } from "@/lib/auth";
 import { AdminHeader } from "@/components/admin/ui";
 import { AccountReviewForm } from "@/components/admin/committee-forms";
+import { InlineTypeSelect } from "@/components/admin/type-select";
 import { Badge } from "@/components/ui/badge";
 import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_GROUPS, ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES } from "@/lib/accounts";
 import type { AccountStatus, AccountType } from "@/lib/types";
@@ -53,13 +54,17 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
   const term = sp.q?.trim().toLowerCase();
   const rows = (data ?? []).filter((p) => !term || [p.full_name, p.email, p.institution, p.committee_position].some((v) => v?.toLowerCase().includes(term)));
 
+  const canLead = profile.access.leadership;
+  /** The owner's account is only changed by the owner, and only leadership changes their own type. */
+  const canChange = (p: { id: string; role: string | null }) => (p.role !== "admin" || profile.access.owner) && (p.id !== user.id || canLead);
+
   const href = (s: Tab, t: AccountType | null = type) => `/admin/accounts?status=${s}${t ? `&type=${t}` : ""}`;
 
   return (
     <div className="space-y-6">
       <AdminHeader
         title="Accounts"
-        description="Everyone who registers appears here first. Approving an account confirms their place and switches on presenter or committee access. Select anyone's name to edit their details, change their account or email them."
+        description="Everyone who registers appears here first. Approving an account confirms their place and switches on presenter or committee access. Change anyone's account type from its dropdown. It saves straight away. Select a name to edit their details or email them."
       />
 
       <nav aria-label="Account status" className="-mx-4 overflow-x-auto px-4">
@@ -90,7 +95,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
 
       {roster && (
         <p className="text-sm text-slate-700">
-          {roster.length} people are on the selected delegate list. They appear here, already approved, once they set up their account.{" "}
+          {roster.length} people are on the selected delegate list. They appear here, already approved, once they set up their account. You can set their account type before then, including committee teams.{" "}
           <Link href="/admin/accounts/roster" className="font-semibold text-electric-600 underline underline-offset-4">See the full list</Link>
         </p>
       )}
@@ -129,8 +134,12 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
                     </p>
                     <p className="mt-0.5 break-all text-sm text-slate-700">{p.email}</p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge tone="violet">{ACCOUNT_TYPE_LABEL[t]}</Badge>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {canChange(p) ? (
+                      <InlineTypeSelect id={p.id} type={t} kind="account" canLead={canLead} name={p.full_name || p.email} />
+                    ) : (
+                      <Badge tone="violet">{ACCOUNT_TYPE_LABEL[t]}</Badge>
+                    )}
                     <Badge tone={s.tone}>{s.label}</Badge>
                   </div>
                 </div>
@@ -158,7 +167,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
                   {p.role === "admin" && !profile.access.owner ? (
                     <p className="text-sm text-slate-700">This is the site owner&apos;s account. Only the site owner can change it.</p>
                   ) : (
-                    <AccountReviewForm id={p.id} type={t} status={p.account_status as AccountStatus} canLead={profile.access.leadership} name={p.full_name || p.email} />
+                    <AccountReviewForm key={t} id={p.id} type={t} status={p.account_status as AccountStatus} canLead={profile.access.leadership} name={p.full_name || p.email} />
                   )}
                 </div>
                 <p className="mt-4 flex flex-wrap gap-x-5 text-sm">
@@ -179,7 +188,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
         rows.length > 0 && (
           <div className="overflow-x-auto rounded-xl border border-navy/10 bg-white">
             <table className="w-full min-w-[40rem] text-left text-sm">
-              <caption className="sr-only">{TABS.find((t) => t.status === status)?.label}, {rows.length} shown. Select a name to see and edit their account.</caption>
+              <caption className="sr-only">{TABS.find((t) => t.status === status)?.label}, {rows.length} shown. Change anyone&apos;s type with its dropdown, or select a name to see and edit their account.</caption>
               <thead className="border-b border-navy/10 bg-paper text-xs uppercase tracking-wide text-slate">
                 <tr>
                   <th scope="col" className="px-4 py-3 font-semibold">Name</th>
@@ -203,7 +212,11 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
                       </td>
                       <td className="px-4 py-3 text-slate-700">{p.institution}</td>
                       <td className="px-4 py-3">
-                        <Badge tone={p.account_type === "delegate" ? "neutral" : "violet"}>{ACCOUNT_TYPE_LABEL[p.account_type as AccountType]}</Badge>
+                        {canChange(p) ? (
+                          <InlineTypeSelect id={p.id} type={p.account_type as AccountType} kind="account" canLead={canLead} name={p.full_name || p.email} />
+                        ) : (
+                          <Badge tone={p.account_type === "delegate" ? "neutral" : "violet"}>{ACCOUNT_TYPE_LABEL[p.account_type as AccountType]}</Badge>
+                        )}
                         {p.committee_position && <span className="mt-1 block text-xs text-slate">{p.committee_position}</span>}
                       </td>
                       {status === "all" && <td className="px-4 py-3"><Badge tone={s.tone}>{s.label}</Badge></td>}

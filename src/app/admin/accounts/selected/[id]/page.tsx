@@ -80,6 +80,7 @@ export default async function SelectedPersonPage({ params }: { params: Promise<{
                 presentationTitle: r.presentation_title,
                 note: r.note,
               }}
+              canLead={profile.access.leadership}
             />
           </Panel>
 

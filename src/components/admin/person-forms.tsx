@@ -5,7 +5,9 @@ import { updatePerson, updateRosterPerson } from "@/app/admin/person-actions";
 import { ResultBanner } from "@/components/portal/profile-forms";
 import { Field, describedBy, inputClass } from "@/components/forms/field";
 import { submitWithoutReset } from "@/lib/use-action-form";
-import { CAREER_STAGES, type RosterType } from "@/lib/accounts";
+import { CAREER_STAGES } from "@/lib/accounts";
+import type { AccountType } from "@/lib/types";
+import { TypeOptions } from "./type-select";
 import { btn } from "./ui";
 
 type PersonDetails = {
@@ -88,13 +90,13 @@ type RosterDetails = {
   email: string;
   institution: string | null;
   yearOfStudy: string | null;
-  accountType: RosterType;
+  accountType: AccountType;
   presentationTitle: string | null;
   note: string | null;
 };
 
 /** Edit someone on the selected list before they set up their account. */
-export function RosterPersonForm({ person }: { person: RosterDetails }) {
+export function RosterPersonForm({ person, canLead }: { person: RosterDetails; canLead: boolean }) {
   const [state, action, pending] = useActionState(updateRosterPerson, null);
   const fe = (k: string) => state?.fieldErrors?.[k];
   return (
@@ -116,12 +118,9 @@ export function RosterPersonForm({ person }: { person: RosterDetails }) {
         />
         <Input id="r-inst" name="institution" label="University" value={person.institution} error={fe("institution")} max={160} />
         <Input id="r-year" name="yearOfStudy" label="Year" value={person.yearOfStudy} error={fe("yearOfStudy")} max={40} />
-        <Field id="r-type" label="Type" required>
-          <select id="r-type" name="accountType" defaultValue={person.accountType} className={inputClass}>
-            <option value="delegate">Delegate</option>
-            <option value="poster_presenter">Poster presenter</option>
-            <option value="oral_presenter">Oral presenter</option>
-            <option value="oral_waitlist">Oral waiting list</option>
+        <Field id="r-type" label="Account type" required error={fe("accountType")} hint="The type they'll have when they set up their account.">
+          <select id="r-type" name="accountType" defaultValue={person.accountType} aria-describedby={describedBy("r-type", fe("accountType"), true)} className={inputClass}>
+            <TypeOptions canLead={canLead} current={person.accountType} />
           </select>
         </Field>
         <Input id="r-title" name="presentationTitle" label="Presentation title" value={person.presentationTitle} error={fe("presentationTitle")} max={300} />
