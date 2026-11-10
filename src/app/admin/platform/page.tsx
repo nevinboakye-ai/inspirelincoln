@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
-  ArrowRight, CalendarCog, Crown, FileStack, History, Mail, Search, Settings2, ShieldCheck, SlidersHorizontal, UserCheck, UserCog, Users,
+  Activity, ArrowRight, BarChart3, CalendarCog, Crown, FileStack, History, Mail, Search, Settings2, ShieldCheck, SlidersHorizontal, UserCheck, UserCog, Users,
 } from "lucide-react";
 import { requireAccess } from "@/lib/auth";
 import { getSwitches, SWITCHES, type SwitchKey } from "@/lib/switches";
@@ -146,6 +146,8 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
       <section aria-labelledby="shortcuts" className="space-y-3">
         <h2 id="shortcuts" className="font-display text-xl text-ink">Edit and review</h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <Shortcut href="/admin/platform/activity" icon={Activity} title="Sign-in activity" note="When each person last signed in and was last active" />
+          <Shortcut href="/admin/platform/metrics" icon={BarChart3} title="Website metrics" note="Visits, visitors, top pages, where people come from" />
           <Shortcut href="/admin/content/committee" icon={Users} title="Committee profiles" note="Names, roles, photos and biographies on the About page" />
           <Shortcut href="/admin/accounts" icon={UserCheck} title="Accept accounts" note="Approve, waitlist or decline new registrations" />
           <Shortcut href="/admin/submissions" icon={FileStack} title="Review submissions" note="Slides and posters, with feedback to presenters" />

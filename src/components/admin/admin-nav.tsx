@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarCog, ClipboardCheck, Eye, FileStack, Gauge, HelpCircle, Inbox, Mail, MapPin, Megaphone, Mic, QrCode, ScrollText, Settings2,
-  Ticket, UserCheck, CalendarCheck2, Users, Wrench, DoorOpen, ShieldCheck, UserRound, LayoutDashboard,
+  Ticket, UserCheck, CalendarCheck2, Users, Wrench, DoorOpen, ShieldCheck, UserRound, LayoutDashboard, Activity, BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Access, Capability } from "@/lib/accounts";
@@ -14,7 +14,11 @@ type LinkDef = { href: string; label: string; icon: typeof Gauge; need?: Need };
 const GROUPS: { title: string; links: LinkDef[] }[] = [
   {
     title: "Platform",
-    links: [{ href: "/admin/platform", label: "Platform dashboard", icon: LayoutDashboard, need: "owner" }],
+    links: [
+      { href: "/admin/platform", label: "Platform dashboard", icon: LayoutDashboard, need: "owner" },
+      { href: "/admin/platform/activity", label: "Sign-in activity", icon: Activity, need: "owner" },
+      { href: "/admin/platform/metrics", label: "Website metrics", icon: BarChart3, need: "owner" },
+    ],
   },
   {
     title: "Today",
@@ -62,6 +66,10 @@ export function AdminNav({ access, name, position }: { access: Access; name: str
   const path = usePathname();
   const allowed = (l: LinkDef) =>
     !l.need || access.owner || (l.need !== "owner" && (Array.isArray(l.need) ? l.need : [l.need]).some((c) => access.can[c]));
+  // The most specific link that matches the page is the current one.
+  const current = GROUPS.flatMap((g) => g.links)
+    .filter((l) => (l.href === "/admin" ? path === "/admin" : path === l.href || path.startsWith(`${l.href}/`)))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
   return (
     <nav aria-label="Committee dashboard" className="min-w-0 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
       <div className="mb-5 flex items-center gap-3">
@@ -82,7 +90,7 @@ export function AdminNav({ access, name, position }: { access: Access; name: str
               <p className="mb-1 px-3 font-ui text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate">{g.title}</p>
               <ul className="flex gap-1 lg:flex-col">
                 {links.map((l) => {
-                  const active = l.href === "/admin" ? path === "/admin" : path.startsWith(l.href);
+                  const active = l.href === current;
                   return (
                     <li key={l.href} className="shrink-0">
                       <Link

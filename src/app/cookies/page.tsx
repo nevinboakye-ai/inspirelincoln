@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/layout/legal-page";
+import Link from "next/link";
 
 export const metadata: Metadata = { title: "Cookie policy", alternates: { canonical: "/cookies" } };
 
 export default function CookiesPage() {
   return (
     <LegalPage title="Cookie policy" updated="10 November 2026">
-      <p>This website uses only what it needs to work. We do not use advertising or analytics cookies.</p>
+      <p>This website uses only what it needs to work. We do not use advertising or analytics cookies. We count visits without cookies or any other storage on your device; the <Link href="/privacy#what">privacy notice</Link> explains how.</p>
       <h2>Essential cookies</h2>
       <p>
         When you sign in, our authentication provider (Supabase) sets cookies that keep you signed in securely. These are strictly necessary
