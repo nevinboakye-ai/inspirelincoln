@@ -442,7 +442,7 @@ function SessionMetaLine({ session, location }: { session: Session; location: st
     <span className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate">
       <span className="flex items-center gap-1.5">
         <Clock aria-hidden className="size-3.5" />
-        {session.startsAt ? `${formatTime(session.startsAt)}${session.endsAt ? `–${formatTime(session.endsAt)}` : ""}` : "Time TBC"}
+        {session.startsAt ? `${formatTime(session.startsAt)}${session.endsAt ? ` to ${formatTime(session.endsAt)}` : ""}` : "Time TBC"}
         {mins ? ` · ${formatDuration(mins)}` : ""}
       </span>
       <span className="flex items-center gap-1.5">
@@ -599,7 +599,7 @@ function SessionDetail({
         <dl className="grid grid-cols-2 gap-4 text-sm">
           <div className="rounded-md bg-paper p-4">
             <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate">Time</dt>
-            <dd className="mt-1 font-medium text-ink">{session.startsAt ? `${formatTime(session.startsAt)}${session.endsAt ? `–${formatTime(session.endsAt)}` : ""}` : "To be confirmed"}</dd>
+            <dd className="mt-1 font-medium text-ink">{session.startsAt ? `${formatTime(session.startsAt)}${session.endsAt ? ` to ${formatTime(session.endsAt)}` : ""}` : "To be confirmed"}</dd>
           </div>
           <div className="rounded-md bg-paper p-4">
             <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate">Duration</dt>

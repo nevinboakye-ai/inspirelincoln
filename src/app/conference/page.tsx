@@ -81,7 +81,7 @@ export default async function ConferencePage() {
   const [{ edition, speakers, workshops }, faqs] = await Promise.all([getConferenceBundle(), getFaqs()]);
   const start = eventStart(edition);
   const dateLabel = formatEventDate(edition.date);
-  const timeLabel = edition.startTime ? `${edition.startTime}${edition.endTime ? `–${edition.endTime}` : ""} (UK time)` : "Times to be confirmed";
+  const timeLabel = edition.startTime ? `${edition.startTime}${edition.endTime ? ` to ${edition.endTime}` : ""} (UK time)` : "Times to be confirmed";
   const venueLine = `${edition.venueName}, ${edition.venueInstitution}`;
   const statusLabel = edition.status ? CONFERENCE_STATUS_LABEL[edition.status] : null;
 

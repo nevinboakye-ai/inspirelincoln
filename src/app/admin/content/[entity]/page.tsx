@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 function cell(v: unknown, col: string) {
   if (typeof v === "boolean") return v ? <Badge tone={col === "published" || col === "verified" ? "success" : "electric"}>Yes</Badge> : <span className="text-slate">No</span>;
-  if (v == null || v === "") return <span className="text-slate">—</span>;
+  if (v == null || v === "") return <span className="text-slate">Not set</span>;
   if (col.endsWith("_at") && typeof v === "string") return new Date(v).toLocaleString("en-GB", { timeZone: "Europe/London", dateStyle: "medium", timeStyle: "short" });
   return String(v);
 }

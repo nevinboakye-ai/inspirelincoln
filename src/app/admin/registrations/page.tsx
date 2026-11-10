@@ -43,10 +43,10 @@ export default async function Registrations({ searchParams }: { searchParams: Pr
       <Table head={["Delegate", "Status", "Reference", "Checked in", "Added"]} empty={rows.length ? null : <p className="p-6 text-sm text-slate-700">No registrations yet.</p>}>
         {rows.map((r) => (
           <tr key={r.id}>
-            <td className="px-4 py-3"><span className="font-medium text-ink">{r.p?.full_name || "—"}</span><span className="block text-xs text-slate">{r.p?.email}{r.p?.institution ? ` · ${r.p.institution}` : ""}</span></td>
+            <td className="px-4 py-3"><span className="font-medium text-ink">{r.p?.full_name || "Not set"}</span><span className="block text-xs text-slate">{r.p?.email}{r.p?.institution ? ` · ${r.p.institution}` : ""}</span></td>
             <td className="px-4 py-3"><RegistrationStatus id={r.id} status={r.status} /></td>
-            <td className="px-4 py-3 text-slate-700">{r.external_reference || "—"}</td>
-            <td className="px-4 py-3 text-slate-700">{r.checked_in_at ? new Date(r.checked_in_at).toLocaleTimeString("en-GB", { timeZone: "Europe/London", hour: "2-digit", minute: "2-digit" }) : "—"}</td>
+            <td className="px-4 py-3 text-slate-700">{r.external_reference || "Not set"}</td>
+            <td className="px-4 py-3 text-slate-700">{r.checked_in_at ? new Date(r.checked_in_at).toLocaleTimeString("en-GB", { timeZone: "Europe/London", hour: "2-digit", minute: "2-digit" }) : "Not set"}</td>
             <td className="px-4 py-3 text-slate-700">{new Date(r.created_at).toLocaleDateString("en-GB", { timeZone: "Europe/London" })}</td>
           </tr>
         ))}

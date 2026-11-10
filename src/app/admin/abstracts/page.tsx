@@ -78,7 +78,7 @@ export default async function AbstractsAdmin({ searchParams }: { searchParams: P
               <td className="px-4 py-3 text-slate-700">{r.presenting_author}<span className="block text-xs text-slate">{r.university}</span></td>
               <td className="px-4 py-3"><Badge tone={st.tone}>{st.label}</Badge></td>
               <td className="px-4 py-3 text-slate-700">{s.done} / {s.assigned}</td>
-              <td className="px-4 py-3 font-semibold text-ink">{s.avg === null ? <span className="font-normal text-slate">—</span> : s.avg.toFixed(0)}</td>
+              <td className="px-4 py-3 font-semibold text-ink">{s.avg === null ? <span className="font-normal text-slate">Not set</span> : s.avg.toFixed(0)}</td>
             </tr>
           );
         })}

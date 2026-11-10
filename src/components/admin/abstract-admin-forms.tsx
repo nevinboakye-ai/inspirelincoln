@@ -58,7 +58,7 @@ export function DecisionForm({ abstractId, status, note, type, types }: { abstra
       </Field>
       <Field id="presentationType" label="Presentation type (if accepted)">
         <select id="presentationType" name="presentationType" defaultValue={type} className={inputClass}>
-          <option value="">—</option>
+          <option value="">None</option>
           {types.map((t) => <option key={t}>{t}</option>)}
         </select>
       </Field>

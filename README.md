@@ -93,7 +93,7 @@ Other commands: `npm run build`, `npm start`, `npm run lint`, `npm run typecheck
 3. Deploy, check the preview, then under **Settings → Domains** add `inspirelincoln.uk` and
    `www.inspirelincoln.uk`.
 4. At Spaceship (DNS for the domain), replace the GitHub Pages records with the ones Vercel shows.
-   Typically: remove the four `185.199.108–111.153` A records and add an A record for `@` pointing to
+   Typically: remove the four `185.199.108.153` to `185.199.111.153` A records and add an A record for `@` pointing to
    Vercel's IP, and change the `www` CNAME to Vercel's target. Use the exact values on the Vercel
    Domains page, as Vercel may give project-specific ones.
 5. Once the domain shows as valid in Vercel, turn off GitHub Pages for the repository
@@ -105,7 +105,7 @@ Other commands: `npm run build`, `npm start`, `npm run lint`, `npm run typecheck
 | --- | --- | --- | --- |
 | Supabase | Database, sign-in, file storage | Yes, for anything beyond static pages | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` in Vercel |
 | Supabase service role key | Lets delegates delete their own account | Recommended | `SUPABASE_SERVICE_ROLE_KEY` in Vercel only (server-side) |
-| Vercel | Hosting | Yes | — |
+| Vercel | Hosting | Yes | Not needed |
 | Spaceship | DNS for inspirelincoln.uk | Yes | DNS records only |
 | Resend | Contact form email notifications; recommended SMTP for auth emails | Optional | `RESEND_API_KEY`, `EMAIL_FROM`, `CONTACT_TO_EMAIL` in Vercel; SMTP in Supabase |
 | External registration platform | Ticketing, if used | Optional | Paste the link in Admin → Conference settings |

@@ -113,7 +113,7 @@ export default async function WorkshopPage({ params }: { params: Promise<{ slug:
                 {[
                   { icon: Users, label: "Intended audience", value: w.audience || "All delegates" },
                   { icon: UserRound, label: "Facilitator", value: w.facilitator ?? "To be announced" },
-                  { icon: Clock, label: "Time", value: session?.startsAt ? `${formatTime(session.startsAt)}${session.endsAt ? `–${formatTime(session.endsAt)}` : ""}` : "To be confirmed" },
+                  { icon: Clock, label: "Time", value: session?.startsAt ? `${formatTime(session.startsAt)}${session.endsAt ? ` to ${formatTime(session.endsAt)}` : ""}` : "To be confirmed" },
                   { icon: MapPin, label: "Room", value: room?.name ?? "To be confirmed" },
                   { icon: Users, label: "Capacity", value: w.capacity ? `${w.capacity} places` : "To be confirmed" },
                 ].map((d) => (

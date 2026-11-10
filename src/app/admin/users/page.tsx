@@ -29,8 +29,8 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
       <Table head={["Name", "Institution", "Role", "Joined"]} empty={rows.length ? null : <p className="p-6 text-sm text-slate-700">No users match.</p>}>
         {rows.map((p) => (
           <tr key={p.id}>
-            <td className="px-4 py-3"><span className="font-medium text-ink">{p.full_name || "—"}{p.id === user.id && " (you)"}</span><span className="block text-xs text-slate">{p.email}</span></td>
-            <td className="px-4 py-3 text-slate-700">{p.institution || "—"}</td>
+            <td className="px-4 py-3"><span className="font-medium text-ink">{p.full_name || "Not set"}{p.id === user.id && " (you)"}</span><span className="block text-xs text-slate">{p.email}</span></td>
+            <td className="px-4 py-3 text-slate-700">{p.institution || "Not set"}</td>
             <td className="px-4 py-3">{p.id === user.id ? <span className="text-sm capitalize">{p.role}</span> : <RoleSelect id={p.id} role={p.role} />}</td>
             <td className="px-4 py-3 text-slate-700">{new Date(p.created_at).toLocaleDateString("en-GB", { timeZone: "Europe/London" })}</td>
           </tr>

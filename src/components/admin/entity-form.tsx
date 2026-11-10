@@ -40,7 +40,7 @@ function Input({ f, row, relations, error }: { f: FieldDef; row: Record<string, 
       case "select":
         return (
           <select {...common} defaultValue={initialValue(f, v) || (f.required ? f.options?.[0]?.value : "")} className={inputClass}>
-            {!f.required && <option value="">—</option>}
+            {!f.required && <option value="">None</option>}
             {f.options?.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         );

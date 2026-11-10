@@ -31,7 +31,7 @@ export function NowNext({ sessions }: { sessions: Session[] }) {
     <Link href={`/programme?session=${s.slug}`} className="block rounded-lg border border-white/10 bg-white/[0.04] p-5 transition-colors hover:border-cyan/40">
       <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-cyan">
         {live && <Radio aria-hidden className="size-3.5 animate-pulse-soft" />}
-        {formatTime(s.startsAt!)}–{formatTime(s.endsAt!)} · {SESSION_CATEGORY_LABEL[s.category]}
+        {formatTime(s.startsAt!)} to {formatTime(s.endsAt!)} · {SESSION_CATEGORY_LABEL[s.category]}
       </span>
       <span className="mt-2 block font-display text-xl font-medium">{s.title}</span>
     </Link>

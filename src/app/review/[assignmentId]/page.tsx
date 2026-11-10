@@ -39,7 +39,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ assignm
             {ABSTRACT_SECTIONS.map((k) => (
               <section key={k}>
                 <h2 className="font-display text-lg font-semibold capitalize text-ink">{k}</h2>
-                <p className="mt-2 whitespace-pre-line leading-relaxed text-slate-700">{a[k] || "—"}</p>
+                <p className="mt-2 whitespace-pre-line leading-relaxed text-slate-700">{a[k] || "Not provided"}</p>
               </section>
             ))}
           </div>

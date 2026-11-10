@@ -24,7 +24,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
             <td className="px-4 py-3 text-slate-700">{e.actor_id ? name.get(e.actor_id) ?? "Deleted user" : "System"}</td>
             <td className="px-4 py-3 capitalize text-ink">{e.action}</td>
             <td className="px-4 py-3 text-slate-700"><a className="underline" href={`?entity=${e.entity}`}>{e.entity}</a><span className="block font-mono text-[0.7rem] text-slate">{e.entity_id}</span></td>
-            <td className="px-4 py-3 text-slate-700">{Object.keys((e.details as { changed?: object })?.changed ?? {}).join(", ") || "—"}</td>
+            <td className="px-4 py-3 text-slate-700">{Object.keys((e.details as { changed?: object })?.changed ?? {}).join(", ") || "Not set"}</td>
           </tr>
         ))}
       </Table>

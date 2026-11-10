@@ -37,7 +37,7 @@ export function ReviewForm({
         <div className="space-y-6">
           {criteria.map((c) => (
             <fieldset key={c.id}>
-              <legend className="font-semibold text-ink">{c.label} <span className="font-normal text-slate">(0–{c.maxScore}{c.weight !== 1 ? `, weight ${c.weight}` : ""})</span></legend>
+              <legend className="font-semibold text-ink">{c.label} <span className="font-normal text-slate">(0 to {c.maxScore}{c.weight !== 1 ? `, weight ${c.weight}` : ""})</span></legend>
               {c.description && <p className="mt-1 text-sm text-slate-700">{c.description}</p>}
               <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label={c.label}>
                 {Array.from({ length: c.maxScore + 1 }, (_, n) => (
