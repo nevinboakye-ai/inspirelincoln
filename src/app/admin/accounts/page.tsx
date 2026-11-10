@@ -5,7 +5,7 @@ import { requireAccess } from "@/lib/auth";
 import { AdminHeader } from "@/components/admin/ui";
 import { AccountReviewForm } from "@/components/admin/committee-forms";
 import { Badge } from "@/components/ui/badge";
-import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES } from "@/lib/accounts";
+import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_GROUPS, ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES } from "@/lib/accounts";
 import type { AccountStatus, AccountType } from "@/lib/types";
 import { cn } from "@/lib/cn";
 
@@ -102,7 +102,11 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
         <label htmlFor="type" className="sr-only">Account type</label>
         <select id="type" name="type" defaultValue={type ?? ""} className="min-h-11 rounded-[3px] border border-navy/15 bg-white px-3 text-sm">
           <option value="">All types</option>
-          {ACCOUNT_TYPES.map((t) => <option key={t} value={t}>{ACCOUNT_TYPE_LABEL[t]}</option>)}
+          {ACCOUNT_TYPE_GROUPS.map((g) => (
+            <optgroup key={g.title} label={g.title}>
+              {g.types.map((t) => <option key={t} value={t}>{ACCOUNT_TYPE_LABEL[t]}</option>)}
+            </optgroup>
+          ))}
         </select>
         <button className="min-h-11 rounded-[3px] border border-navy/15 bg-white px-4 text-sm font-semibold text-ink">Filter</button>
       </form>

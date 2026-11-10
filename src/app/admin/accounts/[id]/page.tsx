@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Crown, Mail, ShieldCheck } from "lucide-react";
 import { requireAccess } from "@/lib/auth";
+import { AccountTypePicker } from "@/components/admin/account-type-picker";
 import { AdminHeader, Panel } from "@/components/admin/ui";
 import { AccountReviewForm, DirectEmailForm } from "@/components/admin/committee-forms";
 import { PersonDetailsForm } from "@/components/admin/person-forms";
@@ -87,6 +88,7 @@ export default async function PersonPage({ params, searchParams }: { params: Pro
         <ul className="flex gap-2 text-sm">
           {[
             ["#details", "Details"],
+            ...(locked ? [] : [["#type", "Account type"]]),
             ["#decision", "Account decision"],
             ...(canEmail ? [["#email", "Email them"]] : []),
             ...(profile.access.owner && !ownerAccount ? [[`/admin/platform/people/${p.id}`, "What they can do"]] : []),
@@ -127,6 +129,17 @@ export default async function PersonPage({ params, searchParams }: { params: Pro
               )}
             </Panel>
           </section>
+
+          {!locked && (
+            <section id="type" className="scroll-mt-28">
+              <Panel title="Account type">
+                <p className="-mt-2 mb-4 text-sm text-slate-700">
+                  Move {name.split(" ")[0]} between delegate, presenter, the supporting committee teams and the executive committee. Their approval stays as it is.
+                </p>
+                <AccountTypePicker id={p.id} type={type} status={status} canLead={profile.access.leadership} name={name} />
+              </Panel>
+            </section>
+          )}
 
           <section id="decision" className="scroll-mt-28">
             <Panel title="Account decision">

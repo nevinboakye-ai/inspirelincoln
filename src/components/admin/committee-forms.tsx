@@ -7,7 +7,7 @@ import type { ActionResult } from "@/app/portal/actions";
 import { ResultBanner } from "@/components/portal/profile-forms";
 import { Field, inputClass } from "@/components/forms/field";
 import { submitWithoutReset } from "@/lib/use-action-form";
-import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES, COMMITTEE_TYPES, EXEC_TYPES, ROSTER_TYPES } from "@/lib/accounts";
+import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_GROUPS, ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES, COMMITTEE_TYPES, EXEC_TYPES, ROSTER_TYPES } from "@/lib/accounts";
 import type { AccountStatus, AccountType } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { btn } from "./ui";
@@ -73,8 +73,12 @@ export function AccountReviewForm({ id, type, status, canLead, name }: { id: str
         <label className="block text-sm">
           <span className="mb-1 block font-semibold text-ink">Account type</span>
           <select name="type" value={chosenType} onChange={(e) => setChosenType(e.target.value as AccountType)} className={cn(small, "w-full")}>
-            {ACCOUNT_TYPES.map((t) => (
-              <option key={t} value={t} disabled={EXEC_TYPES.includes(t) && !canLead && t !== type}>{ACCOUNT_TYPE_LABEL[t]}</option>
+            {ACCOUNT_TYPE_GROUPS.map((g) => (
+              <optgroup key={g.title} label={g.title}>
+                {g.types.map((t) => (
+                  <option key={t} value={t} disabled={EXEC_TYPES.includes(t) && !canLead && t !== type}>{ACCOUNT_TYPE_LABEL[t]}</option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </label>
