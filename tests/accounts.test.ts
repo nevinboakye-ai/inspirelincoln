@@ -68,3 +68,11 @@ describe("emails", () => {
     expect(all).not.toMatch(/—/);
   });
 });
+
+describe("help contact", () => {
+  it("is in every email, HTML and plain text", () => {
+    const m = renderEmail({ siteUrl: "https://inspirelincoln.uk", preheader: "p", heading: "H", paragraphs: ["x"] });
+    expect(m.html).toContain("mailto:inspiresoc@lincolnsu.com");
+    expect(m.text).toContain("inspiresoc@lincolnsu.com");
+  });
+});
