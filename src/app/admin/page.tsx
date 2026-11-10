@@ -5,7 +5,7 @@ import { getEdition } from "@/lib/data/content";
 import { formatEventDate, toZonedInputValue } from "@/lib/time";
 import { AdminHeader, Panel } from "@/components/admin/ui";
 import { Notice } from "@/components/ui/notice";
-import { ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES } from "@/lib/accounts";
+import { ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES, rolesOf } from "@/lib/accounts";
 import type { AccountType } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -35,17 +35,17 @@ export default async function CommitteeHome({ searchParams }: { searchParams: Pr
   for (const s of subs ?? []) if (!latest.has(`${s.user_id}:${s.kind}`)) latest.set(`${s.user_id}:${s.kind}`, s.status);
   const toReview = [...latest.values()].filter((s) => s === "submitted").length;
 
-  const people = access.exec ? (await db.from("profiles").select("account_type, account_status").limit(5000)).data ?? [] : [];
+  const people = access.exec ? ((await db.from("profiles").select("*").limit(5000)).data ?? []).map((p) => ({ ...p, roles: rolesOf(p.account_type as AccountType, p.extra_types as AccountType[] | null) })) : [];
   const pending = people.filter((p) => p.account_status === "pending").length;
   const waitlisted = people.filter((p) => p.account_status === "waitlisted").length;
   const approved = people.filter((p) => p.account_status === "approved");
-  const byType = ACCOUNT_TYPES.map((t) => [t, approved.filter((p) => p.account_type === t).length] as [AccountType, number]);
+  const byType = ACCOUNT_TYPES.map((t) => [t, approved.filter((p) => p.roles.includes(t)).length] as [AccountType, number]);
   const checkedIn = access.exec
     ? ((await db.from("registrations").select("id", { count: "exact", head: true }).eq("edition_id", edition.id).not("checked_in_at", "is", null)).count ?? 0)
     : 0;
 
   const attendance = access.exec ? (await db.from("presenter_attendance").select("response").limit(5000)).data ?? [] : [];
-  const presenterCount = approved.filter((p) => p.account_type === "oral_presenter" || p.account_type === "poster_presenter").length;
+  const presenterCount = approved.filter((p) => p.roles.includes("oral_presenter") || p.roles.includes("poster_presenter")).length;
   const cantMake = attendance.filter((a) => a.response === "unavailable").length;
 
   const todayUk = toZonedInputValue(new Date().toISOString()).slice(0, 10);

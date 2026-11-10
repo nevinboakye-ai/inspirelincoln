@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { rolesOf } from "@/lib/accounts";
+import type { AccountType } from "@/lib/types";
 
 export type Answer = "confirmed" | "unavailable" | "none";
 export type PresenterRow = {
@@ -25,7 +27,13 @@ export type WaitlistRow = {
   since: string;
 };
 
-const PRESENTER_TYPES = ["oral_presenter", "poster_presenter"] as const;
+const RELEVANT: AccountType[] = ["oral_presenter", "poster_presenter", "oral_waitlist"];
+
+/** Their presenting role from any of their roles: oral, poster, the oral waiting list, or none. */
+function presenting(main: AccountType, extra?: AccountType[] | null): "oral_presenter" | "poster_presenter" | "oral_waitlist" | null {
+  const roles = rolesOf(main, extra);
+  return roles.includes("oral_presenter") ? "oral_presenter" : roles.includes("poster_presenter") ? "poster_presenter" : roles.includes("oral_waitlist") ? "oral_waitlist" : null;
+}
 
 /**
  * Everyone who should be presenting (accounts and selected-list entries not yet
@@ -33,28 +41,27 @@ const PRESENTER_TYPES = ["oral_presenter", "poster_presenter"] as const;
  * in the order people were added to it. Needs review_accounts access.
  */
 export async function loadAttendance(db: SupabaseClient) {
-  const [{ data: profiles }, { data: roster }, { data: answers }] = await Promise.all([
-    db
-      .from("profiles")
-      .select("id, email, full_name, institution, account_type, account_status, presentation_title, created_at")
-      .in("account_type", [...PRESENTER_TYPES, "oral_waitlist"])
-      .neq("account_status", "declined"),
-    db
-      .from("delegate_roster")
-      .select("id, email, full_name, institution, account_type, presentation_title, added_at")
-      .in("account_type", [...PRESENTER_TYPES, "oral_waitlist"]),
+  // Presenting can be an extra role (a committee member presenting a poster), so
+  // filter here rather than in the query. "*" includes extra_types once setup file 21 has run.
+  const [{ data: allProfiles }, { data: allRoster }, { data: answers }] = await Promise.all([
+    db.from("profiles").select("*").neq("account_status", "declined").limit(5000),
+    db.from("delegate_roster").select("*").limit(5000),
     db.from("presenter_attendance").select("user_id, response, note, responded_at"),
   ]);
+  const relevant = (r: { account_type: AccountType; extra_types?: AccountType[] | null }) => rolesOf(r.account_type, r.extra_types).some((t) => RELEVANT.includes(t));
+  const profiles = (allProfiles ?? []).filter(relevant);
+  const roster = (allRoster ?? []).filter(relevant);
 
   const byUser = new Map((answers ?? []).map((a) => [a.user_id as string, a]));
-  const withAccount = new Set((profiles ?? []).map((p) => (p.email as string).toLowerCase()));
+  const withAccount = new Set((allProfiles ?? []).map((p) => (p.email as string).toLowerCase()));
   const listAdded = new Map((roster ?? []).map((r) => [r.email as string, r.added_at as string]));
 
   const presenters: PresenterRow[] = [];
   const waitlist: WaitlistRow[] = [];
 
-  for (const p of profiles ?? []) {
-    if (p.account_type === "oral_waitlist") {
+  for (const p of profiles) {
+    const role = presenting(p.account_type, p.extra_types);
+    if (role === "oral_waitlist") {
       waitlist.push({
         id: p.id,
         source: "account",
@@ -72,7 +79,7 @@ export async function loadAttendance(db: SupabaseClient) {
       name: p.full_name || p.email,
       email: p.email,
       institution: p.institution,
-      type: p.account_type,
+      type: role as PresenterRow["type"],
       title: p.presentation_title,
       source: "account",
       approved: p.account_status === "approved",
@@ -81,9 +88,10 @@ export async function loadAttendance(db: SupabaseClient) {
       respondedAt: a?.responded_at ?? null,
     });
   }
-  for (const r of roster ?? []) {
+  for (const r of roster) {
     if (withAccount.has(r.email)) continue;
-    if (r.account_type === "oral_waitlist") {
+    const role = presenting(r.account_type, r.extra_types);
+    if (role === "oral_waitlist") {
       waitlist.push({ id: r.id, source: "list", name: r.full_name, email: r.email, institution: r.institution, title: r.presentation_title, since: r.added_at });
       continue;
     }
@@ -92,7 +100,7 @@ export async function loadAttendance(db: SupabaseClient) {
       name: r.full_name,
       email: r.email,
       institution: r.institution,
-      type: r.account_type,
+      type: role as PresenterRow["type"],
       title: r.presentation_title,
       source: "list",
       approved: false,

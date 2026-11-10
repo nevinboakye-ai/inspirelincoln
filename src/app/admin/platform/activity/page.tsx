@@ -5,7 +5,7 @@ import { requireAccess } from "@/lib/auth";
 import { AdminHeader } from "@/components/admin/ui";
 import { Badge } from "@/components/ui/badge";
 import { Notice } from "@/components/ui/notice";
-import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, COMMITTEE_TYPES, EXEC_TYPES, SUPPORTING_TYPES, submissionKindFor } from "@/lib/accounts";
+import { ACCOUNT_STATUS_LABEL, COMMITTEE_TYPES, EXEC_TYPES, SUPPORTING_TYPES, rolesLabel, rolesOf } from "@/lib/accounts";
 import { fullTime, timeAgo } from "@/lib/admin/time-ago";
 import type { AccountStatus, AccountType } from "@/lib/types";
 import { cn } from "@/lib/cn";
@@ -24,15 +24,20 @@ type Row = {
   last_sign_in_at: string | null;
   last_seen_at: string | null;
   ever_signed_in: boolean;
+  /** Missing until setup file 21 has been run. */
+  extra_types?: AccountType[] | null;
 };
+
+const roles = (r: Row) => rolesOf(r.account_type, r.extra_types);
+const holds = (r: Row, types: AccountType[]) => roles(r).some((t) => types.includes(t));
 
 const GROUPS = {
   all: { label: "Everyone", match: () => true },
-  committee: { label: "Committee", match: (r: Row) => COMMITTEE_TYPES.includes(r.account_type) },
-  exec: { label: "Executive", match: (r: Row) => EXEC_TYPES.includes(r.account_type) },
-  supporting: { label: "Supporting", match: (r: Row) => SUPPORTING_TYPES.includes(r.account_type) },
-  presenters: { label: "Presenters", match: (r: Row) => Boolean(submissionKindFor(r.account_type)) },
-  delegates: { label: "Delegates", match: (r: Row) => r.account_type === "delegate" || r.account_type === "oral_waitlist" },
+  committee: { label: "Committee", match: (r: Row) => holds(r, COMMITTEE_TYPES) },
+  exec: { label: "Executive", match: (r: Row) => holds(r, EXEC_TYPES) },
+  supporting: { label: "Supporting", match: (r: Row) => holds(r, SUPPORTING_TYPES) },
+  presenters: { label: "Presenters", match: (r: Row) => holds(r, ["oral_presenter", "poster_presenter"]) },
+  delegates: { label: "Delegates", match: (r: Row) => holds(r, ["delegate", "oral_waitlist"]) },
 } as const;
 type Group = keyof typeof GROUPS;
 
@@ -195,7 +200,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
                     </Link>
                     <p className="truncate text-sm text-slate-700">{r.email}</p>
                     <p className="mt-1.5 flex flex-wrap gap-1.5">
-                      <Badge tone={COMMITTEE_TYPES.includes(r.account_type) ? "electric" : "violet"}>{ACCOUNT_TYPE_LABEL[r.account_type]}</Badge>
+                      <Badge tone={COMMITTEE_TYPES.includes(r.account_type) ? "electric" : "violet"}>{rolesLabel(roles(r))}</Badge>
                       {r.account_status !== "approved" && <Badge tone={ACCOUNT_STATUS_LABEL[r.account_status].tone}>{ACCOUNT_STATUS_LABEL[r.account_status].label}</Badge>}
                     </p>
                   </div>

@@ -7,7 +7,7 @@ import { Field, describedBy, inputClass } from "@/components/forms/field";
 import { submitWithoutReset } from "@/lib/use-action-form";
 import { CAREER_STAGES } from "@/lib/accounts";
 import type { AccountType } from "@/lib/types";
-import { TypeOptions } from "./type-select";
+import { RoleCheckboxes } from "./roles";
 import { btn } from "./ui";
 
 type PersonDetails = {
@@ -91,6 +91,7 @@ type RosterDetails = {
   institution: string | null;
   yearOfStudy: string | null;
   accountType: AccountType;
+  extraTypes?: AccountType[] | null;
   presentationTitle: string | null;
   note: string | null;
 };
@@ -118,11 +119,17 @@ export function RosterPersonForm({ person, canLead }: { person: RosterDetails; c
         />
         <Input id="r-inst" name="institution" label="University" value={person.institution} error={fe("institution")} max={160} />
         <Input id="r-year" name="yearOfStudy" label="Year" value={person.yearOfStudy} error={fe("yearOfStudy")} max={40} />
-        <Field id="r-type" label="Account type" required error={fe("accountType")} hint="The type they'll have when they set up their account.">
-          <select id="r-type" name="accountType" defaultValue={person.accountType} aria-describedby={describedBy("r-type", fe("accountType"), true)} className={inputClass}>
-            <TypeOptions canLead={canLead} current={person.accountType} />
-          </select>
-        </Field>
+        <fieldset className="sm:col-span-2" aria-describedby={fe("types") ? "r-types-error" : undefined}>
+          <legend className="mb-2 block text-sm font-semibold text-ink">
+            Roles <span className="text-danger">*</span> <span className="font-normal text-slate">They&apos;ll have these when they set up their account.</span>
+          </legend>
+          <RoleCheckboxes initial={[person.accountType, ...(person.extraTypes ?? []).filter((t) => t !== person.accountType)]} canLead={canLead} compact />
+          {fe("types") && (
+            <p id="r-types-error" className="mt-2 text-sm font-medium text-danger">
+              {fe("types")}
+            </p>
+          )}
+        </fieldset>
         <Input id="r-title" name="presentationTitle" label="Presentation title" value={person.presentationTitle} error={fe("presentationTitle")} max={300} />
         <Field id="r-note" label="Committee note" error={fe("note")} hint="Only the committee sees this." className="sm:col-span-2">
           <textarea id="r-note" name="note" rows={3} maxLength={1000} defaultValue={person.note ?? ""} className={inputClass} />

@@ -9,7 +9,7 @@ import { PersonAccess } from "@/components/admin/platform-forms";
 import { ViewAsButton } from "@/components/admin/view-as";
 import { Badge } from "@/components/ui/badge";
 import { Notice } from "@/components/ui/notice";
-import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES, CAPABILITIES, DEFAULT_RULES, type Capability } from "@/lib/accounts";
+import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES, CAPABILITIES, DEFAULT_RULES, rolesLabel, rolesOf, type Capability } from "@/lib/accounts";
 import { effectiveFor, type OverrideMode } from "@/lib/accounts/effective";
 import type { AccountStatus, AccountType, UserRole } from "@/lib/types";
 
@@ -22,20 +22,21 @@ export default async function PersonAccessPage({ params }: { params: Promise<{ i
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
 
   const [{ data: person }, { data: rules }, { data: overrides }] = await Promise.all([
-    db.from("profiles").select("id, full_name, email, account_type, account_status, role, committee_position").eq("id", id).maybeSingle(),
+    db.from("profiles").select("*").eq("id", id).maybeSingle(),
     db.from("access_rules").select("account_type, capability, allowed"),
     db.from("access_overrides").select("capability, allowed").eq("user_id", id),
   ]);
   if (!person) notFound();
 
   const type = person.account_type as AccountType;
+  const extra = (person.extra_types ?? []) as AccountType[];
   const status = person.account_status as AccountStatus;
   const role = person.role as UserRole;
   const ruleMap = Object.fromEntries(ACCOUNT_TYPES.map((t) => [t, Object.fromEntries(CAPABILITIES.map((c) => [c, DEFAULT_RULES[t].includes(c)]))])) as Record<AccountType, Record<Capability, boolean>>;
   for (const r of rules ?? []) if (ruleMap[r.account_type as AccountType]) ruleMap[r.account_type as AccountType][r.capability as Capability] = r.allowed;
 
   // What they'd have from their account type alone, ignoring any individual changes.
-  const base = effectiveFor({ role, accountType: type, accountStatus: status }, ruleMap, {});
+  const base = effectiveFor({ role, accountType: type, extraTypes: extra, accountStatus: status }, ruleMap, {});
   const defaults = Object.fromEntries(CAPABILITIES.map((c) => [c, base[c].allowed])) as Record<Capability, boolean>;
   const initial = Object.fromEntries(CAPABILITIES.map((c) => {
     const o = (overrides ?? []).find((x) => x.capability === c);
@@ -53,7 +54,7 @@ export default async function PersonAccessPage({ params }: { params: Promise<{ i
         description={person.email}
         actions={
           <div className="flex flex-wrap gap-2">
-            {role === "admin" ? <Badge tone="violet"><Crown aria-hidden className="size-3" /> Site owner</Badge> : <Badge tone="violet">{ACCOUNT_TYPE_LABEL[type]}</Badge>}
+            {role === "admin" ? <Badge tone="violet"><Crown aria-hidden className="size-3" /> Site owner</Badge> : <>{rolesOf(type, extra).map((t) => <Badge key={t} tone="violet">{ACCOUNT_TYPE_LABEL[t]}</Badge>)}</>}
             <Badge tone={st.tone}>{st.label}</Badge>
             {person.committee_position && <Badge>{person.committee_position}</Badge>}
             {role !== "admin" && <ViewAsButton id={person.id} name={name} back={`/admin/platform/people/${person.id}`} />}
@@ -76,10 +77,10 @@ export default async function PersonAccessPage({ params }: { params: Promise<{ i
             </Notice>
           )}
           <p className="max-w-3xl text-sm text-slate-700">
-            <strong className="text-ink">Default</strong> follows what you&apos;ve set for {ACCOUNT_TYPE_LABEL[type].toLowerCase()} accounts. <strong className="text-ink">Allow</strong> or <strong className="text-ink">Block</strong> applies to {name} only. Changes save straight away and are recorded in the audit log.
+            <strong className="text-ink">Default</strong> follows what you&apos;ve set for {rolesLabel(rolesOf(type, extra)).toLowerCase()} accounts{extra.length ? " (any of their roles that allows something allows it)" : ""}. <strong className="text-ink">Allow</strong> or <strong className="text-ink">Block</strong> applies to {name} only. Changes save straight away and are recorded in the audit log.
           </p>
-          <Panel title="Account type">
-            <AccountTypePicker id={person.id} type={type} status={status} canLead={profile.access.leadership} name={name} />
+          <Panel title="Roles">
+            <AccountTypePicker id={person.id} type={type} extra={extra} status={status} canLead={profile.access.leadership} name={name} />
           </Panel>
           <PersonAccess userId={person.id} name={name} initial={initial} defaults={defaults} />
         </>

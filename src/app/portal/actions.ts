@@ -7,7 +7,7 @@ import { SUPABASE_URL } from "@/lib/supabase/env";
 import { requireUser } from "@/lib/auth";
 import { getEdition } from "@/lib/data/content";
 import { abstractSchema, FILE_RULES } from "@/lib/validation/abstract";
-import { POLICY_VERSION, resolveFileType, SUBMISSION_FILES, submissionKindFor } from "@/lib/accounts";
+import { POLICY_VERSION, presenterKindOf, resolveFileType, rolesOf, SUBMISSION_FILES, submissionKindsFor } from "@/lib/accounts";
 import { sendEmail } from "@/lib/email/resend";
 import { submissionReceivedEmail } from "@/lib/email/messages";
 import { SITE_URL } from "@/lib/site";
@@ -271,7 +271,7 @@ export async function recordSubmission(input: z.input<typeof recordSchema>): Pro
   const parsed = recordSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Please check the title and file." };
   const v = parsed.data;
-  if (submissionKindFor(profile.accountType) !== v.kind || profile.accountStatus !== "approved")
+  if (!submissionKindsFor(rolesOf(profile.accountType, profile.extraTypes)).includes(v.kind) || profile.accountStatus !== "approved")
     return { ok: false, error: "Your account can't submit this yet." };
   if (!v.path.startsWith(`${user.id}/`)) return { ok: false, error: "That upload doesn't belong to your account." };
   if (!resolveFileType(v.kind, v.name, v.type)) return { ok: false, error: `Upload a ${SUBMISSION_FILES[v.kind].label} file.` };
@@ -307,7 +307,7 @@ const attendanceSchema = z.object({
 /** An oral or poster presenter tells the committee whether they'll be there to present. They can change it later. */
 export async function saveAttendance(_: ActionResult, form: FormData): Promise<ActionResult> {
   const { user, db, profile } = await requireUser("/portal");
-  if (profile.accountStatus !== "approved" || !submissionKindFor(profile.accountType))
+  if (profile.accountStatus !== "approved" || !presenterKindOf(profile))
     return { ok: false, error: "Only approved oral and poster presenters can confirm attendance." };
   const parsed = attendanceSchema.safeParse({ response: form.get("response"), note: form.get("note") ?? "" });
   if (!parsed.success) return { ok: false, error: "Please check your answer.", fieldErrors: fieldErrors(parsed.error) };

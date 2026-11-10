@@ -69,6 +69,66 @@ export const ACCOUNT_TYPE_GROUPS: { title: string; hint: string; types: AccountT
 ];
 export const LEADERSHIP_TYPES: AccountType[] = ["vice_president", "president"];
 
+/**
+ * Every role, most senior first. Someone can hold several (the vice president
+ * who also leads the Academic Team, or a committee member presenting a
+ * poster); the most senior is their main role and the rest are extra roles.
+ */
+export const ROLE_RANK: AccountType[] = [
+  "president",
+  "vice_president",
+  "executive_committee",
+  "academic_team",
+  "publicity_team",
+  "finance_team",
+  "logistics_team",
+  "supporting_committee",
+  "oral_presenter",
+  "poster_presenter",
+  "oral_waitlist",
+  "delegate",
+];
+const ATTENDING: AccountType[] = ["delegate", "oral_presenter", "poster_presenter", "oral_waitlist"];
+
+/** Every role someone holds, main role first, without repeats. */
+export function rolesOf(main: AccountType, extra?: readonly AccountType[] | null): AccountType[] {
+  return [main, ...(extra ?? []).filter((t, i, a) => t !== main && a.indexOf(t) === i)];
+}
+
+/** Whether someone holds a role, as their main role or an extra one. */
+export function hasRole(p: { accountType: AccountType; extraTypes?: readonly AccountType[] | null }, ...types: AccountType[]) {
+  return rolesOf(p.accountType, p.extraTypes).some((t) => types.includes(t));
+}
+
+/** "Vice president · Academic Team" */
+export function rolesLabel(types: readonly AccountType[]) {
+  return types.map((t) => ACCOUNT_TYPE_LABEL[t]).join(" · ");
+}
+
+/**
+ * Tidy a set of ticked roles into a main role and extra roles, or say what's
+ * wrong. Delegate is dropped when someone is already presenting or waiting,
+ * since those include attending.
+ */
+export function splitRoles(picked: readonly string[]): { main: AccountType; extra: AccountType[] } | { error: string } {
+  let types = ROLE_RANK.filter((t) => picked.includes(t));
+  if (!types.length) return { error: "Choose at least one role." };
+  if (types.includes("president") && types.includes("vice_president")) return { error: "Someone can't be both president and vice president." };
+  if (types.includes("oral_presenter") && types.includes("oral_waitlist")) return { error: "Someone can't be an oral presenter and on the oral waiting list." };
+  if (types.includes("delegate") && types.some((t) => t !== "delegate" && ATTENDING.includes(t))) types = types.filter((t) => t !== "delegate");
+  return { main: types[0], extra: types.slice(1) };
+}
+
+/** The presentation someone uploads, from any of their roles (slides first if they somehow have both). */
+export function presenterKindOf(p: { accountType: AccountType; extraTypes?: readonly AccountType[] | null }): SubmissionKind | null {
+  return submissionKindsFor(rolesOf(p.accountType, p.extraTypes))[0] ?? null;
+}
+
+/** Which presentations someone's roles let them upload. */
+export function submissionKindsFor(types: readonly AccountType[]): SubmissionKind[] {
+  return [...(types.includes("oral_presenter") ? (["slides"] as const) : []), ...(types.includes("poster_presenter") ? (["poster"] as const) : [])];
+}
+
 /** Things a person can be allowed to do. Mirrors public.access_capabilities. */
 export const CAPABILITIES = [
   "edit_website",

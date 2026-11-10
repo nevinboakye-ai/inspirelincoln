@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PortalNav } from "@/components/portal/portal-nav";
 import { requireUser } from "@/lib/auth";
 import { getSwitches } from "@/lib/switches";
-import { ACCOUNT_TYPE_LABEL, submissionKindFor } from "@/lib/accounts";
+import { presenterKindOf, rolesLabel, rolesOf } from "@/lib/accounts";
 
 export const metadata: Metadata = { title: "My conference", robots: { index: false } };
 
@@ -15,8 +15,8 @@ export default async function PortalLayout({ children }: { children: React.React
       <div className="container-page grid gap-5 lg:grid-cols-[15rem_1fr] lg:gap-12">
         <PortalNav
           name={profile.fullName ?? profile.email}
-          typeLabel={ACCOUNT_TYPE_LABEL[profile.accountType]}
-          presenter={Boolean(submissionKindFor(profile.accountType))}
+          typeLabel={rolesLabel(rolesOf(profile.accountType, profile.extraTypes))}
+          presenter={Boolean(presenterKindOf(profile))}
           access={profile.access}
           reviewer={profile.siteRole === "reviewer"}
           showNetwork={showNetwork}

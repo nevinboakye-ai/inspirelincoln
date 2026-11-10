@@ -146,3 +146,28 @@ export function oralSlotEmail(opts: { siteUrl: string; name: string | null }): M
   });
   return { subject: "An oral presentation slot is yours at INSPIRE 2026", ...m };
 }
+
+/** Tells someone their roles have changed, for example when they join a committee team as well as presenting. */
+export function rolesChangedEmail(opts: { siteUrl: string; name: string | null; types: AccountType[] }): Mail | null {
+  const { siteUrl, name, types } = opts;
+  const committee = types.some((t) => COMMITTEE_TYPES.includes(t));
+  const slides = types.includes("oral_presenter");
+  const poster = types.includes("poster_presenter");
+  const list = types.map((t) => `<strong>${escapeHtml(ACCOUNT_TYPE_LABEL[t])}</strong>`);
+  const joined = list.length > 1 ? `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}` : list[0];
+  const m = renderEmail({
+    siteUrl,
+    preheader: `Your INSPIRE ${types.length > 1 ? "roles have" : "role has"} been updated.`,
+    eyebrow: "Account updated",
+    heading: types.length > 1 ? "Your roles have changed" : "Your role has changed",
+    paragraphs: [
+      `Hello ${first(name)},`,
+      `The committee has updated your INSPIRE account. You're now ${joined}.`,
+      ...(slides || poster ? [`You can upload your ${slides && poster ? "slides and poster" : slides ? "slides" : "poster"} from your account.`] : []),
+      ...(committee ? ["You can open the committee dashboard from your account."] : []),
+      "If anything here looks wrong, reply to this email and we'll sort it out.",
+    ],
+    cta: { label: committee ? "Open the dashboard" : "Open My Hub", url: `${siteUrl}${committee ? "/admin" : "/portal"}` },
+  });
+  return { subject: types.length > 1 ? "Your INSPIRE roles have been updated" : `Your INSPIRE account is now ${ACCOUNT_TYPE_LABEL[types[0]]}`, ...m };
+}

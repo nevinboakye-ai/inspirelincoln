@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAccess } from "@/lib/auth";
-import { ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES, EXEC_TYPES, canApprove } from "@/lib/accounts";
+import { ACCOUNT_TYPES, canApprove, rolesOf, splitRoles } from "@/lib/accounts";
 import { sendBatch, sendEmail } from "@/lib/email/resend";
 import { accountDecisionEmail, feedbackEmail, oralSlotEmail } from "@/lib/email/messages";
 import { escapeHtml, renderEmail } from "@/lib/email/template";
@@ -372,7 +372,17 @@ export async function offerOralSlot(_: ActionResult, form: FormData): Promise<Ac
   const v = parsed.data;
 
   let to: { email: string; name: string | null } | null = null;
-  if (v.source === "account") {
+  // Someone on the waiting list as an extra role (for example a committee member)
+  // keeps their other roles: only the waiting list role becomes oral presenter.
+  const table = v.source === "account" ? "profiles" : "delegate_roster";
+  const { data: holder } = await db.from(table).select("*").eq("id", v.id).maybeSingle();
+  if (holder && holder.account_type !== "oral_waitlist" && ((holder.extra_types ?? []) as AccountType[]).includes("oral_waitlist")) {
+    const roles = splitRoles(rolesOf(holder.account_type, holder.extra_types).map((t) => (t === "oral_waitlist" ? "oral_presenter" : t)));
+    if ("error" in roles) return { ok: false, error: roles.error };
+    const { error } = await db.from(table).update({ account_type: roles.main, extra_types: roles.extra }).eq("id", v.id);
+    if (error) return { ok: false, error: "Could not move them. Please try again." };
+    to = { email: holder.email, name: holder.full_name };
+  } else if (v.source === "account") {
     const { data: person } = await db.from("profiles").select("account_type").eq("id", v.id).maybeSingle();
     if (person?.account_type !== "oral_waitlist") return { ok: false, error: "This person is no longer on the oral waiting list." };
     const { data, error } = await db.rpc("review_account", { target: v.id, new_status: "approved", new_type: "oral_presenter", note: null });
@@ -403,54 +413,4 @@ export async function offerOralSlot(_: ActionResult, form: FormData): Promise<Ac
   // They leave the waiting list, so the confirmation is shown at the top of the page.
   const params = new URLSearchParams({ offered: to?.name || "They", mail: v.notify ? (emailed ? "sent" : "off") : "no" });
   redirect(`/admin/attendance?${params}`);
-}
-
-const typeSchema = z.object({
-  id: z.string().uuid(),
-  type: z.enum(ACCOUNT_TYPES as [AccountType, ...AccountType[]]),
-  notify: z.boolean(),
-});
-
-/**
- * Changes someone's account type (for example, delegate to Academic Team)
- * without changing whether they're approved. Executive types need the
- * president or vice president. Recorded in the audit log by the database.
- */
-export async function changeAccountType(_: ActionResult, form: FormData): Promise<ActionResult> {
-  const { db, user, profile } = await requireAccess("review_accounts", "/admin/accounts");
-  const parsed = typeSchema.safeParse({ id: form.get("id"), type: form.get("type"), notify: form.get("notify") === "on" });
-  if (!parsed.success) return { ok: false, error: "Choose an account type." };
-  const v = parsed.data;
-  if (v.id === user.id && !profile.access.leadership) return { ok: false, error: "You can't change your own account type." };
-
-  const { data: current } = await db.from("profiles").select("account_type, account_status, role, email, full_name").eq("id", v.id).maybeSingle();
-  if (!current) return { ok: false, error: "Account not found." };
-  if (current.role === "admin" && !profile.access.owner) return { ok: false, error: "Only the site owner can change the site owner's account." };
-  if (current.account_type === v.type) return { ok: true, message: `Already ${ACCOUNT_TYPE_LABEL[v.type]}.` };
-  if ((EXEC_TYPES.includes(v.type) || EXEC_TYPES.includes(current.account_type as AccountType)) && !profile.access.leadership)
-    return { ok: false, error: "Only the president or vice president can move people into or out of the executive committee." };
-
-  const { data: saved, error } = await db.from("profiles").update({ account_type: v.type }).eq("id", v.id).select("id");
-  if (!error && !saved?.length) return { ok: false, error: "You don't have permission to change this account." };
-  if (error) {
-    const msg = /invalid input value for enum/i.test(error.message)
-      ? `The database doesn't know "${ACCOUNT_TYPE_LABEL[v.type]}" yet. Run the committee teams setup SQL (files 14 and 15) in Supabase, then try again.`
-      : /executive|leadership|president/i.test(error.message)
-        ? "Only the president or vice president can make that change."
-        : "Could not change the account type.";
-    return { ok: false, error: msg };
-  }
-
-  let emailed = false;
-  if (v.notify && current.account_status === "approved") {
-    const mail = accountDecisionEmail({ siteUrl: SITE_URL, name: current.full_name, status: "approved", type: v.type, note: null });
-    if (mail) emailed = await sendEmail({ to: current.email, ...mail, subject: `Your INSPIRE account is now ${ACCOUNT_TYPE_LABEL[v.type]}` });
-  }
-  revalidatePath("/admin/accounts", "layout");
-  revalidatePath("/admin/platform", "layout");
-  revalidatePath("/admin");
-  return {
-    ok: true,
-    message: `Changed to ${ACCOUNT_TYPE_LABEL[v.type]}.${v.notify ? (current.account_status !== "approved" ? " They weren't emailed because their account isn't approved yet." : emailed ? " They've been emailed." : " Email isn't set up yet, so they weren't emailed.") : ""}`,
-  };
 }
