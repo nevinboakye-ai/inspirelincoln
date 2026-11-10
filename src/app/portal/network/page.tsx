@@ -9,9 +9,12 @@ export const dynamic = "force-dynamic";
 
 export default async function NetworkPage() {
   const { profile, db } = await requireUser("/portal/network");
-  const open = profile.accountStatus === "approved" || profile.siteRole === "admin";
-  const { data, error } = open ? await db.rpc("network_directory") : { data: null, error: null };
-  const people = ((data ?? []) as Delegate[]);
+  const staff = profile.access.exec || profile.access.owner;
+  const open = profile.accountStatus === "approved" || profile.siteRole === "admin" || staff;
+  const [{ data, error }, { data: waiting }] = open
+    ? await Promise.all([db.rpc("network_directory"), db.rpc("selected_waiting_count")])
+    : [{ data: null, error: null }, { data: 0 }];
+  const people = (data ?? []) as Delegate[];
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -45,7 +48,7 @@ export default async function NetworkPage() {
           {error ? (
             <Notice tone="warning">The network isn&apos;t available just now. Please try again later.</Notice>
           ) : (
-            <NetworkDirectory people={people} me={profile.id} />
+            <NetworkDirectory people={people} me={profile.id} staff={staff} waiting={typeof waiting === "number" ? waiting : 0} />
           )}
         </>
       )}

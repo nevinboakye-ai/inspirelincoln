@@ -19,6 +19,8 @@ export type Delegate = {
   bio: string | null;
   linkedin_url: string | null;
   email: string | null;
+  /** False for people on the selected list who haven't set up an account. Only the committee sees these. */
+  joined: boolean;
 };
 
 type CardProfile = { bio: string | null; linkedinUrl: string | null; networkShowEmail: boolean; networkListed: boolean; email: string };
@@ -92,9 +94,11 @@ const initials = (n: string) =>
     .map((w) => w[0]!.toUpperCase())
     .join("");
 
-export function NetworkDirectory({ people, me }: { people: Delegate[]; me: string }) {
+export function NetworkDirectory({ people, me, staff, waiting }: { people: Delegate[]; me: string; staff: boolean; waiting: number }) {
   const [q, setQ] = useState("");
   const [uni, setUni] = useState("");
+  const [show, setShow] = useState<"" | "joined" | "waiting">("");
+  const joinedCount = people.filter((p) => p.joined).length;
   const query = useDeferredValue(q.trim().toLowerCase());
   const unis = useMemo(() => [...new Set(people.map((p) => p.institution).filter(Boolean) as string[])].sort(), [people]);
   const shown = useMemo(
@@ -102,19 +106,30 @@ export function NetworkDirectory({ people, me }: { people: Delegate[]; me: strin
       people.filter(
         (p) =>
           (!uni || p.institution === uni) &&
+          (!show || (show === "joined") === p.joined) &&
           (!query || [p.full_name, p.institution, p.bio, p.year_of_study].some((v) => v?.toLowerCase().includes(query))),
       ),
-    [people, uni, query],
+    [people, uni, query, show],
   );
 
   return (
     <section aria-labelledby="people-title" className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h2 id="people-title" className="font-display text-xl text-ink">
-          Delegates <span className="text-slate">({people.length})</span>
+          Delegates <span className="text-slate">({joinedCount})</span>
         </h2>
+        {waiting > 0 && (
+          <p className="text-sm text-slate-700">
+            {waiting} more selected {waiting === 1 ? "delegate hasn't" : "delegates haven't"} joined yet
+          </p>
+        )}
       </div>
-      <div className="grid gap-3 sm:grid-cols-[1fr_16rem]">
+      {staff && waiting > 0 && (
+        <p className="rounded-[3px] border border-navy/10 bg-paper-200/60 px-4 py-3 text-sm text-slate-700">
+          As committee you also see the selected delegates who haven&apos;t set up an account. Delegates only see people who have joined.
+        </p>
+      )}
+      <div className={staff ? "grid gap-3 sm:grid-cols-[1fr_14rem_12rem]" : "grid gap-3 sm:grid-cols-[1fr_16rem]"}>
         <label className="relative block">
           <span className="sr-only">Search delegates</span>
           <Search aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate" />
@@ -129,6 +144,16 @@ export function NetworkDirectory({ people, me }: { people: Delegate[]; me: strin
             ))}
           </select>
         </label>
+        {staff && (
+          <label className="block">
+            <span className="sr-only">Show</span>
+            <select value={show} onChange={(e) => setShow(e.target.value as typeof show)} className={inputClass}>
+              <option value="">Everyone</option>
+              <option value="joined">Joined</option>
+              <option value="waiting">Not joined yet</option>
+            </select>
+          </label>
+        )}
       </div>
       <p className="sr-only" role="status" aria-live="polite">
         {shown.length} {shown.length === 1 ? "delegate" : "delegates"} shown
@@ -141,8 +166,8 @@ export function NetworkDirectory({ people, me }: { people: Delegate[]; me: strin
       ) : (
         <ul className="grid gap-3 md:grid-cols-2">
           {shown.map((p) => (
-            <li key={p.id} className="flex gap-4 rounded-xl border border-navy/10 bg-white p-4 sm:p-5">
-              <span aria-hidden className="grid size-11 shrink-0 place-items-center rounded-full bg-navy font-ui text-sm font-semibold text-cyan">
+            <li key={p.id} className={p.joined ? "flex gap-4 rounded-xl border border-navy/10 bg-white p-4 sm:p-5" : "flex gap-4 rounded-xl border border-dashed border-navy/20 bg-paper p-4 sm:p-5"}>
+              <span aria-hidden className={p.joined ? "grid size-11 shrink-0 place-items-center rounded-full bg-navy font-ui text-sm font-semibold text-cyan" : "grid size-11 shrink-0 place-items-center rounded-full bg-paper-200 font-ui text-sm font-semibold text-slate-700"}>
                 {initials(p.full_name)}
               </span>
               <div className="min-w-0 flex-1">
@@ -151,11 +176,12 @@ export function NetworkDirectory({ people, me }: { people: Delegate[]; me: strin
                   {p.id === me && <span className="ml-2 text-xs font-normal text-slate">(you)</span>}
                 </h3>
                 <p className="text-sm text-slate-700">{[p.institution, p.year_of_study].filter(Boolean).join(" · ")}</p>
-                {p.account_type !== "delegate" && (
-                  <p className="mt-2">
-                    <Badge tone={p.account_type.endsWith("presenter") ? "violet" : "neutral"}>
+                {(p.account_type !== "delegate" || !p.joined) && (
+                  <p className="mt-2 flex flex-wrap gap-2">
+                    {!p.joined && <Badge tone="warning">Not joined yet</Badge>}
+                    {p.account_type !== "delegate" && <Badge tone={p.account_type.endsWith("presenter") ? "violet" : "neutral"}>
                       {p.committee_position || ACCOUNT_TYPE_LABEL[p.account_type]}
-                    </Badge>
+                    </Badge>}
                   </p>
                 )}
                 {p.bio && <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">{p.bio}</p>}

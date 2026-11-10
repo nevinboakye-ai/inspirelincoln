@@ -26,7 +26,12 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
   const status = (TABS.find((t) => t.status === sp.status)?.status ?? "pending") as AccountStatus;
   const type = ACCOUNT_TYPES.includes(sp.type as AccountType) ? (sp.type as AccountType) : null;
 
-  const { data: all } = await db.from("profiles").select("account_status").limit(5000);
+  const [{ data: all }, { data: roster }] = await Promise.all([
+    db.from("profiles").select("account_status, email").limit(5000),
+    db.from("delegate_roster").select("email").limit(5000),
+  ]);
+  const emails = new Set((all ?? []).map((r) => r.email.toLowerCase()));
+  const waiting = (roster ?? []).filter((r) => !emails.has(r.email)).length;
   const counts = Object.fromEntries(TABS.map((t) => [t.status, (all ?? []).filter((r) => r.account_status === t.status).length]));
 
   let q = db
@@ -62,13 +67,25 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
               </Link>
             </li>
           ))}
+          {roster && (
+            <li className="shrink-0">
+              <Link
+                href="/admin/accounts/roster?show=waiting"
+                className="flex min-h-11 items-center gap-2 rounded-[3px] border border-dashed border-navy/25 bg-white px-4 text-sm font-semibold text-ink"
+              >
+                Selected, not set up yet <span className="rounded-full bg-paper-200 px-2 text-xs">{waiting}</span>
+              </Link>
+            </li>
+          )}
         </ul>
       </nav>
 
-      <p className="text-sm text-slate-700">
-        People the committee has already selected are approved automatically.{" "}
-        <Link href="/admin/accounts/roster" className="font-semibold text-electric-600 underline underline-offset-4">See the selected delegate list</Link>
-      </p>
+      {roster && (
+        <p className="text-sm text-slate-700">
+          {roster.length} people are on the selected delegate list. They appear here, already approved, once they set up their account.{" "}
+          <Link href="/admin/accounts/roster" className="font-semibold text-electric-600 underline underline-offset-4">See the full list</Link>
+        </p>
+      )}
 
       <form className="flex flex-wrap gap-2" role="search">
         <input type="hidden" name="status" value={status} />
