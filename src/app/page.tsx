@@ -1,4 +1,5 @@
 import { Hero } from "@/components/home/hero";
+import { IntroGate } from "@/components/home/intro-gate";
 import { AtAGlance, FinalCta, ProgrammePreview, SpeakersSection } from "@/components/home/sections";
 import { EventJsonLd } from "@/components/seo/event-json-ld";
 import { getConferenceBundle } from "@/lib/data/content";
@@ -11,6 +12,7 @@ export default async function HomePage() {
   const start = eventStart(edition);
   return (
     <>
+      <IntroGate edition={edition} />
       <EventJsonLd edition={edition} />
       <Hero
         year={edition.year}
