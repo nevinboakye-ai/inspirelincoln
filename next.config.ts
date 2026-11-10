@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
+import { normaliseSupabaseUrl } from "./src/lib/supabase/env";
 
-const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
-  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
-  : undefined;
+const supabaseUrl = normaliseSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
+const supabaseHost = supabaseUrl ? new URL(supabaseUrl).hostname : undefined;
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },

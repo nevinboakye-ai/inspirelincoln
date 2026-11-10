@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabase/env";
 
 const PROTECTED = ["/portal", "/admin", "/review"];
 
@@ -10,8 +11,8 @@ const PROTECTED = ["/portal", "/admin", "/review"];
  * level security enforces access in the database.
  */
 export async function proxy(request: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = SUPABASE_URL;
+  const key = SUPABASE_ANON_KEY;
   let response = NextResponse.next({ request });
   if (!url || !key) return response;
 
