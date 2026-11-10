@@ -17,7 +17,7 @@ export function PortalNav({ role, name }: { role: UserRole; name: string }) {
     ...(role === "editor" || role === "admin" ? [{ href: "/admin", label: "Admin dashboard", icon: ShieldCheck }] : []),
   ];
   return (
-    <nav aria-label="My Conference" className="lg:sticky lg:top-28">
+    <nav aria-label="My Conference" className="min-w-0 lg:sticky lg:top-28">
       <div className="mb-6 flex items-center gap-3">
         <span className="flex size-11 items-center justify-center rounded-full bg-navy text-cyan">
           <UserRound aria-hidden className="size-5" />

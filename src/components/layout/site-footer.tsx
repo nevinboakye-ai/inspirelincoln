@@ -41,7 +41,7 @@ export function SiteFooter({ edition }: { edition: Edition }) {
             <FooterColumn title="Explore" links={FOOTER_LINKS.explore} />
             <FooterColumn title="Take part" links={FOOTER_LINKS.participate} />
             <div>
-              <p className="eyebrow mb-4 text-paper/45">Get in touch</p>
+              <p className="eyebrow mb-4 text-paper/65">Get in touch</p>
               <ul className="space-y-3 text-[0.95rem]">
                 <li>
                   <Link href="/contact" className="link-underline text-paper/80 hover:text-paper">
@@ -62,7 +62,7 @@ export function SiteFooter({ edition }: { edition: Edition }) {
                     </a>
                   </li>
                 ))}
-                {SOCIAL_LINKS.length === 0 && <li className="text-sm text-paper/40">Social channels will be listed here.</li>}
+                {SOCIAL_LINKS.length === 0 && <li className="text-sm text-paper/65">Social channels will be listed here.</li>}
               </ul>
             </div>
           </nav>
@@ -95,7 +95,7 @@ export function SiteFooter({ edition }: { edition: Edition }) {
 function FooterColumn({ title, links }: { title: string; links: { label: string; href: string }[] }) {
   return (
     <div>
-      <p className="eyebrow mb-4 text-paper/45">{title}</p>
+      <p className="eyebrow mb-4 text-paper/65">{title}</p>
       <ul className="space-y-3 text-[0.95rem]">
         {links.map((l) => (
           <li key={l.href}>

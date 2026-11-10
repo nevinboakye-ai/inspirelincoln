@@ -91,7 +91,7 @@ export default async function WorkshopPage({ params }: { params: Promise<{ slug:
               <ol className="mt-6 space-y-3">
                 {w.outcomes.map((o, i) => (
                   <li key={o} className="flex gap-4 rounded-lg border border-navy/10 bg-white p-5">
-                    <span className="font-display text-lg font-semibold" style={{ color: accent === "#39D5F2" ? "#0b6577" : accent }}>
+                    <span className="font-display text-lg font-semibold" style={{ color: accent === "#39D5F2" ? "#0b6577" : accent === "#3478F6" ? "#1f5fd6" : "#5a4ccf" }}>
                       {String(i + 1).padStart(2, "0")}
                     </span>
                     <span className="text-slate-700">{o}</span>
@@ -117,12 +117,11 @@ export default async function WorkshopPage({ params }: { params: Promise<{ slug:
                   { icon: MapPin, label: "Room", value: room?.name ?? "To be confirmed" },
                   { icon: Users, label: "Capacity", value: w.capacity ? `${w.capacity} places` : "To be confirmed" },
                 ].map((d) => (
-                  <div key={d.label} className="flex gap-3 p-5">
-                    <d.icon aria-hidden className="mt-0.5 size-4 shrink-0 text-electric-600" />
-                    <div>
-                      <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate">{d.label}</dt>
-                      <dd className="mt-1 text-ink">{d.value}</dd>
-                    </div>
+                  <div key={d.label} className="p-5">
+                    <dt className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate">
+                      <d.icon aria-hidden className="size-4 shrink-0 text-electric-600" /> {d.label}
+                    </dt>
+                    <dd className="mt-1 pl-7 text-ink">{d.value}</dd>
                   </div>
                 ))}
               </dl>

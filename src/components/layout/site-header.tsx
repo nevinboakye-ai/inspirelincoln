@@ -180,7 +180,7 @@ export function SiteHeader({
                 aria-label="Search the site"
               >
                 <Search aria-hidden className="size-4" />
-                <kbd className="hidden rounded-xs border border-white/15 px-1.5 text-[0.7rem] text-paper/50 xl:inline">⌘K</kbd>
+                <kbd className="hidden rounded-xs border border-white/15 px-1.5 text-[0.7rem] text-paper/70 xl:inline">⌘K</kbd>
               </button>
               <Link
                 href="/portal"
@@ -353,7 +353,7 @@ function MobileNav({ open, onClose, pathname, year }: { open: boolean; onClose: 
                       isActive(pathname, l.href) ? "text-cyan" : "text-paper",
                     )}
                   >
-                    <span className="w-6 text-xs font-normal text-paper/35">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="w-6 text-xs font-normal text-paper/65">{String(i + 1).padStart(2, "0")}</span>
                     {l.label}
                   </Link>
                 </motion.li>

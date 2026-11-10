@@ -90,13 +90,13 @@ export function Countdown({
               <span className="block font-display text-[1.75rem] font-medium tabular-nums leading-none tracking-tight text-paper sm:text-[2.5rem]">
                 {u.value == null ? "--" : String(u.value).padStart(2, "0")}
               </span>
-              <span className="mt-1.5 block text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-paper/45 sm:text-[0.65rem]">{u.label}</span>
+              <span className="mt-1.5 block text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-paper/65 sm:text-[0.65rem]">{u.label}</span>
             </div>
             {i < units.length - 1 && <span className="pb-6 font-display text-xl text-paper/25 sm:pb-8">:</span>}
           </div>
         ))}
       </div>
-      <p className="mt-3 text-xs text-paper/45">
+      <p className="mt-3 text-xs text-paper/65">
         {hasConfirmedTime ? "Counting down to the opening session, UK time." : "Counting down to conference day (UK time). Session times will be confirmed."}
       </p>
     </div>

@@ -21,7 +21,7 @@ export function HistoryTimeline({ events }: { events: TimelineEvent[] }) {
       ))}
       <li className="relative">
         <span aria-hidden className="absolute -left-[2.85rem] top-1.5 size-3.5 rounded-full border-2 border-dashed border-paper/40 bg-midnight" />
-        <p className="font-display text-sm font-semibold tracking-[0.14em] text-paper/45">Earlier years</p>
+        <p className="font-display text-sm font-semibold tracking-[0.14em] text-paper/65">Earlier years</p>
         <p className="mt-2 max-w-2xl text-paper/55">
           INSPIRE has a history spanning more than a decade. Earlier conferences will be added here as their details are verified.
         </p>

@@ -59,7 +59,7 @@ export function AdminNav({ role }: { role: UserRole }) {
   const path = usePathname();
   const isAdmin = role === "admin";
   return (
-    <nav aria-label="Admin" className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
+    <nav aria-label="Admin" className="min-w-0 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
       <p className="mb-4 flex items-center gap-2 font-display text-sm font-semibold uppercase tracking-wider text-slate"><LayoutList aria-hidden className="size-4" /> Admin · <span className="capitalize">{role}</span></p>
       <div className="flex gap-6 overflow-x-auto pb-2 lg:block lg:space-y-6 lg:overflow-visible">
         {GROUPS.filter((g) => !g.admin || isAdmin).map((g) => (

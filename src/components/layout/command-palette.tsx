@@ -196,7 +196,7 @@ export function CommandPalette() {
                   {!index && !error && <li className="p-6 text-center text-sm text-paper/50">Loading…</li>}
                   {error && <li className="p-6 text-center text-sm text-paper/60">Search is unavailable right now.</li>}
                   {index && !query && (
-                    <li role="presentation" className="eyebrow px-3 pb-2 pt-3 text-paper/45">
+                    <li role="presentation" className="eyebrow px-3 pb-2 pt-3 text-paper/65">
                       Common questions
                     </li>
                   )}
@@ -206,7 +206,7 @@ export function CommandPalette() {
                     return (
                       <li key={opt.type === "answer" ? `a-${opt.a.id}` : opt.item.id} role="presentation">
                         {firstItem && query && answers.length > 0 && (
-                          <p role="presentation" className="eyebrow px-3 pb-2 pt-4 text-paper/45">
+                          <p role="presentation" className="eyebrow px-3 pb-2 pt-4 text-paper/65">
                             Results
                           </p>
                         )}
@@ -237,7 +237,7 @@ export function CommandPalette() {
                               </span>
                             </>
                           )}
-                          {isActive && <CornerDownLeft aria-hidden className="size-4 shrink-0 text-paper/40" />}
+                          {isActive && <CornerDownLeft aria-hidden className="size-4 shrink-0 text-paper/65" />}
                         </div>
                       </li>
                     );
@@ -261,7 +261,7 @@ export function CommandPalette() {
                 </ul>
               )}
             </div>
-            <div className="hidden items-center justify-between border-t border-white/10 px-5 py-3 text-xs text-paper/45 sm:flex">
+            <div className="hidden items-center justify-between border-t border-white/10 px-5 py-3 text-xs text-paper/65 sm:flex">
               <span>
                 <kbd className="rounded-xs border border-white/15 px-1.5 py-0.5">↑</kbd>{" "}
                 <kbd className="rounded-xs border border-white/15 px-1.5 py-0.5">↓</kbd> to move,{" "}

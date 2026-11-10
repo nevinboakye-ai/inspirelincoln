@@ -9,7 +9,7 @@ const tones: Record<Tone, string> = {
   cyan: "bg-cyan/15 text-[#0b6577] ring-cyan/30",
   violet: "bg-violet/12 text-[#4b3fc4] ring-violet/25",
   success: "bg-success/10 text-success ring-success/20",
-  warning: "bg-warning/10 text-warning ring-warning/25",
+  warning: "bg-warning/10 text-[#7a4a00] ring-warning/25",
   danger: "bg-danger/10 text-danger ring-danger/20",
   dark: "bg-white/8 text-paper/85 ring-white/15",
 };
