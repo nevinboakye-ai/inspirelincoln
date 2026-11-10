@@ -376,7 +376,7 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
         <div>
           <p className="eyebrow text-cyan">Brayford Pool campus · {dateLabel}</p>
           <h1 className="mt-4 text-display-md font-normal">
-            Find your way <span className="font-light italic text-cyan">around campus</span>
+            Find your way <span className="font-light italic text-gold-300">around campus</span>
           </h1>
         </div>
         <p className="max-w-md text-sm leading-relaxed text-paper/75">

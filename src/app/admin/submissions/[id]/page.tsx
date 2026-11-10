@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
+import { FilePreview } from "@/components/admin/file-preview";
 import { notFound } from "next/navigation";
-import { FileDown } from "lucide-react";
 import { requireAccess } from "@/lib/auth";
 import { AdminHeader, Panel } from "@/components/admin/ui";
 import { FeedbackForm } from "@/components/admin/committee-forms";
@@ -31,8 +31,6 @@ export default async function SubmissionDetail({ params }: { params: Promise<{ i
   const preview = (await db.storage.from("submissions").createSignedUrl(s.file_path, 60 * 30)).data?.signedUrl ?? null;
   const st = SUBMISSION_STATUS_LABEL[s.status as SubmissionStatus];
   const kind = s.kind as SubmissionKind;
-  const isImage = s.file_type.startsWith("image/");
-  const isPdf = s.file_type === "application/pdf";
   const versionOf = new Map((versions ?? []).map((v) => [v.id, v.version]));
 
   return (
@@ -48,21 +46,11 @@ export default async function SubmissionDetail({ params }: { params: Promise<{ i
           <Panel title="File">
             <p className="text-sm text-slate-700">{s.file_name} · {size(s.file_size)}</p>
             {s.presenter_note && <p className="mt-3 rounded-md bg-paper p-4 text-sm text-ink"><span className="font-semibold">From the presenter:</span> {s.presenter_note}</p>}
-            <div className="mt-4 flex flex-wrap gap-2">
-              {signed.data?.signedUrl && (
-                <a href={signed.data.signedUrl} className="inline-flex min-h-11 items-center gap-2 rounded-[3px] bg-navy px-5 text-sm font-semibold text-paper">
-                  <FileDown aria-hidden className="size-4" /> Download
-                </a>
-              )}
-              {preview && (isPdf || isImage) && (
-                <a href={preview} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-[3px] border border-navy/15 px-5 text-sm font-semibold text-ink">
-                  Open in a new tab
-                </a>
-              )}
-            </div>
-            {preview && isImage && <img src={preview} alt={`Poster: ${s.title}`} className="mt-5 w-full rounded-md border border-navy/10" />}
-            {preview && isPdf && <iframe src={preview} title={`${SUBMISSION_LABEL[kind].title}: ${s.title}`} className="mt-5 hidden h-[70vh] w-full rounded-md border border-navy/10 md:block" />}
-            {!isPdf && !isImage && <p className="mt-4 text-sm text-slate">PowerPoint and Keynote files can&apos;t be previewed in the browser. Download to view.</p>}
+            {preview && (
+              <div className="mt-4">
+                <FilePreview url={preview} downloadUrl={signed.data?.signedUrl} name={s.file_name} mime={s.file_type} title={`${SUBMISSION_LABEL[kind].title}: ${s.title}`} />
+              </div>
+            )}
             <p className="mt-4 text-xs text-slate">Links expire after 30 minutes. Refresh the page for new ones.</p>
           </Panel>
           {(versions?.length ?? 0) > 1 && (

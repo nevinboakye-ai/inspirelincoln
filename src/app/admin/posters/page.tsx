@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { FileDown } from "lucide-react";
+import { FilePreview } from "@/components/admin/file-preview";
 import { requireRole } from "@/lib/auth";
 import { AdminHeader } from "@/components/admin/ui";
 import { PosterReviewForm } from "@/components/admin/people-forms";
@@ -11,11 +11,12 @@ export default async function PostersPage() {
   const { db } = await requireRole(["admin"], "/admin/posters");
   const { data } = await db.from("poster_uploads").select("id, file_path, orientation, status, admin_note, created_at, abstracts(reference, title, presenting_author)").order("created_at", { ascending: false });
   const rows = await Promise.all(
-    (data ?? []).map(async (p) => ({ ...p, url: (await db.storage.from("posters").createSignedUrl(p.file_path, 600)).data?.signedUrl ?? null, abs: p.abstracts as unknown as { reference: string; title: string; presenting_author: string } | null })),
+    (data ?? []).map(async (p) => ({ ...p, url: (await db.storage.from("posters").createSignedUrl(p.file_path, 1800)).data?.signedUrl ?? null,
+      download: (await db.storage.from("posters").createSignedUrl(p.file_path, 1800, { download: true })).data?.signedUrl ?? null, abs: p.abstracts as unknown as { reference: string; title: string; presenting_author: string } | null })),
   );
   return (
     <div className="space-y-6">
-      <AdminHeader title="Posters" description="Uploaded poster files for accepted abstracts. Download links last 10 minutes; refresh for new ones." />
+      <AdminHeader title="Posters" description="Uploaded poster files for accepted abstracts. Preview any poster here, or download it. Links last 30 minutes; refresh for new ones." />
       {!rows.length && <p className="text-sm text-slate-700">No posters uploaded yet.</p>}
       <ul className="space-y-4">
         {rows.map((p) => (
@@ -26,8 +27,12 @@ export default async function PostersPage() {
                 <p className="text-sm text-slate-700">{p.abs?.reference} · {p.abs?.presenting_author} · {p.orientation ?? "orientation not given"}</p>
                 <p className="text-xs text-slate">Uploaded {new Date(p.created_at).toLocaleString("en-GB", { timeZone: "Europe/London", dateStyle: "medium", timeStyle: "short" })}</p>
               </div>
-              {p.url && <a href={p.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-electric-600"><FileDown aria-hidden className="size-4" /> Open file</a>}
             </div>
+            {p.url && (
+              <div className="mt-4">
+                <FilePreview url={p.url} downloadUrl={p.download} name={p.file_path} title={`Poster: ${p.abs?.title ?? "untitled"}`} open={false} />
+              </div>
+            )}
             <div className="mt-4"><PosterReviewForm id={p.id} status={p.status} note={p.admin_note ?? ""} /></div>
           </li>
         ))}

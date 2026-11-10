@@ -23,7 +23,7 @@ export function SectionHeading({
     <div className={cn(align === "center" && "mx-auto text-center", "max-w-3xl", className)}>
       {eyebrow && (
         <p className={cn("eyebrow mb-4 flex items-center gap-3", align === "center" && "justify-center", dark ? "text-cyan" : "text-electric-600")}>
-          <LineDraw className={cn("w-8", dark ? "bg-cyan/60" : "bg-electric-600/50")} />
+          <LineDraw className={cn("w-8", dark ? "bg-gold/80" : "bg-gold-600/80")} />
           {eyebrow}
         </p>
       )}

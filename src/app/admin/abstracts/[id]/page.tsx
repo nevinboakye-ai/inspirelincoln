@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { FileDown } from "lucide-react";
+import { FilePreview } from "@/components/admin/file-preview";
 import { requireRole } from "@/lib/auth";
 import { AdminHeader, Panel, Table } from "@/components/admin/ui";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +30,12 @@ export default async function AbstractAdminPage({ params }: { params: Promise<{ 
   const rows = (assignments ?? []).map((x) => ({ id: x.id, reviewer: names.get(x.reviewer_id) ?? "Reviewer", review: (Array.isArray(x.reviews) ? x.reviews[0] : x.reviews) as Review | null }));
   const submitted = rows.filter((r) => r.review?.status === "submitted");
   const mean = submitted.length ? submitted.reduce((n, r) => n + weighted(r.review!.scores), 0) / submitted.length : null;
-  const fileUrl = a.file_path ? (await db.storage.from("abstracts").createSignedUrl(a.file_path, 600, { download: true })).data?.signedUrl : null;
+  const [fileUrl, viewUrl] = a.file_path
+    ? await Promise.all([
+        db.storage.from("abstracts").createSignedUrl(a.file_path, 1800, { download: true }).then((r) => r.data?.signedUrl ?? null),
+        db.storage.from("abstracts").createSignedUrl(a.file_path, 1800).then((r) => r.data?.signedUrl ?? null),
+      ])
+    : [null, null];
   const st = ABSTRACT_STATUS_LABEL[a.status];
   const types = ((edition?.abstract_config as { presentationTypes?: string[] })?.presentationTypes ?? []) as string[];
 
@@ -50,7 +55,12 @@ export default async function AbstractAdminPage({ params }: { params: Promise<{ 
                 <div key={k}><dt className="font-semibold text-ink">{k}</dt><dd className="mt-0.5 whitespace-pre-line break-words text-slate-700">{v}</dd></div>
               ))}
             </dl>
-            {fileUrl && <a href={fileUrl} className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-electric-600"><FileDown aria-hidden className="size-4" /> Download supporting file (link valid 10 minutes)</a>}
+            {viewUrl && (
+              <div className="mt-5 border-t border-navy/10 pt-5">
+                <p className="mb-3 text-sm font-semibold text-ink">Supporting file <span className="font-normal text-slate">(links last 30 minutes)</span></p>
+                <FilePreview url={viewUrl} downloadUrl={fileUrl} name={a.file_path} title={`Supporting file for ${a.title}`} open={false} />
+              </div>
+            )}
             <div className="mt-6 space-y-5 border-t border-navy/10 pt-6">
               {ABSTRACT_SECTIONS.map((k) => (
                 <section key={k}><h3 className="font-semibold capitalize text-ink">{k}</h3><p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-slate-700">{a[k] || "Not provided"}</p></section>

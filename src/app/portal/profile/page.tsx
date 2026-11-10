@@ -78,7 +78,7 @@ export default async function ProfilePage() {
       <section className="rounded-xl border border-danger/20 bg-white p-5 sm:p-8" aria-labelledby="delete">
         <h2 id="delete" className="font-display text-xl text-ink">Delete your account</h2>
         <p className="mb-6 mt-2 text-sm text-slate-700">
-          This permanently deletes your account, ticket, agenda, details and any slides or posters you uploaded. It can&apos;t be undone.
+          This permanently deletes your account, Delegate Card, agenda, details and any slides or posters you uploaded. It can&apos;t be undone.
         </p>
         <DeleteAccountForm />
       </section>
