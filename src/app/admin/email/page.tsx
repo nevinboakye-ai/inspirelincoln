@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/auth";
 import { AdminHeader, Panel } from "@/components/admin/ui";
 import { BroadcastForm } from "@/components/admin/committee-forms";
 import { Notice } from "@/components/ui/notice";
@@ -14,14 +13,14 @@ export const dynamic = "force-dynamic";
 const when = (d: string) => new Date(d).toLocaleString("en-GB", { timeZone: "Europe/London", dateStyle: "medium", timeStyle: "short" });
 
 export default async function EmailPage() {
-  const { db, profile } = await requireRole(["admin"], "/admin/email");
-  if (!profile.access.leadership) redirect("/admin?denied=email");
+  const { db } = await requireAccess("send_email", "/admin/email");
   const [{ data: people }, { data: sent }] = await Promise.all([
-    db.from("profiles").select("account_type").eq("account_status", "approved").limit(5000),
+    db.rpc("audience_counts"),
     db.from("email_broadcasts").select("id, subject, sender_name, purpose, audience_types, recipient_count, delivered_count, created_at").order("created_at", { ascending: false }).limit(20),
   ]);
   const counts: Partial<Record<AccountType, number>> = {};
-  for (const p of people ?? []) counts[p.account_type as AccountType] = (counts[p.account_type as AccountType] ?? 0) + 1;
+  for (const p of (people ?? []) as { account_type: AccountType; account_status: string; total: number }[])
+    if (p.account_status === "approved") counts[p.account_type] = (counts[p.account_type] ?? 0) + Number(p.total);
 
   return (
     <div className="space-y-6">

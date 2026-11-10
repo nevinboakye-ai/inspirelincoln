@@ -3,7 +3,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { AccountStatus, AccountType, UserRole } from "@/lib/types";
-import { accessFor, effectiveRole, type Access } from "@/lib/accounts";
+import { accessFor, accessFromCaps, effectiveRole, type Access, type Capability } from "@/lib/accounts";
 
 export interface Profile {
   id: string;
@@ -37,12 +37,18 @@ export const getCurrentUser = cache(async () => {
     data: { user },
   } = await db.auth.getUser();
   if (!user) return null;
-  const { data: p } = await db.from("profiles").select("*").eq("id", user.id).maybeSingle();
+  const [{ data: p }, caps] = await Promise.all([
+    db.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+    db.rpc("my_access"),
+  ]);
   const base = {
     role: ((p?.role as UserRole) ?? "delegate") as UserRole,
     accountType: ((p?.account_type as AccountType) ?? "delegate") as AccountType,
     accountStatus: ((p?.account_status as AccountStatus) ?? "pending") as AccountStatus,
   };
+  // The database decides access (public.my_access). Fall back to the defaults
+  // only if the access control migration hasn't been run yet.
+  const access = caps.error || !Array.isArray(caps.data) ? accessFor(base) : accessFromCaps(caps.data as string[], base.role);
   const profile: Profile = {
     id: user.id,
     email: user.email ?? p?.email ?? "",
@@ -60,9 +66,9 @@ export const getCurrentUser = cache(async () => {
     accountType: base.accountType,
     accountStatus: base.accountStatus,
     reviewNote: p?.review_note ?? null,
-    role: effectiveRole(base),
+    role: effectiveRole(access, base.role),
     siteRole: base.role,
-    access: accessFor(base),
+    access,
   };
   return { user, profile, db };
 });
@@ -76,13 +82,34 @@ export async function requireUser(next = "/portal") {
 const RANK: Record<UserRole, number> = { delegate: 0, reviewer: 1, editor: 2, admin: 3 };
 
 /**
- * Server-side role gate. `roles` lists the roles allowed; admins are always
- * allowed. Committee members count as editors and executive members as
- * admins. Row level security enforces the same rules in the database.
+ * Older role gate, kept for the content and records pages. "admin" means
+ * delegate records (manage_people), "editor" means editing the website and
+ * "reviewer" means abstract reviewing. The site owner passes every gate.
+ * Row level security enforces the same rules in the database.
  */
 export async function requireRole(roles: UserRole[], next = "/admin") {
   const current = await requireUser(next);
-  if (current.profile.role !== "admin" && !roles.includes(current.profile.role)) redirect("/portal?denied=1");
+  const { access, siteRole } = current.profile;
+  const ok =
+    access.owner ||
+    (roles.includes("admin") && access.can.manage_people) ||
+    (roles.includes("editor") && access.can.edit_website) ||
+    (roles.includes("reviewer") && (siteRole === "reviewer" || access.can.review_submissions));
+  if (!ok) redirect("/portal?denied=1");
+  return current;
+}
+
+/**
+ * Permission gate. Pass one permission, several (any of them is enough),
+ * "any" for anyone with a dashboard permission, or "owner".
+ */
+export async function requireAccess(need: Capability | Capability[] | "any" | "owner", next = "/admin") {
+  const current = await requireUser(next);
+  const { access } = current.profile;
+  const ok =
+    access.owner ||
+    (need === "any" ? access.committee : need === "owner" ? false : (Array.isArray(need) ? need : [need]).some((c) => access.can[c]));
+  if (!ok) redirect(need === "any" ? "/portal?denied=1" : "/admin?denied=1");
   return current;
 }
 

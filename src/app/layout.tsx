@@ -3,6 +3,7 @@ import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/layout/providers";
 import { SiteHeader } from "@/components/layout/site-header";
+import { EditShortcut } from "@/components/layout/edit-shortcut";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { getAnnouncements, getEdition } from "@/lib/data/content";
@@ -59,6 +60,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {children}
           </main>
           <SiteFooter edition={edition} />
+          <EditShortcut />
         </Providers>
       </body>
     </html>

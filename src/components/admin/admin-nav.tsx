@@ -3,59 +3,64 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarCog, ClipboardCheck, Eye, FileStack, Gauge, HelpCircle, Inbox, Mail, MapPin, Megaphone, Mic, QrCode, ScrollText, Settings2,
-  Ticket, UserCheck, Users, Wrench, DoorOpen, ShieldCheck, UserRound,
+  Ticket, UserCheck, Users, Wrench, DoorOpen, ShieldCheck, UserRound, LayoutDashboard,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import type { Access } from "@/lib/accounts";
+import type { Access, Capability } from "@/lib/accounts";
 
-type Level = "committee" | "exec" | "leadership" | "owner";
-type LinkDef = { href: string; label: string; icon: typeof Gauge; level?: Level };
+type Need = Capability | Capability[] | "owner";
+type LinkDef = { href: string; label: string; icon: typeof Gauge; need?: Need };
 
 const GROUPS: { title: string; links: LinkDef[] }[] = [
+  {
+    title: "Platform",
+    links: [{ href: "/admin/platform", label: "Platform dashboard", icon: LayoutDashboard, need: "owner" }],
+  },
   {
     title: "Today",
     links: [
       { href: "/admin", label: "Overview", icon: Gauge },
-      { href: "/admin/checkin", label: "Check-in", icon: QrCode, level: "exec" },
+      { href: "/admin/checkin", label: "Check-in", icon: QrCode, need: ["check_in", "manage_people"] },
     ],
   },
   {
     title: "People",
     links: [
-      { href: "/admin/accounts", label: "Accounts", icon: UserCheck, level: "exec" },
-      { href: "/admin/submissions", label: "Slides and posters", icon: FileStack },
-      { href: "/admin/email", label: "Group email", icon: Mail, level: "leadership" },
+      { href: "/admin/accounts", label: "Accounts", icon: UserCheck, need: "review_accounts" },
+      { href: "/admin/submissions", label: "Slides and posters", icon: FileStack, need: "review_submissions" },
+      { href: "/admin/email", label: "Group email", icon: Mail, need: "send_email" },
     ],
   },
   {
     title: "Website",
     links: [
-      { href: "/admin/content/sessions", label: "Programme", icon: CalendarCog },
-      { href: "/admin/content/announcements", label: "Announcements", icon: Megaphone },
-      { href: "/admin/content/speakers", label: "Speakers", icon: Mic },
-      { href: "/admin/content/workshops", label: "Workshops", icon: Wrench },
-      { href: "/admin/content/map", label: "Campus map", icon: MapPin },
-      { href: "/admin/content/rooms", label: "Rooms", icon: DoorOpen },
-      { href: "/admin/content/faqs", label: "FAQs", icon: HelpCircle },
-      { href: "/admin/content/committee", label: "Committee profiles", icon: Users },
-      { href: "/admin/settings", label: "Conference settings", icon: Settings2, level: "exec" },
+      { href: "/admin/content/committee", label: "Committee profiles", icon: Users, need: "edit_website" },
+      { href: "/admin/content/sessions", label: "Programme", icon: CalendarCog, need: "edit_website" },
+      { href: "/admin/content/announcements", label: "Announcements", icon: Megaphone, need: "edit_website" },
+      { href: "/admin/content/speakers", label: "Speakers", icon: Mic, need: "edit_website" },
+      { href: "/admin/content/workshops", label: "Workshops", icon: Wrench, need: "edit_website" },
+      { href: "/admin/content/map", label: "Campus map", icon: MapPin, need: "edit_website" },
+      { href: "/admin/content/rooms", label: "Rooms", icon: DoorOpen, need: "edit_website" },
+      { href: "/admin/content/faqs", label: "FAQs", icon: HelpCircle, need: "edit_website" },
+      { href: "/admin/settings", label: "Conference settings", icon: Settings2, need: "edit_website" },
     ],
   },
   {
     title: "Records",
     links: [
-      { href: "/admin/registrations", label: "Registrations", icon: Ticket, level: "exec" },
-      { href: "/admin/enquiries", label: "Enquiries", icon: Inbox, level: "exec" },
-      { href: "/admin/abstracts", label: "Abstracts", icon: ClipboardCheck, level: "exec" },
-      { href: "/admin/users", label: "Site roles", icon: ShieldCheck, level: "owner" },
-      { href: "/admin/audit", label: "Audit log", icon: ScrollText, level: "exec" },
+      { href: "/admin/registrations", label: "Registrations", icon: Ticket, need: "manage_people" },
+      { href: "/admin/enquiries", label: "Enquiries", icon: Inbox, need: "manage_people" },
+      { href: "/admin/abstracts", label: "Abstracts", icon: ClipboardCheck, need: "manage_people" },
+      { href: "/admin/users", label: "Site roles", icon: ShieldCheck, need: "owner" },
+      { href: "/admin/audit", label: "Audit log", icon: ScrollText, need: "manage_people" },
     ],
   },
 ];
 
 export function AdminNav({ access, name, position }: { access: Access; name: string; position: string }) {
   const path = usePathname();
-  const allowed = (l: LinkDef) => !l.level || (l.level === "committee" ? access.committee : l.level === "exec" ? access.exec : l.level === "owner" ? access.owner : access.leadership);
+  const allowed = (l: LinkDef) =>
+    !l.need || access.owner || (l.need !== "owner" && (Array.isArray(l.need) ? l.need : [l.need]).some((c) => access.can[c]));
   return (
     <nav aria-label="Committee dashboard" className="min-w-0 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
       <div className="mb-5 flex items-center gap-3">

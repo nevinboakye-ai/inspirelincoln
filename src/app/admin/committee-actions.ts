@@ -1,7 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/auth";
 import { ACCOUNT_TYPES, canApprove } from "@/lib/accounts";
 import { sendBatch, sendEmail } from "@/lib/email/resend";
 import { accountDecisionEmail, feedbackEmail } from "@/lib/email/messages";
@@ -20,7 +20,7 @@ const reviewSchema = z.object({
 
 /** Executive review of an account. Updates the account and the registration together, then emails the person. */
 export async function reviewAccount(_: ActionResult, form: FormData): Promise<ActionResult> {
-  const { db, user, profile } = await requireRole(["admin"], "/admin/accounts");
+  const { db, user, profile } = await requireAccess("review_accounts", "/admin/accounts");
   const parsed = reviewSchema.safeParse({ ...Object.fromEntries(form), notify: form.get("notify") === "on" });
   if (!parsed.success) return { ok: false, error: "Choose a decision." };
   const v = parsed.data;
@@ -57,7 +57,7 @@ const feedbackSchema = z.object({
 
 /** Committee feedback on a slide deck or poster. A decision also updates the submission's status. */
 export async function giveFeedback(_: ActionResult, form: FormData): Promise<ActionResult> {
-  const { db } = await requireRole(["editor"], "/admin/submissions");
+  const { db } = await requireAccess("review_submissions", "/admin/submissions");
   const parsed = feedbackSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success) return { ok: false, error: "Choose a decision." };
   const v = parsed.data;
@@ -95,8 +95,7 @@ export type BroadcastResult = (ActionResult & { count?: number }) | null;
 
 /** Group email from the president or vice president to chosen account types. */
 export async function sendBroadcast(_: BroadcastResult, form: FormData): Promise<BroadcastResult> {
-  const { db, user, profile } = await requireRole(["admin"], "/admin/email");
-  if (!profile.access.leadership) return { ok: false, error: "Only the president or vice president can send group emails." };
+  const { db, user, profile } = await requireAccess("send_email", "/admin/email");
   const parsed = broadcastSchema.safeParse({
     subject: form.get("subject"),
     body: form.get("body"),
@@ -112,16 +111,14 @@ export async function sendBroadcast(_: BroadcastResult, form: FormData): Promise
   }
   const v = parsed.data;
 
-  let q = db.from("profiles").select("email, full_name").in("account_type", v.types).in("account_status", v.statuses).limit(5000);
   // Marketing and news only go to people who opted in.
-  if (v.purpose === "marketing") q = q.eq("marketing_opt_in", true);
-  const { data: people, error } = await q;
+  const { data: people, error } = await db.rpc("broadcast_recipients", { types: v.types, statuses: v.statuses, marketing_only: v.purpose === "marketing" });
   if (error) return { ok: false, error: "Could not load the recipients." };
-  const recipients = (people ?? []).filter((p) => p.email);
+  const recipients = ((people ?? []) as { email: string; full_name: string | null }[]).filter((p) => p.email);
 
   if (v.intent === "preview") return { ok: true, count: recipients.length, message: `${recipients.length} ${recipients.length === 1 ? "person" : "people"} will receive this.` };
 
-  const sender = [profile.fullName, profile.access.leadership ? (profile.accountType === "president" ? "President" : profile.accountType === "vice_president" ? "Vice president" : null) : null]
+  const sender = [profile.fullName, profile.accountStatus === "approved" ? (profile.accountType === "president" ? "President" : profile.accountType === "vice_president" ? "Vice president" : profile.committeePosition) : null]
     .filter(Boolean)
     .join(", ");
   const paragraphs = v.body.split(/\n{2,}/).map((para) => escapeHtml(para).replace(/\n/g, "<br>"));

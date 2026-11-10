@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/auth";
 import { AdminHeader } from "@/components/admin/ui";
 import { AccountReviewForm } from "@/components/admin/committee-forms";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +22,7 @@ const when = (d: string) => new Date(d).toLocaleString("en-GB", { timeZone: "Eur
 
 export default async function AccountsPage({ searchParams }: { searchParams: Promise<{ status?: string; type?: string; q?: string }> }) {
   const sp = await searchParams;
-  const { db, user, profile } = await requireRole(["admin"], "/admin/accounts");
+  const { db, user, profile } = await requireAccess("review_accounts", "/admin/accounts");
   const status = (TABS.find((t) => t.status === sp.status)?.status ?? "pending") as AccountStatus;
   const type = ACCOUNT_TYPES.includes(sp.type as AccountType) ? (sp.type as AccountType) : null;
 

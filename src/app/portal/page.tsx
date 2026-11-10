@@ -1,6 +1,6 @@
 import Link from "next/link";
 import QRCode from "qrcode";
-import { ArrowRight, CalendarDays, Clock, HeartHandshake, Hourglass, LayoutDashboard, MapPin, Megaphone, Ticket, UploadCloud, XCircle } from "lucide-react";
+import { ArrowRight, CalendarDays, Clock, Gauge, HeartHandshake, Hourglass, LayoutDashboard, MapPin, Megaphone, Ticket, UploadCloud, XCircle } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { getConferenceBundle } from "@/lib/data/content";
 import { formatEventDate } from "@/lib/time";
@@ -140,6 +140,18 @@ export default async function PortalHome({ searchParams }: { searchParams: Promi
             {latestSub ? (latestSub.status === "changes_requested" ? "See feedback and upload a new version" : "View submission") : `Upload ${SUBMISSION_LABEL[kind].noun}`} <ArrowRight aria-hidden className="size-4" />
           </Link>
         </Card>
+      )}
+
+      {/* Site owner */}
+      {profile.access.owner && (
+        <Link href="/admin/platform" className="group flex items-center gap-4 rounded-xl border border-cyan/40 bg-midnight p-5 text-paper transition-colors hover:border-cyan sm:p-6">
+          <Gauge aria-hidden className="size-6 shrink-0 text-cyan" />
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-xl">Platform dashboard</span>
+            <span className="block text-sm text-paper/75">Who can see and do what, committee profiles, accounts and submissions</span>
+          </span>
+          <ArrowRight aria-hidden className="size-5 shrink-0 transition-transform group-hover:translate-x-1" />
+        </Link>
       )}
 
       {/* Committee */}

@@ -1,6 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { requireRole } from "@/lib/auth";
+import { requireAccess, requireRole } from "@/lib/auth";
 import type { ActionResult } from "@/app/portal/actions";
 import { currentEditionId } from "@/lib/admin/server";
 
@@ -35,7 +35,7 @@ export async function setRegistrationStatus(_: ActionResult, form: FormData): Pr
 export type CheckInResult = { ok: boolean; error?: string; name?: string | null; status?: string; already?: boolean; at?: string | null } | null;
 
 export async function checkIn(_: CheckInResult, form: FormData): Promise<CheckInResult> {
-  const { db } = await requireRole(["admin"], "/admin/checkin");
+  const { db } = await requireAccess(["check_in", "manage_people"], "/admin/checkin");
   const raw = String(form.get("token") ?? "").trim();
   const token = raw.replace(/^INSPIRE-CHECKIN:/i, "");
   if (!/^[0-9a-f-]{36}$/i.test(token)) return { ok: false, error: "That isn't a valid INSPIRE check-in code." };
@@ -49,8 +49,7 @@ export async function checkIn(_: CheckInResult, form: FormData): Promise<CheckIn
 }
 
 export async function setRole(_: ActionResult, form: FormData): Promise<ActionResult> {
-  const { db, user, profile } = await requireRole(["admin"], "/admin/users");
-  if (!profile.access.owner) return { ok: false, error: "Only the site owner can change site roles." };
+  const { db, user, profile } = await requireAccess("owner", "/admin/users");
   const id = String(form.get("id"));
   const role = String(form.get("role"));
   if (!ROLES.includes(role)) return { ok: false, error: "Invalid role." };

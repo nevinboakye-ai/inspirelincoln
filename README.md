@@ -35,14 +35,29 @@ choices, a full data download and account deletion. Oral presenters upload slide
 PowerPoint or Keynote) and poster presenters upload posters (PDF, PNG or JPG), up to 50 MB, with
 versions and committee feedback.
 
-**Committee dashboard (`/admin`).** What each person sees depends on their account type:
+**Committee dashboard (`/admin`).** What each person sees depends on their permissions. The
+defaults by account type are:
 
-| Account | Can |
+| Permission | Who has it by default |
 | --- | --- |
-| Supporting committee | Edit the website content (programme, speakers, map, FAQs, announcements, settings), review slides and posters, give feedback, run check-in |
-| Executive committee | All of the above, plus approve, waitlist or decline accounts, registrations, enquiries and the audit log |
-| President and vice president | All of the above, plus approve executive accounts and send group emails by account type and status |
-| Site owner (site role `admin`) | Everything, above the president: only a site owner can change site roles, and nobody else can change a site owner's account |
+| Edit the website (programme, speakers, committee, map, FAQs, announcements, settings) | Supporting committee and above |
+| Review slides and posters | Supporting committee and above |
+| Review accounts (approve, waitlist or decline) | Executive committee and above |
+| Delegate records (registrations, abstracts, enquiries, audit log) | Executive committee and above |
+| Check-in desk | Executive committee and above |
+| Approve committee accounts | President and vice president |
+| Group emails | President and vice president |
+
+**Platform dashboard (`/admin/platform`).** Only the site owner (site role `admin`) sees it. The
+owner always has every permission and can:
+
+- switch any permission on or off for a whole account type,
+- allow or block a single permission for one person (for example, let a delegate volunteer
+  run the check-in desk),
+- jump straight to editing committee profiles, accepting accounts and reviewing submissions,
+- see recent permission changes, which are all written to the audit log.
+
+Signed-in editors also get an "Edit this page" shortcut on the public pages.
 
 Every rule is enforced twice: in server code and by Postgres row level security
 (`supabase/tests/rls.test.sql`).
@@ -70,7 +85,9 @@ Other commands: `npm run build`, `npm start`, `npm run lint`, `npm run typecheck
    3. `supabase/migrations/20261111000000_accounts_and_submissions.sql` (account types and review,
       slide and poster submissions, feedback, consent records, group email log)
    4. `supabase/migrations/20261112000000_site_owner.sql` (site owner above the president)
-   5. `supabase/seed.sql` (the 2026 edition, confirmed timetable, rooms, committee, map places, FAQs)
+   5. `supabase/migrations/20261113000000_access_control.sql` (permissions the site owner can
+      change from the platform dashboard)
+   6. `supabase/seed.sql` (the 2026 edition, confirmed timetable, rooms, committee, map places, FAQs)
 
    **Database already set up?** Run only the ones you haven't run yet. Existing accounts are
    marked approved by migration 3, so nobody loses access.

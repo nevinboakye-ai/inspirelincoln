@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { AdminNav } from "@/components/admin/admin-nav";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/auth";
 import { ACCOUNT_TYPE_LABEL } from "@/lib/accounts";
 
 export const metadata: Metadata = {
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { profile } = await requireRole(["editor"], "/admin");
+  const { profile } = await requireAccess("any", "/admin");
   const position = [profile.committeePosition, ACCOUNT_TYPE_LABEL[profile.accountType]].filter(Boolean).join(" · ");
   return (
     <div className="min-h-screen bg-paper pb-28 pt-24 lg:pb-24">

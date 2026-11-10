@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, CalendarCog, FileStack, Mail, MapPin, Megaphone, UserCheck } from "lucide-react";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/auth";
 import { getEdition } from "@/lib/data/content";
 import { formatEventDate, toZonedInputValue } from "@/lib/time";
 import { AdminHeader, Panel } from "@/components/admin/ui";
@@ -26,7 +26,7 @@ function Action({ href, icon: Icon, title, value, note }: { href: string; icon: 
 
 export default async function CommitteeHome({ searchParams }: { searchParams: Promise<{ denied?: string }> }) {
   const sp = await searchParams;
-  const { db, profile } = await requireRole(["editor"], "/admin");
+  const { db, profile } = await requireAccess("any", "/admin");
   const { access } = profile;
   const edition = await getEdition();
 
@@ -49,7 +49,7 @@ export default async function CommitteeHome({ searchParams }: { searchParams: Pr
 
   return (
     <div className="space-y-8">
-      {sp.denied && <Notice tone="warning">That page is for the president and vice president.</Notice>}
+      {sp.denied && <Notice tone="warning">{"You don't have permission for that page. The site owner can change this on the platform dashboard."}</Notice>}
       <AdminHeader
         title={`Hello${profile.fullName ? `, ${profile.fullName.split(" ")[0]}` : ""}`}
         description={<>{formatEventDate(edition.date)} · {days > 0 ? `${days} day${days === 1 ? "" : "s"} to go` : days === 0 ? "It's conference day" : "The conference has finished"}</>}

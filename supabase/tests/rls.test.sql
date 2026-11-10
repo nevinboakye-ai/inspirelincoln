@@ -374,4 +374,65 @@ reset role;
 select pg_temp.expect((select count(*) from auth.users where id = '00000000-0000-0000-0000-0000000000f7') = 0, 'people can delete their own account');
 select pg_temp.expect((select count(*) from public.profiles where id = '00000000-0000-0000-0000-0000000000f7') = 0, 'deleting an account removes the profile');
 
+-- 15. Access the site owner controls
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f3');
+select pg_temp.expect(public.has_access('edit_website') and not public.has_access('send_email'), 'supporting committee gets its default access');
+select pg_temp.expect(array_length(public.my_access(), 1) = 2, 'my_access lists exactly what someone can do');
+reset role;
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f1');
+do $$ begin
+  update public.access_rules set allowed = true where account_type = 'delegate' and capability = 'edit_website';
+  if found then raise exception 'FAILED: president changed the access rules'; end if;
+  raise notice 'ok - president cannot change the access rules';
+end $$;
+do $$ begin
+  insert into public.access_overrides (user_id, capability, allowed) values (auth.uid(), 'edit_website', true);
+  raise exception 'FAILED: president granted themselves access';
+exception when insufficient_privilege then raise notice 'ok - president cannot grant individual access'; end $$;
+select pg_temp.expect((select count(*) from public.access_overrides) = 0, 'president cannot see other people''s individual access');
+reset role;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+update public.access_rules set allowed = true where account_type = 'poster_presenter' and capability = 'check_in';
+insert into public.access_overrides (user_id, capability, allowed) values
+  ('00000000-0000-0000-0000-0000000000f3', 'send_email', true),
+  ('00000000-0000-0000-0000-0000000000f3', 'edit_website', false),
+  ('00000000-0000-0000-0000-0000000000f6', 'edit_website', true);
+select pg_temp.expect((select updated_by from public.access_overrides where user_id = '00000000-0000-0000-0000-0000000000f3' and capability = 'send_email') = '00000000-0000-0000-0000-00000000000a', 'changes record who made them');
+reset role;
+select pg_temp.expect((select count(*) from public.audit_events where entity = 'access_overrides') >= 3, 'access changes are in the audit log');
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f4');
+select pg_temp.expect(public.has_access('check_in') and not public.has_access('edit_website'), 'a rule change reaches everyone of that account type');
+reset role;
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f3');
+select pg_temp.expect(public.has_access('send_email'), 'an individual grant adds access');
+select pg_temp.expect(not public.is_editor(), 'an individual block removes access, even from the default');
+do $$ begin
+  insert into public.faqs (question, answer) values ('Blocked?', 'Should not save');
+  raise exception 'FAILED: blocked person edited the website';
+exception when insufficient_privilege then raise notice 'ok - the database enforces a block'; end $$;
+select pg_temp.expect((select count(*) from public.broadcast_recipients('{delegate}', '{approved,waitlisted}', false)) >= 1, 'a granted sender can reach recipients');
+reset role;
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f6');
+select pg_temp.expect(public.has_access('edit_website'), 'an individual grant works for someone not yet approved');
+reset role;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select public.review_account('00000000-0000-0000-0000-0000000000f6', 'declined');
+reset role;
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f6');
+select pg_temp.expect(not public.has_access('edit_website'), 'a declined account loses individual grants');
+reset role;
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f2');
+do $$ begin
+  perform * from public.broadcast_recipients('{delegate}', '{approved}', false);
+  raise exception 'FAILED: exec listed recipients';
+exception when raise_exception then
+  if sqlerrm like 'FAILED%' then raise; end if;
+  raise notice 'ok - only people allowed to send can list recipients';
+end $$;
+reset role;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+update public.access_rules set allowed = false where capability = 'edit_website';
+select pg_temp.expect(public.has_access('edit_website'), 'the site owner can never lock themselves out');
+reset role;
+
 select 'ALL RLS TESTS PASSED' as result;
