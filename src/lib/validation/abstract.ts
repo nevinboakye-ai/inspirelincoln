@@ -22,8 +22,8 @@ export function abstractSchema(cfg: AbstractConfig, mode: "draft" | "submit") {
     .object({
       presentingAuthor: z.string().trim().min(2, "Enter the presenting author's name.").max(120),
       email: z.string().trim().email("Enter a valid email address.").max(254),
-      university: z.string().trim().min(2, "Enter your university.").max(160),
-      programmeYear: z.string().trim().min(2, "Enter your programme and year of study.").max(120),
+      university: mode === "submit" ? z.string().trim().min(2, "Enter your university.").max(160) : z.string().trim().max(160),
+      programmeYear: mode === "submit" ? z.string().trim().min(2, "Enter your programme and year of study.").max(120) : z.string().trim().max(120),
       title: z.string().trim().min(5, "Enter a title of at least 5 characters.").max(300),
       coAuthors: z.string().trim().max(2000).default(""),
       category: z.string().refine((v) => cfg.categories.includes(v), { message: "Choose a research category." }),

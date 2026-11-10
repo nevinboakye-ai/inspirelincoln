@@ -78,7 +78,7 @@ export default async function PortalHome({ searchParams }: { searchParams: Promi
               {qr && (
                 <figure className="w-40 shrink-0">
                   <div className="rounded-md border border-navy/10 p-2" dangerouslySetInnerHTML={{ __html: qr }} role="img" aria-label="Check-in QR code" />
-                  <figcaption className="mt-1 text-center text-xs text-slate">Check-in code</figcaption>
+                  <figcaption className="mt-1 text-center text-xs text-slate">Check-in code<span className="mt-1 block break-all font-mono text-[0.65rem]">{registration.checkin_token}</span></figcaption>
                 </figure>
               )}
             </div>

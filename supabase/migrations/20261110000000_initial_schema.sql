@@ -407,6 +407,20 @@ end $$;
 create trigger abstracts_guard before update on public.abstracts
   for each row execute function public.guard_abstract_author_update();
 
+-- Stamp the submission time when an abstract is submitted on its first save.
+create or replace function public.stamp_abstract_insert()
+returns trigger language plpgsql set search_path = public as $$
+begin
+  if new.status = 'submitted' then
+    new.submitted_at = now();
+  else
+    new.submitted_at = null;
+  end if;
+  return new;
+end $$;
+create trigger abstracts_stamp before insert on public.abstracts
+  for each row execute function public.stamp_abstract_insert();
+
 create table public.review_criteria (
   id uuid primary key default gen_random_uuid(),
   edition_id uuid not null references public.editions (id) on delete cascade,

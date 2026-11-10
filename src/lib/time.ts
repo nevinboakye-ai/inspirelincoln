@@ -105,3 +105,17 @@ export function daysUntil(dateIso: string, now = new Date()) {
   const target = zonedTimeToUtc(dateIso, "23:59");
   return Math.ceil((target.getTime() - now.getTime()) / 86400000);
 }
+
+/** Formats an ISO instant as a `datetime-local` input value in UK time. */
+export function toZonedInputValue(iso: string | null | undefined, timeZone = UK_TZ) {
+  if (!iso) return "";
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).formatToParts(new Date(iso));
+  const g = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${g("year")}-${g("month")}-${g("day")}T${g("hour")}:${g("minute")}`;
+}
+
+/** Parses a `datetime-local` value entered in UK time to an ISO instant. */
+export function fromZonedInputValue(v: string, timeZone = UK_TZ) {
+  const m = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})$/.exec(v.trim());
+  return m ? zonedTimeToUtc(m[1], m[2], timeZone).toISOString() : null;
+}

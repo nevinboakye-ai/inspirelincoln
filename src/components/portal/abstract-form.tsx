@@ -1,4 +1,5 @@
 "use client";
+import { submitWithoutReset } from "@/lib/use-action-form";
 import { useActionState, useState } from "react";
 import { Loader2, Save, Send } from "lucide-react";
 import { saveAbstract } from "@/app/portal/actions";
@@ -63,7 +64,7 @@ export function AbstractForm({ initial, config }: { initial: AbstractValues; con
   );
 
   return (
-    <form action={action} noValidate className="space-y-10">
+    <form onSubmit={submitWithoutReset(action)} noValidate className="space-y-10">
       <ResultBanner state={state} />
       {id && <input type="hidden" name="id" value={id} />}
 

@@ -89,7 +89,7 @@ export default async function AbstractPage({ params, searchParams }: { params: P
           </div>
         )}
 
-        {["draft", "submitted", "under_review", "accepted", "waitlisted"].includes(a.status) && (
+        {["submitted", "under_review"].includes(a.status) && (
           <div className="mt-10 border-t border-navy/10 pt-6">
             <WithdrawForm id={a.id} />
           </div>

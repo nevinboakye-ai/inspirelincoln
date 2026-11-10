@@ -1,4 +1,5 @@
 "use client";
+import { submitWithoutReset } from "@/lib/use-action-form";
 import Link from "next/link";
 import { useActionState } from "react";
 import { Loader2 } from "lucide-react";
@@ -27,7 +28,7 @@ const inv = (s: AuthState, k: string) => ({ "aria-invalid": Boolean(fe(s, k)), "
 export function SignInForm({ next, disabled }: { next: string; disabled: boolean }) {
   const [state, action, pending] = useActionState(signIn, null);
   return (
-    <form action={action} noValidate className="space-y-5">
+    <form onSubmit={submitWithoutReset(action)} noValidate className="space-y-5">
       <Status state={state} />
       <input type="hidden" name="next" value={next} />
       <Field id="email" label="Email" required error={fe(state, "email")}>
@@ -50,7 +51,7 @@ export function SignUpForm({ next, disabled }: { next: string; disabled: boolean
   const [state, action, pending] = useActionState(signUp, null);
   if (state?.message) return <Status state={state} />;
   return (
-    <form action={action} noValidate className="space-y-5">
+    <form onSubmit={submitWithoutReset(action)} noValidate className="space-y-5">
       <Status state={state} />
       <input type="hidden" name="next" value={next} />
       <Field id="fullName" label="Full name" required error={fe(state, "fullName")}>
@@ -81,7 +82,7 @@ export function SignUpForm({ next, disabled }: { next: string; disabled: boolean
 export function ResetForm({ disabled }: { disabled: boolean }) {
   const [state, action, pending] = useActionState(requestReset, null);
   return (
-    <form action={action} noValidate className="space-y-5">
+    <form onSubmit={submitWithoutReset(action)} noValidate className="space-y-5">
       <Status state={state} />
       <Field id="email" label="Email" required error={fe(state, "email")}>
         <input id="email" name="email" type="email" autoComplete="email" className={inputClass} {...inv(state, "email")} />
@@ -96,7 +97,7 @@ export function ResetForm({ disabled }: { disabled: boolean }) {
 export function UpdatePasswordForm() {
   const [state, action, pending] = useActionState(updatePassword, null);
   return (
-    <form action={action} noValidate className="space-y-5">
+    <form onSubmit={submitWithoutReset(action)} noValidate className="space-y-5">
       <Status state={state} />
       <Field id="password" label="New password" required error={fe(state, "password")} hint="At least 10 characters.">
         <input id="password" name="password" type="password" autoComplete="new-password" className={inputClass} {...inv(state, "password")} />

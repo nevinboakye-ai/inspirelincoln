@@ -1,4 +1,5 @@
 "use client";
+import { submitWithoutReset } from "@/lib/use-action-form";
 import { useActionState } from "react";
 import { Loader2 } from "lucide-react";
 import { deleteAccount, updateProfile, type ActionResult } from "@/app/portal/actions";
@@ -16,7 +17,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
   const [state, action, pending] = useActionState(updateProfile, null);
   const fe = (k: string) => state?.fieldErrors?.[k];
   return (
-    <form action={action} noValidate className="space-y-5">
+    <form onSubmit={submitWithoutReset(action)} noValidate className="space-y-5">
       <ResultBanner state={state} />
       <Field id="email" label="Email" required hint="Contact the team to change the email on your account.">
         <input id="email" value={profile.email} readOnly disabled className={inputClass} />
@@ -45,7 +46,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
 export function DeleteAccountForm() {
   const [state, action, pending] = useActionState(deleteAccount, null);
   return (
-    <form action={action} noValidate className="space-y-4">
+    <form onSubmit={submitWithoutReset(action)} noValidate className="space-y-4">
       <ResultBanner state={state} />
       <Field id="confirm" label='Type "DELETE" to confirm' required error={state?.fieldErrors?.confirm}>
         <input id="confirm" name="confirm" autoComplete="off" className={inputClass} />
