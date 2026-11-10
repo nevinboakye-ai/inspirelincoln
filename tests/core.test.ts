@@ -69,3 +69,14 @@ describe("calendar export", () => {
     expect(ics.trim().endsWith("END:VCALENDAR")).toBe(true);
   });
 });
+
+import { normaliseSupabaseUrl } from "@/lib/supabase/env";
+describe("Supabase URL normalisation", () => {
+  it("tolerates common paste mistakes", () => {
+    expect(normaliseSupabaseUrl(" abc.supabase.co ")).toBe("https://abc.supabase.co");
+    expect(normaliseSupabaseUrl("https://abc.supabase.co/rest/v1/")).toBe("https://abc.supabase.co");
+    expect(normaliseSupabaseUrl('"https://abc.supabase.co"')).toBe("https://abc.supabase.co");
+    expect(normaliseSupabaseUrl("")).toBe("");
+    expect(normaliseSupabaseUrl("http://[bad")).toBe("");
+  });
+});

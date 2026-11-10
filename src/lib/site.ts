@@ -1,4 +1,11 @@
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://inspirelincoln.uk").replace(/\/$/, "");
+export const SITE_URL = (() => {
+  const raw = (process.env.NEXT_PUBLIC_SITE_URL ?? "").trim();
+  try {
+    return new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`).origin;
+  } catch {
+    return "https://inspirelincoln.uk";
+  }
+})();
 export const SITE_NAME = "INSPIRE National Medical Research Conference";
 export const SITE_SHORT = "INSPIRE";
 export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? null;

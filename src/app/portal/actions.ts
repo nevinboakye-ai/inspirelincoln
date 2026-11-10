@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { SUPABASE_URL } from "@/lib/supabase/env";
 import { requireUser } from "@/lib/auth";
 import { getEdition } from "@/lib/data/content";
 import { abstractSchema, FILE_RULES } from "@/lib/validation/abstract";
@@ -42,7 +43,7 @@ export async function deleteAccount(_: ActionResult, form: FormData): Promise<Ac
   if (form.get("confirm") !== "DELETE") return { ok: false, fieldErrors: { confirm: "Type DELETE to confirm." } };
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!key) return { ok: false, error: "Self-service deletion is not enabled yet. Please contact the team and we will delete your account." };
-  const admin = createAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, key, { auth: { persistSession: false } });
+  const admin = createAdminClient(SUPABASE_URL, key, { auth: { persistSession: false } });
   const { error } = await admin.auth.admin.deleteUser(user.id);
   if (error) return { ok: false, error: "We couldn't delete your account. Please contact the team." };
   await db.auth.signOut();
