@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Crown, UserCheck } from "lucide-react";
 import { requireAccess } from "@/lib/auth";
-import { AdminHeader } from "@/components/admin/ui";
+import { AccountTypePicker } from "@/components/admin/account-type-picker";
+import { AdminHeader, Panel } from "@/components/admin/ui";
 import { PersonAccess } from "@/components/admin/platform-forms";
 import { ViewAsButton } from "@/components/admin/view-as";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +78,9 @@ export default async function PersonAccessPage({ params }: { params: Promise<{ i
           <p className="max-w-3xl text-sm text-slate-700">
             <strong className="text-ink">Default</strong> follows what you&apos;ve set for {ACCOUNT_TYPE_LABEL[type].toLowerCase()} accounts. <strong className="text-ink">Allow</strong> or <strong className="text-ink">Block</strong> applies to {name} only. Changes save straight away and are recorded in the audit log.
           </p>
+          <Panel title="Account type">
+            <AccountTypePicker id={person.id} type={type} status={status} canLead={profile.access.leadership} name={name} />
+          </Panel>
           <PersonAccess userId={person.id} name={name} initial={initial} defaults={defaults} />
         </>
       )}

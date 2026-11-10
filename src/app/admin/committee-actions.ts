@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAccess } from "@/lib/auth";
-import { ACCOUNT_TYPES, canApprove } from "@/lib/accounts";
+import { ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES, EXEC_TYPES, canApprove } from "@/lib/accounts";
 import { sendBatch, sendEmail } from "@/lib/email/resend";
 import { accountDecisionEmail, feedbackEmail, oralSlotEmail } from "@/lib/email/messages";
 import { escapeHtml, renderEmail } from "@/lib/email/template";
@@ -403,4 +403,54 @@ export async function offerOralSlot(_: ActionResult, form: FormData): Promise<Ac
   // They leave the waiting list, so the confirmation is shown at the top of the page.
   const params = new URLSearchParams({ offered: to?.name || "They", mail: v.notify ? (emailed ? "sent" : "off") : "no" });
   redirect(`/admin/attendance?${params}`);
+}
+
+const typeSchema = z.object({
+  id: z.string().uuid(),
+  type: z.enum(ACCOUNT_TYPES as [AccountType, ...AccountType[]]),
+  notify: z.boolean(),
+});
+
+/**
+ * Changes someone's account type (for example, delegate to Academic Team)
+ * without changing whether they're approved. Executive types need the
+ * president or vice president. Recorded in the audit log by the database.
+ */
+export async function changeAccountType(_: ActionResult, form: FormData): Promise<ActionResult> {
+  const { db, user, profile } = await requireAccess("review_accounts", "/admin/accounts");
+  const parsed = typeSchema.safeParse({ id: form.get("id"), type: form.get("type"), notify: form.get("notify") === "on" });
+  if (!parsed.success) return { ok: false, error: "Choose an account type." };
+  const v = parsed.data;
+  if (v.id === user.id && !profile.access.leadership) return { ok: false, error: "You can't change your own account type." };
+
+  const { data: current } = await db.from("profiles").select("account_type, account_status, role, email, full_name").eq("id", v.id).maybeSingle();
+  if (!current) return { ok: false, error: "Account not found." };
+  if (current.role === "admin" && !profile.access.owner) return { ok: false, error: "Only the site owner can change the site owner's account." };
+  if (current.account_type === v.type) return { ok: true, message: `Already ${ACCOUNT_TYPE_LABEL[v.type]}.` };
+  if ((EXEC_TYPES.includes(v.type) || EXEC_TYPES.includes(current.account_type as AccountType)) && !profile.access.leadership)
+    return { ok: false, error: "Only the president or vice president can move people into or out of the executive committee." };
+
+  const { data: saved, error } = await db.from("profiles").update({ account_type: v.type }).eq("id", v.id).select("id");
+  if (!error && !saved?.length) return { ok: false, error: "You don't have permission to change this account." };
+  if (error) {
+    const msg = /invalid input value for enum/i.test(error.message)
+      ? `The database doesn't know "${ACCOUNT_TYPE_LABEL[v.type]}" yet. Run the committee teams setup SQL (files 14 and 15) in Supabase, then try again.`
+      : /executive|leadership|president/i.test(error.message)
+        ? "Only the president or vice president can make that change."
+        : "Could not change the account type.";
+    return { ok: false, error: msg };
+  }
+
+  let emailed = false;
+  if (v.notify && current.account_status === "approved") {
+    const mail = accountDecisionEmail({ siteUrl: SITE_URL, name: current.full_name, status: "approved", type: v.type, note: null });
+    if (mail) emailed = await sendEmail({ to: current.email, ...mail, subject: `Your INSPIRE account is now ${ACCOUNT_TYPE_LABEL[v.type]}` });
+  }
+  revalidatePath("/admin/accounts", "layout");
+  revalidatePath("/admin/platform", "layout");
+  revalidatePath("/admin");
+  return {
+    ok: true,
+    message: `Changed to ${ACCOUNT_TYPE_LABEL[v.type]}.${v.notify ? (current.account_status !== "approved" ? " They weren't emailed because their account isn't approved yet." : emailed ? " They've been emailed." : " Email isn't set up yet, so they weren't emailed.") : ""}`,
+  };
 }

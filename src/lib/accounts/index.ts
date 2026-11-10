@@ -60,6 +60,13 @@ export type RosterType = (typeof ROSTER_TYPES)[number];
 export const SUPPORTING_TYPES: AccountType[] = ["supporting_committee", "academic_team", "publicity_team", "finance_team", "logistics_team"];
 export const COMMITTEE_TYPES: AccountType[] = [...SUPPORTING_TYPES, "executive_committee", "vice_president", "president"];
 export const EXEC_TYPES: AccountType[] = ["executive_committee", "vice_president", "president"];
+
+/** Account types grouped the way the committee thinks about them, for pickers. */
+export const ACCOUNT_TYPE_GROUPS: { title: string; hint: string; types: AccountType[] }[] = [
+  { title: "Attending", hint: "Delegates and presenters", types: ["delegate", "oral_presenter", "poster_presenter", "oral_waitlist"] },
+  { title: "Supporting committee", hint: "Can edit the website and review slides and posters", types: SUPPORTING_TYPES },
+  { title: "Executive committee", hint: "Can also review accounts and email groups", types: EXEC_TYPES },
+];
 export const LEADERSHIP_TYPES: AccountType[] = ["vice_president", "president"];
 
 /** Things a person can be allowed to do. Mirrors public.access_capabilities. */
