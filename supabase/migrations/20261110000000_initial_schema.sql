@@ -61,7 +61,7 @@ create table public.profiles (
 create trigger profiles_touch before update on public.profiles
   for each row execute function public.touch_updated_at();
 
-create or replace function public.current_role()
+create or replace function public.my_role()
 returns public.user_role
 language sql stable security definer set search_path = public as $$
   select role from public.profiles where id = auth.uid()
@@ -97,6 +97,10 @@ create trigger on_auth_user_created after insert on auth.users
 create or replace function public.protect_profile_role()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
+  -- Server-side contexts (SQL editor, service role) have no auth.uid() and are trusted.
+  if auth.uid() is null then
+    return new;
+  end if;
   if new.role is distinct from old.role and not public.is_admin() then
     raise exception 'Only administrators can change roles';
   end if;
@@ -371,7 +375,7 @@ create trigger abstracts_audit after insert or update or delete on public.abstra
 create or replace function public.guard_abstract_author_update()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  if public.is_admin() then
+  if public.is_admin() or auth.uid() is null then
     if new.status in ('accepted', 'rejected', 'waitlisted') and old.status is distinct from new.status then
       new.decided_at = now();
     end if;
@@ -439,7 +443,7 @@ create trigger reviews_touch before update on public.reviews for each row execut
 create or replace function public.guard_review_update()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  if tg_op = 'UPDATE' and old.status = 'submitted' and not public.is_admin() then
+  if tg_op = 'UPDATE' and old.status = 'submitted' and not public.is_admin() and auth.uid() is not null then
     raise exception 'Submitted reviews cannot be changed';
   end if;
   if new.status = 'submitted' and (tg_op = 'INSERT' or old.status = 'draft') then
