@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { FileDown } from "lucide-react";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/auth";
 import { AdminHeader, Panel } from "@/components/admin/ui";
 import { FeedbackForm } from "@/components/admin/committee-forms";
 import { FeedbackThread } from "@/components/portal/submission-ui";
@@ -17,7 +17,7 @@ const size = (b: number) => (b > 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(1)} 
 
 export default async function SubmissionDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { db } = await requireRole(["editor"], `/admin/submissions/${id}`);
+  const { db } = await requireAccess("review_submissions", `/admin/submissions/${id}`);
   const { data: s } = await db.from("presentation_submissions").select("*").eq("id", id).maybeSingle();
   if (!s) notFound();
   const [{ data: versions }, { data: feedback }, signed] = await Promise.all([

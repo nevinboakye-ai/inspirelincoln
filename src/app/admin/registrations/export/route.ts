@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const current = await getCurrentUser();
-  if (!current || current.profile.role !== "admin") return new NextResponse("Not authorised", { status: 403 });
+  if (!current || !current.profile.access.can.manage_people) return new NextResponse("Not authorised", { status: 403 });
   const { db } = current;
   const ed = await currentEditionId(db);
   const { data: regs } = await db.from("registrations").select("user_id, status, source, external_reference, checked_in_at, created_at").eq("edition_id", ed ?? "");

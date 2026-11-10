@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/auth";
 import { AdminHeader } from "@/components/admin/ui";
 import { Badge } from "@/components/ui/badge";
 import { SUBMISSION_LABEL, SUBMISSION_STATUS_LABEL } from "@/lib/accounts";
@@ -15,7 +15,7 @@ const when = (d: string) => new Date(d).toLocaleString("en-GB", { timeZone: "Eur
 
 export default async function SubmissionsPage({ searchParams }: { searchParams: Promise<{ kind?: string; status?: string }> }) {
   const sp = await searchParams;
-  const { db } = await requireRole(["editor"], "/admin/submissions");
+  const { db } = await requireAccess("review_submissions", "/admin/submissions");
   const kind = sp.kind === "slides" || sp.kind === "poster" ? (sp.kind as SubmissionKind) : null;
   const status = (["submitted", "changes_requested", "approved"] as const).find((s) => s === sp.status) ?? null;
 

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { Reveal } from "@/components/motion/reveal";
+import { FadeUp, LineDraw, MaskRise } from "@/components/motion/effects";
 import { cn } from "@/lib/cn";
 
 /**
@@ -35,20 +35,27 @@ export function PageHero({
             alt=""
             width={338}
             height={397}
-            className="absolute -right-16 top-1/2 hidden h-[130%] w-auto -translate-y-1/3 opacity-[0.05] lg:block"
+            className="animate-breathe absolute -right-16 top-1/2 hidden h-[130%] w-auto -translate-y-1/3 opacity-[0.05] lg:block"
           />
         )}
       </div>
       <div className="container-page relative">
-        <Reveal>
-          <p className="eyebrow flex items-center gap-4 border-t border-white/15 pt-4 text-cyan">
+        <LineDraw onMount className="bg-white/15" />
+        <FadeUp delay={0.1}>
+          <p className="eyebrow flex items-center gap-4 pt-4 text-cyan">
             <span aria-hidden className="font-display text-base normal-case italic tracking-normal text-paper/60">INSPIRE</span>
             {eyebrow}
           </p>
-          <h1 className={cn("mt-8 max-w-5xl font-normal", size === "lg" ? "text-display-xl" : "text-display-lg")}>{title}</h1>
-          {intro && <div className="mt-6 max-w-2xl text-lg leading-relaxed text-paper/70 sm:text-xl">{intro}</div>}
-          {children}
-        </Reveal>
+        </FadeUp>
+        <h1 className={cn("mt-8 max-w-5xl font-normal", size === "lg" ? "text-display-xl" : "text-display-lg")}>
+          <MaskRise onMount delay={0.15}>{title}</MaskRise>
+        </h1>
+        {(intro || children) && (
+          <FadeUp delay={0.45}>
+            {intro && <div className="mt-6 max-w-2xl text-lg leading-relaxed text-paper/70 sm:text-xl">{intro}</div>}
+            {children}
+          </FadeUp>
+        )}
       </div>
     </section>
   );

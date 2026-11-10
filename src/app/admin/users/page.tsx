@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/auth";
 import { AdminHeader, Table, btn } from "@/components/admin/ui";
 import { RoleSelect } from "@/components/admin/people-forms";
-import { redirect } from "next/navigation";
 import { ACCOUNT_TYPE_LABEL } from "@/lib/accounts";
 import type { AccountType } from "@/lib/types";
 
@@ -11,8 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function UsersPage({ searchParams }: { searchParams: Promise<{ q?: string; role?: string }> }) {
   const sp = await searchParams;
-  const { db, user, profile } = await requireRole(["admin"], "/admin/users");
-  if (!profile.access.owner) redirect("/admin");
+  const { db, user, profile } = await requireAccess("owner", "/admin/users");
   let q = db.from("profiles").select("id, full_name, email, institution, role, account_type, created_at").order("created_at", { ascending: false }).limit(1000);
   if (sp.role) q = q.eq("role", sp.role);
   const { data } = await q;

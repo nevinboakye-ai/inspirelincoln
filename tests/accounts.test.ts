@@ -1,32 +1,43 @@
 import { describe, expect, it } from "vitest";
-import { accessFor, canApprove, effectiveRole, resolveFileType, submissionKindFor } from "@/lib/accounts";
+import { accessFor, accessFromCaps, canApprove, effectiveRole, resolveFileType, submissionKindFor } from "@/lib/accounts";
+import { effectiveFor } from "@/lib/accounts/effective";
 import { escapeHtml, renderEmail } from "@/lib/email/template";
 import { accountDecisionEmail } from "@/lib/email/messages";
 
 const p = (accountType: Parameters<typeof accessFor>[0]["accountType"], accountStatus: Parameters<typeof accessFor>[0]["accountStatus"], role: Parameters<typeof accessFor>[0]["role"] = "delegate") => ({ accountType, accountStatus, role });
 
+const flags = (a: ReturnType<typeof accessFor>) => ({ committee: a.committee, exec: a.exec, leadership: a.leadership, owner: a.owner });
+
 describe("account access", () => {
   it("gives nothing extra until an account is approved", () => {
-    expect(accessFor(p("president", "pending"))).toEqual({ committee: false, exec: false, leadership: false, owner: false });
+    expect(flags(accessFor(p("president", "pending")))).toEqual({ committee: false, exec: false, leadership: false, owner: false });
     expect(accessFor(p("executive_committee", "waitlisted")).exec).toBe(false);
   });
-  it("matches each committee level", () => {
-    expect(accessFor(p("supporting_committee", "approved"))).toEqual({ committee: true, exec: false, leadership: false, owner: false });
-    expect(accessFor(p("executive_committee", "approved"))).toEqual({ committee: true, exec: true, leadership: false, owner: false });
-    expect(accessFor(p("vice_president", "approved"))).toEqual({ committee: true, exec: true, leadership: true, owner: false });
-    expect(accessFor(p("delegate", "approved"))).toEqual({ committee: false, exec: false, leadership: false, owner: false });
+  it("matches each committee level by default", () => {
+    expect(flags(accessFor(p("supporting_committee", "approved")))).toEqual({ committee: true, exec: false, leadership: false, owner: false });
+    expect(flags(accessFor(p("executive_committee", "approved")))).toEqual({ committee: true, exec: true, leadership: false, owner: false });
+    expect(flags(accessFor(p("vice_president", "approved")))).toEqual({ committee: true, exec: true, leadership: true, owner: false });
+    expect(flags(accessFor(p("delegate", "approved")))).toEqual({ committee: false, exec: false, leadership: false, owner: false });
+    expect(accessFor(p("supporting_committee", "approved")).can.send_email).toBe(false);
+    expect(accessFor(p("executive_committee", "approved")).can.check_in).toBe(true);
   });
-  it("treats a site admin as leadership whatever their account", () => {
-    expect(accessFor(p("delegate", "pending", "admin")).leadership).toBe(true);
-  });
-  it("puts the site owner above the president", () => {
+  it("puts the site owner above everyone", () => {
     expect(accessFor(p("president", "approved")).owner).toBe(false);
-    expect(accessFor(p("vice_president", "approved", "admin"))).toEqual({ committee: true, exec: true, leadership: true, owner: true });
+    const owner = accessFor(p("delegate", "pending", "admin"));
+    expect(flags(owner)).toEqual({ committee: true, exec: true, leadership: true, owner: true });
+    expect(Object.values(owner.can).every(Boolean)).toBe(true);
   });
-  it("maps to the role tiers the gates use", () => {
-    expect(effectiveRole(p("executive_committee", "approved"))).toBe("admin");
-    expect(effectiveRole(p("supporting_committee", "approved"))).toBe("editor");
-    expect(effectiveRole(p("oral_presenter", "approved"))).toBe("delegate");
+  it("uses exactly what the database grants", () => {
+    const a = accessFromCaps(["check_in"], "delegate");
+    expect(a.committee).toBe(true);
+    expect(a.can.check_in).toBe(true);
+    expect(a.can.edit_website).toBe(false);
+    expect(accessFromCaps([], "delegate").committee).toBe(false);
+  });
+  it("maps to the role tiers the older gates use", () => {
+    expect(effectiveRole(accessFor(p("executive_committee", "approved")), "delegate")).toBe("admin");
+    expect(effectiveRole(accessFor(p("supporting_committee", "approved")), "delegate")).toBe("editor");
+    expect(effectiveRole(accessFor(p("oral_presenter", "approved")), "delegate")).toBe("delegate");
   });
   it("only lets leadership approve executive accounts", () => {
     const exec = accessFor(p("executive_committee", "approved"));
@@ -34,6 +45,20 @@ describe("account access", () => {
     expect(canApprove(exec, "executive_committee")).toBe(false);
     expect(canApprove(exec, "poster_presenter")).toBe(true);
     expect(canApprove(pres, "vice_president")).toBe(true);
+  });
+});
+
+describe("individual access", () => {
+  const rules = { supporting_committee: { edit_website: true } };
+  it("follows the account type, then any override", () => {
+    const base = effectiveFor({ role: "delegate", accountType: "supporting_committee", accountStatus: "approved" }, rules, {});
+    expect(base.edit_website).toEqual({ allowed: true, source: "type" });
+    const blocked = effectiveFor({ role: "delegate", accountType: "supporting_committee", accountStatus: "approved" }, rules, { edit_website: false });
+    expect(blocked.edit_website.allowed).toBe(false);
+  });
+  it("lets an override work before approval, but never for declined accounts", () => {
+    expect(effectiveFor({ role: "delegate", accountType: "delegate", accountStatus: "pending" }, rules, { check_in: true }).check_in.allowed).toBe(true);
+    expect(effectiveFor({ role: "delegate", accountType: "delegate", accountStatus: "declined" }, rules, { check_in: true }).check_in.allowed).toBe(false);
   });
 });
 

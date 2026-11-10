@@ -41,32 +41,73 @@ export const COMMITTEE_TYPES: AccountType[] = ["supporting_committee", "executiv
 export const EXEC_TYPES: AccountType[] = ["executive_committee", "vice_president", "president"];
 export const LEADERSHIP_TYPES: AccountType[] = ["vice_president", "president"];
 
+/** Things a person can be allowed to do. Mirrors public.access_capabilities. */
+export const CAPABILITIES = [
+  "edit_website",
+  "review_submissions",
+  "review_accounts",
+  "approve_committee",
+  "manage_people",
+  "check_in",
+  "send_email",
+] as const;
+export type Capability = (typeof CAPABILITIES)[number];
+
+export const CAPABILITY_LABEL: Record<Capability, { label: string; description: string }> = {
+  edit_website: { label: "Edit the website", description: "Programme, speakers, committee, campus map, FAQs, announcements and conference settings." },
+  review_submissions: { label: "Review slides and posters", description: "See presenters' uploads and give feedback, request changes or approve them." },
+  review_accounts: { label: "Review accounts", description: "See new registrations and approve, waitlist or decline them." },
+  approve_committee: { label: "Approve committee accounts", description: "Approve executive committee, vice president and president accounts." },
+  manage_people: { label: "Delegate records", description: "Registrations, abstracts, poster records, enquiries and the audit log. This is personal data." },
+  check_in: { label: "Check-in desk", description: "Scan tickets and check people in on the day." },
+  send_email: { label: "Group emails", description: "Send emails to groups of delegates, presenters or the committee." },
+};
+
+/** The defaults the database starts with, used only if the access tables aren't set up yet. */
+export const DEFAULT_RULES: Record<AccountType, Capability[]> = {
+  delegate: [],
+  oral_presenter: [],
+  poster_presenter: [],
+  supporting_committee: ["edit_website", "review_submissions"],
+  executive_committee: ["edit_website", "review_submissions", "review_accounts", "manage_people", "check_in"],
+  vice_president: [...CAPABILITIES],
+  president: [...CAPABILITIES],
+};
+
 export interface Access {
-  /** Approved committee member (any level) or site editor. Edits content, reviews submissions. */
+  /** Each permission, as the database decides it (public.has_access). */
+  can: Record<Capability, boolean>;
+  /** Has at least one permission, so can open the committee dashboard. */
   committee: boolean;
-  /** Approved executive member, VP, president or site admin. Reviews accounts, sees personal data. */
+  /** Can review accounts. */
   exec: boolean;
-  /** President, vice president or site owner. Approves executive accounts, sends group emails. */
+  /** Can approve committee and leadership accounts. */
   leadership: boolean;
-  /** Site owner (site role admin). Above the president: changes site roles, and only they can change their own account. */
+  /** Site owner (site role admin). Above everyone: controls who can do what. */
   owner: boolean;
 }
 
-/** Mirrors public.is_committee(), is_exec() and is_leadership() in the database. */
-export function accessFor(p: { role: UserRole; accountType: AccountType; accountStatus: AccountStatus }): Access {
-  const approved = p.accountStatus === "approved";
-  const leadership = p.role === "admin" || (approved && LEADERSHIP_TYPES.includes(p.accountType));
-  const exec = p.role === "admin" || (approved && EXEC_TYPES.includes(p.accountType));
-  const committee = p.role === "admin" || p.role === "editor" || (approved && COMMITTEE_TYPES.includes(p.accountType));
-  return { committee, exec, leadership, owner: p.role === "admin" };
+type AccessInput = { role: UserRole; accountType: AccountType; accountStatus: AccountStatus };
+
+/** Builds access from the list of permissions the database returned (public.my_access()). */
+export function accessFromCaps(caps: readonly string[], role: UserRole): Access {
+  const owner = role === "admin";
+  const can = Object.fromEntries(CAPABILITIES.map((c) => [c, owner || caps.includes(c)])) as Record<Capability, boolean>;
+  return { can, committee: CAPABILITIES.some((c) => can[c]), exec: can.review_accounts, leadership: can.approve_committee, owner };
 }
 
-/** The permission tier the existing role gates understand. */
-export function effectiveRole(p: { role: UserRole; accountType: AccountType; accountStatus: AccountStatus }): UserRole {
-  const a = accessFor(p);
-  if (a.exec) return "admin";
-  if (a.committee) return "editor";
-  return p.role === "reviewer" ? "reviewer" : "delegate";
+/** Default access for an account, before any changes on the platform dashboard. */
+export function accessFor(p: AccessInput): Access {
+  const fromType = p.accountStatus === "approved" ? DEFAULT_RULES[p.accountType] : [];
+  const legacy: Capability[] = p.role === "editor" ? ["edit_website", "review_submissions"] : [];
+  return accessFromCaps([...fromType, ...legacy], p.role);
+}
+
+/** The permission tier the older role gates understand. */
+export function effectiveRole(access: Access, role: UserRole): UserRole {
+  if (access.owner || access.can.manage_people) return "admin";
+  if (access.can.edit_website) return "editor";
+  return role === "reviewer" ? "reviewer" : "delegate";
 }
 
 /** Which kind of file an account type submits, if any. */
@@ -76,7 +117,7 @@ export function submissionKindFor(t: AccountType): SubmissionKind | null {
 
 /** Whether a reviewer may approve this account (executive accounts need the president or VP). */
 export function canApprove(reviewer: Access, target: AccountType) {
-  return EXEC_TYPES.includes(target) ? reviewer.leadership : reviewer.exec;
+  return EXEC_TYPES.includes(target) ? reviewer.leadership && reviewer.exec : reviewer.exec;
 }
 
 export const SUBMISSION_LABEL: Record<SubmissionKind, { noun: string; title: string }> = {

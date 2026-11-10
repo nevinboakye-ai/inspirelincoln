@@ -263,3 +263,67 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------------- Motion ---------------- */
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-4%, 3%, 0) scale(1.06); }
+  100% { transform: translate3d(3%, -2%, 0) scale(0.98); }
+}
+@keyframes trace {
+  from { stroke-dashoffset: 1.08; }
+  to { stroke-dashoffset: -0.08; }
+}
+@keyframes breathe {
+  0%, 100% { opacity: 0.04; transform: scale(1); }
+  50% { opacity: 0.08; transform: scale(1.04); }
+}
+
+/* Each page settles in on navigation. "backwards" so no transform is left behind. */
+.page-enter { animation: page-in 0.6s var(--ease-out-expo) backwards; }
+
+.animate-drift { animation: drift 22s ease-in-out infinite alternate; will-change: transform; }
+.animate-breathe { animation: breathe 9s ease-in-out infinite; }
+
+.pulse-tracer {
+  stroke-dasharray: 0.06 1;
+  stroke-dashoffset: 1.08;
+  filter: drop-shadow(0 0 6px rgb(201 216 236 / 0.9));
+  animation: trace 6s linear 3s infinite;
+}
+
+/* A light sweep across primary buttons on hover. */
+.shine { position: relative; overflow: hidden; isolation: isolate; }
+.shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.55) 50%, transparent 65%);
+  transform: translateX(-120%);
+  transition: transform 0.8s var(--ease-out-expo);
+}
+.shine:hover::after, .shine:focus-visible::after { transform: translateX(120%); }
+
+/* Pointer-following glow, positioned by SpotlightGroup. */
+.spotlight { position: relative; isolation: isolate; }
+.spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgb(47 124 246 / 0.1), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.spotlight:hover::before { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-drift, .animate-breathe, .pulse-tracer { animation: none !important; }
+  .shine::after { display: none; }
+}

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, LogOut, ShieldCheck, Ticket, UploadCloud, UserRound, ClipboardCheck } from "lucide-react";
+import { Gauge, LayoutDashboard, LogOut, ShieldCheck, Ticket, UploadCloud, UserRound, ClipboardCheck } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 import { cn } from "@/lib/cn";
 import type { Access } from "@/lib/accounts";
@@ -13,6 +13,7 @@ export function PortalNav({ name, typeLabel, presenter, access, reviewer }: { na
     ...(presenter ? [{ href: "/portal/submission", label: "My submission", icon: UploadCloud }] : []),
     { href: "/portal/profile", label: "Profile and privacy", icon: UserRound },
     ...(reviewer && !access.committee ? [{ href: "/review", label: "Abstract reviews", icon: ClipboardCheck }] : []),
+    ...(access.owner ? [{ href: "/admin/platform", label: "Platform dashboard", icon: Gauge }] : []),
     ...(access.committee ? [{ href: "/admin", label: "Committee dashboard", icon: access.exec ? ShieldCheck : LayoutDashboard }] : []),
   ];
   return (
