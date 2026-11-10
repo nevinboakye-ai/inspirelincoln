@@ -21,22 +21,22 @@ export function AtAGlance({ edition }: { edition: Edition; workshopCount?: numbe
     { href: "/conference", icon: HelpCircle, title: "Venue & FAQs", body: "Travel, access and questions" },
   ];
   return (
-    <section aria-labelledby="glance-title" className="bg-paper py-16 sm:py-24">
+    <section aria-labelledby="glance-title" className="bg-paper py-8 sm:py-24">
       <div className="container-page">
         <h2 id="glance-title" className="eyebrow flex items-center gap-3 text-electric-600">
           <LineDraw className="w-8 bg-electric-600/50" /> INSPIRE {edition.year}, sorted
         </h2>
         <SpotlightGroup>
-        <Stagger className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Stagger className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-8 sm:gap-3 lg:grid-cols-4">
           {items.map((it) => (
             <StaggerItem key={it.href} className="h-full">
-              <Link href={it.href} className="spotlight group flex h-full items-center gap-4 rounded-[3px] border border-navy/10 bg-white p-5 transition-[transform,border-color,box-shadow] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-navy/30 hover:shadow-[0_24px_48px_-28px_rgba(26,49,84,0.45)] lg:flex-col lg:items-start lg:p-7">
+              <Link href={it.href} className="spotlight group flex h-full flex-col items-start gap-3 rounded-[3px] border border-navy/10 bg-white p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-5 transition-[transform,border-color,box-shadow] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-navy/30 hover:shadow-[0_24px_48px_-28px_rgba(26,49,84,0.45)] lg:flex-col lg:items-start lg:p-7">
                 <span className="grid size-11 shrink-0 place-items-center rounded-[3px] bg-navy text-cyan transition-transform duration-500 ease-[var(--ease-out-expo)] group-hover:-rotate-6 group-hover:scale-110"><it.icon aria-hidden className="size-5" /></span>
                 <span className="min-w-0 flex-1">
-                  <span className="block font-display text-xl text-ink">{it.title}</span>
-                  <span className="mt-0.5 block text-sm text-slate-700">{it.body}</span>
+                  <span className="block font-display text-lg text-ink sm:text-xl">{it.title}</span>
+                  <span className="mt-0.5 hidden text-sm text-slate-700 sm:block">{it.body}</span>
                 </span>
-                <ArrowRight aria-hidden className="size-4 shrink-0 text-slate transition-transform group-hover:translate-x-0.5 lg:hidden" />
+                <ArrowRight aria-hidden className="hidden size-4 shrink-0 text-slate transition-transform group-hover:translate-x-0.5 sm:block lg:hidden" />
               </Link>
             </StaggerItem>
           ))}
@@ -61,8 +61,8 @@ export function ProgrammePreview({ sessions }: { sessions: Session[] }) {
   const preview = sessions.filter((s) => s.category !== "break").slice(0, 6);
   const provisional = sessions.some((s) => s.isProvisional);
   return (
-    <section aria-labelledby="programme-title" className="relative overflow-hidden bg-paper-200 py-24 sm:py-32">
-      <div className="container-page grid gap-12 lg:grid-cols-12">
+    <section aria-labelledby="programme-title" className="relative overflow-hidden bg-paper-200 py-12 sm:py-24 lg:py-32">
+      <div className="container-page grid gap-6 sm:gap-12 lg:grid-cols-12">
         <Reveal className="lg:col-span-4">
           <p className="eyebrow mb-4 flex items-center gap-3 text-electric-600">
             <LineDraw className="w-8 bg-electric-600/50" /> Programme
@@ -70,7 +70,7 @@ export function ProgrammePreview({ sessions }: { sessions: Session[] }) {
           <h2 id="programme-title" className="text-display-md font-normal text-ink">
             <MaskRise>The shape of the day</MaskRise>
           </h2>
-          <p className="mt-6 text-lg leading-relaxed text-slate-700">
+          <p className="mt-3 leading-relaxed text-slate-700 sm:mt-6 sm:text-lg">
             Keynotes, student research, clinician-led workshops and time to connect. Build your own agenda and export it to your
             calendar once times are confirmed.
           </p>
@@ -79,7 +79,7 @@ export function ProgrammePreview({ sessions }: { sessions: Session[] }) {
               <PlaceholderTag>Provisional: times to be confirmed</PlaceholderTag>
             </div>
           )}
-          <Link href="/programme" className="group mt-8 inline-flex min-h-12 items-center gap-2 rounded-[3px] bg-navy px-6 font-ui font-medium text-paper hover:bg-navy-700">
+          <Link href="/programme" className="group mt-5 inline-flex min-h-12 items-center gap-2 rounded-[3px] bg-navy px-6 sm:mt-8 font-ui font-medium text-paper hover:bg-navy-700">
             Open the full programme <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </Reveal>
@@ -89,7 +89,7 @@ export function ProgrammePreview({ sessions }: { sessions: Session[] }) {
           {preview.map((s, i) => {
             const Icon = CATEGORY_ICON[s.category];
             return (
-              <li key={s.id}>
+              <li key={s.id} className={i >= 4 ? "hidden sm:block" : undefined}>
                 <Reveal delay={i * 0.06}>
                   <Link
                     href={`/programme?session=${s.slug}`}
@@ -98,15 +98,15 @@ export function ProgrammePreview({ sessions }: { sessions: Session[] }) {
                     <span className="relative z-10 flex size-11 shrink-0 items-center justify-center rounded-full border border-navy/10 bg-white text-electric-600 shadow-sm transition-colors group-hover:scale-110 group-hover:bg-navy group-hover:text-cyan">
                       <Icon aria-hidden className="size-[1.1rem]" />
                     </span>
-                    <span className="min-w-0 flex-1 border-b border-navy/10 pb-5">
+                    <span className="min-w-0 flex-1 border-b border-navy/10 pb-3 sm:pb-5">
                       <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate">
                         {SESSION_CATEGORY_LABEL[s.category]}
                         <span className="font-normal normal-case tracking-normal">
                           {s.startsAt ? formatTime(s.startsAt) : "Time TBC"}
                         </span>
                       </span>
-                      <span className="mt-1.5 block font-display text-xl font-medium text-ink">{s.title}</span>
-                      <span className="mt-1 line-clamp-2 block text-sm text-slate-700">{s.description}</span>
+                      <span className="mt-1 block font-display text-lg font-medium text-ink sm:mt-1.5 sm:text-xl">{s.title}</span>
+                      <span className="mt-1 line-clamp-2 hidden text-sm text-slate-700 sm:block">{s.description}</span>
                     </span>
                     <ArrowUpRight aria-hidden className="mt-3 size-5 shrink-0 -translate-x-1 translate-y-1 text-slate opacity-0 transition-[opacity,translate] duration-300 group-hover:translate-0 group-hover:opacity-100" />
                   </Link>
@@ -123,10 +123,10 @@ export function ProgrammePreview({ sessions }: { sessions: Session[] }) {
 /* ---------------- F: Speakers ---------------- */
 export function SpeakersSection({ speakers }: { speakers: Speaker[] }) {
   return (
-    <section aria-labelledby="speakers-title" className="surface-dark relative overflow-hidden py-24 sm:py-32">
+    <section aria-labelledby="speakers-title" className="surface-dark relative overflow-hidden py-12 sm:py-24 lg:py-32">
       <div aria-hidden className="animate-drift absolute right-0 top-0 size-[30rem] rounded-full bg-violet/15 blur-[140px]" />
       <div className="container-page relative">
-        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+        <div className="flex flex-col justify-between gap-3 sm:gap-6 md:flex-row md:items-end">
           <Reveal>
             <p className="eyebrow mb-4 flex items-center gap-3 text-cyan">
               <LineDraw className="w-8 bg-cyan/60" /> Speakers
@@ -141,7 +141,7 @@ export function SpeakersSection({ speakers }: { speakers: Speaker[] }) {
             </Link>
           )}
         </div>
-        {speakers.length ? <SpeakerCarousel speakers={speakers} /> : <SpeakersSoon dark className="mt-12" />}
+        {speakers.length ? <SpeakerCarousel speakers={speakers} /> : <SpeakersSoon dark className="mt-6 sm:mt-12" />}
       </div>
     </section>
   );
@@ -201,7 +201,7 @@ export function WorkshopGrid({ workshops, compact = false }: { workshops: Worksh
 
 export function FinalCta({ edition }: { edition: Edition }) {
   return (
-    <section aria-labelledby="cta-title" className="surface-midnight noise relative isolate overflow-hidden py-32 sm:py-40">
+    <section aria-labelledby="cta-title" className="surface-midnight noise relative isolate overflow-hidden py-14 sm:py-32 lg:py-40">
       <div aria-hidden className="absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_70%_at_50%_100%,rgba(58,95,148,0.35),transparent_70%)]" />
         <Image src="/brand/crest-white.png" alt="" width={338} height={397} className="animate-breathe absolute left-1/2 top-1/2 h-[120%] w-auto -translate-x-1/2 -translate-y-1/2 opacity-[0.04]" />
@@ -213,10 +213,10 @@ export function FinalCta({ edition }: { edition: Edition }) {
             <MaskRise>Be part of</MaskRise>
             <MaskRise delay={0.12}><span className="italic font-light text-cyan">what comes next.</span></MaskRise>
           </h2>
-          <p className="mx-auto mt-8 max-w-xl text-lg text-paper/70">
+          <p className="mx-auto mt-5 max-w-xl text-paper/70 sm:mt-8 sm:text-lg">
             Whether you are presenting your first poster or simply curious about research, there is a place for you at INSPIRE.
           </p>
-          <div className="mt-10 flex flex-wrap justify-center gap-3">
+          <div className="mt-7 flex flex-wrap justify-center gap-3 sm:mt-10">
             <Link href="/signup" className="shine group inline-flex min-h-14 items-center gap-2 rounded-[3px] bg-cyan px-8 font-ui font-semibold text-midnight transition-[background-color,box-shadow] hover:bg-cyan-300 hover:shadow-[0_12px_40px_-10px_rgba(201,216,236,0.7)]">
               Register <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
             </Link>
