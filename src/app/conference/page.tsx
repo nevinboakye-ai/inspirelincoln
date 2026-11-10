@@ -10,6 +10,7 @@ import { getConferenceBundle, getFaqs } from "@/lib/data/content";
 import { eventEnd, eventStart, formatEventDate } from "@/lib/time";
 import type { Edition } from "@/lib/types";
 import { SITE_URL } from "@/lib/site";
+import { AuthLink } from "@/components/auth/auth-link";
 
 export const revalidate = 60;
 
@@ -60,9 +61,7 @@ function Registration({ edition }: { edition: Edition }) {
               Register
             </Link>
           )}
-          <Link href="/login" className="order-first inline-flex min-h-14 items-center gap-2 rounded-[3px] bg-gold px-7 font-ui font-semibold text-midnight hover:bg-gold-300">
-            Log in <ArrowRight aria-hidden className="size-4" />
-          </Link>
+          <AuthLink className="order-first inline-flex min-h-14 items-center gap-2 rounded-[3px] bg-gold px-7 font-ui font-semibold text-midnight hover:bg-gold-300" />
         </div>
       </div>
     </div>

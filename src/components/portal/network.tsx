@@ -1,6 +1,7 @@
 "use client";
-import { useActionState, useDeferredValue, useMemo, useState } from "react";
-import { Loader2, Mail, Search } from "lucide-react";
+import { useActionState, useCallback, useDeferredValue, useMemo, useState } from "react";
+import { ArrowRight, Loader2, Mail, Search } from "lucide-react";
+import { Drawer } from "@/components/ui/drawer";
 import { saveNetworkCard } from "@/app/portal/actions";
 import { submitWithoutReset } from "@/lib/use-action-form";
 import { Field, inputClass } from "@/components/forms/field";
@@ -19,7 +20,7 @@ export type Delegate = {
   bio: string | null;
   linkedin_url: string | null;
   email: string | null;
-  /** False for people on the selected list who haven't set up an account. Only the committee sees these. */
+  /** False for people on the selected list who haven't set up an account yet. Only the committee sees these. */
   joined: boolean;
 };
 
@@ -94,11 +95,19 @@ const initials = (n: string) =>
     .map((w) => w[0]!.toUpperCase())
     .join("");
 
-export function NetworkDirectory({ people, me, staff, waiting }: { people: Delegate[]; me: string; staff: boolean; waiting: number }) {
+const TONE_STYLE: Record<string, { band: string; avatar: string }> = {
+  oral_presenter: { band: "bg-cyan", avatar: "bg-cyan/20 text-navy" },
+  poster_presenter: { band: "bg-gold", avatar: "bg-gold/25 text-midnight" },
+  delegate: { band: "bg-navy", avatar: "bg-navy text-cyan" },
+  other: { band: "bg-midnight", avatar: "bg-midnight text-gold-300" },
+};
+const toneFor = (t: AccountType) => TONE_STYLE[t] ?? TONE_STYLE.other;
+const roleLabel = (p: Delegate) => p.committee_position || ACCOUNT_TYPE_LABEL[p.account_type];
+
+export function NetworkDirectory({ people, me }: { people: Delegate[]; me: string }) {
   const [q, setQ] = useState("");
   const [uni, setUni] = useState("");
-  const [show, setShow] = useState<"" | "joined" | "waiting">("");
-  const joinedCount = people.filter((p) => p.joined).length;
+  const [openId, setOpenId] = useState<string | null>(null);
   const query = useDeferredValue(q.trim().toLowerCase());
   const unis = useMemo(() => [...new Set(people.map((p) => p.institution).filter(Boolean) as string[])].sort(), [people]);
   const shown = useMemo(
@@ -106,30 +115,19 @@ export function NetworkDirectory({ people, me, staff, waiting }: { people: Deleg
       people.filter(
         (p) =>
           (!uni || p.institution === uni) &&
-          (!show || (show === "joined") === p.joined) &&
           (!query || [p.full_name, p.institution, p.bio, p.year_of_study].some((v) => v?.toLowerCase().includes(query))),
       ),
-    [people, uni, query, show],
+    [people, uni, query],
   );
+  const selected = people.find((p) => p.id === openId) ?? null;
+  const close = useCallback(() => setOpenId(null), []);
 
   return (
     <section aria-labelledby="people-title" className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h2 id="people-title" className="font-display text-xl text-ink">
-          Delegates <span className="text-slate">({joinedCount})</span>
-        </h2>
-        {waiting > 0 && (
-          <p className="text-sm text-slate-700">
-            {waiting} more selected {waiting === 1 ? "delegate hasn't" : "delegates haven't"} joined yet
-          </p>
-        )}
-      </div>
-      {staff && waiting > 0 && (
-        <p className="rounded-[3px] border border-navy/10 bg-paper-200/60 px-4 py-3 text-sm text-slate-700">
-          As committee you also see the selected delegates who haven&apos;t set up an account. Delegates only see people who have joined.
-        </p>
-      )}
-      <div className={staff ? "grid gap-3 sm:grid-cols-[1fr_14rem_12rem]" : "grid gap-3 sm:grid-cols-[1fr_16rem]"}>
+      <h2 id="people-title" className="font-display text-xl text-ink">
+        Delegates <span className="text-slate">({people.length})</span>
+      </h2>
+      <div className="grid gap-3 sm:grid-cols-[1fr_16rem]">
         <label className="relative block">
           <span className="sr-only">Search delegates</span>
           <Search aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate" />
@@ -144,16 +142,6 @@ export function NetworkDirectory({ people, me, staff, waiting }: { people: Deleg
             ))}
           </select>
         </label>
-        {staff && (
-          <label className="block">
-            <span className="sr-only">Show</span>
-            <select value={show} onChange={(e) => setShow(e.target.value as typeof show)} className={inputClass}>
-              <option value="">Everyone</option>
-              <option value="joined">Joined</option>
-              <option value="waiting">Not joined yet</option>
-            </select>
-          </label>
-        )}
       </div>
       <p className="sr-only" role="status" aria-live="polite">
         {shown.length} {shown.length === 1 ? "delegate" : "delegates"} shown
@@ -164,46 +152,109 @@ export function NetworkDirectory({ people, me, staff, waiting }: { people: Deleg
           {people.length === 0 ? "No one is listed yet. Add your card above to be the first." : "No one matches that search."}
         </p>
       ) : (
-        <ul className="grid gap-3 md:grid-cols-2">
-          {shown.map((p) => (
-            <li key={p.id} className={p.joined ? "flex gap-4 rounded-xl border border-navy/10 bg-white p-4 sm:p-5" : "flex gap-4 rounded-xl border border-dashed border-navy/20 bg-paper p-4 sm:p-5"}>
-              <span aria-hidden className={p.joined ? "grid size-11 shrink-0 place-items-center rounded-full bg-navy font-ui text-sm font-semibold text-cyan" : "grid size-11 shrink-0 place-items-center rounded-full bg-paper-200 font-ui text-sm font-semibold text-slate-700"}>
-                {initials(p.full_name)}
-              </span>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-semibold text-ink">
-                  {p.full_name}
-                  {p.id === me && <span className="ml-2 text-xs font-normal text-slate">(you)</span>}
-                </h3>
-                <p className="text-sm text-slate-700">{[p.institution, p.year_of_study].filter(Boolean).join(" · ")}</p>
-                {(p.account_type !== "delegate" || !p.joined) && (
-                  <p className="mt-2 flex flex-wrap gap-2">
-                    {!p.joined && <Badge tone="warning">Not joined yet</Badge>}
-                    {p.account_type !== "delegate" && <Badge tone={p.account_type.endsWith("presenter") ? "violet" : "neutral"}>
-                      {p.committee_position || ACCOUNT_TYPE_LABEL[p.account_type]}
-                    </Badge>}
-                  </p>
-                )}
-                {p.bio && <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">{p.bio}</p>}
-                {(p.linkedin_url || p.email) && (
-                  <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                    {p.linkedin_url && (
-                      <a href={p.linkedin_url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex min-h-10 items-center gap-1.5 font-medium text-electric-600 underline-offset-4 hover:underline">
-                        <LinkedInMark /> LinkedIn<span className="sr-only"> profile of {p.full_name} (opens in a new tab)</span>
-                      </a>
-                    )}
-                    {p.email && (
-                      <a href={`mailto:${p.email}`} className="inline-flex min-h-10 min-w-0 items-center gap-1.5 font-medium text-electric-600 underline-offset-4 hover:underline">
-                        <Mail aria-hidden className="size-4 shrink-0" /> <span className="truncate">{p.email}</span>
-                      </a>
-                    )}
-                  </p>
-                )}
-              </div>
-            </li>
-          ))}
+        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {shown.map((p) => {
+            const tone = toneFor(p.account_type);
+            return (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  onClick={() => setOpenId(p.id)}
+                  aria-haspopup="dialog"
+                  className="group relative flex h-full w-full flex-col overflow-hidden rounded-xl border border-navy/10 bg-white text-left shadow-[0_1px_2px_rgba(12,24,44,0.06)] transition-[transform,box-shadow,border-color] duration-300 ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-navy/25 hover:shadow-[0_22px_44px_-26px_rgba(26,49,84,0.55)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600"
+                >
+                  <span aria-hidden className={`h-1.5 w-full ${tone.band}`} />
+                  <span className="flex flex-1 flex-col p-4 sm:p-5">
+                    <span className="flex items-center gap-3.5">
+                      <span aria-hidden className={`grid size-12 shrink-0 place-items-center rounded-full font-ui text-sm font-semibold transition-transform duration-300 group-hover:scale-105 ${tone.avatar}`}>
+                        {initials(p.full_name)}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate font-semibold text-ink">
+                          {p.full_name}
+                          {p.id === me && <span className="ml-1.5 text-xs font-normal text-slate">(you)</span>}
+                        </span>
+                        <span className="block truncate text-sm text-slate-700">{[p.institution, p.year_of_study].filter(Boolean).join(" · ") || " "}</span>
+                      </span>
+                    </span>
+                    {p.bio && <span className="mt-3 line-clamp-2 text-sm leading-relaxed text-slate-700">{p.bio}</span>}
+                    <span className="mt-auto flex items-center justify-between gap-2 pt-4">
+                      {p.account_type !== "delegate" ? (
+                        <Badge tone={p.account_type.endsWith("presenter") ? "violet" : "neutral"}>{roleLabel(p)}</Badge>
+                      ) : (
+                        <span />
+                      )}
+                      <span className="inline-flex items-center gap-1 font-ui text-xs font-semibold text-electric-600">
+                        View profile <ArrowRight aria-hidden className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
+                      </span>
+                    </span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
+
+      <Drawer open={Boolean(selected)} onClose={close} label={selected ? `${selected.full_name}'s profile` : "Profile"}>
+        {selected && <PersonDetail p={selected} me={me} />}
+      </Drawer>
     </section>
+  );
+}
+
+function PersonDetail({ p, me }: { p: Delegate; me: string }) {
+  const tone = toneFor(p.account_type);
+  return (
+    <div>
+      <div className="relative overflow-hidden bg-midnight px-6 pb-7 pt-10 text-paper sm:px-8">
+        <div aria-hidden className="lanyard-grid pointer-events-none absolute inset-0 opacity-20" />
+        <div className="relative flex items-center gap-4">
+          <span aria-hidden className={`grid size-16 shrink-0 place-items-center rounded-full font-ui text-lg font-semibold ring-4 ring-white/10 ${tone.avatar}`}>
+            {initials(p.full_name)}
+          </span>
+          <div className="min-w-0">
+            <h3 className="font-display text-2xl leading-tight">
+              {p.full_name}
+              {p.id === me && <span className="ml-2 align-middle text-sm font-normal text-paper/60">(you)</span>}
+            </h3>
+            <p className="mt-1 text-sm text-gold-300">{roleLabel(p)}</p>
+          </div>
+        </div>
+      </div>
+      <span aria-hidden className={`block h-1.5 w-full ${tone.band}`} />
+      <dl className="grid gap-5 px-6 py-6 sm:px-8">
+        {p.institution && (
+          <div>
+            <dt className="eyebrow text-slate">Medical school</dt>
+            <dd className="mt-1 text-ink">{p.institution}</dd>
+          </div>
+        )}
+        {p.year_of_study && (
+          <div>
+            <dt className="eyebrow text-slate">Year of study</dt>
+            <dd className="mt-1 text-ink">{p.year_of_study}</dd>
+          </div>
+        )}
+        <div>
+          <dt className="eyebrow text-slate">About</dt>
+          <dd className="mt-1 whitespace-pre-line leading-relaxed text-slate-700">{p.bio || "They haven't added a bio yet."}</dd>
+        </div>
+      </dl>
+      {(p.linkedin_url || p.email) && (
+        <div className="flex flex-wrap gap-3 border-t border-navy/10 px-6 py-5 sm:px-8">
+          {p.linkedin_url && (
+            <a href={p.linkedin_url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex min-h-11 items-center gap-2 rounded-[3px] bg-navy px-4 text-sm font-semibold text-paper hover:bg-navy-700">
+              <LinkedInMark /> LinkedIn<span className="sr-only"> (opens in a new tab)</span>
+            </a>
+          )}
+          {p.email && (
+            <a href={`mailto:${p.email}`} className="inline-flex min-h-11 min-w-0 items-center gap-2 rounded-[3px] border border-navy/15 px-4 text-sm font-semibold text-ink hover:border-navy/35">
+              <Mail aria-hidden className="size-4 shrink-0" /> <span className="truncate">{p.email}</span>
+            </a>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

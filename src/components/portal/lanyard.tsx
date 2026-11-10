@@ -227,7 +227,7 @@ function Back({ year, theme, qr, reference, checkedIn, hidden }: LanyardProps & 
             <div aria-hidden className="mt-6 grid aspect-square w-[70%] place-items-center rounded-xl border border-dashed border-paper/25">
               <img src="/brand/crest-white.png" alt="" className="h-16 w-auto opacity-40" />
             </div>
-            <p className="mt-auto text-sm leading-snug text-paper/80">Your check-in code will appear here once your place is confirmed.</p>
+            <p className="mt-auto text-sm leading-snug text-paper/80">Your check-in code will appear here closer to the event.</p>
           </>
         )}
       </div>

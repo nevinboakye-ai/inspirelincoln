@@ -12,7 +12,7 @@ import { cn } from "@/lib/cn";
 const GROUPS: { title: string; types: AccountType[] }[] = [
   { title: "Attending", types: ["delegate"] },
   { title: "Presenting", types: ["oral_presenter", "poster_presenter"] },
-  { title: "INSPIRE committee", types: ["supporting_committee", "executive_committee", "vice_president", "president"] },
+  { title: "INSPIRE committee", types: COMMITTEE_TYPES },
 ];
 
 const STEPS = ["How you're joining", "About you", "Your choices"] as const;

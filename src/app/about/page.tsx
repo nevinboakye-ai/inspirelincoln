@@ -5,6 +5,7 @@ import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { CommitteeDirectory } from "@/components/about/committee";
 import { HistoryTimeline } from "@/components/about/timeline";
+import { STORY } from "@/content/story";
 import { getCommittee, getPartners, getTimeline } from "@/lib/data/content";
 
 export const revalidate = 300;
@@ -50,19 +51,9 @@ export default async function AboutPage() {
             <SectionHeading eyebrow="Our story" title={<span id="story-title">More than a decade of student research</span>} />
           </Reveal>
           <Reveal delay={0.1} className="prose-inspire lg:col-span-7 lg:col-start-6">
-            <p>
-              For more than a decade, INSPIRE has brought together medical students who are interested in research. It began as a way
-              for students to share their work, learn from clinicians and researchers, and discover that research is something they
-              can take part in long before they qualify.
-            </p>
-            <p>
-              INSPIRE has historically connected medical students across Leicester, Nottingham and East Anglia. In 2026 the conference
-              is hosted in Lincoln, in collaboration with the participating medical school community.
-            </p>
-            <p>
-              Today INSPIRE is both an annual conference and a wider academic community. The conference changes host and theme each
-              year; the mission stays the same.
-            </p>
+            {STORY.map((ch) => (
+              <p key={ch.label}>{ch.text}</p>
+            ))}
           </Reveal>
         </div>
       </section>

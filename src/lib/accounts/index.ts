@@ -5,6 +5,10 @@ export const ACCOUNT_TYPES: AccountType[] = [
   "oral_presenter",
   "poster_presenter",
   "supporting_committee",
+  "academic_team",
+  "publicity_team",
+  "finance_team",
+  "logistics_team",
   "executive_committee",
   "vice_president",
   "president",
@@ -15,6 +19,10 @@ export const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
   oral_presenter: "Oral presenter",
   poster_presenter: "Poster presenter",
   supporting_committee: "Supporting committee",
+  academic_team: "Academic Team",
+  publicity_team: "Publicity Team",
+  finance_team: "Finance Team",
+  logistics_team: "Logistics Team",
   executive_committee: "Executive committee",
   vice_president: "Vice president",
   president: "President",
@@ -25,6 +33,10 @@ export const ACCOUNT_TYPE_BLURB: Record<AccountType, string> = {
   oral_presenter: "Giving a talk. You'll upload your slides here.",
   poster_presenter: "Presenting a poster. You'll upload it for feedback.",
   supporting_committee: "Helping run INSPIRE on the supporting committee.",
+  academic_team: "Supporting committee: the Academic Team.",
+  publicity_team: "Supporting committee: the Publicity Team.",
+  finance_team: "Supporting committee: the Finance Team.",
+  logistics_team: "Supporting committee: the Logistics Team.",
   executive_committee: "A member of the executive committee.",
   vice_president: "INSPIRE vice president.",
   president: "INSPIRE president.",
@@ -37,7 +49,9 @@ export const ACCOUNT_STATUS_LABEL: Record<AccountStatus, { label: string; tone: 
   declined: { label: "Not approved", tone: "danger" },
 };
 
-export const COMMITTEE_TYPES: AccountType[] = ["supporting_committee", "executive_committee", "vice_president", "president"];
+/** The supporting committee and its teams. */
+export const SUPPORTING_TYPES: AccountType[] = ["supporting_committee", "academic_team", "publicity_team", "finance_team", "logistics_team"];
+export const COMMITTEE_TYPES: AccountType[] = [...SUPPORTING_TYPES, "executive_committee", "vice_president", "president"];
 export const EXEC_TYPES: AccountType[] = ["executive_committee", "vice_president", "president"];
 export const LEADERSHIP_TYPES: AccountType[] = ["vice_president", "president"];
 
@@ -69,6 +83,10 @@ export const DEFAULT_RULES: Record<AccountType, Capability[]> = {
   oral_presenter: [],
   poster_presenter: [],
   supporting_committee: ["edit_website", "review_submissions"],
+  academic_team: ["edit_website", "review_submissions"],
+  publicity_team: ["edit_website", "review_submissions"],
+  finance_team: ["edit_website", "review_submissions"],
+  logistics_team: ["edit_website", "review_submissions"],
   executive_committee: ["edit_website", "review_submissions", "review_accounts", "manage_people", "check_in"],
   vice_president: [...CAPABILITIES],
   president: [...CAPABILITIES],

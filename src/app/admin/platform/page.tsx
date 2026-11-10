@@ -12,7 +12,7 @@ import { ViewAsPicker } from "@/components/admin/view-as";
 import { viewAsAvailable } from "@/lib/view-as-seal";
 import { Badge } from "@/components/ui/badge";
 import { Notice } from "@/components/ui/notice";
-import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES, CAPABILITIES, CAPABILITY_LABEL, DEFAULT_RULES, type Capability } from "@/lib/accounts";
+import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES, CAPABILITIES, CAPABILITY_LABEL, COMMITTEE_TYPES, DEFAULT_RULES, type Capability } from "@/lib/accounts";
 import type { AccountStatus, AccountType } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Platform dashboard" };
@@ -80,7 +80,7 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
   const overrides = overridesRes.data ?? [];
   const customPeople = [...new Set(overrides.map((o) => o.user_id))];
   const committee = people
-    .filter((p) => ["president", "vice_president", "executive_committee", "supporting_committee"].includes(p.account_type) || p.role !== "delegate")
+    .filter((p) => COMMITTEE_TYPES.includes(p.account_type) || p.role !== "delegate")
     .sort((a, b) => ACCOUNT_TYPES.indexOf(b.account_type as AccountType) - ACCOUNT_TYPES.indexOf(a.account_type as AccountType));
   const list = searchRes.data ?? committee;
 
