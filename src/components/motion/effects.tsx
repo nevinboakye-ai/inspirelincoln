@@ -110,18 +110,17 @@ export function PulseLine({ className }: { className?: string }) {
         animate={{ pathLength: 1 }}
         transition={{ duration: 2.4, delay: 0.6, ease: "easeInOut" }}
       />
-      {!reduce && (
-        <path
-          d={d}
-          pathLength={1}
-          stroke="#e8f0fb"
-          strokeWidth="2"
-          vectorEffect="non-scaling-stroke"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="pulse-tracer"
-        />
-      )}
+      {/* Always rendered so server and browser markup match; CSS hides it when motion is reduced. */}
+      <path
+        d={d}
+        pathLength={1}
+        stroke="#e8f0fb"
+        strokeWidth="2"
+        vectorEffect="non-scaling-stroke"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="pulse-tracer"
+      />
     </svg>
   );
 }
