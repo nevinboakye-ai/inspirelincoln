@@ -26,6 +26,7 @@ import { SavedAgenda } from "@/components/portal/saved-agenda";
 import { Lanyard, type LanyardTone } from "@/components/portal/lanyard";
 import { Countdown, HubItem, HubStagger, ReadinessRing } from "@/components/portal/hub-motion";
 import { MaskRise } from "@/components/motion/effects";
+import { AttendanceCard, type AttendanceAnswer } from "@/components/portal/attendance-card";
 import {
   ACCOUNT_STATUS_LABEL,
   ACCOUNT_TYPE_LABEL,
@@ -84,12 +85,15 @@ export default async function PortalHome({
   const { edition, sessions, workshops } = await getConferenceBundle();
   const kind = submissionKindFor(profile.accountType);
   const status = profile.accountStatus;
+  // Approved oral and poster presenters confirm whether they'll be there to present.
+  const presenting = Boolean(kind) && status === "approved";
 
   const [
     { data: registration },
     { data: latestSub },
     { data: announcements },
     { data: waitPos },
+    { data: attendance },
   ] = await Promise.all([
     db
       .from("registrations")
@@ -121,7 +125,13 @@ export default async function PortalHome({
     status === "waitlisted"
       ? db.rpc("my_waitlist_position")
       : Promise.resolve({ data: null }),
+    presenting
+      ? db.from("presenter_attendance").select("response, note, responded_at").eq("user_id", user.id).maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
+  const answer: AttendanceAnswer = attendance
+    ? { response: attendance.response as "confirmed" | "unavailable", note: attendance.note, respondedAt: attendance.responded_at }
+    : null;
 
   const ticket = status === "approved" && registration?.status === "confirmed";
   const qr = ticket
@@ -141,6 +151,13 @@ export default async function PortalHome({
     { label: "Account approved", done: status === "approved", href: null as string | null },
     { label: "Your details", done: Boolean(profile.fullName && profile.institution), href: "/portal/profile" },
     { label: "A short bio for your profile", done: Boolean(profile.bio), href: "/portal/profile#bio" },
+    ...(presenting
+      ? [{
+          label: answer?.response === "unavailable" ? "You've said you can't attend" : "Confirm you'll be there to present",
+          done: Boolean(answer),
+          href: "#attend-h",
+        }]
+      : []),
     ...(kind
       ? [{
           label: latestSub?.status === "changes_requested" ? `Update your ${SUBMISSION_LABEL[kind].noun} (feedback waiting)` : `Upload your ${SUBMISSION_LABEL[kind].noun}`,
@@ -205,6 +222,16 @@ export default async function PortalHome({
 
       <HubStagger className="grid gap-5 sm:gap-6 xl:grid-cols-[minmax(0,1fr)_20.5rem] xl:items-start">
         <div className="min-w-0 space-y-5 sm:space-y-6">
+          {presenting && (
+            <HubItem>
+              <AttendanceCard
+                answer={answer}
+                kind={kind!}
+                dateLabel={formatEventDate(edition.date)}
+                venue={edition.venueName}
+              />
+            </HubItem>
+          )}
           {status === "approved" && !showCard ? (
             <HubItem>
               <section className="flex items-center gap-4 rounded-xl border border-success/25 bg-success/[0.06] p-5 sm:p-6">
