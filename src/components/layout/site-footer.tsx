@@ -12,15 +12,15 @@ export function SiteFooter({ edition }: { edition: Edition }) {
   return (
     <footer className="surface-midnight relative overflow-hidden pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
 
-      <div className="container-page relative pt-20 pb-10">
-        <div className="grid gap-12 lg:grid-cols-12">
+      <div className="container-page relative pb-8 pt-10 sm:pb-10 sm:pt-20">
+        <div className="grid gap-8 sm:gap-12 lg:grid-cols-12">
           <div className="lg:col-span-5">
             <Logo />
-            <p className="mt-6 max-w-sm leading-relaxed text-paper/65">
+            <p className="mt-4 max-w-sm text-sm leading-relaxed text-paper/65 sm:mt-6 sm:text-base">
               INSPIRE encourages medical students to explore research, develop academically, connect with researchers and
               clinicians, and gain the confidence to contribute to the future of medicine.
             </p>
-            <div className="mt-8 rounded-lg border border-white/10 bg-white/[0.03] p-5">
+            <div className="mt-8 hidden rounded-lg border border-white/10 bg-white/[0.03] p-5 sm:block">
               <p className="eyebrow text-cyan">{edition.name}</p>
               <p className="mt-2 font-display text-lg font-medium">{edition.theme}</p>
               <p className="mt-1 text-sm text-paper/60">
@@ -29,7 +29,7 @@ export function SiteFooter({ edition }: { edition: Edition }) {
             </div>
           </div>
 
-          <nav aria-label="Footer" className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-7">
+          <nav aria-label="Footer" className="grid grid-cols-2 gap-x-6 gap-y-7 sm:grid-cols-3 sm:gap-8 lg:col-span-7">
             <FooterColumn title="Explore" links={FOOTER_LINKS.explore} />
             <FooterColumn title="Take part" links={FOOTER_LINKS.participate} />
             <div>
@@ -60,7 +60,7 @@ export function SiteFooter({ edition }: { edition: Edition }) {
           </nav>
         </div>
 
-        <div aria-hidden className="pointer-events-none mt-20 flex select-none items-end justify-between gap-6 border-t border-white/10 pt-10">
+        <div aria-hidden className="pointer-events-none mt-20 hidden select-none sm:flex items-end justify-between gap-6 border-t border-white/10 pt-10">
           <Parallax axis="x" distance={40}>
             <svg viewBox="0 0 600 170" className="h-auto w-[62vw] max-w-[760px] text-white/[0.08]">
               <text x="0" y="140" fill="currentColor" className="font-display" fontSize="180" fontStyle="italic" fontWeight="300" letterSpacing="-5">
@@ -71,7 +71,7 @@ export function SiteFooter({ edition }: { edition: Edition }) {
           <Image src="/brand/crest-white.png" alt="" width={338} height={397} className="mb-2 hidden h-40 w-auto opacity-25 md:block lg:h-52" />
         </div>
 
-        <div className="mt-8 flex flex-col gap-4 border-t border-white/10 pt-8 text-sm text-paper/70 md:flex-row md:items-center md:justify-between">
+        <div className="mt-8 flex flex-col gap-4 border-t border-white/10 pt-6 sm:pt-8 text-sm text-paper/70 md:flex-row md:items-center md:justify-between">
           <p>© {year} INSPIRE National Medical Research Conference. <span className="whitespace-nowrap">Built by Nevin Boakye.</span></p>
           <ul className="flex flex-wrap gap-x-6 gap-y-2">
             {FOOTER_LINKS.legal.map((l) => (

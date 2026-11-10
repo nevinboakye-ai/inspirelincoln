@@ -43,7 +43,7 @@ export function Hero({
   const { lead, rest } = splitTheme(theme);
 
   return (
-    <section ref={ref} aria-labelledby="hero-title" className="surface-midnight noise relative isolate overflow-hidden pt-[calc(var(--header-h)+3rem)]">
+    <section ref={ref} aria-labelledby="hero-title" className="surface-midnight noise relative isolate overflow-hidden pt-[calc(var(--header-h)+1.25rem)] sm:pt-[calc(var(--header-h)+3rem)]">
       {/* Heraldic quartering: a cross of hairlines that the crest sits on. */}
       <div aria-hidden className="absolute inset-0 -z-10">
         <div className="animate-drift absolute -inset-[10%] bg-[radial-gradient(ellipse_60%_70%_at_72%_42%,rgba(58,95,148,0.38),transparent_70%)]" />
@@ -61,10 +61,10 @@ export function Hero({
           {status && <span className="text-cyan">{CONFERENCE_STATUS_LABEL[status]}</span>}
         </div>
 
-        <div className="grid items-center gap-12 pb-16 pt-12 sm:pt-16 lg:grid-cols-12 lg:gap-8 lg:pb-24">
+        <div className="grid items-center gap-8 pb-4 pt-7 sm:gap-12 sm:pb-16 sm:pt-16 lg:grid-cols-12 lg:gap-8 lg:pb-24">
           <m.div style={{ y: textY }} className="lg:col-span-7">
             <p className="eyebrow text-cyan">INSPIRE {year}</p>
-            <h1 id="hero-title" className="mt-6 text-display-xl font-normal">
+            <h1 id="hero-title" className="mt-4 text-display-xl font-normal sm:mt-6">
               <span className="block overflow-hidden pb-[0.08em]">
                 <span className="enter-rise block [animation-delay:50ms]">{lead}</span>
               </span>
@@ -78,13 +78,13 @@ export function Hero({
             </h1>
 
             <p
-              className="enter-up mt-8 [animation-delay:280ms] max-w-xl text-lg leading-relaxed text-paper/75"
+              className="enter-up mt-5 max-w-xl leading-relaxed text-paper/75 [animation-delay:280ms] sm:mt-8 sm:text-lg"
             >
               A day for medical students to present research, learn from clinicians and researchers, and take a first
               step into academic medicine. Hosted at Lincoln Medical School.
             </p>
 
-            <div className="enter-up mt-10 flex flex-wrap gap-3 [animation-delay:340ms]">
+            <div className="enter-up mt-6 flex flex-wrap gap-3 [animation-delay:340ms] sm:mt-10">
               <Link
                 href="/signup"
                 className="shine group inline-flex min-h-14 items-center gap-3 bg-paper px-7 font-ui font-semibold text-navy transition-colors hover:bg-white"
@@ -100,31 +100,31 @@ export function Hero({
               </Link>
               <Link
                 href="/map"
-                className="inline-flex min-h-14 items-center gap-2 px-3 font-ui font-medium text-paper underline decoration-white/30 underline-offset-[6px] transition-colors hover:decoration-white"
+                className="hidden min-h-14 items-center gap-2 px-3 font-ui font-medium text-paper underline sm:inline-flex decoration-white/30 underline-offset-[6px] transition-colors hover:decoration-white"
               >
                 Campus map
               </Link>
             </div>
           </m.div>
 
-          <m.div style={{ y: crestY }} className="relative mx-auto w-[min(62vw,300px)] lg:col-span-5 lg:w-[min(30vw,360px)]">
+          <m.div style={{ y: crestY }} className="relative mx-auto hidden lg:block w-[min(62vw,300px)] lg:col-span-5 lg:w-[min(30vw,360px)]">
             <CrestReveal />
           </m.div>
         </div>
 
-        <PulseLine className="-mb-2 -mt-6 h-16 w-full sm:h-20 lg:-mt-10" />
+        <PulseLine className="-mb-1 h-10 w-full sm:-mb-2 sm:-mt-6 sm:h-20 lg:-mt-10" />
 
         <div
-          className="enter-up grid gap-8 pb-14 [animation-delay:450ms] md:grid-cols-12 md:items-end"
+          className="enter-up grid gap-5 pb-8 [animation-delay:450ms] sm:gap-8 sm:pb-14 md:grid-cols-12 md:items-end"
         >
           <dl className="grid grid-cols-2 gap-6 font-ui text-sm md:col-span-5">
             <div>
               <dt className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-paper/65">Date</dt>
-              <dd className="mt-2 font-display text-xl text-paper">{dateLabel}</dd>
+              <dd className="mt-1 font-display text-base text-paper sm:mt-2 sm:text-xl">{dateLabel}</dd>
             </div>
             <div>
               <dt className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-paper/65">Venue</dt>
-              <dd className="mt-2 font-display text-xl text-paper">{venue}</dd>
+              <dd className="mt-1 font-display text-base text-paper sm:mt-2 sm:text-xl">{venue}</dd>
             </div>
           </dl>
           <div className="md:col-span-7">

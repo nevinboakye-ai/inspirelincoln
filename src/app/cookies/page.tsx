@@ -15,8 +15,8 @@ export default function CookiesPage() {
       <h2>Local storage</h2>
       <p>
         If you save sessions to your agenda without signing in, the list is stored in your browser&apos;s local storage so it is there next time
-        you visit. It never leaves your device unless you sign in. We also remember that you have seen the welcome screen, so it is only
-        shown once. You can clear both at any time from your browser settings.
+        you visit. It never leaves your device unless you sign in. We also remember, for the rest of your visit only, that you have seen
+        the welcome screen. You can clear both at any time from your browser settings.
       </p>
       <h2>Optional cookies</h2>
       <p>
