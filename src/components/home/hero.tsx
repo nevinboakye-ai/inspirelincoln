@@ -46,6 +46,17 @@ export function Hero({
     <section ref={ref} aria-labelledby="hero-title" className="surface-midnight noise relative isolate overflow-hidden pt-[calc(var(--header-h)+1.25rem)] sm:pt-[calc(var(--header-h)+3rem)]">
       {/* Heraldic quartering: a cross of hairlines that the crest sits on. */}
       <div aria-hidden className="absolute inset-0 -z-10">
+        {/* Lincoln Cathedral, kept faint and toned to the navy so it sits behind everything. */}
+        <m.div style={{ y: crestY }} className="absolute inset-0 -bottom-24">
+          <Image
+            src="/images/lincoln-cathedral.webp"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-[62%_30%] opacity-[0.17] mix-blend-luminosity grayscale-[35%] [mask-image:linear-gradient(to_bottom,black_45%,transparent_95%)] sm:opacity-[0.2] lg:[mask-image:linear-gradient(to_right,transparent_8%,black_55%),linear-gradient(to_bottom,black_55%,transparent_98%)] lg:[mask-composite:intersect]"
+          />
+        </m.div>
         <div className="animate-drift absolute -inset-[10%] bg-[radial-gradient(ellipse_60%_70%_at_72%_42%,rgba(58,95,148,0.38),transparent_70%)]" />
         <div className="absolute inset-y-0 left-[58%] hidden w-px bg-gradient-to-b from-transparent via-white/15 to-transparent lg:block" />
         <div className="quarter-lattice absolute inset-0 opacity-60 [mask-image:radial-gradient(ellipse_at_70%_45%,black,transparent_70%)]" />
