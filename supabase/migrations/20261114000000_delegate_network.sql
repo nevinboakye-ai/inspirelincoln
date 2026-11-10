@@ -127,8 +127,8 @@ begin
   if auth.uid() is null or current_setting('inspire.roster_apply', true) = 'on' then
     return new;
   end if;
-  if new.role is distinct from old.role and not public.is_leadership() then
-    raise exception 'Only the president, vice president or a site admin can change site roles';
+  if new.role is distinct from old.role and not public.is_site_owner() then
+    raise exception 'Only the site owner can change site roles';
   end if;
   if (new.account_type is distinct from old.account_type
       or new.account_status is distinct from old.account_status
@@ -137,6 +137,9 @@ begin
       or new.reviewed_at is distinct from old.reviewed_at) then
     if not public.is_exec() then
       raise exception 'Only the executive committee can review accounts';
+    end if;
+    if old.role = 'admin' and not public.is_site_owner() then
+      raise exception 'Only the site owner can change the site owner''s account';
     end if;
     if new.id = auth.uid() and not public.is_leadership() then
       raise exception 'You cannot review your own account';
