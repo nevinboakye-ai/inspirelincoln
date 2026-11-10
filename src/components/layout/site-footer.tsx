@@ -5,6 +5,7 @@ import type { Edition } from "@/lib/types";
 import { CONTACT_EMAIL, FOOTER_LINKS, SOCIAL_LINKS } from "@/lib/site";
 import { formatEventDate } from "@/lib/time";
 import { Logo } from "./logo";
+import { Parallax } from "@/components/motion/effects";
 
 export function SiteFooter({ edition }: { edition: Edition }) {
   const year = new Date().getFullYear();
@@ -60,11 +61,13 @@ export function SiteFooter({ edition }: { edition: Edition }) {
         </div>
 
         <div aria-hidden className="pointer-events-none mt-20 flex select-none items-end justify-between gap-6 border-t border-white/10 pt-10">
-          <svg viewBox="0 0 600 170" className="h-auto w-[62vw] max-w-[760px] text-white/[0.08]">
-            <text x="0" y="140" fill="currentColor" className="font-display" fontSize="180" fontStyle="italic" fontWeight="300" letterSpacing="-5">
-              Inspire
-            </text>
-          </svg>
+          <Parallax axis="x" distance={40}>
+            <svg viewBox="0 0 600 170" className="h-auto w-[62vw] max-w-[760px] text-white/[0.08]">
+              <text x="0" y="140" fill="currentColor" className="font-display" fontSize="180" fontStyle="italic" fontWeight="300" letterSpacing="-5">
+                Inspire
+              </text>
+            </svg>
+          </Parallax>
           <Image src="/brand/crest-white.png" alt="" width={338} height={397} className="mb-2 hidden h-40 w-auto opacity-25 md:block lg:h-52" />
         </div>
 

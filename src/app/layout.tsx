@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/layout/providers";
 import { SiteHeader } from "@/components/layout/site-header";
 import { EditShortcut } from "@/components/layout/edit-shortcut";
+import { ScrollProgress } from "@/components/motion/effects";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { getAnnouncements, getEdition } from "@/lib/data/content";
@@ -55,6 +56,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           Skip to main content
         </a>
         <Providers>
+          <ScrollProgress />
           <SiteHeader edition={{ year: edition.year, date: edition.date }} ribbon={ribbon} />
           <main id="main" tabIndex={-1} className="outline-none">
             {children}

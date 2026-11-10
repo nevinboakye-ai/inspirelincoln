@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
 import { Countdown } from "@/components/visual/countdown";
+import { PulseLine } from "@/components/motion/effects";
 import { CONFERENCE_STATUS_LABEL, type ConferenceStatus } from "@/lib/types";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -46,9 +47,8 @@ export function Hero({
     <section ref={ref} aria-labelledby="hero-title" className="surface-midnight noise relative isolate overflow-hidden pt-[calc(var(--header-h)+3rem)]">
       {/* Heraldic quartering: a cross of hairlines that the crest sits on. */}
       <div aria-hidden className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_70%_at_72%_42%,rgba(58,95,148,0.38),transparent_70%)]" />
+        <div className="animate-drift absolute -inset-[10%] bg-[radial-gradient(ellipse_60%_70%_at_72%_42%,rgba(58,95,148,0.38),transparent_70%)]" />
         <div className="absolute inset-y-0 left-[58%] hidden w-px bg-gradient-to-b from-transparent via-white/15 to-transparent lg:block" />
-        <div className="absolute inset-x-0 top-[52%] h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
         <div className="quarter-lattice absolute inset-0 opacity-60 [mask-image:radial-gradient(ellipse_at_70%_45%,black,transparent_70%)]" />
       </div>
 
@@ -106,7 +106,7 @@ export function Hero({
             >
               <Link
                 href="/signup"
-                className="group inline-flex min-h-14 items-center gap-3 bg-paper px-7 font-ui font-semibold text-navy transition-colors hover:bg-white"
+                className="shine group inline-flex min-h-14 items-center gap-3 bg-paper px-7 font-ui font-semibold text-navy transition-colors hover:bg-white"
               >
                 Register
                 <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
@@ -130,6 +130,8 @@ export function Hero({
             <CrestReveal />
           </motion.div>
         </div>
+
+        <PulseLine className="-mb-2 -mt-6 h-16 w-full sm:h-20 lg:-mt-10" />
 
         <motion.div
           initial={{ opacity: 0, y: 14 }}

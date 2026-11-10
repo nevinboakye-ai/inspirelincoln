@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { LineDraw, MaskRise } from "@/components/motion/effects";
 
 export function SectionHeading({
   eyebrow,
@@ -22,11 +23,11 @@ export function SectionHeading({
     <div className={cn(align === "center" && "mx-auto text-center", "max-w-3xl", className)}>
       {eyebrow && (
         <p className={cn("eyebrow mb-4 flex items-center gap-3", align === "center" && "justify-center", dark ? "text-cyan" : "text-electric-600")}>
-          <span aria-hidden className={cn("h-px w-8", dark ? "bg-cyan/60" : "bg-electric-600/50")} />
+          <LineDraw className={cn("w-8", dark ? "bg-cyan/60" : "bg-electric-600/50")} />
           {eyebrow}
         </p>
       )}
-      <Tag className={cn("text-display-md font-normal", dark ? "text-paper" : "text-ink")}>{title}</Tag>
+      <Tag className={cn("text-display-md font-normal", dark ? "text-paper" : "text-ink")}><MaskRise>{title}</MaskRise></Tag>
       {intro && (
         <p className={cn("mt-6 text-lg leading-relaxed", dark ? "text-paper/70" : "text-slate-700")}>{intro}</p>
       )}

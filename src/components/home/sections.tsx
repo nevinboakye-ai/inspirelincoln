@@ -4,7 +4,8 @@ import { SpeakersSoon } from "@/components/speakers/speakers-soon";
 import { ArrowRight, ArrowUpRight, CalendarDays, Coffee, FlaskConical, HelpCircle, MapPin, Mic2, PartyPopper, Presentation, Ticket, Users } from "lucide-react";
 import type { Edition, Session, Speaker, Workshop } from "@/lib/types";
 import { SESSION_CATEGORY_LABEL } from "@/lib/types";
-import { Reveal } from "@/components/motion/reveal";
+import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
+import { LineDraw, MaskRise, ScrollLine, SpotlightGroup } from "@/components/motion/effects";
 import { WorkshopMotif, ACCENT_HEX } from "@/components/visual/workshop-motif";
 import { PlaceholderTag } from "@/components/ui/badge";
 import { formatTime } from "@/lib/time";
@@ -23,22 +24,24 @@ export function AtAGlance({ edition }: { edition: Edition; workshopCount?: numbe
     <section aria-labelledby="glance-title" className="bg-paper py-16 sm:py-24">
       <div className="container-page">
         <h2 id="glance-title" className="eyebrow flex items-center gap-3 text-electric-600">
-          <span aria-hidden className="h-px w-8 bg-electric-600/50" /> INSPIRE {edition.year}, sorted
+          <LineDraw className="w-8 bg-electric-600/50" /> INSPIRE {edition.year}, sorted
         </h2>
-        <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <SpotlightGroup>
+        <Stagger className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {items.map((it) => (
-            <li key={it.href}>
-              <Link href={it.href} className="group flex h-full items-center gap-4 rounded-[3px] border border-navy/10 bg-white p-5 transition-colors hover:border-navy/30 lg:flex-col lg:items-start lg:p-7">
-                <span className="grid size-11 shrink-0 place-items-center rounded-[3px] bg-navy text-cyan"><it.icon aria-hidden className="size-5" /></span>
+            <StaggerItem key={it.href} className="h-full">
+              <Link href={it.href} className="spotlight group flex h-full items-center gap-4 rounded-[3px] border border-navy/10 bg-white p-5 transition-[transform,border-color,box-shadow] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-navy/30 hover:shadow-[0_24px_48px_-28px_rgba(26,49,84,0.45)] lg:flex-col lg:items-start lg:p-7">
+                <span className="grid size-11 shrink-0 place-items-center rounded-[3px] bg-navy text-cyan transition-transform duration-500 ease-[var(--ease-out-expo)] group-hover:-rotate-6 group-hover:scale-110"><it.icon aria-hidden className="size-5" /></span>
                 <span className="min-w-0 flex-1">
                   <span className="block font-display text-xl text-ink">{it.title}</span>
                   <span className="mt-0.5 block text-sm text-slate-700">{it.body}</span>
                 </span>
                 <ArrowRight aria-hidden className="size-4 shrink-0 text-slate transition-transform group-hover:translate-x-0.5 lg:hidden" />
               </Link>
-            </li>
+            </StaggerItem>
           ))}
-        </ul>
+        </Stagger>
+        </SpotlightGroup>
       </div>
     </section>
   );
@@ -62,10 +65,10 @@ export function ProgrammePreview({ sessions }: { sessions: Session[] }) {
       <div className="container-page grid gap-12 lg:grid-cols-12">
         <Reveal className="lg:col-span-4">
           <p className="eyebrow mb-4 flex items-center gap-3 text-electric-600">
-            <span aria-hidden className="h-px w-8 bg-electric-600/50" /> Programme
+            <LineDraw className="w-8 bg-electric-600/50" /> Programme
           </p>
           <h2 id="programme-title" className="text-display-md font-normal text-ink">
-            The shape of the day
+            <MaskRise>The shape of the day</MaskRise>
           </h2>
           <p className="mt-6 text-lg leading-relaxed text-slate-700">
             Keynotes, student research, clinician-led workshops and time to connect. Build your own agenda and export it to your
@@ -82,7 +85,7 @@ export function ProgrammePreview({ sessions }: { sessions: Session[] }) {
         </Reveal>
 
         <ol className="relative lg:col-span-8">
-          <span aria-hidden className="absolute bottom-6 left-[1.4rem] top-6 w-px bg-gradient-to-b from-electric via-cyan to-violet opacity-40" />
+          <ScrollLine className="bottom-6 left-[1.4rem] top-6 sm:left-[1.65rem]" />
           {preview.map((s, i) => {
             const Icon = CATEGORY_ICON[s.category];
             return (
@@ -90,9 +93,9 @@ export function ProgrammePreview({ sessions }: { sessions: Session[] }) {
                 <Reveal delay={i * 0.06}>
                   <Link
                     href={`/programme?session=${s.slug}`}
-                    className="group relative flex items-start gap-5 rounded-lg p-3 transition-colors hover:bg-white sm:p-4"
+                    className="group relative flex items-start gap-5 rounded-lg p-3 transition-[background-color,transform] duration-500 ease-[var(--ease-out-expo)] hover:translate-x-1 hover:bg-white sm:p-4"
                   >
-                    <span className="relative z-10 flex size-11 shrink-0 items-center justify-center rounded-full border border-navy/10 bg-white text-electric-600 shadow-sm transition-colors group-hover:bg-navy group-hover:text-cyan">
+                    <span className="relative z-10 flex size-11 shrink-0 items-center justify-center rounded-full border border-navy/10 bg-white text-electric-600 shadow-sm transition-colors group-hover:scale-110 group-hover:bg-navy group-hover:text-cyan">
                       <Icon aria-hidden className="size-[1.1rem]" />
                     </span>
                     <span className="min-w-0 flex-1 border-b border-navy/10 pb-5">
@@ -105,7 +108,7 @@ export function ProgrammePreview({ sessions }: { sessions: Session[] }) {
                       <span className="mt-1.5 block font-display text-xl font-medium text-ink">{s.title}</span>
                       <span className="mt-1 line-clamp-2 block text-sm text-slate-700">{s.description}</span>
                     </span>
-                    <ArrowUpRight aria-hidden className="mt-3 size-5 shrink-0 text-slate opacity-0 transition-opacity group-hover:opacity-100" />
+                    <ArrowUpRight aria-hidden className="mt-3 size-5 shrink-0 -translate-x-1 translate-y-1 text-slate opacity-0 transition-[opacity,translate] duration-300 group-hover:translate-0 group-hover:opacity-100" />
                   </Link>
                 </Reveal>
               </li>
@@ -121,15 +124,15 @@ export function ProgrammePreview({ sessions }: { sessions: Session[] }) {
 export function SpeakersSection({ speakers }: { speakers: Speaker[] }) {
   return (
     <section aria-labelledby="speakers-title" className="surface-dark relative overflow-hidden py-24 sm:py-32">
-      <div aria-hidden className="absolute right-0 top-0 size-[30rem] rounded-full bg-violet/15 blur-[140px]" />
+      <div aria-hidden className="animate-drift absolute right-0 top-0 size-[30rem] rounded-full bg-violet/15 blur-[140px]" />
       <div className="container-page relative">
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <Reveal>
             <p className="eyebrow mb-4 flex items-center gap-3 text-cyan">
-              <span aria-hidden className="h-px w-8 bg-cyan/60" /> Speakers
+              <LineDraw className="w-8 bg-cyan/60" /> Speakers
             </p>
             <h2 id="speakers-title" className="text-display-md font-normal">
-              Voices from research and practice
+              <MaskRise>Voices from research and practice</MaskRise>
             </h2>
           </Reveal>
           {speakers.length > 0 && (
@@ -201,20 +204,21 @@ export function FinalCta({ edition }: { edition: Edition }) {
     <section aria-labelledby="cta-title" className="surface-midnight noise relative isolate overflow-hidden py-32 sm:py-40">
       <div aria-hidden className="absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_70%_at_50%_100%,rgba(58,95,148,0.35),transparent_70%)]" />
-        <Image src="/brand/crest-white.png" alt="" width={338} height={397} className="absolute left-1/2 top-1/2 h-[120%] w-auto -translate-x-1/2 -translate-y-1/2 opacity-[0.04]" />
+        <Image src="/brand/crest-white.png" alt="" width={338} height={397} className="animate-breathe absolute left-1/2 top-1/2 h-[120%] w-auto -translate-x-1/2 -translate-y-1/2 opacity-[0.04]" />
       </div>
       <div className="container-page relative text-center">
         <Reveal>
           <p className="eyebrow text-cyan">INSPIRE {edition.year} · {edition.venueName}</p>
           <h2 id="cta-title" className="mx-auto mt-6 max-w-5xl text-display-xl font-normal">
-            Be part of <span className="italic font-light text-cyan">what comes next.</span>
+            <MaskRise>Be part of</MaskRise>
+            <MaskRise delay={0.12}><span className="italic font-light text-cyan">what comes next.</span></MaskRise>
           </h2>
           <p className="mx-auto mt-8 max-w-xl text-lg text-paper/70">
             Whether you are presenting your first poster or simply curious about research, there is a place for you at INSPIRE.
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <Link href="/signup" className="inline-flex min-h-14 items-center gap-2 rounded-[3px] bg-cyan px-8 font-ui font-semibold text-midnight transition-[background-color,box-shadow] hover:bg-cyan-300 hover:shadow-[0_12px_40px_-10px_rgba(201,216,236,0.7)]">
-              Register <ArrowRight aria-hidden className="size-4" />
+            <Link href="/signup" className="shine group inline-flex min-h-14 items-center gap-2 rounded-[3px] bg-cyan px-8 font-ui font-semibold text-midnight transition-[background-color,box-shadow] hover:bg-cyan-300 hover:shadow-[0_12px_40px_-10px_rgba(201,216,236,0.7)]">
+              Register <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link href="/conference" className="inline-flex min-h-14 items-center rounded-[3px] border border-white/20 bg-white/5 px-8 font-ui font-medium backdrop-blur-sm hover:border-white/40">
               Venue & FAQs
