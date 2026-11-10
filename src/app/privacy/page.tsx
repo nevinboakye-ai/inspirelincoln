@@ -100,7 +100,7 @@ const PROCESSORS: { name: string; does: string; where: string }[] = [
   { name: "Vercel", does: "Hosts the website", where: "USA, with public pages cached worldwide" },
   { name: "Resend", does: "Sends our emails, including sign-up and password emails", where: "USA" },
   { name: "Microsoft", does: "Shows PowerPoint and Word slides to committee reviewers who choose to preview them, using a private link that expires within 30 minutes", where: "EU and USA" },
-  { name: "CARTO and OpenStreetMap", does: "Map images on the campus map. They receive your IP address when the map loads", where: "EU and USA" },
+  { name: "CARTO and OpenStreetMap", does: "Backup map images, only if our own campus map can't load. They then receive your IP address", where: "EU and USA" },
 ];
 
 const RIGHTS: { icon: typeof Eye; title: string; body: React.ReactNode }[] = [

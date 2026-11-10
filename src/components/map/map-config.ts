@@ -1,6 +1,8 @@
 /**
- * Shared map settings. Tiles are CARTO's light basemap, built on OpenStreetMap
- * data, and are loaded by the visitor's browser only when a map is shown.
+ * Shared map settings. The public campus map draws its own campus from a file
+ * on this site (see campus-layer.ts). These CARTO tiles, built on OpenStreetMap
+ * data, are only used by the committee's location picker and as a fallback if
+ * that file can't load.
  */
 export const TILE_URL = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
 export const TILE_ATTRIBUTION =

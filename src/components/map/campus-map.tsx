@@ -14,6 +14,7 @@ import {
   distanceMetres,
   walkingMinutes,
 } from "./map-config";
+import { OSM_ATTRIBUTION, drawCampus, type CampusLayer } from "./campus-layer";
 
 export interface MapSession {
   id: string;
@@ -83,6 +84,9 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
   const L = useRef<typeof import("leaflet") | null>(null);
   const pins = useRef<Map<string, Marker>>(new Map());
   const youLayer = useRef<LayerGroup | null>(null);
+  const campusLayer = useRef<CampusLayer | null>(null);
+  const buildingOf = useRef<Map<string, string>>(new Map());
+  const [campusReady, setCampusReady] = useState(false);
   const watchId = useRef<number | null>(null);
 
   // Read ?place= on first load so links can open a place directly.
@@ -97,59 +101,99 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
   // Create the map once.
   useEffect(() => {
     let cancelled = false;
+    let made: LeafletMap | null = null;
     import("leaflet").then((leaflet) => {
       if (cancelled || !mapEl.current || map.current) return;
       L.current = leaflet;
-      const m = leaflet.map(mapEl.current, { zoomControl: false, scrollWheelZoom: true, minZoom: 14, maxZoom: 20, tapTolerance: 20 });
+      const m = leaflet.map(mapEl.current, { zoomSnap: 0.25, zoomControl: false, scrollWheelZoom: true, minZoom: 15, maxZoom: 20, tapTolerance: 20 });
+      made = m;
       m.setView(CAMPUS_CENTRE, CAMPUS_ZOOM);
       if (!isPhone()) leaflet.control.zoom({ position: "bottomright" }).addTo(m);
       m.attributionControl.setPosition(isPhone() ? "topleft" : "bottomright");
-      let loaded = 0;
-      let failed = 0;
-      leaflet
-        .tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, maxZoom: 20, subdomains: "abcd" })
-        .on("tileload", () => {
-          loaded++;
-          setTilesFailed(false);
-        })
-        .on("tileerror", () => {
-          failed++;
-          if (failed >= 6 && loaded === 0) setTilesFailed(true);
-        })
-        .addTo(m);
-      for (const p of places) {
-        if (p.lat == null || p.lng == null) continue;
-        const label = (p.code ?? p.name.replace(/^The /, "").charAt(0)).slice(0, 4);
-        const safe = (t: string) => t.replace(/[<>&"]/g, "");
-        const icon = leaflet.divIcon({
-          className: "",
-          html: `<span class="map-marker"><span class="map-pin map-pin--${p.kind}" data-label="${safe(label)}"></span>${p.kind === "venue" ? `<span class="map-label">${safe(p.name)}</span>` : ""}</span>`,
-          iconSize: [28, 34],
-          iconAnchor: [14, 32],
-        });
-        const marker = leaflet.marker([p.lat, p.lng], { icon, title: p.name, alt: p.name, keyboard: true, riseOnHover: true }).addTo(m);
-        marker.on("click", () => {
-          setSelected(p.id);
-          setSheet((v) => (v === "peek" ? "half" : v));
-        });
-        marker.on("keypress", (e) => {
-          const key = (e.originalEvent as KeyboardEvent).key;
-          if (key === "Enter" || key === " ") setSelected(p.id);
-        });
-        pins.current.set(p.id, marker);
-      }
-      youLayer.current = leaflet.layerGroup().addTo(m);
-      map.current = m;
-      // Fit everything that is pinned, but stay on campus.
-      const pts = places.filter((p) => p.lat != null && p.lng != null).map((p) => [p.lat!, p.lng!] as [number, number]);
-      if (pts.length > 1) m.fitBounds(pts, { padding: [48, 48], maxZoom: 17 });
-      setReady(true);
+      m.attributionControl.setPrefix(false);
+      // Pins go on once the base is drawn, so the first view and any linked place settle only once.
+      const finish = () => {
+        for (const p of places) {
+          if (p.lat == null || p.lng == null) continue;
+          const label = (p.code ?? p.name.replace(/^The /, "").charAt(0)).slice(0, 4);
+          const safe = (t: string) => t.replace(/[<>&"]/g, "");
+          const icon = leaflet.divIcon({
+            className: "",
+            html: `<span class="map-marker"><span class="map-pin map-pin--${p.kind}" data-label="${safe(label)}"></span>${p.kind === "venue" ? `<span class="map-label">${safe(p.name)}</span>` : ""}</span>`,
+            iconSize: [28, 34],
+            iconAnchor: [14, 32],
+          });
+          const marker = leaflet.marker([p.lat, p.lng], { icon, title: p.name, alt: p.name, keyboard: true, riseOnHover: true }).addTo(m);
+          marker.on("click", () => {
+            setSelected(p.id);
+            setSheet((v) => (v === "peek" ? "half" : v));
+          });
+          marker.on("keypress", (e) => {
+            const key = (e.originalEvent as KeyboardEvent).key;
+            if (key === "Enter" || key === " ") setSelected(p.id);
+          });
+          pins.current.set(p.id, marker);
+        }
+        youLayer.current = leaflet.layerGroup().addTo(m);
+        map.current = m;
+        // Fit everything that is pinned, but stay on campus.
+        const pts = places.filter((p) => p.lat != null && p.lng != null).map((p) => [p.lat!, p.lng!] as [number, number]);
+        if (pts.length > 1) m.fitBounds(pts, { padding: [48, 48], maxZoom: 17 });
+        setReady(true);
+      };
+      // Our own drawing of the campus. If it can't load, fall back to a standard street map.
+      drawCampus(leaflet, m).then((campus) => {
+        if (cancelled) return;
+        if (!campus) {
+          let loaded = 0;
+          let failed = 0;
+          leaflet
+            .tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, maxZoom: 20, subdomains: "abcd" })
+            .on("tileload", () => {
+              loaded++;
+              setTilesFailed(false);
+            })
+            .on("tileerror", () => {
+              failed++;
+              if (failed >= 6 && loaded === 0) setTilesFailed(true);
+            })
+            .addTo(m);
+          finish();
+          return;
+        }
+        m.attributionControl.addAttribution(OSM_ATTRIBUTION);
+        // Keep the view on the drawn area, so there is never blank space at the edges.
+        const area = leaflet.latLngBounds(campus.bounds);
+        m.options.maxBoundsViscosity = 1;
+        const fit = () => {
+          m.setMinZoom(Math.min(18, Math.ceil(m.getBoundsZoom(area, true) * 4) / 4));
+          if (m.getZoom() < m.getMinZoom()) m.setZoom(m.getMinZoom(), { animate: false });
+        };
+        m.setMaxBounds(area);
+        fit();
+        m.on("resize", fit);
+        for (const p of places) {
+          if (p.lat == null || p.lng == null) continue;
+          const id = campus.claim({ lat: p.lat, lng: p.lng }, p.kind === "venue" ? "venue" : "place", () => {
+            setSelected(p.id);
+            setSheet((v) => (v === "peek" ? "half" : v));
+          });
+          if (id) buildingOf.current.set(p.id, id);
+        }
+        campusLayer.current = campus;
+        finish();
+        setCampusReady(true);
+      });
     });
+    const pinRefs = pins.current;
+    const buildingRefs = buildingOf.current;
     return () => {
       cancelled = true;
-      map.current?.remove();
+      made?.remove();
       map.current = null;
-      pins.current.clear();
+      pinRefs.clear();
+      buildingRefs.clear();
+      campusLayer.current = null;
     };
   }, [places]);
 
@@ -161,6 +205,7 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
     for (const [id, marker] of pins.current) {
       marker.getElement()?.querySelector(".map-pin")?.classList.toggle("is-active", id === pinOwner);
     }
+    campusLayer.current?.setActive(pinOwner ? (buildingOf.current.get(pinOwner) ?? null) : null);
     if (target && map.current) {
       const m = map.current;
       const zoom = Math.max(m.getZoom(), 18);
@@ -174,7 +219,7 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
     if (p) url.searchParams.set("place", p.slug);
     else url.searchParams.delete("place");
     window.history.replaceState(null, "", url);
-  }, [selected, byId, ready]);
+  }, [selected, byId, ready, campusReady]);
 
   // Draw "you are here".
   useEffect(() => {
