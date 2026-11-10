@@ -1,6 +1,6 @@
 import { Hero } from "@/components/home/hero";
 import { IntroGate } from "@/components/home/intro-gate";
-import { AtAGlance, FinalCta, ProgrammePreview, SpeakersSection } from "@/components/home/sections";
+import { AtAGlance } from "@/components/home/sections";
 import { EventJsonLd } from "@/components/seo/event-json-ld";
 import { getConferenceBundle } from "@/lib/data/content";
 import { eventEnd, eventStart, formatEventDate } from "@/lib/time";
@@ -8,7 +8,7 @@ import { eventEnd, eventStart, formatEventDate } from "@/lib/time";
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const { edition, sessions, speakers, workshops } = await getConferenceBundle();
+  const { edition, workshops } = await getConferenceBundle();
   const start = eventStart(edition);
   return (
     <>
@@ -25,9 +25,6 @@ export default async function HomePage() {
         status={edition.status}
       />
       <AtAGlance edition={edition} workshopCount={workshops.length} />
-      <ProgrammePreview sessions={sessions} />
-      <SpeakersSection speakers={speakers} />
-      <FinalCta edition={edition} />
     </>
   );
 }
