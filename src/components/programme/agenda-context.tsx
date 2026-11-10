@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { usePathname } from "next/navigation";
 import { hasSessionCookie } from "@/lib/supabase/session-hint";
 import { useToast } from "@/components/ui/toast";
+import { viewingAs } from "@/lib/view-as-client";
 
 const STORAGE_KEY = "inspire-agenda-v1";
 
@@ -71,6 +72,22 @@ export function AgendaProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     let cancelled = false;
+    if (viewingAs()) {
+      // Show the agenda of the person being viewed, without touching this browser's own.
+      fetch("/api/me/agenda", { credentials: "same-origin" })
+        .then((r) => (r.ok ? r.json() : { sessions: [], workshops: [] }))
+        .then((d: { sessions: string[]; workshops: string[] }) => {
+          if (cancelled) return;
+          setSessions(new Set(d.sessions));
+          setWorkshops(new Set(d.workshops));
+          setUserId("view-as");
+          setReady(true);
+        })
+        .catch(() => setReady(true));
+      return () => {
+        cancelled = true;
+      };
+    }
     (async () => {
       const db = await loadClient();
       if (!db || cancelled) {
@@ -125,6 +142,10 @@ export function AgendaProvider({ children }: { children: React.ReactNode }) {
 
   const toggleSession = useCallback(
     (id: string, title?: string) => {
+      if (viewingAs()) {
+        toast({ tone: "info", title: "Read only", body: "You're viewing as someone else, so their agenda can't be changed." });
+        return;
+      }
       const add = !sessions.has(id);
       const next = new Set(sessions);
       if (add) next.add(id);
@@ -145,6 +166,10 @@ export function AgendaProvider({ children }: { children: React.ReactNode }) {
 
   const toggleWorkshop = useCallback(
     (id: string, title?: string) => {
+      if (viewingAs()) {
+        toast({ tone: "info", title: "Read only", body: "You're viewing as someone else, so their agenda can't be changed." });
+        return;
+      }
       const add = !workshops.has(id);
       const next = new Set(workshops);
       if (add) next.add(id);

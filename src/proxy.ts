@@ -1,11 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabase/env";
+import { VIEW_AS_COOKIE, openViewAs } from "@/lib/view-as-seal";
 
 const PROTECTED = ["/portal", "/admin", "/review"];
 
 /** Pages that stay reachable while the public website is closed. */
-const ALWAYS_OPEN = /^\/(login|signup|auth|portal|admin|review|privacy|cookies|terms|accessibility|contact|api|search-index|opengraph-image|robots\.txt|sitemap\.xml|icon|apple-icon)(\/|$|\.)/;
+const ALWAYS_OPEN = /^\/(login|signup|auth|portal|admin|review|view-as|privacy|cookies|terms|accessibility|contact|api|search-index|opengraph-image|robots\.txt|sitemap\.xml|icon|apple-icon)(\/|$|\.)/;
 
 // The "website open" switch, remembered for a short while so most requests
 // don't wait on the database.
@@ -73,13 +74,27 @@ export async function proxy(request: NextRequest) {
 
   if (gated) {
     let staff = false;
-    if (user) {
-      const hit = committee.get(user.id);
+    // While the site owner is viewing as someone, gate the site as that person would see it.
+    const view = user ? openViewAs(request.cookies.get(VIEW_AS_COOKIE)?.value) : null;
+    const viewing = view && view.o === user?.id ? view : null;
+    const who = viewing ? viewing.t : user?.id;
+    if (who) {
+      const hit = committee.get(who);
       if (hit && Date.now() - hit.at < TTL) staff = hit.value;
       else {
-        const { data } = await supabase.rpc("has_access", { cap: "edit_website" });
-        staff = data === true;
-        committee.set(user.id, { value: staff, at: Date.now() });
+        if (viewing) {
+          const res = await fetch(`${url}/rest/v1/rpc/has_access`, {
+            method: "POST",
+            headers: { apikey: key, Authorization: `Bearer ${viewing.a}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ cap: "edit_website" }),
+            cache: "no-store",
+          }).catch(() => null);
+          staff = res?.ok ? (await res.json()) === true : false;
+        } else {
+          const { data } = await supabase.rpc("has_access", { cap: "edit_website" });
+          staff = data === true;
+        }
+        committee.set(who, { value: staff, at: Date.now() });
         if (committee.size > 500) committee.clear();
       }
     }

@@ -6,6 +6,7 @@ import { requireAccess } from "@/lib/auth";
 import { AdminHeader, Panel } from "@/components/admin/ui";
 import { AccountReviewForm, DirectEmailForm } from "@/components/admin/committee-forms";
 import { PersonDetailsForm } from "@/components/admin/person-forms";
+import { ViewAsButton } from "@/components/admin/view-as";
 import { Badge } from "@/components/ui/badge";
 import { Notice } from "@/components/ui/notice";
 import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, COMMITTEE_TYPES, SUBMISSION_LABEL, SUBMISSION_STATUS_LABEL } from "@/lib/accounts";
@@ -77,6 +78,7 @@ export default async function PersonPage({ params, searchParams }: { params: Pro
             )}
             <Badge tone={st.tone}>{st.label}</Badge>
             {p.id === user.id && <Badge>You</Badge>}
+            {profile.access.owner && !ownerAccount && p.id !== user.id && <ViewAsButton id={p.id} name={name} back={`/admin/accounts/${p.id}`} />}
           </div>
         }
       />

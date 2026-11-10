@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, FileUp, Loader2, UploadCloud } from "lucide-react";
 import { recordSubmission } from "@/app/portal/actions";
 import { getBrowserClient } from "@/lib/supabase/client";
+import { viewingAs } from "@/lib/view-as-client";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabase/env";
 import { resolveFileType, SUBMISSION_FILES, SUBMISSION_LABEL } from "@/lib/accounts";
 import type { SubmissionKind } from "@/lib/types";
@@ -45,6 +46,7 @@ export function SubmissionUpload({ kind, userId, defaultTitle, isUpdate }: { kin
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (viewingAs()) return setError("You're viewing as someone else, so uploads are switched off.");
     const form = new FormData(e.currentTarget);
     const title = String(form.get("title") ?? "").trim();
     const note = String(form.get("note") ?? "").trim();

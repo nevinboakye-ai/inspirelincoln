@@ -459,3 +459,32 @@ dialog.gate.is-leaving { background: transparent; }
   font-size: 0.8rem;
   font-weight: 600;
 }
+
+/* My Hub: lanyard and hero */
+.lanyard-grid {
+  background-image: linear-gradient(rgba(201, 216, 236, 0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(201, 216, 236, 0.35) 1px, transparent 1px);
+  background-size: 18px 18px;
+  mask-image: radial-gradient(120% 90% at 80% 0%, #000 20%, transparent 75%);
+}
+.lanyard-foil {
+  background: linear-gradient(100deg, #a5802a 0%, #e6c97f 18%, #fff4cf 26%, #d4af5a 36%, #a5802a 52%, #e6c97f 70%, #fff4cf 78%, #a5802a 100%);
+  background-size: 220% 100%;
+  animation: lanyard-foil 6s linear infinite;
+}
+@keyframes lanyard-foil {
+  to { background-position: -220% 0; }
+}
+.hub-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(48px);
+  animation: hub-drift 18s ease-in-out infinite alternate;
+}
+@keyframes hub-drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(8%, -10%, 0) scale(1.08); }
+  100% { transform: translate3d(-6%, 6%, 0) scale(0.96); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lanyard-foil, .hub-orb { animation: none; }
+}
