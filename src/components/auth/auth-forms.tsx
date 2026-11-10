@@ -62,18 +62,33 @@ export function ResetForm({ disabled }: { disabled: boolean }) {
   );
 }
 
-export function UpdatePasswordForm() {
+/** Choose a new password. The first time (after a temporary password from the committee) it also asks them to read the privacy notice. */
+export function UpdatePasswordForm({ first = false }: { first?: boolean }) {
   const [state, action, pending] = useActionState(updatePassword, null);
   return (
     <form onSubmit={submitWithoutReset(action)} noValidate className="space-y-5">
       <Status state={state} />
-      <Field id="password" label="New password" required error={fe(state, "password")} hint="At least 10 characters.">
+      {first && <input type="hidden" name="first" value="1" />}
+      <Field id="password" label="New password" required error={fe(state, "password")} hint="At least 10 characters. Don't reuse the temporary one.">
         <input id="password" name="password" type="password" autoComplete="new-password" className={inputClass} {...inv(state, "password")} />
       </Field>
       <Field id="confirm" label="Confirm new password" required error={fe(state, "confirm")}>
         <input id="confirm" name="confirm" type="password" autoComplete="new-password" className={inputClass} {...inv(state, "confirm")} />
       </Field>
-      <Submit pending={pending}>Update password</Submit>
+      {first && (
+        <div>
+          <label className="flex items-start gap-3 text-sm text-slate-700">
+            <input type="checkbox" name="privacyAck" className="mt-0.5 size-5 shrink-0 accent-navy" {...inv(state, "privacyAck")} />
+            <span>
+              I have read the{" "}
+              <Link href="/privacy" target="_blank" className="font-medium text-electric-600 underline underline-offset-4">privacy notice</Link>{" "}
+              (opens in a new tab).
+            </span>
+          </label>
+          {fe(state, "privacyAck") && <p id="privacyAck-error" className="mt-2 text-sm font-medium text-danger">{fe(state, "privacyAck")}</p>}
+        </div>
+      )}
+      <Submit pending={pending}>{first ? "Save my password" : "Update password"}</Submit>
     </form>
   );
 }

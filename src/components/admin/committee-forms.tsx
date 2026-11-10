@@ -11,9 +11,49 @@ import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES, EXEC_TYPES } f
 import type { AccountStatus, AccountType } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { btn } from "./ui";
+import { EMAIL_PRESETS, PLACEHOLDER_HELP, type EmailPreset } from "@/lib/email/presets";
 import { useToast } from "@/components/ui/toast";
 
 const small = "min-h-11 rounded-[3px] border border-navy/15 bg-white px-3 text-sm";
+
+/** Start from one of the committee's ready-made emails. Everything stays editable. */
+function TemplatePicker({ id, onPick }: { id: string; onPick: (p: EmailPreset | null) => void }) {
+  const [chosen, setChosen] = useState<EmailPreset | null>(null);
+  return (
+    <div className="rounded-[3px] border border-gold-600/40 bg-gold/10 p-4">
+      <label htmlFor={id} className="block text-sm font-semibold text-ink">Start from a template</label>
+      <select
+        id={id}
+        value={chosen?.id ?? ""}
+        onChange={(e) => {
+          const p = EMAIL_PRESETS.find((x) => x.id === e.target.value) ?? null;
+          setChosen(p);
+          onPick(p);
+        }}
+        className={cn(small, "mt-2 w-full")}
+      >
+        <option value="">Write my own</option>
+        {EMAIL_PRESETS.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+      </select>
+      <p className="mt-2 text-sm text-slate-700">{chosen ? `${chosen.use} You can edit anything before sending.` : "Templates fill in the subject, message and suggested recipients. You can edit anything before sending."}</p>
+    </div>
+  );
+}
+
+/** Adds each person's website login, creating accounts and temporary passwords where needed. */
+function LoginToggle({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
+  return (
+    <label className={cn("flex gap-3 rounded-[3px] border p-3 text-sm", checked ? "border-navy bg-paper ring-1 ring-navy" : "border-navy/15 bg-white", disabled && "opacity-60")}>
+      <input type="checkbox" name="includeLogin" checked={checked && !disabled} disabled={disabled} onChange={(e) => onChange(e.target.checked)} className="mt-0.5 size-4 accent-navy" />
+      <span>
+        <span className="block font-semibold text-ink">Include their login details</span>
+        <span className="text-slate-700">
+          Adds a box with the website and their email. Anyone who hasn&apos;t chosen a password yet gets a temporary one, and must change it when they first log in. Selected delegates without an account get one, approved from the list. Nobody&apos;s own password is ever changed.
+        </span>
+      </span>
+    </label>
+  );
+}
 
 export function AccountReviewForm({ id, type, status, canLead, name }: { id: string; type: AccountType; status: AccountStatus; canLead: boolean; name: string }) {
   const toast = useToast();
@@ -106,7 +146,21 @@ export function BroadcastForm({ counts, selected }: { counts: Partial<Record<Acc
   const [types, setTypes] = useState<AccountType[]>(["delegate"]);
   const [statuses, setStatuses] = useState<AccountStatus[]>(["approved"]);
   const [includeSelected, setIncludeSelected] = useState(false);
+  const [includeLogin, setIncludeLogin] = useState(false);
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
   const [excluded, setExcluded] = useState<Set<string>>(new Set());
+  const pick = (p: EmailPreset | null) => {
+    if (!p) return;
+    setSubject(p.subject);
+    setBody(p.body);
+    setPurpose("service");
+    setTypes(p.audience.types);
+    setStatuses(p.audience.statuses);
+    setIncludeSelected(p.audience.includeSelected);
+    setIncludeLogin(p.login);
+    setExcluded(new Set());
+  };
   const [people, setPeople] = useState<RecipientRow[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -134,6 +188,7 @@ export function BroadcastForm({ counts, selected }: { counts: Partial<Record<Acc
   return (
     <form onSubmit={submitWithoutReset(action)} className="space-y-6" onChange={() => setConfirming(false)}>
       <ResultBanner state={state} />
+      <TemplatePicker id="group-template" onPick={pick} />
       <fieldset>
         <legend className="mb-2 text-sm font-semibold text-ink">Send to <span className="text-danger">*</span></legend>
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -199,11 +254,12 @@ export function BroadcastForm({ counts, selected }: { counts: Partial<Record<Acc
       {[...excluded].map((e) => <input key={e} type="hidden" name="exclude" value={e} />)}
 
       <Field id="subject" label="Subject" required error={fe("subject")}>
-        <input id="subject" name="subject" maxLength={160} className={inputClass} />
+        <input id="subject" name="subject" maxLength={160} value={subject} onChange={(e) => setSubject(e.target.value)} className={inputClass} />
       </Field>
-      <Field id="body" label="Message" required error={fe("body")} hint="Plain text. Leave a blank line between paragraphs. We add a greeting with their first name and your sign-off.">
-        <textarea id="body" name="body" rows={10} maxLength={10000} className={inputClass} />
+      <Field id="body" label="Message" required error={fe("body")} hint={`Plain text. Leave a blank line between paragraphs. ${PLACEHOLDER_HELP} If you don't start with your own greeting or end with a sign-off, we add them.`}>
+        <textarea id="body" name="body" rows={body ? 18 : 10} maxLength={10000} value={body} onChange={(e) => setBody(e.target.value)} className={inputClass} />
       </Field>
+      <LoginToggle checked={includeLogin} onChange={setIncludeLogin} disabled={purpose !== "service"} />
       <div className="flex flex-wrap items-center gap-2">
         <button name="intent" value="test" disabled={pending} className={btn.secondary}>Send me a test</button>
         {confirming ? (
@@ -341,6 +397,9 @@ export function DirectEmailForm({
   const [query, setQuery] = useState("");
   const [to, setTo] = useState<DirectoryPerson | null>(initial);
   const [confirming, setConfirming] = useState(false);
+  const [subject, setSubject] = useState(defaults?.subject ?? "");
+  const [body, setBody] = useState(defaults?.body ?? "");
+  const [includeLogin, setIncludeLogin] = useState(false);
   const fe = (k: string) => state?.fieldErrors?.[k];
   const q = query.trim().toLowerCase();
   const matches = q.length < 2 ? [] : people.filter((p) => [p.full_name, p.email, p.detail].some((v) => v?.toLowerCase().includes(q))).slice(0, 8);
@@ -390,12 +449,14 @@ export function DirectEmailForm({
       {to && !to.joined && (
         <p className="text-sm text-slate-700">They haven&apos;t set up an account yet, so their email includes a button to do it.</p>
       )}
+      <TemplatePicker id="direct-template" onPick={(p) => { if (p) { setSubject(p.subject); setBody(p.body); setIncludeLogin(p.login); } }} />
       <Field id="direct-subject" label="Subject" required error={fe("subject")}>
-        <input id="direct-subject" name="subject" maxLength={160} defaultValue={defaults?.subject} className={inputClass} />
+        <input id="direct-subject" name="subject" maxLength={160} value={subject} onChange={(e) => setSubject(e.target.value)} className={inputClass} />
       </Field>
-      <Field id="direct-body" label="Message" required error={fe("body")} hint="Plain text. We add a greeting with their first name and your sign-off. Replies come to your email.">
-        <textarea id="direct-body" name="body" rows={6} maxLength={10000} defaultValue={defaults?.body} className={inputClass} />
+      <Field id="direct-body" label="Message" required error={fe("body")} hint={`Plain text. ${PLACEHOLDER_HELP} If you don't start with your own greeting or end with a sign-off, we add them. Replies come to your email.`}>
+        <textarea id="direct-body" name="body" rows={body.length > 400 ? 16 : 6} maxLength={10000} value={body} onChange={(e) => setBody(e.target.value)} className={inputClass} />
       </Field>
+      <LoginToggle checked={includeLogin} onChange={setIncludeLogin} />
       <div className="flex flex-wrap items-center gap-2">
         <button name="intent" value="test" disabled={pending} className={btn.secondary}>Send me a test</button>
         {confirming ? (

@@ -3,6 +3,9 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { clearTemporaryPassword } from "@/lib/accounts/login-details";
+import { plainClient, serviceClient } from "@/lib/view-as";
+import { SUPABASE_ANON_KEY } from "@/lib/supabase/env";
 import { SITE_URL } from "@/lib/site";
 import { ACCOUNT_TYPES, COMMITTEE_TYPES, POLICY_VERSION, submissionKindFor } from "@/lib/accounts";
 import type { AccountType } from "@/lib/types";
@@ -32,11 +35,13 @@ export async function signIn(_: AuthState, form: FormData): Promise<AuthState> {
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
   const db = await createClient();
   if (!db) return { error: "Accounts are not available yet." };
-  const { error } = await db.auth.signInWithPassword(parsed.data);
+  const { data, error } = await db.auth.signInWithPassword(parsed.data);
   if (error) {
     if (error.message.toLowerCase().includes("confirm")) return { error: "Please verify your email address first. Check your inbox for the link." };
     return { error: "Email or password is incorrect." };
   }
+  // A temporary password from the committee: choose their own first.
+  if (data.user?.app_metadata?.must_change_password === true) redirect("/auth/update-password?first=1");
   redirect(safeNext(form.get("next")));
 }
 
@@ -165,8 +170,27 @@ export async function updatePassword(_: AuthState, form: FormData): Promise<Auth
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
   const db = await createClient();
   if (!db) return { error: "Accounts are not available yet." };
+  const { data: { user } } = await db.auth.getUser();
+  // First log in with a temporary password from the committee.
+  const first = user?.app_metadata?.must_change_password === true;
+  if (first && form.get("privacyAck") !== "on") return { fieldErrors: { privacyAck: "Please confirm you have read the privacy notice." } };
+  if (first && user?.email) {
+    // Make sure the temporary password isn't simply kept.
+    const probe = plainClient(SUPABASE_ANON_KEY);
+    const check = await probe.auth.signInWithPassword({ email: user.email, password: parsed.data.password });
+    if (!check.error) {
+      await probe.auth.signOut({ scope: "local" });
+      return { fieldErrors: { password: "Choose a new password, not the temporary one." } };
+    }
+  }
   const { error } = await db.auth.updateUser({ password: parsed.data.password });
-  if (error) return { error: "Your reset link may have expired. Please request a new one." };
+  if (error) return { error: first ? "We couldn't save your password. Please try again." : "Your reset link may have expired. Please request a new one." };
+  if (first && user) {
+    await clearTemporaryPassword(user.id);
+    await serviceClient()?.from("consent_records").insert({ user_id: user.id, purpose: "privacy_notice", granted: true, policy_version: POLICY_VERSION, source: "portal" });
+    await db.auth.refreshSession();
+    redirect("/portal?welcome=first");
+  }
   redirect("/portal?password=updated");
 }
 

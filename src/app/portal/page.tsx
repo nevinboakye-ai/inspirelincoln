@@ -159,11 +159,13 @@ export default async function PortalHome({
         <Notice tone="warning">You don&apos;t have access to that area.</Notice>
       )}
       {sp.password && <Notice>Your password has been updated.</Notice>}
-      {sp.welcome && (
+      {sp.welcome === "first" ? (
+        <Notice title="Welcome to INSPIRE">Your password is saved. This is My Hub, where you can get everything ready for the day.</Notice>
+      ) : sp.welcome ? (
         <Notice title="Email verified">
           Thank you. Your account is set up.
         </Notice>
-      )}
+      ) : null}
 
       <header className="relative isolate overflow-hidden rounded-2xl bg-midnight px-6 py-8 text-paper sm:px-9 sm:py-10">
         <span aria-hidden className="hub-orb -left-16 -top-20 size-72 bg-navy-600/70" />
