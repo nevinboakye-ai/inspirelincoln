@@ -100,7 +100,14 @@ export async function signUp(_: AuthState, form: FormData): Promise<AuthState> {
   if (error) {
     if (error.message.toLowerCase().includes("already")) return { error: "An account with this email already exists. Try signing in." };
     if (error.status === 429) return { error: "Too many attempts. Please wait a minute and try again." };
-    return { error: "We couldn't create your account. Please try again." };
+    // Shows in Vercel's runtime logs so the committee can see the real cause.
+    console.error("Sign-up failed:", error.status, error.code, error.message);
+    const m = error.message.toLowerCase();
+    if (m.includes("sending") || (m.includes("email") && m.includes("confirm")))
+      return { error: "We couldn't send your confirmation email. Please try again later, or email inspiresoc@lincolnsu.com." };
+    if (m.includes("database"))
+      return { error: "We couldn't save your account. Please try again later, or email inspiresoc@lincolnsu.com." };
+    return { error: "We couldn't create your account. Please try again, or email inspiresoc@lincolnsu.com." };
   }
   if (data.session) redirect(safeNext(form.get("next")));
   return { message: v.email };
