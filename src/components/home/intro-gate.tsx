@@ -95,7 +95,7 @@ export function IntroGate({ edition }: { edition: Edition }) {
             </div>
 
             <p className="gate-eyebrow enter-up eyebrow mt-6 text-gold [animation-delay:600ms] sm:mt-10">
-              INSPIRE {edition.year}<span className="hidden sm:inline"> · National Medical Research Conference</span>
+              INSPIRE {edition.year}<span className="hidden sm:inline"> · </span><span className="mt-1.5 block sm:mt-0 sm:inline">National Medical Research Conference</span>
             </p>
             <h2 id="gate-title" className="mt-2.5 text-[2.15rem] font-normal leading-[1.02] sm:mt-4 sm:text-[3.4rem] lg:text-[4rem]">
               <span className="block overflow-hidden pb-[0.08em]">

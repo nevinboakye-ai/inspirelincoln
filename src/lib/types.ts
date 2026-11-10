@@ -251,6 +251,10 @@ export type AccountType =
   | "oral_presenter"
   | "poster_presenter"
   | "supporting_committee"
+  | "academic_team"
+  | "publicity_team"
+  | "finance_team"
+  | "logistics_team"
   | "executive_committee"
   | "vice_president"
   | "president";

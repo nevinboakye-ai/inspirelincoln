@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { AuthLink } from "@/components/auth/auth-link";
 
 /** Shown until the first speaker is published in the committee dashboard. */
 export function SpeakersSoon({ dark = false, className }: { dark?: boolean; className?: string }) {
@@ -15,9 +15,7 @@ export function SpeakersSoon({ dark = false, className }: { dark?: boolean; clas
         We&apos;re confirming this year&apos;s keynote speakers now.
       </p>
       <div className="mt-5 flex flex-wrap justify-center gap-3 sm:mt-8">
-        <Link href="/login" className={cn("inline-flex min-h-12 items-center gap-2 rounded-[3px] px-6 font-ui font-semibold", dark ? "bg-paper text-navy" : "bg-navy text-paper")}>
-          Log in <ArrowRight aria-hidden className="size-4" />
-        </Link>
+        <AuthLink className={cn("inline-flex min-h-12 items-center gap-2 rounded-[3px] px-6 font-ui font-semibold", dark ? "bg-paper text-navy" : "bg-navy text-paper")} />
         <Link href="/programme" className={cn("inline-flex min-h-12 items-center rounded-[3px] border px-6 font-ui font-semibold", dark ? "border-white/30 text-paper" : "border-navy/15 text-ink")}>
           See the programme
         </Link>
