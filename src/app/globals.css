@@ -400,19 +400,23 @@ html.gate-member .gate-guest, html:not(.gate-member) .gate-member-only { display
 .gate-mote { opacity: 0; filter: blur(0.3px); box-shadow: 0 0 8px rgb(201 216 236 / 0.8); animation: gate-mote 20s linear infinite; will-change: transform; }
 
 /* Keep the gate on one screen, however short it is. */
-@media (min-width: 640px) and (max-height: 1000px) {
-  .gate-crest { width: 128px; }
-  .gate-eyebrow { margin-top: 2.5rem; }
-}
 @media (min-width: 640px) and (max-height: 860px) {
-  .gate-crest { width: 116px; }
-  .gate-eyebrow { margin-top: 2.25rem; }
+  .gate-crest { width: 104px; }
+  .gate-eyebrow { margin-top: 1.75rem; }
+}
+@media (min-width: 640px) and (max-height: 740px) {
+  .gate-crest { width: 88px; }
+  .gate-eyebrow { margin-top: 1.25rem; }
+}
+@media (max-height: 700px) {
+  .gate-crest { width: 68px; }
+  .gate-eyebrow { margin-top: 1rem; }
+  .gate-beat-svg { height: 1.25rem; margin-top: 0.25rem; }
 }
 @media (max-height: 600px) {
-  .gate-crest { width: 76px; }
-  .gate-eyebrow { margin-top: 1.25rem; }
+  .gate-crest { width: 56px; }
   .gate-beat-svg { display: none; }
-  .gate-partners img { height: 1.5rem; }
+  .gate-partners img { height: 1.1rem; }
 }
 .gate-beat { stroke-dasharray: 1; stroke-dashoffset: 1; animation: gate-beat 1.8s ease-in-out 0.9s forwards; }
 
