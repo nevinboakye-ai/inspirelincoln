@@ -31,7 +31,7 @@ export const RegistrationStatus = ({ id, status }: { id: string; status: string 
   <AutoSelect action={setRegistrationStatus} hidden={{ id }} name="status" value={status} label="Registration status" options={[["pending", "Pending"], ["confirmed", "Confirmed"], ["waitlisted", "Waitlisted"], ["cancelled", "Cancelled"]]} />
 );
 export const RoleSelect = ({ id, role }: { id: string; role: string }) => (
-  <AutoSelect action={setRole} hidden={{ id }} name="role" value={role} label="Role" options={[["delegate", "Delegate"], ["reviewer", "Reviewer"], ["editor", "Editor"], ["admin", "Admin"]]} />
+  <AutoSelect action={setRole} hidden={{ id }} name="role" value={role} label="Role" options={[["delegate", "No extra access"], ["reviewer", "Abstract reviewer"], ["editor", "Website editor"], ["admin", "Site admin"]]} />
 );
 export const EnquiryStatus = ({ id, status }: { id: string; status: string }) => (
   <AutoSelect action={updateEnquiry} hidden={{ id }} name="status" value={status} label="Enquiry status" options={[["new", "New"], ["in_progress", "In progress"], ["closed", "Closed"]]} />

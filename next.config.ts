@@ -29,6 +29,19 @@ const nextConfig: NextConfig = {
       ? [{ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/public/**" }]
       : [],
   },
+  // Pages folded into the simpler site keep working for anyone with an old link.
+  async redirects() {
+    return [
+      { source: "/research/:path*", destination: "/programme", permanent: false },
+      { source: "/research", destination: "/programme", permanent: false },
+      { source: "/opportunities/:path*", destination: "/about", permanent: false },
+      { source: "/opportunities", destination: "/about", permanent: false },
+      { source: "/gallery", destination: "/about", permanent: false },
+      { source: "/archive/:path*", destination: "/about", permanent: false },
+      { source: "/committee", destination: "/admin", permanent: false },
+      { source: "/register", destination: "/signup", permanent: false },
+    ];
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

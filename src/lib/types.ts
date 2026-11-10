@@ -246,6 +246,18 @@ export interface SiteContent {
 
 export type UserRole = "delegate" | "reviewer" | "editor" | "admin";
 
+export type AccountType =
+  | "delegate"
+  | "oral_presenter"
+  | "poster_presenter"
+  | "supporting_committee"
+  | "executive_committee"
+  | "vice_president"
+  | "president";
+export type AccountStatus = "pending" | "approved" | "waitlisted" | "declined";
+export type SubmissionKind = "slides" | "poster";
+export type SubmissionStatus = "submitted" | "changes_requested" | "approved";
+
 export type MapPlaceKind = "venue" | "room" | "building" | "landmark" | "amenity";
 
 export interface MapPlace {

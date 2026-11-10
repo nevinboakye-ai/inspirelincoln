@@ -46,8 +46,8 @@ export function Countdown({
     return (
       <div className={cn("flex flex-wrap items-center gap-4", className)}>
         <p className="font-display text-lg text-paper/80">INSPIRE {year} has concluded. Thank you to everyone who took part.</p>
-        <Link href="/gallery" className="inline-flex items-center gap-2 rounded-[3px] border border-cyan/40 px-5 py-2.5 text-sm font-semibold text-cyan hover:bg-cyan/10">
-          Explore INSPIRE {year} highlights <ArrowRight aria-hidden className="size-4" />
+        <Link href="/about" className="inline-flex items-center gap-2 rounded-[3px] border border-cyan/40 px-5 py-2.5 text-sm font-semibold text-cyan hover:bg-cyan/10">
+          About INSPIRE <ArrowRight aria-hidden className="size-4" />
         </Link>
       </div>
     );

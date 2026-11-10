@@ -7,6 +7,10 @@ import { SUPABASE_URL } from "@/lib/supabase/env";
 import { requireUser } from "@/lib/auth";
 import { getEdition } from "@/lib/data/content";
 import { abstractSchema, FILE_RULES } from "@/lib/validation/abstract";
+import { POLICY_VERSION, resolveFileType, SUBMISSION_FILES, submissionKindFor } from "@/lib/accounts";
+import { sendEmail } from "@/lib/email/resend";
+import { submissionReceivedEmail } from "@/lib/email/messages";
+import { SITE_URL } from "@/lib/site";
 
 export type ActionResult = { ok: boolean; error?: string; message?: string; fieldErrors?: Record<string, string>; id?: string } | null;
 
@@ -21,31 +25,87 @@ const profileSchema = z.object({
   fullName: z.string().trim().min(2, "Enter your name.").max(120),
   institution: z.string().trim().max(160).optional().default(""),
   programme: z.string().trim().max(160).optional().default(""),
-  yearOfStudy: z.string().trim().max(40).optional().default(""),
+  careerStage: z.string().trim().max(80).optional().default(""),
+  committeePosition: z.string().trim().max(120).optional().default(""),
+  presentationTitle: z.string().trim().max(300).optional().default(""),
 });
 
 export async function updateProfile(_: ActionResult, form: FormData): Promise<ActionResult> {
   const { user, db } = await requireUser("/portal/profile");
   const parsed = profileSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
+  const v = parsed.data;
   const { error } = await db
     .from("profiles")
-    .update({ full_name: parsed.data.fullName, institution: parsed.data.institution || null, programme: parsed.data.programme || null, year_of_study: parsed.data.yearOfStudy || null })
+    .update({
+      full_name: v.fullName,
+      institution: v.institution || null,
+      programme: v.programme || null,
+      career_stage: v.careerStage || null,
+      committee_position: v.committeePosition || null,
+      presentation_title: v.presentationTitle || null,
+    })
     .eq("id", user.id);
-  if (error) return { ok: false, error: "We couldn't save your profile." };
+  if (error) return { ok: false, error: "We couldn't save your details." };
   revalidatePath("/portal", "layout");
-  return { ok: true, message: "Profile saved." };
+  return { ok: true, message: "Saved." };
 }
 
-/** Permanently deletes the account. Requires the service role key on the server; never exposed to the browser. */
+/**
+ * Access and dietary needs can reveal health or religious beliefs, which UK
+ * GDPR treats as special category data. They are only stored with explicit
+ * consent, recorded first, and are wiped if consent is withdrawn.
+ */
+export async function saveNeeds(_: ActionResult, form: FormData): Promise<ActionResult> {
+  const { user, db } = await requireUser("/portal/profile");
+  const accessibility = String(form.get("accessibility") ?? "").trim().slice(0, 1000);
+  const dietary = String(form.get("dietary") ?? "").trim().slice(0, 500);
+  if (form.get("intent") === "remove") {
+    const { error } = await db.from("consent_records").insert({ user_id: user.id, purpose: "special_category", granted: false, policy_version: POLICY_VERSION, source: "portal" });
+    if (error) return { ok: false, error: "We couldn't remove your details. Please try again." };
+    revalidatePath("/portal", "layout");
+    return { ok: true, message: "Removed. We no longer hold any access or dietary details for you." };
+  }
+  if (!accessibility && !dietary) return { ok: false, error: "Add your access or dietary needs, or leave this section empty." };
+  if (form.get("consent") !== "on") return { ok: false, fieldErrors: { consent: "Please tick the box to give your permission, or leave these details out." } };
+  const c = await db.from("consent_records").insert({ user_id: user.id, purpose: "special_category", granted: true, policy_version: POLICY_VERSION, source: "portal" });
+  if (c.error) return { ok: false, error: "We couldn't save your details. Please try again." };
+  const { error } = await db.from("profiles").update({ accessibility_needs: accessibility || null, dietary_requirements: dietary || null }).eq("id", user.id);
+  if (error) return { ok: false, error: "We couldn't save your details. Please try again." };
+  revalidatePath("/portal", "layout");
+  return { ok: true, message: "Saved. Only the executive committee can see these details." };
+}
+
+/** Marketing email and photography preferences, each change kept in the consent history. */
+export async function setPreference(_: ActionResult, form: FormData): Promise<ActionResult> {
+  const { user, db } = await requireUser("/portal/profile");
+  const purpose = form.get("purpose");
+  if (purpose !== "marketing_email" && purpose !== "photography_opt_out") return { ok: false, error: "Unknown preference." };
+  const granted = form.get("value") === "on";
+  const { error } = await db.from("consent_records").insert({ user_id: user.id, purpose, granted, policy_version: POLICY_VERSION, source: "portal" });
+  if (error) return { ok: false, error: "We couldn't save that. Please try again." };
+  revalidatePath("/portal/profile");
+  return { ok: true, message: "Preference saved." };
+}
+
+/** Permanently deletes the account and everything linked to it. */
 export async function deleteAccount(_: ActionResult, form: FormData): Promise<ActionResult> {
   const { user, db } = await requireUser("/portal/profile");
   if (form.get("confirm") !== "DELETE") return { ok: false, fieldErrors: { confirm: "Type DELETE to confirm." } };
+  // Remove uploaded files first; the database rows go with the account.
+  for (const bucket of ["submissions", "posters", "abstracts"]) {
+    const folders = bucket === "submissions" ? [`${user.id}/slides`, `${user.id}/poster`] : [user.id];
+    for (const folder of folders) {
+      const { data } = await db.storage.from(bucket).list(folder, { limit: 1000 });
+      const paths = (data ?? []).filter((f) => f.id).map((f) => `${folder}/${f.name}`);
+      if (paths.length) await db.storage.from(bucket).remove(paths);
+    }
+  }
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!key) return { ok: false, error: "Self-service deletion is not enabled yet. Please contact the team and we will delete your account." };
-  const admin = createAdminClient(SUPABASE_URL, key, { auth: { persistSession: false } });
-  const { error } = await admin.auth.admin.deleteUser(user.id);
-  if (error) return { ok: false, error: "We couldn't delete your account. Please contact the team." };
+  const { error } = key
+    ? await createAdminClient(SUPABASE_URL, key, { auth: { persistSession: false } }).auth.admin.deleteUser(user.id)
+    : await db.rpc("delete_my_account");
+  if (error) return { ok: false, error: "We couldn't delete your account. Please contact the committee and we'll do it for you." };
   await db.auth.signOut();
   redirect("/?account=deleted");
 }
@@ -153,4 +213,44 @@ export async function uploadPoster(_: ActionResult, form: FormData): Promise<Act
   if (error) return { ok: false, error: "Upload saved but could not be recorded. Please contact the team." };
   revalidatePath("/portal/presenter");
   return { ok: true, message: "Poster uploaded. The conference team will review it." };
+}
+
+/* ---------- Slides and posters ---------- */
+const recordSchema = z.object({
+  kind: z.enum(["slides", "poster"]),
+  title: z.string().trim().min(3, "Enter the title.").max(300),
+  note: z.string().trim().max(2000).optional().default(""),
+  path: z.string().min(10).max(400),
+  name: z.string().min(1).max(200),
+  type: z.string().min(1).max(120),
+  size: z.coerce.number().int().positive().max(50 * 1024 * 1024),
+});
+
+/**
+ * Records a file the presenter has already uploaded straight to private
+ * storage from their browser (large files never pass through the website's
+ * servers). The database checks the account type, approval and folder.
+ */
+export async function recordSubmission(input: z.input<typeof recordSchema>): Promise<ActionResult> {
+  const { user, db, profile } = await requireUser("/portal/submission");
+  const parsed = recordSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Please check the title and file." };
+  const v = parsed.data;
+  if (submissionKindFor(profile.accountType) !== v.kind || profile.accountStatus !== "approved")
+    return { ok: false, error: "Your account can't submit this yet." };
+  if (!v.path.startsWith(`${user.id}/`)) return { ok: false, error: "That upload doesn't belong to your account." };
+  if (!resolveFileType(v.kind, v.name, v.type)) return { ok: false, error: `Upload a ${SUBMISSION_FILES[v.kind].label} file.` };
+
+  const edition = await getEdition();
+  const { data, error } = await db
+    .from("presentation_submissions")
+    .insert({ edition_id: edition.id, user_id: user.id, kind: v.kind, title: v.title, presenter_note: v.note, file_path: v.path, file_name: v.name, file_type: v.type, file_size: v.size })
+    .select("id, version")
+    .single();
+  if (error || !data) return { ok: false, error: "Your file uploaded but we couldn't record it. Please try again." };
+  if (user.email) {
+    await sendEmail({ to: user.email, ...submissionReceivedEmail({ siteUrl: SITE_URL, name: profile.fullName, kind: v.kind, title: v.title, version: data.version }) });
+  }
+  revalidatePath("/portal", "layout");
+  return { ok: true, message: data.version > 1 ? `Version ${data.version} submitted. The committee has been sent your update.` : "Submitted. The committee will review it and reply here." };
 }

@@ -6,7 +6,7 @@ import type { ActionResult } from "@/app/portal/actions";
 
 /** Saves or submits a review. RLS limits writes to the reviewer's own assignments; a trigger locks submitted reviews. */
 export async function saveReview(_: ActionResult, form: FormData): Promise<ActionResult> {
-  const { db } = await requireRole(["reviewer"], "/review");
+  const { db } = await requireRole(["reviewer", "editor"], "/review");
   const assignmentId = String(form.get("assignmentId") ?? "");
   const intent = form.get("intent") === "submit" ? "submit" : "draft";
 

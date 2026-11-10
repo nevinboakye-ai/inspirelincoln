@@ -1,55 +1,44 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, BookOpenCheck, Coffee, FlaskConical, Mic2, PartyPopper, Presentation, Users } from "lucide-react";
-import type { Edition, Resource, Session, Speaker, Workshop } from "@/lib/types";
+import { SpeakersSoon } from "@/components/speakers/speakers-soon";
+import { ArrowRight, ArrowUpRight, CalendarDays, Coffee, FlaskConical, HelpCircle, MapPin, Mic2, PartyPopper, Presentation, Ticket, Users } from "lucide-react";
+import type { Edition, Session, Speaker, Workshop } from "@/lib/types";
 import { SESSION_CATEGORY_LABEL } from "@/lib/types";
-import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
-import { CountUp } from "@/components/visual/count-up";
+import { Reveal } from "@/components/motion/reveal";
 import { WorkshopMotif, ACCENT_HEX } from "@/components/visual/workshop-motif";
 import { PlaceholderTag } from "@/components/ui/badge";
 import { formatTime } from "@/lib/time";
 import { SpeakerCarousel } from "./speaker-carousel";
 
 /* ---------------- D: At a glance ---------------- */
-export function AtAGlance({ edition, workshopCount }: { edition: Edition; workshopCount: number }) {
-  const stats = [
-    { value: edition.expectedAttendance, prefix: "~", label: "Expected delegates", note: "Projected attendance" },
-    { value: workshopCount, label: "Interactive workshops", note: "Planned, clinician-led" },
-    { text: "National", label: "Medical student community", note: "Students from across participating schools" },
-    { value: 1, label: "Day of research, learning and networking", note: "Saturday, in Lincoln" },
+/** Four doors into the site, sized for thumbs. */
+export function AtAGlance({ edition }: { edition: Edition; workshopCount?: number }) {
+  const items = [
+    { href: "/programme", icon: CalendarDays, title: "Programme", body: "Every session, with times and rooms" },
+    { href: "/map", icon: MapPin, title: "Campus map", body: "Find your building and room" },
+    { href: "/portal", icon: Ticket, title: "My ticket", body: "Your check-in code and agenda" },
+    { href: "/conference", icon: HelpCircle, title: "Venue & FAQs", body: "Travel, access and questions" },
   ];
   return (
-    <section aria-labelledby="glance-title" className="relative bg-paper py-24 sm:py-28">
+    <section aria-labelledby="glance-title" className="bg-paper py-16 sm:py-24">
       <div className="container-page">
-        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
-          <Reveal>
-            <p className="eyebrow mb-4 flex items-center gap-3 text-electric-600">
-              <span aria-hidden className="h-px w-8 bg-electric-600/50" /> At a glance
-            </p>
-            <h2 id="glance-title" className="text-display-md font-normal text-ink">
-              INSPIRE {edition.year} in numbers
-            </h2>
-          </Reveal>
-          <p className="max-w-sm text-sm text-slate">Figures describe plans for this year&apos;s conference, not past results.</p>
-        </div>
-        <Stagger className="mt-14 grid border-t border-navy/10 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.map((s, i) => (
-            <StaggerItem key={s.label} className="border-b border-navy/10 py-10 sm:pr-8 lg:border-b-0 lg:border-r lg:px-8 lg:first:pl-0 lg:last:border-r-0">
-              <p className="font-display text-[clamp(3.5rem,7vw,5.5rem)] font-semibold leading-none tracking-[-0.05em] text-ink">
-                {"text" in s && s.text ? (
-                  <span className="text-[0.6em] tracking-[-0.03em]">{s.text}</span>
-                ) : s.value != null ? (
-                  <CountUp value={s.value} prefix={s.prefix} />
-                ) : (
-                  "TBC"
-                )}
-              </p>
-              <p className="mt-4 font-display text-lg font-medium text-ink">{s.label}</p>
-              <p className="mt-1 text-sm text-slate">{s.note}</p>
-              <span aria-hidden className="mt-6 block h-1 w-12 rounded-full" style={{ background: ["#C9D8EC", "#3A5F94", "#9FB4D4", "#1A3154"][i] }} />
-            </StaggerItem>
+        <h2 id="glance-title" className="eyebrow flex items-center gap-3 text-electric-600">
+          <span aria-hidden className="h-px w-8 bg-electric-600/50" /> INSPIRE {edition.year}, sorted
+        </h2>
+        <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {items.map((it) => (
+            <li key={it.href}>
+              <Link href={it.href} className="group flex h-full items-center gap-4 rounded-[3px] border border-navy/10 bg-white p-5 transition-colors hover:border-navy/30 lg:flex-col lg:items-start lg:p-7">
+                <span className="grid size-11 shrink-0 place-items-center rounded-[3px] bg-navy text-cyan"><it.icon aria-hidden className="size-5" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display text-xl text-ink">{it.title}</span>
+                  <span className="mt-0.5 block text-sm text-slate-700">{it.body}</span>
+                </span>
+                <ArrowRight aria-hidden className="size-4 shrink-0 text-slate transition-transform group-hover:translate-x-0.5 lg:hidden" />
+              </Link>
+            </li>
           ))}
-        </Stagger>
+        </ul>
       </div>
     </section>
   );
@@ -143,11 +132,13 @@ export function SpeakersSection({ speakers }: { speakers: Speaker[] }) {
               Voices from research and practice
             </h2>
           </Reveal>
-          <Link href="/speakers" className="group inline-flex items-center gap-2 font-ui font-medium text-cyan">
-            All speakers <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
-          </Link>
+          {speakers.length > 0 && (
+            <Link href="/speakers" className="group inline-flex items-center gap-2 font-ui font-medium text-cyan">
+              All speakers <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
+            </Link>
+          )}
         </div>
-        <SpeakerCarousel speakers={speakers} />
+        {speakers.length ? <SpeakerCarousel speakers={speakers} /> : <SpeakersSoon dark className="mt-12" />}
       </div>
     </section>
   );
@@ -205,152 +196,6 @@ export function WorkshopGrid({ workshops, compact = false }: { workshops: Worksh
   );
 }
 
-export function WorkshopsSection({ workshops }: { workshops: Workshop[] }) {
-  return (
-    <section aria-labelledby="workshops-title" className="bg-paper py-24 sm:py-32">
-      <div className="container-page">
-        <div className="mb-14 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-          <Reveal className="max-w-2xl">
-            <p className="eyebrow mb-4 flex items-center gap-3 text-electric-600">
-              <span aria-hidden className="h-px w-8 bg-electric-600/50" /> Workshops
-            </p>
-            <h2 id="workshops-title" className="text-display-md font-normal text-ink">
-              Six workshops. Learn by doing.
-            </h2>
-            <p className="mt-5 text-lg text-slate-700">Small-group, clinician-led sessions designed around practical skills you can use straight away.</p>
-          </Reveal>
-          <Link href="/workshops" className="group inline-flex items-center gap-2 font-ui font-medium text-electric-600">
-            All workshops <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
-          </Link>
-        </div>
-        <WorkshopGrid workshops={workshops} />
-      </div>
-    </section>
-  );
-}
-
-/* ---------------- H: Research showcase ---------------- */
-export function ResearchSection({ edition }: { edition: Edition }) {
-  const links = [
-    { label: "Research at INSPIRE", href: "/research" },
-    { label: "Abstract guidance", href: "/research#abstracts" },
-    { label: "Presentation requirements", href: "/research#presenters" },
-    { label: "Research resources", href: "/research#resources" },
-  ];
-  return (
-    <section aria-labelledby="research-title" className="relative overflow-hidden bg-white py-24 sm:py-32">
-      <div className="container-page grid gap-14 lg:grid-cols-12">
-        <Reveal className="lg:col-span-7">
-          <p className="eyebrow mb-4 flex items-center gap-3 text-electric-600">
-            <span aria-hidden className="h-px w-8 bg-electric-600/50" /> Student research
-          </p>
-          <h2 id="research-title" className="text-display-lg font-normal text-ink">
-            Your Research Deserves to Be Seen.
-          </h2>
-          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-700">
-            Sharing your work is part of doing research. Presenting a poster lets you explain your methods, defend your findings,
-            hear new perspectives and practise the skills every clinician-researcher needs. At INSPIRE, student research sits at
-            the centre of the day.
-          </p>
-          <ul className="mt-10 grid gap-3 sm:grid-cols-2">
-            {links.map((l) => (
-              <li key={l.href}>
-                <Link href={l.href} className="group flex min-h-14 items-center justify-between rounded-md border border-navy/10 px-5 font-medium text-ink transition-colors hover:border-electric-600/40 hover:bg-paper">
-                  {l.label}
-                  <ArrowRight aria-hidden className="size-4 text-electric-600 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Reveal>
-
-        <Reveal delay={0.15} className="lg:col-span-5">
-          <div className="relative overflow-hidden rounded-xl bg-navy p-8 text-paper sm:p-10">
-            <div aria-hidden className="grid-lines absolute inset-0 opacity-60" />
-            <div aria-hidden className="absolute -right-20 -top-20 size-64 rounded-full bg-cyan/20 blur-3xl" />
-            <div className="relative">
-              <BookOpenCheck aria-hidden className="size-7 text-cyan" />
-              <p className="eyebrow mt-6 text-cyan">For accepted presenters</p>
-              {edition.posterDeadline && (
-                <p className="mt-3 font-display text-3xl font-semibold leading-tight">
-                  Posters due{" "}
-                  {new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/London" }).format(new Date(`${edition.posterDeadline}T12:00:00Z`))}
-                </p>
-              )}
-              <ul className="mt-6 space-y-3 text-paper/80">
-                {edition.posterRequirements.map((r) => (
-                  <li key={r} className="flex gap-3">
-                    <span aria-hidden className="mt-2.5 size-1.5 shrink-0 rounded-full bg-cyan" />
-                    {r}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/research#presenters" className="mt-8 inline-flex items-center gap-2 font-ui font-semibold text-cyan">
-                Presenter guidance <ArrowRight aria-hidden className="size-4" />
-              </Link>
-            </div>
-          </div>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
-/* ---------------- I: Beyond the conference ---------------- */
-export function BeyondSection({ resources }: { resources: Resource[] }) {
-  const items = [
-    { title: "Educational resources", body: "Curated guides on abstract writing, critical appraisal and research methods.", status: resources.length ? "Available now" : "Planned", href: "/research#resources" },
-    { title: "Research skills development", body: "Workshops and masterclasses that build practical research skills through the year.", status: "Planned", href: "/opportunities" },
-    { title: "Academic mentorship and networking", body: "Connecting students with researchers and clinicians who can guide their next steps.", status: "Planned", href: "/opportunities" },
-    { title: "Research opportunities", body: "A shared noticeboard for projects, collaborations and presentation opportunities.", status: "Planned", href: "/opportunities" },
-    { title: "Future conferences", body: "INSPIRE continues each year, hosted with the participating medical school community.", status: "Ongoing", href: "/about" },
-  ];
-  return (
-    <section aria-labelledby="beyond-title" className="relative bg-paper py-24 sm:py-32">
-      <div className="container-page grid gap-12 lg:grid-cols-12">
-        <Reveal className="lg:col-span-4">
-          <p className="eyebrow mb-4 flex items-center gap-3 text-electric-600">
-            <span aria-hidden className="h-px w-8 bg-electric-600/50" /> Beyond the conference
-          </p>
-          <h2 id="beyond-title" className="text-display-md font-normal text-ink">
-            A community, all year round
-          </h2>
-          <p className="mt-6 text-lg leading-relaxed text-slate-700">
-            INSPIRE is growing beyond a single day. Here is what is available now and what we are building next.
-          </p>
-        </Reveal>
-        <ul className="divide-y divide-navy/10 border-y border-navy/10 lg:col-span-8">
-          {items.map((it, i) => (
-            <li key={it.title}>
-              <Reveal delay={i * 0.05}>
-                <Link href={it.href} className="group grid gap-2 py-7 transition-colors sm:grid-cols-[1fr_auto] sm:items-center sm:gap-8">
-                  <span>
-                    <span className="flex items-center gap-3 font-display text-xl font-medium text-ink sm:text-2xl">
-                      {it.title}
-                      <ArrowRight aria-hidden className="size-5 -translate-x-2 text-electric-600 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-                    </span>
-                    <span className="mt-1 block text-slate-700">{it.body}</span>
-                  </span>
-                  <span
-                    className={
-                      it.status === "Planned"
-                        ? "w-fit rounded-full border border-dashed border-slate/50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate"
-                        : "w-fit rounded-full bg-success/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-success"
-                    }
-                  >
-                    {it.status}
-                  </span>
-                </Link>
-              </Reveal>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
-  );
-}
-
-/* ---------------- J: Final CTA ---------------- */
 export function FinalCta({ edition }: { edition: Edition }) {
   return (
     <section aria-labelledby="cta-title" className="surface-midnight noise relative isolate overflow-hidden py-32 sm:py-40">
@@ -368,11 +213,11 @@ export function FinalCta({ edition }: { edition: Edition }) {
             Whether you are presenting your first poster or simply curious about research, there is a place for you at INSPIRE.
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <Link href="/conference#registration" className="inline-flex min-h-14 items-center gap-2 rounded-[3px] bg-cyan px-8 font-ui font-semibold text-midnight transition-[background-color,box-shadow] hover:bg-cyan-300 hover:shadow-[0_12px_40px_-10px_rgba(201,216,236,0.7)]">
-              Registration information <ArrowRight aria-hidden className="size-4" />
+            <Link href="/signup" className="inline-flex min-h-14 items-center gap-2 rounded-[3px] bg-cyan px-8 font-ui font-semibold text-midnight transition-[background-color,box-shadow] hover:bg-cyan-300 hover:shadow-[0_12px_40px_-10px_rgba(201,216,236,0.7)]">
+              Register <ArrowRight aria-hidden className="size-4" />
             </Link>
             <Link href="/conference" className="inline-flex min-h-14 items-center rounded-[3px] border border-white/20 bg-white/5 px-8 font-ui font-medium backdrop-blur-sm hover:border-white/40">
-              Conference details
+              Venue & FAQs
             </Link>
           </div>
         </Reveal>

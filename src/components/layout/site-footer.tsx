@@ -9,7 +9,7 @@ import { Logo } from "./logo";
 export function SiteFooter({ edition }: { edition: Edition }) {
   const year = new Date().getFullYear();
   return (
-    <footer className="surface-midnight relative overflow-hidden">
+    <footer className="surface-midnight relative overflow-hidden pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
 
       <div className="container-page relative pt-20 pb-10">
         <div className="grid gap-12 lg:grid-cols-12">
@@ -69,7 +69,7 @@ export function SiteFooter({ edition }: { edition: Edition }) {
         </div>
 
         <div className="mt-8 flex flex-col gap-4 border-t border-white/10 pt-8 text-sm text-paper/70 md:flex-row md:items-center md:justify-between">
-          <p>© {year} INSPIRE National Medical Research Conference.</p>
+          <p>© {year} INSPIRE National Medical Research Conference. <span className="whitespace-nowrap">Built by Nevin Boakye.</span></p>
           <ul className="flex flex-wrap gap-x-6 gap-y-2">
             {FOOTER_LINKS.legal.map((l) => (
               <li key={l.href}>

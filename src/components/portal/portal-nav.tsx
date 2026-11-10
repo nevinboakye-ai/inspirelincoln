@@ -1,38 +1,44 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardCheck, FileText, LayoutDashboard, LogOut, Presentation, Settings, ShieldCheck, UserRound } from "lucide-react";
+import { LayoutDashboard, LogOut, ShieldCheck, Ticket, UploadCloud, UserRound, ClipboardCheck } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 import { cn } from "@/lib/cn";
-import type { UserRole } from "@/lib/types";
+import type { Access } from "@/lib/accounts";
 
-export function PortalNav({ role, name }: { role: UserRole; name: string }) {
+export function PortalNav({ name, typeLabel, presenter, access, reviewer }: { name: string; typeLabel: string; presenter: boolean; access: Access; reviewer: boolean }) {
   const path = usePathname();
   const links = [
-    { href: "/portal", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/portal/presenter", label: "Presenter", icon: Presentation },
-    { href: "/portal/abstracts/new", label: "Submit abstract", icon: FileText },
-    { href: "/portal/profile", label: "Profile & settings", icon: Settings },
-    ...(role === "reviewer" || role === "admin" ? [{ href: "/review", label: "Review abstracts", icon: ClipboardCheck }] : []),
-    ...(role === "editor" || role === "admin" ? [{ href: "/admin", label: "Admin dashboard", icon: ShieldCheck }] : []),
+    { href: "/portal", label: "My conference", icon: Ticket },
+    ...(presenter ? [{ href: "/portal/submission", label: "My submission", icon: UploadCloud }] : []),
+    { href: "/portal/profile", label: "Profile and privacy", icon: UserRound },
+    ...(reviewer && !access.committee ? [{ href: "/review", label: "Abstract reviews", icon: ClipboardCheck }] : []),
+    ...(access.committee ? [{ href: "/admin", label: "Committee dashboard", icon: access.exec ? ShieldCheck : LayoutDashboard }] : []),
   ];
   return (
-    <nav aria-label="My Conference" className="min-w-0 lg:sticky lg:top-28">
-      <div className="mb-6 flex items-center gap-3">
+    <nav aria-label="My account" className="min-w-0 lg:sticky lg:top-28">
+      <div className="mb-5 hidden items-center gap-3 lg:flex">
         <span className="flex size-11 items-center justify-center rounded-full bg-navy text-cyan">
           <UserRound aria-hidden className="size-5" />
         </span>
         <span className="min-w-0">
           <span className="block truncate font-semibold text-ink">{name}</span>
-          <span className="block text-xs capitalize text-slate">{role}</span>
+          <span className="block text-xs text-slate">{typeLabel}</span>
         </span>
       </div>
-      <ul className="flex gap-2 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0">
+      <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0">
         {links.map((l) => {
           const active = l.href === "/portal" ? path === "/portal" : path.startsWith(l.href);
           return (
             <li key={l.href} className="shrink-0">
-              <Link href={l.href} aria-current={active ? "page" : undefined} className={cn("flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors", active ? "bg-navy text-paper" : "text-slate-700 hover:bg-paper-200")}>
+              <Link
+                href={l.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "flex min-h-11 items-center gap-2.5 whitespace-nowrap rounded-[3px] px-3 text-sm font-medium transition-colors",
+                  active ? "bg-navy text-paper" : "border border-navy/10 bg-white text-slate-700 hover:bg-paper-200 lg:border-0 lg:bg-transparent",
+                )}
+              >
                 <l.icon aria-hidden className="size-4" />
                 {l.label}
               </Link>
@@ -41,7 +47,7 @@ export function PortalNav({ role, name }: { role: UserRole; name: string }) {
         })}
         <li className="shrink-0 lg:mt-4 lg:border-t lg:border-navy/10 lg:pt-4">
           <form action={signOut}>
-            <button type="submit" className="flex min-h-11 w-full items-center gap-3 rounded-md px-3 text-sm font-medium text-slate-700 hover:bg-paper-200">
+            <button type="submit" className="flex min-h-11 w-full items-center gap-2.5 whitespace-nowrap rounded-[3px] border border-navy/10 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-paper-200 lg:border-0 lg:bg-transparent">
               <LogOut aria-hidden className="size-4" /> Sign out
             </button>
           </form>

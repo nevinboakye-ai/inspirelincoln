@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/layout/page-hero";
 import { SpeakerDirectory } from "@/components/speakers/speaker-directory";
-import { PlaceholderTag } from "@/components/ui/badge";
+import { SpeakersSoon } from "@/components/speakers/speakers-soon";
 import { getSpeakers } from "@/lib/data/content";
 
 export const revalidate = 60;
@@ -23,7 +23,7 @@ export default async function SpeakersPage() {
             Clinicians. Researchers. <span className="text-cyan">Innovators.</span>
           </>
         }
-        intro="Meet the healthcare and research professionals sharing their work and experience at INSPIRE."
+        intro={speakers.length ? "Meet the healthcare and research professionals sharing their work and experience at INSPIRE." : "This year's speakers will be announced soon."}
         visual={
           <div aria-hidden className="absolute -right-10 bottom-0 hidden h-full w-1/2 lg:block">
             {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -35,14 +35,7 @@ export default async function SpeakersPage() {
       <section className="bg-paper py-16 sm:py-24">
         <div className="container-page">
           {speakers.length === 0 ? (
-            <div className="relative overflow-hidden rounded-xl border border-dashed border-navy/20 bg-white px-6 py-20 text-center">
-              <PlaceholderTag>Placeholder</PlaceholderTag>
-              <h2 className="mt-6 font-display text-3xl font-semibold text-ink">Speaker announcement coming soon</h2>
-              <p className="mx-auto mt-4 max-w-lg text-slate-700">
-                Confirmed speakers will be listed here with their biography, institution and sessions. Check back soon, or explore the
-                programme in the meantime.
-              </p>
-            </div>
+            <SpeakersSoon />
           ) : (
             <SpeakerDirectory speakers={speakers} />
           )}

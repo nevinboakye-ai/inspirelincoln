@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getConferenceBundle, getFaqs, getOpportunities, getResources } from "@/lib/data/content";
+import { getConferenceBundle, getFaqs, getResources } from "@/lib/data/content";
 import { formatEventDate } from "@/lib/time";
 import type { SearchIndex, SearchItem } from "@/lib/search/types";
 
@@ -13,22 +13,19 @@ const PAGES: SearchItem[] = [
   { id: "p-today", kind: "Page", title: "Conference day", href: "/today", keywords: "event day live now next today" },
   { id: "p-speakers", kind: "Page", title: "Speakers", href: "/speakers", keywords: "keynote faculty" },
   { id: "p-workshops", kind: "Page", title: "Workshops", href: "/workshops" },
-  { id: "p-research", kind: "Page", title: "Research & Abstracts", href: "/research", keywords: "abstract poster submission presenter guidance" },
-  { id: "p-showcase", kind: "Page", title: "Research showcase", href: "/research/showcase" },
-  { id: "p-opps", kind: "Page", title: "Opportunities", href: "/opportunities", keywords: "mentorship research projects" },
-  { id: "p-gallery", kind: "Page", title: "Gallery & archive", href: "/gallery", keywords: "photos past conferences" },
   { id: "p-contact", kind: "Page", title: "Contact", href: "/contact", keywords: "email enquiry help" },
-  { id: "p-portal", kind: "Page", title: "My Conference", href: "/portal", keywords: "account login sign in dashboard agenda" },
-  { id: "p-privacy", kind: "Page", title: "Privacy policy", href: "/privacy", keywords: "gdpr data" },
+  { id: "p-map", kind: "Page", title: "Campus map", href: "/map", keywords: "map directions building room find where lms inb" },
+  { id: "p-register", kind: "Page", title: "Register", href: "/signup", keywords: "register sign up ticket account join" },
+  { id: "p-portal", kind: "Page", title: "My account", href: "/portal", keywords: "account login sign in ticket qr agenda slides poster upload" },
+  { id: "p-privacy", kind: "Page", title: "Privacy notice", href: "/privacy", keywords: "gdpr data" },
   { id: "p-access", kind: "Page", title: "Accessibility statement", href: "/accessibility" },
 ];
 
 export async function GET() {
-  const [{ edition, sessions, speakers, workshops }, faqs, resources, opportunities] = await Promise.all([
+  const [{ edition, sessions, speakers, workshops }, faqs, resources] = await Promise.all([
     getConferenceBundle(),
     getFaqs(),
     getResources(),
-    getOpportunities(),
   ]);
 
   const items: SearchItem[] = [
@@ -61,17 +58,9 @@ export async function GET() {
       id: `r-${r.id}`,
       kind: "Resource" as const,
       title: r.title,
-      href: r.url ?? "/research#resources",
+      href: r.url ?? "/programme",
       summary: r.summary,
       keywords: r.category,
-    })),
-    ...opportunities.map((o) => ({
-      id: `o-${o.id}`,
-      kind: "Opportunity" as const,
-      title: o.title,
-      href: `/opportunities/${o.slug}`,
-      summary: o.summary,
-      keywords: o.category,
     })),
     ...faqs.map((f) => ({
       id: `f-${f.id}`,
@@ -101,8 +90,8 @@ export async function GET() {
       id: "posters",
       question: "What do poster presenters need to do?",
       answer: edition.posterRequirements.join(" "),
-      href: "/research#presenters",
-      linkLabel: "Presenter guidance",
+      href: "/portal/submission",
+      linkLabel: "Upload your poster",
     },
     {
       id: "workshops",
