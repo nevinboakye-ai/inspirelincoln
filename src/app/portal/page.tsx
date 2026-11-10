@@ -165,31 +165,36 @@ export default async function PortalHome({
         </Notice>
       )}
 
-      <header className="relative isolate overflow-hidden rounded-2xl bg-midnight px-6 py-8 text-paper sm:px-9 sm:py-10">
-        <span aria-hidden className="hub-orb -left-16 -top-20 size-72 bg-navy-600/70" />
-        <span aria-hidden className="hub-orb -bottom-24 right-[-4rem] size-80 bg-gold/25 [animation-delay:-6s]" />
-        <span aria-hidden className="hub-orb left-1/2 top-1/3 size-52 bg-cyan/15 [animation-delay:-11s]" />
-        <div aria-hidden className="lanyard-grid pointer-events-none absolute inset-0 opacity-25" />
-        <img src="/brand/crest-white.png" alt="" aria-hidden className="pointer-events-none absolute -bottom-12 -right-8 h-56 w-auto opacity-[0.06]" />
-        <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <div className="min-w-0">
-            <p className="eyebrow text-gold">{ACCOUNT_TYPE_LABEL[profile.accountType]} · INSPIRE {edition.year}</p>
-            <h1 className="mt-3 font-display text-4xl leading-[1.05] sm:text-5xl">
-              <MaskRise onMount>Hello{firstName ? `, ${firstName}` : ""}</MaskRise>
-            </h1>
-            <p className="mt-3 max-w-xl text-paper/75">{edition.theme}</p>
-            <p className="mt-5 flex flex-wrap gap-x-5 gap-y-1 text-sm text-paper/75">
-              <span className="flex items-center gap-2">
-                <CalendarDays aria-hidden className="size-4 text-cyan" /> {formatEventDate(edition.date)}
-              </span>
-              <span className="flex items-center gap-2">
-                <MapPin aria-hidden className="size-4 text-cyan" /> {edition.venueName}
-              </span>
-            </p>
+      {lanyard ? (
+        // The lanyard carries the name, role, date, venue and countdown, so there's no banner above it.
+        <h1 className="sr-only">My Hub{firstName ? `, ${firstName}` : ""}</h1>
+      ) : (
+        <header className="relative isolate overflow-hidden rounded-2xl bg-midnight px-6 py-8 text-paper sm:px-9 sm:py-10">
+          <span aria-hidden className="hub-orb -left-16 -top-20 size-72 bg-navy-600/70" />
+          <span aria-hidden className="hub-orb -bottom-24 right-[-4rem] size-80 bg-gold/25 [animation-delay:-6s]" />
+          <span aria-hidden className="hub-orb left-1/2 top-1/3 size-52 bg-cyan/15 [animation-delay:-11s]" />
+          <div aria-hidden className="lanyard-grid pointer-events-none absolute inset-0 opacity-25" />
+          <img src="/brand/crest-white.png" alt="" aria-hidden className="pointer-events-none absolute -bottom-12 -right-8 h-56 w-auto opacity-[0.06]" />
+          <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="min-w-0">
+              <p className="eyebrow text-gold">{ACCOUNT_TYPE_LABEL[profile.accountType]} · INSPIRE {edition.year}</p>
+              <h1 className="mt-3 font-display text-4xl leading-[1.05] sm:text-5xl">
+                <MaskRise onMount>Hello{firstName ? `, ${firstName}` : ""}</MaskRise>
+              </h1>
+              <p className="mt-3 max-w-xl text-paper/75">{edition.theme}</p>
+              <p className="mt-5 flex flex-wrap gap-x-5 gap-y-1 text-sm text-paper/75">
+                <span className="flex items-center gap-2">
+                  <CalendarDays aria-hidden className="size-4 text-cyan" /> {formatEventDate(edition.date)}
+                </span>
+                <span className="flex items-center gap-2">
+                  <MapPin aria-hidden className="size-4 text-cyan" /> {edition.venueName}
+                </span>
+              </p>
+            </div>
+            <Countdown date={edition.date} time={edition.startTime} />
           </div>
-          <Countdown date={edition.date} time={edition.startTime} />
-        </div>
-      </header>
+        </header>
+      )}
 
       <HubStagger className="grid gap-5 sm:gap-6 xl:grid-cols-[minmax(0,1fr)_20.5rem] xl:items-start">
         <div className="min-w-0 space-y-5 sm:space-y-6">
@@ -401,6 +406,7 @@ export default async function PortalHome({
               qr={qr}
               reference={ticket ? registration!.checkin_token.slice(0, 8).toUpperCase() : null}
               checkedIn={Boolean(ticket && registration!.checked_in_at)}
+              countdown={{ date: edition.date, time: edition.startTime }}
               previewNote={!switches.delegate_card ? "Only you can see this card for now. Turn on the Delegate card switch in the Platform dashboard to show it to everyone." : null}
             />
           </aside>

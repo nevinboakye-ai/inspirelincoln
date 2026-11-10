@@ -115,3 +115,35 @@ export function HubItem({ children, className }: { children: React.ReactNode; cl
     </m.div>
   );
 }
+
+/** The countdown printed on the lanyard: small, in the card's own colours. */
+export function CardCountdown({ date, time }: { date: string; time: string | null }) {
+  const target = zonedTimeToUtc(date, time ?? "00:00").getTime();
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setNow(Date.now());
+    const t = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(t);
+  }, []);
+  if (now === null) return <div className="h-12" aria-hidden />;
+  const left = target - now;
+  if (left <= 0) {
+    const today = now < zonedTimeToUtc(date, "23:59").getTime();
+    return <p className="font-display text-lg text-gold-700">{today ? "Happening today" : "Thank you for coming"}</p>;
+  }
+  const d = Math.floor(left / 86_400_000);
+  const h = Math.floor((left % 86_400_000) / 3_600_000);
+  const parts: [number, string][] = time ? [[d, d === 1 ? "day" : "days"], [h, h === 1 ? "hr" : "hrs"]] : [[Math.ceil(left / 86_400_000), Math.ceil(left / 86_400_000) === 1 ? "day" : "days"]];
+  return (
+    <p className="flex items-end gap-3">
+      <span className="sr-only">{parts.map(([v, l]) => `${v} ${l}`).join(", ")} to go</span>
+      {parts.map(([v, l]) => (
+        <span key={l} aria-hidden className="flex items-baseline gap-1">
+          <span className="font-display text-[1.7rem] tabular-nums leading-none text-ink"><Ticker value={v} /></span>
+          <span className="font-ui text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-slate">{l}</span>
+        </span>
+      ))}
+      <span aria-hidden className="pb-0.5 font-ui text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-gold-700">to go</span>
+    </p>
+  );
+}
