@@ -145,10 +145,10 @@ export function IntroGate({ edition }: { edition: Edition }) {
                 className="gate-guest group flex min-h-[4.5rem] flex-col items-start justify-center gap-0.5 rounded-[4px] border border-white/25 bg-white/[0.04] px-5 py-3.5 text-left sm:min-h-24 sm:gap-1 sm:px-6 sm:py-5 backdrop-blur-sm transition-[transform,border-color,background-color] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/[0.08] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan"
               >
                 <span className="flex w-full items-center justify-between font-display text-xl sm:text-2xl text-paper">
-                  Sign in
+                  Log in
                   <LogIn aria-hidden className="size-5 text-cyan transition-transform duration-300 group-hover:translate-x-1" />
                 </span>
-                <span className="text-xs text-paper/70 sm:text-sm">Your ticket, submission or committee dashboard</span>
+                <span className="text-xs text-paper/70 sm:text-sm">Selected delegates, presenters and committee</span>
               </Link>
               {/* Shown instead of "Sign in" when this browser is already signed in. */}
               <Link
@@ -160,7 +160,7 @@ export function IntroGate({ edition }: { edition: Edition }) {
                   Go to My Hub
                   <LayoutDashboard aria-hidden className="size-5 text-cyan transition-transform duration-300 group-hover:translate-x-1" />
                 </span>
-                <span className="text-xs text-paper/70 sm:text-sm">You&apos;re signed in. Your ticket, agenda and dashboard</span>
+                <span className="text-xs text-paper/70 sm:text-sm">You&apos;re logged in. Your ticket, agenda and dashboard</span>
               </Link>
             </div>
             <p className="gate-guest enter-fade mt-4 text-sm sm:mt-6 text-paper/70 [animation-delay:1250ms]">

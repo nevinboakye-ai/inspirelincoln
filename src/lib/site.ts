@@ -37,8 +37,8 @@ export const FOOTER_LINKS = {
     { label: "Workshops", href: "/workshops" },
   ],
   participate: [
+    { label: "Log in", href: "/login" },
     { label: "Register", href: "/signup" },
-    { label: "My account", href: "/portal" },
     { label: "Venue & FAQs", href: "/conference" },
     { label: "About INSPIRE", href: "/about" },
     { label: "Contact", href: "/contact" },

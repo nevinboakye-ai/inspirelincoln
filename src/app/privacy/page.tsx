@@ -34,6 +34,18 @@ const PURPOSES: { what: string; why: string; basis: string; kept: string }[] = [
     kept: "As for your account",
   },
   {
+    what: "The selected delegate list: name, email, university, year and any accepted presentation, taken from the application you made to your society or medical school",
+    why: "So the people the committee selected are approved straight away when they set up their account",
+    basis: "Legitimate interests in running the conference for the people who applied and were selected",
+    kept: "Until 31 March 2027, then deleted",
+  },
+  {
+    what: "Your delegate network card: the bio and LinkedIn link you add, and whether to show your email",
+    why: "So confirmed delegates can find each other before and after the conference",
+    basis: "Legitimate interests for your name, university and year; your choice for everything else. You can hide your card at any time",
+    kept: "As for your account",
+  },
+  {
     what: "Your ticket and check-in time",
     why: "To let you in on the day and know who is in the building in an emergency",
     basis: "Contract, and legitimate interests in safety",
@@ -117,7 +129,7 @@ export default function PrivacyPage() {
             <h2 className="font-display text-2xl text-ink">The short version</h2>
             <ul className="mt-5 grid gap-4 text-[0.95rem] leading-relaxed text-slate-700 sm:grid-cols-2">
               <li className="flex gap-3"><Lock aria-hidden className="mt-1 size-4 shrink-0 text-electric-600" /> We only ask for what we need to run your account and the conference.</li>
-              <li className="flex gap-3"><Eye aria-hidden className="mt-1 size-4 shrink-0 text-electric-600" /> Only the INSPIRE committee can see it, and each member sees only what their role needs.</li>
+              <li className="flex gap-3"><Eye aria-hidden className="mt-1 size-4 shrink-0 text-electric-600" /> Only the INSPIRE committee can see your account, and each member sees only what their role needs. Other confirmed delegates see just your network card, which you control.</li>
               <li className="flex gap-3"><ShieldCheck aria-hidden className="mt-1 size-4 shrink-0 text-electric-600" /> We never sell your data, and we don&apos;t use advertising or tracking cookies.</li>
               <li className="flex gap-3"><Trash2 aria-hidden className="mt-1 size-4 shrink-0 text-electric-600" /> You can download or delete your data yourself, at any time.</li>
             </ul>
@@ -202,7 +214,7 @@ export default function PrivacyPage() {
               <li><strong>You</strong> see everything about yourself.</li>
               <li><strong>Supporting committee members</strong> see slides and posters with the presenter&apos;s name, so they can review them. They can&apos;t see anyone&apos;s email or profile.</li>
               <li><strong>The executive committee</strong>, vice president and president see account details to review accounts, manage the waitlist and run check-in.</li>
-              <li><strong>Other attendees</strong> see nothing about you.</li>
+              <li><strong>Other confirmed delegates</strong> see your name, university, year and account type on the delegate network, plus a bio, LinkedIn link or email only if you add them. You can hide yourself from the network in My Hub. People whose account isn&apos;t confirmed see nothing.</li>
             </ul>
             <p>We won&apos;t share your data with anyone else unless the law requires it, for example if the police make a valid request.</p>
 

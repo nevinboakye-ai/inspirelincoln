@@ -87,7 +87,13 @@ Other commands: `npm run build`, `npm start`, `npm run lint`, `npm run typecheck
    4. `supabase/migrations/20261112000000_site_owner.sql` (site owner above the president)
    5. `supabase/migrations/20261113000000_access_control.sql` (permissions the site owner can
       change from the platform dashboard)
-   6. `supabase/seed.sql` (the 2026 edition, confirmed timetable, rooms, committee, map places, FAQs)
+   6. `supabase/migrations/20261114000000_delegate_network.sql` (the selected delegate list, which
+      approves listed people as soon as they set up their account, and the delegate network)
+   7. `supabase/seed.sql` (the 2026 edition, confirmed timetable, rooms, committee, map places, FAQs)
+
+   The selected delegate list itself is personal data, so it is never committed here. Load it
+   from the private SQL file the committee holds, or add people one at a time from
+   Committee dashboard > Accounts > Selected delegates.
 
    **Database already set up?** Run only the ones you haven't run yet. Existing accounts are
    marked approved by migration 3, so nobody loses access.

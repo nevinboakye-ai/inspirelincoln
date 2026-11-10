@@ -311,7 +311,7 @@ export function ProgrammeExplorer({ sessions, speakers, workshops, rooms, editio
             <p className="rounded-md border border-navy/10 bg-white p-4 text-sm text-slate-700">
               Your agenda is saved in this browser.{" "}
               <Link href="/login?next=/programme?view=agenda" className="font-medium text-electric-600 underline underline-offset-4">
-                Sign in
+                Log in
               </Link>{" "}
               to keep it across devices.
             </p>

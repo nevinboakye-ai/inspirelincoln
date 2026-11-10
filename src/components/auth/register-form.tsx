@@ -99,7 +99,7 @@ export function RegisterForm({ next, disabled }: { next: string; disabled: boole
         <ol className="mt-6 space-y-3 text-sm text-slate-700">
           <li className="flex gap-3"><Check aria-hidden className="mt-0.5 size-4 shrink-0 text-success" /> Verify your email using the link.</li>
           <li className="flex gap-3"><span aria-hidden className="mt-0.5 grid size-4 shrink-0 place-items-center rounded-full border border-navy/30 text-[0.6rem]">2</span> The executive committee reviews your account. We&apos;ll email you when it&apos;s approved, or if you&apos;re placed on the waitlist.</li>
-          <li className="flex gap-3"><span aria-hidden className="mt-0.5 grid size-4 shrink-0 place-items-center rounded-full border border-navy/30 text-[0.6rem]">3</span> Sign in any time to see where things are.</li>
+          <li className="flex gap-3"><span aria-hidden className="mt-0.5 grid size-4 shrink-0 place-items-center rounded-full border border-navy/30 text-[0.6rem]">3</span> Log in any time to see where things are.</li>
         </ol>
         <p className="mt-6 text-sm text-slate">No email after a few minutes? Check your spam or junk folder.</p>
       </div>

@@ -16,7 +16,7 @@ const PAGES: SearchItem[] = [
   { id: "p-contact", kind: "Page", title: "Contact", href: "/contact", keywords: "email enquiry help" },
   { id: "p-map", kind: "Page", title: "Campus map", href: "/map", keywords: "map directions building room find where lms inb" },
   { id: "p-register", kind: "Page", title: "Register", href: "/signup", keywords: "register sign up ticket account join" },
-  { id: "p-portal", kind: "Page", title: "My account", href: "/portal", keywords: "account login sign in ticket qr agenda slides poster upload" },
+  { id: "p-portal", kind: "Page", title: "My Hub", href: "/portal", keywords: "account login log in sign in network delegates ticket qr agenda slides poster upload" },
   { id: "p-privacy", kind: "Page", title: "Privacy notice", href: "/privacy", keywords: "gdpr data" },
   { id: "p-access", kind: "Page", title: "Accessibility statement", href: "/accessibility" },
 ];

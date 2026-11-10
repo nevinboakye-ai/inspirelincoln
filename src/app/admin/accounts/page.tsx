@@ -65,6 +65,11 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
         </ul>
       </nav>
 
+      <p className="text-sm text-slate-700">
+        People the committee has already selected are approved automatically.{" "}
+        <Link href="/admin/accounts/roster" className="font-semibold text-electric-600 underline underline-offset-4">See the selected delegate list</Link>
+      </p>
+
       <form className="flex flex-wrap gap-2" role="search">
         <input type="hidden" name="status" value={status} />
         <label htmlFor="q" className="sr-only">Search</label>
