@@ -16,6 +16,8 @@ const nextConfig: NextConfig = {
   // public pages are statically generated and revalidated, account areas are dynamic.
   cacheComponents: false,
   poweredByHeader: false,
+  // Import only the parts of these libraries each page uses.
+  experimental: { optimizePackageImports: ["motion", "motion/react", "lucide-react"] },
   turbopack: {
     rules: {
       "*.css": {

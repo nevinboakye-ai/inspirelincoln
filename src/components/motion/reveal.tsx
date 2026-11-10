@@ -1,5 +1,5 @@
 "use client";
-import { motion, type HTMLMotionProps } from "motion/react";
+import { m, type HTMLMotionProps } from "motion/react";
 
 /** Fades and lifts content into view once. Disabled by MotionConfig for reduced motion. */
 export function Reveal({
@@ -9,7 +9,7 @@ export function Reveal({
   ...props
 }: HTMLMotionProps<"div"> & { delay?: number; y?: number }) {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "0px 0px -10% 0px" }}
@@ -17,13 +17,13 @@ export function Reveal({
       {...props}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
 export function Stagger({ children, className, gap = 0.08 }: { children: React.ReactNode; className?: string; gap?: number }) {
   return (
-    <motion.div
+    <m.div
       className={className}
       initial="hidden"
       whileInView="show"
@@ -31,13 +31,13 @@ export function Stagger({ children, className, gap = 0.08 }: { children: React.R
       variants={{ hidden: {}, show: { transition: { staggerChildren: gap } } }}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
 export function StaggerItem({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <motion.div
+    <m.div
       className={className}
       variants={{
         hidden: { opacity: 0, y: 24 },
@@ -45,6 +45,6 @@ export function StaggerItem({ children, className }: { children: React.ReactNode
       }}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }

@@ -1,5 +1,5 @@
 "use client";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { X } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 
@@ -54,7 +54,7 @@ export function Drawer({
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-[75]">
-          <motion.div
+          <m.div
             className="absolute inset-0 bg-midnight/60 backdrop-blur-[2px]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -62,7 +62,7 @@ export function Drawer({
             onClick={onClose}
             aria-hidden
           />
-          <motion.div
+          <m.div
             ref={panel}
             role="dialog"
             aria-modal="true"
@@ -82,7 +82,7 @@ export function Drawer({
               <X className="size-5" />
             </button>
             <div className="flex-1 overflow-y-auto overscroll-contain">{children}</div>
-          </motion.div>
+          </m.div>
         </div>
       )}
     </AnimatePresence>

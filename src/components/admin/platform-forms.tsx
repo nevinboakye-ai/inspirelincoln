@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useTransition } from "react";
-import { motion } from "motion/react";
+import { m as motion } from "motion/react";
 import { Check, Crown, Loader2, Minus, RotateCcw, X } from "lucide-react";
 import { resetRules, setOverride, setRule } from "@/app/admin/platform/actions";
 import { ACCOUNT_TYPE_LABEL, CAPABILITIES, CAPABILITY_LABEL, type Capability } from "@/lib/accounts";

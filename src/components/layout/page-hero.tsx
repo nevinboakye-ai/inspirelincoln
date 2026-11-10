@@ -1,6 +1,5 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { FadeUp, LineDraw, MaskRise } from "@/components/motion/effects";
 import { cn } from "@/lib/cn";
 
 /**
@@ -40,21 +39,21 @@ export function PageHero({
         )}
       </div>
       <div className="container-page relative">
-        <LineDraw onMount className="bg-white/15" />
-        <FadeUp delay={0.1}>
-          <p className="eyebrow flex items-center gap-4 pt-4 text-cyan">
-            <span aria-hidden className="font-display text-base normal-case italic tracking-normal text-paper/60">INSPIRE</span>
-            {eyebrow}
-          </p>
-        </FadeUp>
+        <span aria-hidden className="enter-draw block h-px bg-white/15" />
+        <p className="enter-up eyebrow flex items-center gap-4 pt-4 text-cyan [animation-delay:60ms]">
+          <span aria-hidden className="font-display text-base normal-case italic tracking-normal text-paper/60">INSPIRE</span>
+          {eyebrow}
+        </p>
         <h1 className={cn("mt-8 max-w-5xl font-normal", size === "lg" ? "text-display-xl" : "text-display-lg")}>
-          <MaskRise onMount delay={0.15}>{title}</MaskRise>
+          <span className="block overflow-hidden pb-[0.1em]">
+            <span className="enter-rise block [animation-delay:100ms]">{title}</span>
+          </span>
         </h1>
         {(intro || children) && (
-          <FadeUp delay={0.45}>
+          <div className="enter-up [animation-delay:260ms]">
             {intro && <div className="mt-6 max-w-2xl text-lg leading-relaxed text-paper/70 sm:text-xl">{intro}</div>}
             {children}
-          </FadeUp>
+          </div>
         )}
       </div>
     </section>

@@ -1,6 +1,6 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { CheckCircle2, Loader2, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -38,10 +38,10 @@ export function ContactForm({ initialCategory, active }: { initialCategory?: Enq
 
   if (result?.ok) {
     return (
-      <motion.div ref={summaryRef} tabIndex={-1} role="status" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-success/25 bg-success/[0.06] p-8 outline-none">
-        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400, damping: 15, delay: 0.1 }} className="inline-flex">
+      <m.div ref={summaryRef} tabIndex={-1} role="status" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-success/25 bg-success/[0.06] p-8 outline-none">
+        <m.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400, damping: 15, delay: 0.1 }} className="inline-flex">
           <CheckCircle2 aria-hidden className="size-10 text-success" />
-        </motion.span>
+        </m.span>
         <h2 className="mt-4 font-display text-2xl font-semibold text-ink">Thank you. Your message has been received.</h2>
         <p className="mt-2 text-slate-700">
           {result.emailed
@@ -51,7 +51,7 @@ export function ContactForm({ initialCategory, active }: { initialCategory?: Enq
         <button type="button" onClick={() => setResult(null)} className="mt-6 text-sm font-semibold text-electric-600 underline underline-offset-4">
           Send another message
         </button>
-      </motion.div>
+      </m.div>
     );
   }
 

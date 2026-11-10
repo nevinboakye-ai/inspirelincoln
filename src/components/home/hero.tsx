@@ -1,5 +1,5 @@
 "use client";
-import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
+import { m, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,7 +8,6 @@ import { Countdown } from "@/components/visual/countdown";
 import { PulseLine } from "@/components/motion/effects";
 import { CONFERENCE_STATUS_LABEL, type ConferenceStatus } from "@/lib/types";
 
-const ease = [0.16, 1, 0.3, 1] as const;
 
 /** Splits the theme into "headline: rest" so the subtitle can be set in italic. */
 function splitTheme(theme: string) {
@@ -54,56 +53,38 @@ export function Hero({
 
       <div className="container-page relative">
         {/* Dateline, set like the masthead of a journal */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, ease }}
-          className="flex flex-wrap items-center justify-between gap-x-8 gap-y-2 border-y border-white/15 py-3 font-ui text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-paper/75"
+        <div
+          className="enter-fade flex flex-wrap items-center justify-between gap-x-8 gap-y-2 border-y border-white/15 py-3 font-ui text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-paper/75"
         >
           <span className="hidden sm:inline">National Medical Research Conference</span>
           <span>{dateLabel}</span>
           {status && <span className="text-cyan">{CONFERENCE_STATUS_LABEL[status]}</span>}
-        </motion.div>
+        </div>
 
         <div className="grid items-center gap-12 pb-16 pt-12 sm:pt-16 lg:grid-cols-12 lg:gap-8 lg:pb-24">
-          <motion.div style={{ y: textY }} className="lg:col-span-7">
+          <m.div style={{ y: textY }} className="lg:col-span-7">
             <p className="eyebrow text-cyan">INSPIRE {year}</p>
             <h1 id="hero-title" className="mt-6 text-display-xl font-normal">
               <span className="block overflow-hidden pb-[0.08em]">
-                <motion.span className="block" initial={{ y: "105%" }} animate={{ y: 0 }} transition={{ duration: 1.1, delay: 0.1, ease }}>
-                  {lead}
-                </motion.span>
+                <span className="enter-rise block [animation-delay:50ms]">{lead}</span>
               </span>
               {rest && (
                 <span className="block overflow-hidden pb-[0.12em]">
-                  <motion.span
-                    className="block text-[0.58em] font-light italic leading-[1.05] text-cyan"
-                    initial={{ y: "110%" }}
-                    animate={{ y: 0 }}
-                    transition={{ duration: 1.1, delay: 0.25, ease }}
-                  >
+                  <span className="enter-rise block text-[0.58em] font-light italic leading-[1.05] text-cyan [animation-delay:150ms]">
                     {rest}
-                  </motion.span>
+                  </span>
                 </span>
               )}
             </h1>
 
-            <motion.p
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, delay: 0.5, ease }}
-              className="mt-8 max-w-xl text-lg leading-relaxed text-paper/75"
+            <p
+              className="enter-up mt-8 [animation-delay:280ms] max-w-xl text-lg leading-relaxed text-paper/75"
             >
               A day for medical students to present research, learn from clinicians and researchers, and take a first
               step into academic medicine. Hosted at Lincoln Medical School.
-            </motion.p>
+            </p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, delay: 0.62, ease }}
-              className="mt-10 flex flex-wrap gap-3"
-            >
+            <div className="enter-up mt-10 flex flex-wrap gap-3 [animation-delay:340ms]">
               <Link
                 href="/signup"
                 className="shine group inline-flex min-h-14 items-center gap-3 bg-paper px-7 font-ui font-semibold text-navy transition-colors hover:bg-white"
@@ -123,21 +104,18 @@ export function Hero({
               >
                 Campus map
               </Link>
-            </motion.div>
-          </motion.div>
+            </div>
+          </m.div>
 
-          <motion.div style={{ y: crestY }} className="relative mx-auto w-[min(62vw,300px)] lg:col-span-5 lg:w-[min(30vw,360px)]">
+          <m.div style={{ y: crestY }} className="relative mx-auto w-[min(62vw,300px)] lg:col-span-5 lg:w-[min(30vw,360px)]">
             <CrestReveal />
-          </motion.div>
+          </m.div>
         </div>
 
         <PulseLine className="-mb-2 -mt-6 h-16 w-full sm:h-20 lg:-mt-10" />
 
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 0.8, ease }}
-          className="grid gap-8 pb-14 md:grid-cols-12 md:items-end"
+        <div
+          className="enter-up grid gap-8 pb-14 [animation-delay:450ms] md:grid-cols-12 md:items-end"
         >
           <dl className="grid grid-cols-2 gap-6 font-ui text-sm md:col-span-5">
             <div>
@@ -152,7 +130,7 @@ export function Hero({
           <div className="md:col-span-7">
             <Countdown startIso={startIso} endIso={endIso} hasConfirmedTime={hasConfirmedTime} year={year} />
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );
@@ -160,7 +138,6 @@ export function Hero({
 
 /** The crest, revealed one quarter at a time, with a slow outline drawn around it. */
 function CrestReveal() {
-  const reduce = useReducedMotion();
   const quarters = [
     "inset(0 50% 50% 0)",
     "inset(0 0 50% 50%)",
@@ -172,17 +149,9 @@ function CrestReveal() {
       <div aria-hidden className="absolute -inset-[10%] rounded-full border border-white/10" />
       <div aria-hidden className="absolute -inset-[22%] rounded-full border border-dashed border-white/[0.07]" />
       {quarters.map((clip, i) => (
-        <motion.div
-          key={clip}
-          aria-hidden
-          className="absolute inset-0"
-          style={{ clipPath: clip }}
-          initial={reduce ? false : { opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.9, delay: 0.35 + i * 0.14, ease }}
-        >
+        <div key={clip} aria-hidden className="enter-pop absolute inset-0" style={{ clipPath: clip, animationDelay: `${200 + i * 110}ms` }}>
           <Image src="/brand/crest-white.png" alt="" fill priority sizes="360px" className="object-contain" />
-        </motion.div>
+        </div>
       ))}
       <span className="sr-only">The INSPIRE crest: a shield quartered with an open book, the rod of Asclepius twice, and an atom.</span>
     </div>

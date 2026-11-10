@@ -1,5 +1,5 @@
 "use client";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { Plus } from "lucide-react";
 import { useId, useState } from "react";
 import { cn } from "@/lib/cn";
@@ -29,7 +29,7 @@ export function Accordion({ items, dark = false }: { items: { id: string; title:
             </h3>
             <AnimatePresence initial={false}>
               {isOpen && (
-                <motion.div
+                <m.div
                   id={`${base}-${it.id}`}
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
@@ -38,7 +38,7 @@ export function Accordion({ items, dark = false }: { items: { id: string; title:
                   className="overflow-hidden"
                 >
                   <div className={cn("max-w-3xl pb-6 leading-relaxed", dark ? "text-paper/70" : "text-slate-700")}>{it.body}</div>
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
           </li>
