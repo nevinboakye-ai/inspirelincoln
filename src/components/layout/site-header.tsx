@@ -1,6 +1,6 @@
 "use client";
 import { AnimatePresence, m } from "motion/react";
-import { ArrowUpRight, CalendarDays, Home, Map as MapIcon, Menu, Search, Ticket, UserRound, X } from "lucide-react";
+import { ArrowUpRight, CalendarDays, Home, Map as MapIcon, Menu, Search, LayoutDashboard, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -156,7 +156,7 @@ function BottomBar({ pathname }: { pathname: string }) {
     { href: "/", label: "Home", icon: Home },
     { href: "/programme", label: "Programme", icon: CalendarDays },
     { href: "/map", label: "Map", icon: MapIcon },
-    { href: "/portal", label: "My ticket", icon: Ticket },
+    { href: "/portal", label: "My Hub", icon: LayoutDashboard },
   ];
   return (
     <nav

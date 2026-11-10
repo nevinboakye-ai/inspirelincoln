@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SpeakersSoon } from "@/components/speakers/speakers-soon";
-import { ArrowRight, ArrowUpRight, CalendarDays, Coffee, FlaskConical, HelpCircle, MapPin, Mic2, PartyPopper, Presentation, Ticket, Users } from "lucide-react";
+import { ArrowRight, ArrowUpRight, CalendarDays, Coffee, FlaskConical, HelpCircle, MapPin, Mic2, PartyPopper, Presentation, LayoutDashboard, Users } from "lucide-react";
 import type { Edition, Session, Speaker, Workshop } from "@/lib/types";
 import { SESSION_CATEGORY_LABEL } from "@/lib/types";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
@@ -17,7 +17,7 @@ export function AtAGlance({ edition }: { edition: Edition; workshopCount?: numbe
   const items = [
     { href: "/programme", icon: CalendarDays, title: "Programme", body: "Every session, with times and rooms" },
     { href: "/map", icon: MapPin, title: "Campus map", body: "Find your building and room" },
-    { href: "/portal", icon: Ticket, title: "My ticket", body: "Your check-in code and agenda" },
+    { href: "/portal", icon: LayoutDashboard, title: "My Hub", body: "Your ticket, agenda and account" },
     { href: "/conference", icon: HelpCircle, title: "Venue & FAQs", body: "Travel, access and questions" },
   ];
   return (
