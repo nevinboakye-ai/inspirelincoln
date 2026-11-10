@@ -65,6 +65,14 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Someone given a temporary password chooses their own before anything else.
+  if (user?.app_metadata?.must_change_password === true && isProtected) {
+    const to = request.nextUrl.clone();
+    to.pathname = "/auth/update-password";
+    to.search = "?first=1";
+    return NextResponse.redirect(to);
+  }
+
   if (!user && isProtected) {
     const login = request.nextUrl.clone();
     login.pathname = "/login";

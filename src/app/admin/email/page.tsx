@@ -9,6 +9,8 @@ import type { AccountType } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Group email" };
 export const dynamic = "force-dynamic";
+// Sending with login details sets up accounts one by one, so allow time for a large group.
+export const maxDuration = 300;
 
 const when = (d: string) => new Date(d).toLocaleString("en-GB", { timeZone: "Europe/London", dateStyle: "medium", timeStyle: "short" });
 

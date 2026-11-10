@@ -7,6 +7,9 @@ import { sendBatch, sendEmail } from "@/lib/email/resend";
 import { accountDecisionEmail, feedbackEmail } from "@/lib/email/messages";
 import { escapeHtml, renderEmail } from "@/lib/email/template";
 import { SITE_URL } from "@/lib/site";
+import { fillPlaceholders } from "@/lib/email/presets";
+import { loginDetailsAvailable, prepareLogins, type LoginDetails } from "@/lib/accounts/login-details";
+import { serviceClient } from "@/lib/view-as";
 import type { AccountStatus, AccountType, SubmissionKind } from "@/lib/types";
 import type { ActionResult } from "@/app/portal/actions";
 
@@ -89,6 +92,7 @@ const broadcastSchema = z.object({
   types: z.array(z.enum(ACCOUNT_TYPES as [AccountType, ...AccountType[]])).min(1, "Choose at least one group."),
   statuses: z.array(z.enum(["pending", "approved", "waitlisted", "declined"])),
   includeSelected: z.boolean(),
+  includeLogin: z.boolean(),
   intent: z.enum(["preview", "test", "send"]),
 });
 
@@ -147,25 +151,82 @@ function senderLine(profile: { fullName: string | null; accountStatus: string; a
     .join(", ");
 }
 
+const WEBSITE = SITE_URL.replace(/^https?:\/\//, "");
+
+/** Their presentation titles, from their account or the selected list, for the {title} placeholder. */
+async function titlesFor(db: Awaited<ReturnType<typeof requireAccess>>["db"], emails: string[]) {
+  const reader = serviceClient() ?? db;
+  const titles = new Map<string, string>();
+  for (let i = 0; i < emails.length; i += 200) {
+    const chunk = emails.slice(i, i + 200);
+    const [{ data: roster }, { data: accounts }] = await Promise.all([
+      reader.from("delegate_roster").select("email, presentation_title").in("email", chunk),
+      reader.from("profiles").select("email, presentation_title").in("email", chunk),
+    ]);
+    for (const r of [...(roster ?? []), ...(accounts ?? [])]) if (r.presentation_title) titles.set(String(r.email).toLowerCase(), r.presentation_title);
+  }
+  return titles;
+}
+
 /**
- * The email itself. People on the selected list who haven't set up an
- * account get a button to do it, and a footnote saying why they're hearing from us.
+ * The email itself. Placeholders such as {first_name} are filled in for each
+ * person. If the message starts with its own greeting or ends with its own
+ * sign-off, ours are left out. With login details, a box shows the website,
+ * their email and, where needed, a temporary password.
  */
-function buildEmail(o: { subject: string; body: string; purpose: "service" | "marketing" | "direct"; sender: string; name: string | null; joined: boolean }) {
-  const paragraphs = o.body.split(/\n{2,}/).map((para) => escapeHtml(para).replace(/\n/g, "<br>"));
-  return renderEmail({
+function buildEmail(o: {
+  subject: string;
+  body: string;
+  purpose: "service" | "marketing" | "direct";
+  sender: string;
+  name: string | null;
+  joined: boolean;
+  title?: string | null;
+  login?: LoginDetails | "sample" | null;
+}) {
+  const filled = fillPlaceholders(o.body, { first_name: o.name?.split(" ")[0], full_name: o.name, title: o.title, website: WEBSITE });
+  const subject = fillPlaceholders(o.subject, { first_name: o.name?.split(" ")[0], full_name: o.name, title: o.title, website: WEBSITE });
+  const ownGreeting = /^\s*(dear|hello|hi)\b/i.test(filled);
+  const ownSignOff = /(regards|best wishes|sincerely|kind wishes)/i.test(filled.slice(-400));
+  const paragraphs = filled.split(/\n{2,}/).map((para) => escapeHtml(para).replace(/\n/g, "<br>"));
+  const login = o.login;
+  const details =
+    login === "sample"
+      ? [
+          { label: "Website", value: `${WEBSITE}/login` },
+          { label: "Email", value: "their email address" },
+          { label: "Temporary password", value: "made for each person when you send" },
+        ]
+      : login
+        ? [
+            { label: "Website", value: `${WEBSITE}/login` },
+            { label: "Email", value: login.email },
+            ...(login.kind === "temporary"
+              ? [{ label: "Temporary password", value: login.password }]
+              : [{ label: "Password", value: "the one you chose. Forgotten it? Use \"Forgotten your password?\" on the login page." }]),
+          ]
+        : undefined;
+  const rendered = renderEmail({
     siteUrl: SITE_URL,
-    preheader: o.body.slice(0, 120),
+    preheader: filled.replace(/^\s*(dear|hello|hi)[^\n]*\n+/i, "").slice(0, 120),
     eyebrow: o.purpose === "marketing" ? "News from INSPIRE" : o.purpose === "direct" ? "A message from INSPIRE" : "Conference update",
-    heading: o.subject,
-    paragraphs: [`Hello ${escapeHtml(o.name?.split(" ")[0] || "there")},`, ...paragraphs, o.sender ? `${escapeHtml(o.sender)}<br>On behalf of the INSPIRE committee` : "The INSPIRE committee"],
-    cta: o.joined ? undefined : { label: "Set up your account", url: `${SITE_URL}/auth/activate` },
-    footnote: !o.joined
-      ? "You're receiving this because you were selected to attend INSPIRE. Set up your account with this email address to see your Delegate Card."
-      : o.purpose === "marketing"
-        ? `You're receiving this because you asked for news about INSPIRE events. <a href="${SITE_URL}/portal/profile" style="color:#1a3154;">Stop these emails</a>.`
-        : "You're receiving this because you have an INSPIRE account and it's about the conference.",
+    heading: subject,
+    paragraphs: [
+      ...(ownGreeting ? [] : [`Hello ${escapeHtml(o.name?.split(" ")[0] || "there")},`]),
+      ...paragraphs,
+      ...(ownSignOff ? [] : [o.sender ? `${escapeHtml(o.sender)}<br>On behalf of the INSPIRE committee` : "The INSPIRE committee"]),
+    ],
+    details,
+    cta: login ? { label: "Log in to My Hub", url: `${SITE_URL}/login` } : o.joined ? undefined : { label: "Set up your account", url: `${SITE_URL}/auth/activate` },
+    footnote: login && login !== "sample" && login.kind === "temporary"
+      ? "Keep this email private. The temporary password only works until you choose your own, which you'll be asked to do when you first log in."
+      : !o.joined && !login
+        ? "You're receiving this because you were selected to attend INSPIRE. Set up your account with this email address to see your Delegate Card."
+        : o.purpose === "marketing"
+          ? `You're receiving this because you asked for news about INSPIRE events. <a href="${SITE_URL}/portal/profile" style="color:#1a3154;">Stop these emails</a>.`
+          : "You're receiving this because you applied to INSPIRE and it's about the conference.",
   });
+  return { subject, ...rendered };
 }
 
 /** Group email to chosen account types, optionally including selected delegates who haven't joined yet. */
@@ -178,6 +239,7 @@ export async function sendBroadcast(_: BroadcastResult, form: FormData): Promise
     types: form.getAll("types"),
     statuses: form.getAll("statuses"),
     includeSelected: form.get("includeSelected") === "on",
+    includeLogin: form.get("includeLogin") === "on",
     intent: form.get("intent"),
   });
   if (!parsed.success) {
@@ -203,13 +265,24 @@ export async function sendBroadcast(_: BroadcastResult, form: FormData): Promise
     };
 
   const sender = senderLine(profile);
+  const withLogin = v.includeLogin && v.purpose === "service";
+  if (withLogin && !loginDetailsAvailable()) return { ok: false, error: "Login details need SUPABASE_SERVICE_ROLE_KEY in Vercel. Add it and redeploy, or untick \"Include their login details\"." };
   if (v.intent === "test") {
-    const ok = await sendEmail({ to: user.email!, subject: `[Test] ${v.subject}`, ...buildEmail({ ...v, sender, name: profile.fullName, joined: true }) });
-    return ok ? { ok: true, message: `A test has been sent to ${user.email}.` } : { ok: false, error: "Email isn't set up yet. Add the Resend settings in Vercel first." };
+    const e = buildEmail({ ...v, sender, name: profile.fullName, joined: true, title: profile.presentationTitle, login: withLogin ? "sample" : null });
+    const ok = await sendEmail({ to: user.email!, ...e, subject: `[Test] ${e.subject}` });
+    return ok ? { ok: true, message: `A test has been sent to ${user.email}.${withLogin ? " It shows where each person's login details will go." : ""}` } : { ok: false, error: "Email isn't set up yet. Add the Resend settings in Vercel first." };
   }
 
   if (!recipients.length) return { ok: false, error: found.people.length ? "Everyone in those groups has been unticked." : "Nobody matches those groups." };
-  const delivered = await sendBatch(recipients.map((r) => ({ to: r.email, subject: v.subject, ...buildEmail({ ...v, sender, name: r.full_name, joined: r.joined }) })));
+  const titles = await titlesFor(db, recipients.map((r) => r.email));
+  const logins = withLogin ? await prepareLogins(recipients) : null;
+  if (withLogin && !logins) return { ok: false, error: "Could not prepare login details. Check SUPABASE_SERVICE_ROLE_KEY in Vercel." };
+  const delivered = await sendBatch(
+    recipients.map((r) => {
+      const e = buildEmail({ ...v, sender, name: r.full_name, joined: r.joined || Boolean(logins?.get(r.email)), title: titles.get(r.email), login: logins?.get(r.email) ?? null });
+      return { to: r.email, ...e };
+    }),
+  );
   await db.from("email_broadcasts").insert({
     sent_by: user.id,
     sender_name: sender,
@@ -231,13 +304,14 @@ const directSchema = z.object({
   to: z.string().trim().toLowerCase().email("Choose who to email."),
   subject: z.string().trim().min(3, "Write a subject.").max(160),
   body: z.string().trim().min(10, "Write your message.").max(10000),
+  includeLogin: z.boolean(),
   intent: z.enum(["test", "send"]),
 });
 
 /** Email one delegate. Only people with an account or on the selected list can be chosen. */
 export async function sendDirectEmail(_: ActionResult, form: FormData): Promise<ActionResult> {
   const { db, user, profile } = await requireAccess("send_email", "/admin/email");
-  const parsed = directSchema.safeParse(Object.fromEntries(form));
+  const parsed = directSchema.safeParse({ ...Object.fromEntries(form), includeLogin: form.get("includeLogin") === "on" });
   if (!parsed.success) {
     const fe: Record<string, string> = {};
     for (const i of parsed.error.issues) fe[String(i.path[0])] ??= i.message;
@@ -249,13 +323,19 @@ export async function sendDirectEmail(_: ActionResult, form: FormData): Promise<
   const person = ((data ?? []) as { email: string; full_name: string | null; joined: boolean }[]).find((p) => p.email === v.to);
   if (!person) return { ok: false, fieldErrors: { to: "Choose someone from the list. You can only email delegates and people on the selected list." } };
   const sender = senderLine(profile);
-  const content = buildEmail({ subject: v.subject, body: v.body, purpose: "direct", sender, name: person.full_name, joined: person.joined });
+  if (v.includeLogin && !loginDetailsAvailable()) return { ok: false, error: "Login details need SUPABASE_SERVICE_ROLE_KEY in Vercel. Add it and redeploy, or untick \"Include their login details\"." };
+  const title = (await titlesFor(db, [person.email])).get(person.email);
 
   if (v.intent === "test") {
-    const ok = await sendEmail({ to: user.email!, subject: `[Test] ${v.subject}`, ...content });
+    const e = buildEmail({ subject: v.subject, body: v.body, purpose: "direct", sender, name: person.full_name, joined: person.joined, title, login: v.includeLogin ? "sample" : null });
+    const ok = await sendEmail({ to: user.email!, ...e, subject: `[Test] ${e.subject}` });
     return ok ? { ok: true, message: `A test has been sent to ${user.email}.` } : { ok: false, error: "Email isn't set up yet. Add the Resend settings in Vercel first." };
   }
-  const ok = await sendEmail({ to: person.email, subject: v.subject, replyTo: user.email ?? undefined, ...content });
+  const logins = v.includeLogin ? await prepareLogins([{ email: person.email, joined: person.joined, account_type: (person as { account_type?: AccountType }).account_type }]) : null;
+  if (v.includeLogin && !logins) return { ok: false, error: "Could not prepare login details. Check SUPABASE_SERVICE_ROLE_KEY in Vercel." };
+  const login = logins?.get(person.email) ?? null;
+  const content = buildEmail({ subject: v.subject, body: v.body, purpose: "direct", sender, name: person.full_name, joined: person.joined || Boolean(login), title, login });
+  const ok = await sendEmail({ to: person.email, replyTo: user.email ?? undefined, ...content });
   await db.from("email_broadcasts").insert({
     sent_by: user.id,
     sender_name: sender,
