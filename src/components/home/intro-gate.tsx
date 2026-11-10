@@ -43,6 +43,14 @@ const MOTES: [number, number, number, number][] = [
   [55, 3, 22, 13], [63, 2, 20, 4], [71, 4, 26, 17], [79, 2, 19, 8], [87, 3, 23, 12], [94, 2, 21, 3],
 ];
 
+/** White versions of the partner logos, for the dark intro screen. */
+const PARTNERS = [
+  { name: "University of Lincoln", src: "/partners/lincoln.png", w: 182, className: "h-9 w-auto sm:h-10", text: true },
+  { name: "University of Nottingham", src: "/partners/nottingham.png", w: 529, className: "h-6 w-auto sm:h-7", text: false },
+  { name: "University of East Anglia", src: "/partners/uea.png", w: 268, className: "h-7 w-auto sm:h-8", text: false },
+  { name: "University of Leicester", src: "/partners/leicester.png", w: 600, className: "h-6 w-auto sm:h-7", text: false },
+];
+
 /** The welcome screen: sign in, or carry on to the website. */
 export function IntroGate({ edition }: { edition: Edition }) {
   const i = edition.theme.indexOf(":");
@@ -57,6 +65,8 @@ export function IntroGate({ edition }: { edition: Edition }) {
           {/* Atmosphere */}
           <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
             <div className="animate-drift absolute -inset-[15%] bg-[radial-gradient(ellipse_50%_45%_at_50%_38%,rgba(58,95,148,0.5),transparent_70%)]" />
+            {/* The Brayford Pool campus, drawn faintly from our own map data */}
+            <div className="gate-map absolute inset-0 bg-[url('/map/campus-outline.svg')] bg-cover bg-center [mask-image:radial-gradient(ellipse_70%_65%_at_50%_45%,black_20%,transparent_75%)]" />
             <div className="quarter-lattice absolute inset-0 opacity-50 [mask-image:radial-gradient(ellipse_at_50%_40%,black,transparent_70%)]" />
             {/* Drifting points of light, like data rising off the page */}
             {MOTES.map(([left, size, dur, delay], n) => (
@@ -68,17 +78,14 @@ export function IntroGate({ edition }: { edition: Edition }) {
             ))}
           </div>
 
-          <div className="container-page flex flex-1 flex-col items-center justify-center py-6 text-center sm:py-14">
+          <div className="container-page flex flex-1 flex-col items-center justify-center py-6 text-center sm:py-10">
             {/* The crest, assembled one quarter at a time inside turning rings */}
             <div className="relative mx-auto grid aspect-square w-[min(26vw,104px)] place-items-center sm:w-[160px] gate-crest">
               <div aria-hidden className="gate-ring absolute -inset-[18%] rounded-full border border-white/10" />
               <div aria-hidden className="gate-ring-slow absolute -inset-[40%] rounded-full border border-dashed border-white/[0.09]" />
-              <div aria-hidden className="gate-glow absolute inset-0 rounded-full bg-cyan/10 blur-2xl" />
-              {/* Pulse waves, in time with the heartbeat below */}
-              {[0, 1, 2].map((n) => (
-                <span key={n} aria-hidden className="gate-ripple absolute inset-0 rounded-full border border-cyan/30" style={{ animationDelay: `${2.6 + n * 1.6}s` }} />
-              ))}
-              <div className="relative aspect-[338/397] w-[82%]">
+              {/* A soft, steady glow behind the crest */}
+              <div aria-hidden className="gate-glow absolute inset-[-6%] rounded-full bg-cyan/15 blur-2xl" />
+              <div className="gate-crest-img relative aspect-[338/397] w-[82%]">
                 {quarters.map((clip, n) => (
                   <div key={clip} aria-hidden className="enter-pop absolute inset-0" style={{ clipPath: clip, animationDelay: `${120 + n * 120}ms` }}>
                     <Image src="/brand/crest-white.png" alt="" fill priority sizes="170px" className="object-contain" />
@@ -170,6 +177,18 @@ export function IntroGate({ edition }: { edition: Edition }) {
               </Link>
             </p>
           </div>
+
+          <section aria-labelledby="gate-partners" className="gate-partners enter-fade container-page pb-4 text-center [animation-delay:1350ms]">
+            <h3 id="gate-partners" className="font-ui text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-paper/60">Partner universities</h3>
+            <ul className="mt-3 flex flex-wrap items-center justify-center gap-x-7 gap-y-3 sm:gap-x-12">
+              {PARTNERS.map((u) => (
+                <li key={u.name} className="flex items-center gap-2.5 opacity-80 transition-opacity duration-300 hover:opacity-100">
+                  <img src={u.src} alt={u.text ? "" : u.name} width={u.w} height={160} className={u.className} loading="eager" decoding="async" />
+                  {u.text && <span className="text-left font-display text-[0.8rem] leading-tight text-paper">University<br />of Lincoln</span>}
+                </li>
+              ))}
+            </ul>
+          </section>
 
           <p className="enter-fade pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-center text-xs text-paper/60 [@media(hover:none)]:hidden [animation-delay:1400ms]">
             Press Esc to go straight to the website

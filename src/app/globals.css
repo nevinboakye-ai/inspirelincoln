@@ -372,18 +372,19 @@ html.gate-open { overflow: hidden; }
 html.gate-member .gate-guest, html:not(.gate-member) .gate-member-only { display: none; }
 
 @keyframes gate-spin { to { transform: rotate(360deg); } }
-@keyframes gate-glow { 0%, 100% { opacity: 0.5; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.05); } }
 @keyframes gate-beat { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes gate-out { to { opacity: 0; transform: scale(1.04); filter: blur(6px); } }
 @keyframes gate-backdrop-out { to { opacity: 0; } }
 
 .gate-ring { animation: enter-pop 1s var(--ease-out-expo) 0.1s backwards, gate-spin 60s linear infinite; }
 .gate-ring-slow { animation: enter-fade 1.2s ease 0.3s backwards, gate-spin 120s linear infinite reverse; }
-.gate-glow { animation: gate-glow 1.6s ease-in-out 2.6s infinite; }
+.gate-glow { animation: enter-fade 1.6s ease 0.6s backwards; }
+.gate-crest-img { filter: drop-shadow(0 0 10px rgb(201 216 236 / 0.35)) drop-shadow(0 0 28px rgb(201 216 236 / 0.18)); }
+.gate-map { opacity: 0.4; animation: enter-fade 2.4s ease 0.4s backwards, gate-pan 80s ease-in-out infinite alternate; }
+@keyframes gate-pan { from { transform: scale(1.04) translate3d(-1%, 0, 0); } to { transform: scale(1.1) translate3d(1.5%, -1.5%, 0); } }
 
-/* Continuous: a pulse runs along the heartbeat, waves ripple from the crest, light drifts upward. */
+/* Continuous: a pulse runs along the heartbeat and light drifts upward. */
 @keyframes gate-trace { from { stroke-dashoffset: 1.12; } to { stroke-dashoffset: -0.12; } }
-@keyframes gate-ripple { 0% { transform: scale(0.75); opacity: 0.55; } 100% { transform: scale(2.6); opacity: 0; } }
 @keyframes gate-mote {
   0% { transform: translateY(0); opacity: 0; }
   10% { opacity: 0.55; }
@@ -396,10 +397,13 @@ html.gate-member .gate-guest, html:not(.gate-member) .gate-member-only { display
   filter: drop-shadow(0 0 5px rgb(201 216 236 / 0.9));
   animation: gate-trace 3.2s cubic-bezier(0.45, 0, 0.55, 1) 2.6s infinite;
 }
-.gate-ripple { opacity: 0; animation: gate-ripple 4.8s cubic-bezier(0.2, 0.6, 0.3, 1) infinite; }
 .gate-mote { opacity: 0; filter: blur(0.3px); box-shadow: 0 0 8px rgb(201 216 236 / 0.8); animation: gate-mote 20s linear infinite; will-change: transform; }
 
 /* Keep the gate on one screen, however short it is. */
+@media (min-width: 640px) and (max-height: 1000px) {
+  .gate-crest { width: 128px; }
+  .gate-eyebrow { margin-top: 2.5rem; }
+}
 @media (min-width: 640px) and (max-height: 860px) {
   .gate-crest { width: 116px; }
   .gate-eyebrow { margin-top: 2.25rem; }
@@ -408,6 +412,7 @@ html.gate-member .gate-guest, html:not(.gate-member) .gate-member-only { display
   .gate-crest { width: 76px; }
   .gate-eyebrow { margin-top: 1.25rem; }
   .gate-beat-svg { display: none; }
+  .gate-partners img { height: 1.5rem; }
 }
 .gate-beat { stroke-dasharray: 1; stroke-dashoffset: 1; animation: gate-beat 1.8s ease-in-out 0.9s forwards; }
 
@@ -416,8 +421,8 @@ dialog.gate.is-leaving::backdrop { animation: gate-backdrop-out 0.6s ease forwar
 dialog.gate.is-leaving { background: transparent; }
 
 @media (prefers-reduced-motion: reduce) {
-  .gate-ring, .gate-ring-slow, .gate-glow { animation: none !important; }
-  .gate-tracer, .gate-ripple, .gate-mote { display: none; }
+  .gate-ring, .gate-ring-slow, .gate-glow, .gate-map { animation: none !important; }
+  .gate-tracer, .gate-mote { display: none; }
   .gate-beat { animation: none !important; stroke-dashoffset: 0; }
 }
 

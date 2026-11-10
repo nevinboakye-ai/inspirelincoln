@@ -9,7 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "campus-map": "node scripts/build-campus-map.mjs"
+    "campus-map": "node scripts/build-campus-map.mjs && node scripts/build-campus-outline.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.5",

@@ -3,6 +3,7 @@ import { m, useMotionTemplate, useMotionValue, useReducedMotion, useSpring, useT
 import { RotateCw } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
+import { CardCountdown } from "./hub-motion";
 
 export type LanyardTone = "delegate" | "poster" | "oral" | "committee";
 
@@ -26,6 +27,8 @@ export interface LanyardProps {
   qr: string | null;
   reference: string | null;
   checkedIn: boolean;
+  /** The conference start, for the countdown printed on the card. */
+  countdown?: { date: string; time: string | null };
   /** Shown to the site owner while the card is still switched off for everyone else. */
   previewNote?: string | null;
 }
@@ -157,7 +160,7 @@ function Face({ hidden, back, children, className }: { hidden: boolean; back?: b
   );
 }
 
-function Front({ year, theme, name, detail, role, tone, dateLabel, venue, long, hidden, sheen }: LanyardProps & { long: boolean; hidden: boolean; sheen: ReturnType<typeof useMotionTemplate> | null }) {
+function Front({ year, theme, name, detail, role, tone, dateLabel, venue, countdown, long, hidden, sheen }: LanyardProps & { long: boolean; hidden: boolean; sheen: ReturnType<typeof useMotionTemplate> | null }) {
   return (
     <Face hidden={hidden} className="bg-ivory text-ink ring-1 ring-black/5">
       <div className="relative bg-midnight px-6 pb-5 pt-10 text-paper">
@@ -178,6 +181,11 @@ function Front({ year, theme, name, detail, role, tone, dateLabel, venue, long, 
         <p className={cn("mt-4 font-display leading-[1.05] text-ink", long ? "text-[1.6rem]" : "text-[2.05rem]")}>{name}</p>
         {detail && <p className="mt-2 text-sm leading-snug text-slate-700">{detail}</p>}
       </div>
+      {countdown && (
+        <div className="absolute inset-x-0 bottom-[6.75rem] px-6">
+          <CardCountdown date={countdown.date} time={countdown.time} />
+        </div>
+      )}
       <div className={cn("absolute inset-x-0 bottom-14 flex h-12 items-center justify-center font-ui text-sm font-bold uppercase tracking-[0.28em]", BAND[tone])}>{role}</div>
       <div className="absolute inset-x-0 bottom-0 flex h-14 items-center justify-between gap-3 px-6 font-ui text-[0.68rem] text-slate-700">
         <span className="font-semibold text-ink">{dateLabel}</span>
