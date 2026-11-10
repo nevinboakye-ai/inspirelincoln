@@ -18,7 +18,7 @@ export default async function NewAbstractPage() {
       <h1 className="mt-3 font-display text-3xl font-semibold text-ink">Submit an abstract</h1>
       {!cfg.submissionsOpen ? (
         <div className="mt-6 space-y-4">
-          <Notice>Abstract submissions are not open at the moment. When the call opens, the form will appear here and on the <Link href="/research" className="underline">Research page</Link>.</Notice>
+          <Notice>Abstract submissions are not open at the moment. When the call opens, the form will appear here and on the <Link href="/programme" className="underline">Research page</Link>.</Notice>
         </div>
       ) : (
         <>

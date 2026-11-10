@@ -189,4 +189,174 @@ select pg_temp.expect((select count(*) from public.abstracts) = 0, 'editors cann
 select pg_temp.expect((select count(*) from public.contact_enquiries) = 0, 'editors cannot read enquiries');
 reset role;
 
+-- 10. Account types, review and committee access
+select set_config('request.jwt.claim.sub', '', false);
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('00000000-0000-0000-0000-0000000000f1', 'pres@example.test', '{"full_name":"Pres","account_type":"president","privacy_ack":true,"policy_version":"test"}'),
+  ('00000000-0000-0000-0000-0000000000f2', 'exec@example.test', '{"full_name":"Exec","account_type":"executive_committee","committee_position":"Events"}'),
+  ('00000000-0000-0000-0000-0000000000f3', 'sup@example.test', '{"full_name":"Sup","account_type":"supporting_committee"}'),
+  ('00000000-0000-0000-0000-0000000000f4', 'poster@example.test', '{"full_name":"Poster","account_type":"poster_presenter"}'),
+  ('00000000-0000-0000-0000-0000000000f5', 'oral@example.test', '{"full_name":"Oral","account_type":"oral_presenter"}'),
+  ('00000000-0000-0000-0000-0000000000f6', 'wait@example.test', '{"full_name":"Wait","account_type":"delegate"}'),
+  ('00000000-0000-0000-0000-0000000000f7', 'sneaky@example.test', '{"full_name":"Sneaky","account_type":"not_a_type"}');
+select pg_temp.expect((select account_status from public.profiles where id = '00000000-0000-0000-0000-0000000000f1') = 'pending', 'new accounts start pending, even a president');
+select pg_temp.expect((select account_type from public.profiles where id = '00000000-0000-0000-0000-0000000000f7') = 'delegate', 'unknown account types fall back to delegate');
+select pg_temp.expect((select count(*) from public.consent_records where user_id = '00000000-0000-0000-0000-0000000000f1' and purpose = 'privacy_notice') = 1, 'privacy acknowledgement recorded at sign-up');
+
+-- A pending president has no committee powers.
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f1');
+select pg_temp.expect(not public.is_committee(), 'pending president is not committee');
+select pg_temp.expect((select count(*) from public.profiles) = 1, 'pending president sees only own profile');
+do $$ begin
+  update public.profiles set account_status = 'approved' where id = auth.uid();
+  raise exception 'FAILED: self-approved';
+exception when raise_exception then
+  if sqlerrm like 'FAILED%' then raise; end if;
+  raise notice 'ok - cannot approve own account';
+end $$;
+do $$ begin
+  perform public.review_account('00000000-0000-0000-0000-0000000000f2', 'approved');
+  raise exception 'FAILED: pending account reviewed others';
+exception when raise_exception then
+  if sqlerrm like 'FAILED%' then raise; end if;
+  raise notice 'ok - pending account cannot review others';
+end $$;
+reset role;
+
+-- The site admin approves the president; the president approves the executive member.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select public.review_account('00000000-0000-0000-0000-0000000000f1', 'approved');
+reset role;
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f1');
+select pg_temp.expect(public.is_leadership(), 'approved president has leadership access');
+select public.review_account('00000000-0000-0000-0000-0000000000f2', 'approved');
+reset role;
+
+-- Executive members review accounts but cannot approve other executives.
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f2');
+select pg_temp.expect(public.is_exec() and not public.is_leadership(), 'approved exec has exec but not leadership access');
+select pg_temp.expect((select count(*) from public.profiles) >= 7, 'exec can read profiles to review them');
+select public.review_account('00000000-0000-0000-0000-0000000000f3', 'approved');
+select public.review_account('00000000-0000-0000-0000-0000000000f4', 'approved');
+select public.review_account('00000000-0000-0000-0000-0000000000f5', 'approved');
+select public.review_account('00000000-0000-0000-0000-0000000000f6', 'waitlisted');
+do $$ begin
+  perform public.review_account('00000000-0000-0000-0000-0000000000f6', 'approved', 'executive_committee');
+  raise exception 'FAILED: exec appointed an exec';
+exception when raise_exception then
+  if sqlerrm like 'FAILED%' then raise; end if;
+  raise notice 'ok - exec cannot appoint executive members';
+end $$;
+do $$ begin
+  update public.profiles set role = 'admin' where id = '00000000-0000-0000-0000-0000000000f3';
+  raise exception 'FAILED: exec changed site role';
+exception when raise_exception then
+  if sqlerrm like 'FAILED%' then raise; end if;
+  raise notice 'ok - only leadership can change site roles';
+end $$;
+reset role;
+select pg_temp.expect((select status from public.registrations where user_id = '00000000-0000-0000-0000-0000000000f6') = 'waitlisted', 'waitlisting also waitlists the registration');
+select pg_temp.expect((select status from public.registrations where user_id = '00000000-0000-0000-0000-0000000000f4') = 'confirmed', 'approval confirms the registration');
+
+-- Waitlist position is private.
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f6');
+select pg_temp.expect(public.my_waitlist_position() = 1, 'waitlisted person sees own place in the queue');
+select pg_temp.expect((select count(*) from public.profiles) = 1, 'waitlisted person sees only own profile');
+reset role;
+
+-- 11. Submissions and feedback
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f4');
+insert into public.presentation_submissions (edition_id, user_id, kind, title, file_path, file_name, file_type, file_size, status)
+  values ((select id from public.editions where is_current), auth.uid(), 'poster', 'My poster', '00000000-0000-0000-0000-0000000000f4/poster/a.pdf', 'a.pdf', 'application/pdf', 1000, 'approved');
+select pg_temp.expect((select status from public.presentation_submissions where user_id = auth.uid()) = 'submitted', 'presenters cannot set their own status');
+do $$ begin
+  insert into public.presentation_submissions (edition_id, user_id, kind, title, file_path, file_name, file_type, file_size)
+    values ((select id from public.editions where is_current), auth.uid(), 'slides', 'Wrong kind', '00000000-0000-0000-0000-0000000000f4/slides/a.pdf', 'a.pdf', 'application/pdf', 1000);
+  raise exception 'FAILED: poster presenter submitted slides';
+exception when insufficient_privilege then raise notice 'ok - poster presenter cannot submit slides'; end $$;
+do $$ begin
+  insert into public.presentation_submissions (edition_id, user_id, kind, title, file_path, file_name, file_type, file_size)
+    values ((select id from public.editions where is_current), auth.uid(), 'poster', 'Other folder', '00000000-0000-0000-0000-0000000000f5/poster/a.pdf', 'a.pdf', 'application/pdf', 1000);
+  raise exception 'FAILED: file path outside own folder accepted';
+exception when raise_exception then
+  if sqlerrm like 'FAILED%' then raise; end if;
+  raise notice 'ok - submissions must point at your own folder';
+end $$;
+do $$ begin
+  insert into public.submission_feedback (submission_id, decision, body) values ((select id from public.presentation_submissions limit 1), 'approved', 'self');
+  raise exception 'FAILED: presenter reviewed own work';
+exception when insufficient_privilege then raise notice 'ok - presenters cannot give feedback'; end $$;
+reset role;
+
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f5');
+select pg_temp.expect((select count(*) from public.presentation_submissions) = 0, 'presenters cannot see others'' submissions');
+reset role;
+
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f6');
+do $$ begin
+  insert into public.presentation_submissions (edition_id, user_id, kind, title, file_path, file_name, file_type, file_size)
+    values ((select id from public.editions where is_current), auth.uid(), 'poster', 'Delegate', '00000000-0000-0000-0000-0000000000f6/poster/a.pdf', 'a.pdf', 'application/pdf', 1000);
+  raise exception 'FAILED: delegate submitted';
+exception when insufficient_privilege then raise notice 'ok - delegates cannot submit'; end $$;
+reset role;
+
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f3');
+select pg_temp.expect((select count(*) from public.presentation_submissions) = 1, 'supporting committee sees submissions');
+select pg_temp.expect((select count(*) from public.profiles) = 1, 'supporting committee cannot read other profiles');
+select pg_temp.expect((select presenter_name from public.presentation_submissions limit 1) = 'Poster', 'submission carries the presenter name');
+insert into public.submission_feedback (submission_id, decision, body) values ((select id from public.presentation_submissions limit 1), 'changes_requested', 'Shorter methods please');
+select pg_temp.expect((select author_name from public.submission_feedback limit 1) = 'Sup', 'feedback is stamped with the reviewer');
+select pg_temp.expect((select status from public.presentation_submissions limit 1) = 'changes_requested', 'a decision updates the submission');
+select pg_temp.expect(public.is_editor(), 'supporting committee can edit content');
+select pg_temp.expect(not public.is_admin(), 'supporting committee has no personal data access');
+reset role;
+
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f4');
+select pg_temp.expect((select count(*) from public.submission_feedback) = 1, 'presenter reads feedback on own work');
+reset role;
+
+-- 12. Consents and special category data
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f6');
+do $$ begin
+  update public.profiles set accessibility_needs = 'Wheelchair access' where id = auth.uid();
+  raise exception 'FAILED: needs saved without consent';
+exception when raise_exception then
+  if sqlerrm like 'FAILED%' then raise; end if;
+  raise notice 'ok - access needs need explicit consent';
+end $$;
+insert into public.consent_records (user_id, purpose, granted, policy_version) values (auth.uid(), 'special_category', true, 'test');
+update public.profiles set accessibility_needs = 'Wheelchair access' where id = auth.uid();
+insert into public.consent_records (user_id, purpose, granted, policy_version) values (auth.uid(), 'special_category', false, 'test');
+select pg_temp.expect((select accessibility_needs from public.profiles where id = auth.uid()) is null, 'withdrawing consent deletes access needs');
+do $$ begin
+  update public.consent_records set granted = true where user_id = auth.uid();
+  if found then raise exception 'FAILED: consent history rewritten'; end if;
+  raise notice 'ok - consent history cannot be changed';
+end $$;
+do $$ begin
+  insert into public.consent_records (user_id, purpose, granted, policy_version, source) values (auth.uid(), 'marketing_email', true, 'test', 'signup');
+  raise exception 'FAILED: forged a sign-up consent';
+exception when insufficient_privilege then raise notice 'ok - cannot forge sign-up consents'; end $$;
+reset role;
+
+-- 13. Group email is for leadership only
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f2');
+select pg_temp.expect((select count(*) from public.email_broadcasts) = 0, 'exec cannot read group email history');
+do $$ begin
+  insert into public.email_broadcasts (sent_by, subject, body, purpose, audience_types, audience_statuses) values (auth.uid(), 'Hello', 'A message body', 'service', '{delegate}', '{approved}');
+  raise exception 'FAILED: exec logged a broadcast';
+exception when insufficient_privilege then raise notice 'ok - exec cannot send group email'; end $$;
+reset role;
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f1');
+insert into public.email_broadcasts (sent_by, subject, body, purpose, audience_types, audience_statuses) values (auth.uid(), 'Hello', 'A message body', 'service', '{delegate}', '{approved}');
+select pg_temp.expect((select count(*) from public.email_broadcasts) = 1, 'president can send and see group email');
+reset role;
+
+-- 14. Self-service deletion
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f7');
+select public.delete_my_account();
+reset role;
+select pg_temp.expect((select count(*) from auth.users where id = '00000000-0000-0000-0000-0000000000f7') = 0, 'people can delete their own account');
+select pg_temp.expect((select count(*) from public.profiles where id = '00000000-0000-0000-0000-0000000000f7') = 0, 'deleting an account removes the profile');
+
 select 'ALL RLS TESTS PASSED' as result;

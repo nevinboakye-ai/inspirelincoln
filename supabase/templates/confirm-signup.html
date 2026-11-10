@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>Welcome to INSPIRE</title>
+</head>
+<body style="margin:0;padding:0;background:#f6f3ec;-webkit-text-size-adjust:100%;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#f6f3ec;">One tap to verify your email and finish registering for INSPIRE.&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f3ec;">
+  <tr><td align="center" style="padding:24px 12px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;">
+      <tr><td style="background:#0c182c;padding:32px 32px 28px;border-radius:3px 3px 0 0;">
+        <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+          <td style="vertical-align:middle;padding-right:14px;"><img src="{{ .SiteURL }}/brand/crest-white.png" width="40" height="47" alt="INSPIRE crest" style="display:block;border:0;"></td>
+          <td style="vertical-align:middle;">
+            <p style="margin:0;font-family:Georgia, 'Times New Roman', Times, serif;font-size:24px;line-height:1;color:#f6f3ec;">Inspire</p>
+            <p style="margin:6px 0 0;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#c9d8ec;">Medical Research Conference</p>
+          </td>
+        </tr></table>
+      </td></tr>
+      <tr><td style="background:#0c182c;padding:0 32px;"><div style="height:1px;background:#2a3d5c;line-height:1px;font-size:1px;">&nbsp;</div></td></tr>
+      <tr><td style="background:#ffffff;padding:36px 32px 12px;border-left:1px solid #ddd6c6;border-right:1px solid #ddd6c6;">
+        <p style="margin:0 0 12px;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:12px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:#555f6e;">Verify your email</p>
+        <h1 style="margin:0 0 20px;font-family:Georgia, 'Times New Roman', Times, serif;font-size:30px;line-height:1.2;font-weight:normal;color:#0f1b2e;">Welcome to INSPIRE</h1>
+        <p style="margin:0 0 16px;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:16px;line-height:1.6;color:#0f1b2e;">Thank you for registering for INSPIRE. Please confirm this is your email address so we can set up your account.</p>
+<p style="margin:0 0 16px;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:16px;line-height:1.6;color:#0f1b2e;">Once you've confirmed it, the executive committee will review your account. We'll email you as soon as it's approved, or if you're placed on the waitlist.</p>
+        
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px;">
+        <tr><td style="background:#1a3154;border-radius:3px;">
+          <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/portal?welcome=1" style="display:inline-block;padding:15px 28px;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:16px;font-weight:600;color:#f6f3ec;text-decoration:none;border-radius:3px;">Confirm my email</a>
+        </td></tr>
+      </table>
+      <p style="margin:0 0 24px;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;color:#555f6e;">If the button doesn't work, copy this link into your browser:<br><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/portal?welcome=1" style="color:#1a3154;word-break:break-all;">{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/portal?welcome=1</a></p>
+        <p style="margin:0 0 24px;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;color:#555f6e;">If you didn't register for INSPIRE, you can ignore this email and no account will be created.</p>
+      </td></tr>
+      <tr><td style="background:#1a3154;padding:24px 32px;border-radius:0 0 3px 3px;">
+        <p style="margin:0;font-family:Georgia, 'Times New Roman', Times, serif;font-style:italic;font-size:16px;color:#f6f3ec;">Digital Health: From Innovation to Evidence</p>
+        <p style="margin:6px 0 0;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.6;color:#c9d8ec;">Saturday 21 November 2026 · Lincoln Medical School, University of Lincoln</p>
+        <p style="margin:14px 0 0;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:12px;line-height:1.6;color:#c9d8ec;">
+          <a href="{{ .SiteURL }}" style="color:#f6f3ec;">inspirelincoln.uk</a> ·
+          <a href="{{ .SiteURL }}/privacy" style="color:#f6f3ec;">Privacy</a> ·
+          <a href="{{ .SiteURL }}/portal/profile" style="color:#f6f3ec;">Email preferences</a>
+        </p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>

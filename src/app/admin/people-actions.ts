@@ -49,11 +49,12 @@ export async function checkIn(_: CheckInResult, form: FormData): Promise<CheckIn
 }
 
 export async function setRole(_: ActionResult, form: FormData): Promise<ActionResult> {
-  const { db, user } = await requireRole(["admin"], "/admin/users");
+  const { db, user, profile } = await requireRole(["admin"], "/admin/users");
+  if (!profile.access.leadership) return { ok: false, error: "Only the president, vice president or a site admin can change site roles." };
   const id = String(form.get("id"));
   const role = String(form.get("role"));
   if (!ROLES.includes(role)) return { ok: false, error: "Invalid role." };
-  if (id === user.id && role !== "admin") return { ok: false, error: "You can't remove your own admin access. Ask another admin." };
+  if (id === user.id && role !== "admin" && profile.siteRole === "admin") return { ok: false, error: "You can't remove your own admin access. Ask another admin." };
   const { error } = await db.from("profiles").update({ role }).eq("id", id);
   if (error) return { ok: false, error: "Could not change the role." };
   revalidatePath("/admin/users");

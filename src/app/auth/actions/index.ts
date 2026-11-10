@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { SITE_URL } from "@/lib/site";
+import { ACCOUNT_TYPES, COMMITTEE_TYPES, POLICY_VERSION, submissionKindFor } from "@/lib/accounts";
+import type { AccountType } from "@/lib/types";
 
 export type AuthState = { error?: string; message?: string; fieldErrors?: Record<string, string> } | null;
 
@@ -38,29 +40,70 @@ export async function signIn(_: AuthState, form: FormData): Promise<AuthState> {
   redirect(safeNext(form.get("next")));
 }
 
+const signUpSchema = z
+  .object({
+    accountType: z.enum(ACCOUNT_TYPES as [AccountType, ...AccountType[]], { message: "Choose how you're joining INSPIRE." }),
+    fullName: z.string().trim().min(2, "Enter your full name.").max(120),
+    email,
+    password,
+    institution: z.string().trim().min(2, "Enter your university or organisation.").max(160),
+    careerStage: z.string().trim().min(1, "Choose your stage.").max(80),
+    programme: z.string().trim().max(160).optional().default(""),
+    committeePosition: z.string().trim().max(120).optional().default(""),
+    presentationTitle: z.string().trim().max(300).optional().default(""),
+    heardAbout: z.string().trim().max(120).optional().default(""),
+    photoOptOut: z.boolean(),
+    marketingOptIn: z.boolean(),
+    privacyAck: z.literal(true, { message: "Please confirm you have read the privacy notice." }),
+  })
+  .superRefine((v, ctx) => {
+    if (COMMITTEE_TYPES.includes(v.accountType) && v.committeePosition.length < 2)
+      ctx.addIssue({ code: "custom", path: ["committeePosition"], message: "Enter your committee position, for example Head of Events." });
+    if (submissionKindFor(v.accountType) && v.presentationTitle.length < 5)
+      ctx.addIssue({ code: "custom", path: ["presentationTitle"], message: "Enter the title of your presentation." });
+  });
+
 export async function signUp(_: AuthState, form: FormData): Promise<AuthState> {
-  const parsed = z
-    .object({
-      fullName: z.string().trim().min(2, "Enter your name.").max(120),
-      email,
-      password,
-      consent: z.literal("on", { message: "Please confirm you have read the privacy policy." }),
-    })
-    .safeParse(Object.fromEntries(form));
-  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
+  const raw = Object.fromEntries(form);
+  const parsed = signUpSchema.safeParse({
+    ...raw,
+    photoOptOut: form.get("photoOptOut") === "on",
+    marketingOptIn: form.get("marketingOptIn") === "on",
+    privacyAck: form.get("privacyAck") === "on",
+  });
+  if (!parsed.success) return { error: "Please check the highlighted answers.", fieldErrors: fieldErrors(parsed.error) };
+  const v = parsed.data;
   const db = await createClient();
   if (!db) return { error: "Accounts are not available yet." };
   const { data, error } = await db.auth.signUp({
-    email: parsed.data.email,
-    password: parsed.data.password,
+    email: v.email,
+    password: v.password,
     options: {
-      data: { full_name: parsed.data.fullName },
+      // Only everyday details go in sign-up metadata. Access and dietary needs are added later, with explicit consent.
+      data: {
+        full_name: v.fullName,
+        account_type: v.accountType,
+        institution: v.institution,
+        career_stage: v.careerStage,
+        programme: v.programme,
+        committee_position: COMMITTEE_TYPES.includes(v.accountType) ? v.committeePosition : "",
+        presentation_title: submissionKindFor(v.accountType) ? v.presentationTitle : "",
+        heard_about: v.heardAbout,
+        photo_opt_out: v.photoOptOut,
+        marketing_opt_in: v.marketingOptIn,
+        privacy_ack: true,
+        policy_version: POLICY_VERSION,
+      },
       emailRedirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(safeNext(form.get("next")))}`,
     },
   });
-  if (error) return { error: error.message.includes("already") ? "An account with this email already exists. Try signing in." : "We couldn't create your account. Please try again." };
+  if (error) {
+    if (error.message.toLowerCase().includes("already")) return { error: "An account with this email already exists. Try signing in." };
+    if (error.status === 429) return { error: "Too many attempts. Please wait a minute and try again." };
+    return { error: "We couldn't create your account. Please try again." };
+  }
   if (data.session) redirect(safeNext(form.get("next")));
-  return { message: "Check your inbox: we have sent a link to verify your email address. Your account is ready once it is verified." };
+  return { message: v.email };
 }
 
 export async function requestReset(_: AuthState, form: FormData): Promise<AuthState> {

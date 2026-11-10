@@ -225,6 +225,21 @@
 .map-pin--building::after, .map-pin--landmark::after, .map-pin--amenity::after { color: var(--color-navy); }
 .map-pin.is-active { transform: scale(1.25) translateY(-3px); background: var(--color-electric); }
 .map-pin.is-active::after { color: #fff; }
+.map-marker { position: relative; display: block; width: 28px; height: 34px; }
+.map-label {
+  position: absolute;
+  left: 34px;
+  top: 6px;
+  white-space: nowrap;
+  padding: 3px 7px;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 0.94);
+  color: var(--color-ink);
+  font: 600 11.5px/1.2 var(--font-ui);
+  box-shadow: 0 2px 8px -2px rgb(12 24 44 / 0.35);
+  pointer-events: none;
+}
+.map-pin.is-active + .map-label { background: var(--color-navy); color: #fff; }
 .map-you {
   display: block;
   width: 18px;
@@ -237,6 +252,8 @@
 .leaflet-container { font-family: var(--font-ui); background: var(--color-paper-200); }
 .leaflet-container a { color: var(--color-electric-600); }
 .leaflet-bar a { color: var(--color-ink) !important; }
+.leaflet-control-attribution { background: rgb(255 255 255 / 0.92) !important; color: var(--color-ink); }
+.leaflet-control-attribution a { color: var(--color-navy) !important; text-decoration: underline; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

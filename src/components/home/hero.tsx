@@ -105,10 +105,10 @@ export function Hero({
               className="mt-10 flex flex-wrap gap-3"
             >
               <Link
-                href="/conference"
+                href="/signup"
                 className="group inline-flex min-h-14 items-center gap-3 bg-paper px-7 font-ui font-semibold text-navy transition-colors hover:bg-white"
               >
-                Explore the conference
+                Register
                 <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
               </Link>
               <Link

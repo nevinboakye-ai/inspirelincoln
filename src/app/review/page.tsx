@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 export const dynamic = "force-dynamic";
 
 export default async function ReviewHome() {
-  const { db, user } = await requireRole(["reviewer"], "/review");
+  const { db, user } = await requireRole(["reviewer", "editor"], "/review");
   const { data: rows } = await db
     .from("review_assignments")
     .select("id, created_at, abstracts(reference, title, category, status), reviews(status, updated_at)")

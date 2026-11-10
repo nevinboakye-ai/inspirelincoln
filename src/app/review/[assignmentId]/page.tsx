@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function ReviewPage({ params }: { params: Promise<{ assignmentId: string }> }) {
   const { assignmentId } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(assignmentId)) notFound();
-  const { db, user } = await requireRole(["reviewer"], `/review/${assignmentId}`);
+  const { db, user } = await requireRole(["reviewer", "editor"], `/review/${assignmentId}`);
   const { data: asg } = await db
     .from("review_assignments")
     .select("id, abstract_id, reviewer_id, abstracts(id, edition_id, reference, title, category, presentation_preference, background, aim, methods, results, conclusion, status)")

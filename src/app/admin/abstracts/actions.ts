@@ -45,7 +45,7 @@ export async function decideAbstract(_: ActionResult, form: FormData): Promise<A
   if (error) return { ok: false, error: "Could not save the decision." };
   revalidatePath(`/admin/abstracts/${id}`);
   revalidatePath("/admin/abstracts");
-  revalidatePath("/research/showcase");
+  revalidatePath("/");
   return { ok: true, message: "Decision saved. The author sees it in their portal." };
 }
 
@@ -58,7 +58,7 @@ export async function setShowcase(_: ActionResult, form: FormData): Promise<Acti
   if (publish && (!a?.consent_showcase || a.status !== "accepted")) return { ok: false, error: "Only accepted abstracts whose authors consented can be published." };
   const { error } = await db.from("abstracts").update({ showcase_published: publish, showcase_summary: summary }).eq("id", id);
   if (error) return { ok: false, error: "Could not update the showcase." };
-  revalidatePath("/research/showcase");
+  revalidatePath("/");
   revalidatePath(`/admin/abstracts/${id}`);
   return { ok: true, message: publish ? "Published to the research showcase." : "Showcase settings saved." };
 }

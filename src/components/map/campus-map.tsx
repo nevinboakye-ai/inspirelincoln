@@ -25,6 +25,9 @@ export interface MapSession {
 }
 
 type Filter = "day" | "all";
+type Sheet = "peek" | "half" | "full";
+const SHEET_ORDER: Sheet[] = ["peek", "half", "full"];
+const isPhone = () => typeof window !== "undefined" && !window.matchMedia("(min-width: 1024px)").matches;
 type Fix = { lat: number; lng: number; accuracy: number };
 
 const KIND_LABEL: Record<MapPlace["kind"], string> = {
@@ -70,6 +73,10 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
   const [geoError, setGeoError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [ready, setReady] = useState(false);
+  const [tilesFailed, setTilesFailed] = useState(false);
+  // Phones: the panel is a sheet over the map that can be pulled up.
+  const [sheet, setSheet] = useState<Sheet>("peek");
+  const sheetRef = useRef<HTMLElement>(null);
 
   const mapEl = useRef<HTMLDivElement>(null);
   const map = useRef<LeafletMap | null>(null);
@@ -93,21 +100,38 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
     import("leaflet").then((leaflet) => {
       if (cancelled || !mapEl.current || map.current) return;
       L.current = leaflet;
-      const m = leaflet.map(mapEl.current, { zoomControl: false, scrollWheelZoom: true, minZoom: 14, maxZoom: 20 });
+      const m = leaflet.map(mapEl.current, { zoomControl: false, scrollWheelZoom: true, minZoom: 14, maxZoom: 20, tapTolerance: 20 });
       m.setView(CAMPUS_CENTRE, CAMPUS_ZOOM);
-      leaflet.control.zoom({ position: "bottomright" }).addTo(m);
-      leaflet.tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, maxZoom: 20, subdomains: "abcd" }).addTo(m);
+      if (!isPhone()) leaflet.control.zoom({ position: "bottomright" }).addTo(m);
+      m.attributionControl.setPosition(isPhone() ? "topleft" : "bottomright");
+      let loaded = 0;
+      let failed = 0;
+      leaflet
+        .tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, maxZoom: 20, subdomains: "abcd" })
+        .on("tileload", () => {
+          loaded++;
+          setTilesFailed(false);
+        })
+        .on("tileerror", () => {
+          failed++;
+          if (failed >= 6 && loaded === 0) setTilesFailed(true);
+        })
+        .addTo(m);
       for (const p of places) {
         if (p.lat == null || p.lng == null) continue;
         const label = (p.code ?? p.name.replace(/^The /, "").charAt(0)).slice(0, 4);
+        const safe = (t: string) => t.replace(/[<>&"]/g, "");
         const icon = leaflet.divIcon({
           className: "",
-          html: `<span class="map-pin map-pin--${p.kind}" data-label="${label.replace(/"/g, "")}"></span>`,
+          html: `<span class="map-marker"><span class="map-pin map-pin--${p.kind}" data-label="${safe(label)}"></span>${p.kind === "venue" ? `<span class="map-label">${safe(p.name)}</span>` : ""}</span>`,
           iconSize: [28, 34],
           iconAnchor: [14, 32],
         });
         const marker = leaflet.marker([p.lat, p.lng], { icon, title: p.name, alt: p.name, keyboard: true, riseOnHover: true }).addTo(m);
-        marker.on("click", () => setSelected(p.id));
+        marker.on("click", () => {
+          setSelected(p.id);
+          setSheet((v) => (v === "peek" ? "half" : v));
+        });
         marker.on("keypress", (e) => {
           const key = (e.originalEvent as KeyboardEvent).key;
           if (key === "Enter" || key === " ") setSelected(p.id);
@@ -137,7 +161,14 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
     for (const [id, marker] of pins.current) {
       marker.getElement()?.querySelector(".map-pin")?.classList.toggle("is-active", id === pinOwner);
     }
-    if (target && map.current) map.current.flyTo([target.lat, target.lng], Math.max(map.current.getZoom(), 18), { duration: 0.8 });
+    if (target && map.current) {
+      const m = map.current;
+      const zoom = Math.max(m.getZoom(), 18);
+      // Keep the pin above the sheet on phones.
+      const cover = isPhone() && sheetRef.current ? sheetRef.current.getBoundingClientRect().height : 0;
+      const pt = m.project([target.lat, target.lng], zoom).add([0, cover / 2]);
+      m.flyTo(m.unproject(pt, zoom), zoom, { duration: 0.8 });
+    }
     const url = new URL(window.location.href);
     url.searchParams.delete("room");
     if (p) url.searchParams.set("place", p.slug);
@@ -231,10 +262,117 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
   };
 
   const pinnedCount = places.filter((p) => p.lat != null).length;
+  const unpinnedVenues = places.filter((p) => p.kind === "venue" && p.lat == null && !p.parentId);
+
+  const choose = (id: string | null) => {
+    setSelected(id);
+    if (id) setSheet((v) => (v === "peek" ? "half" : v));
+  };
+
+  // Drag the sheet's handle to resize it; a tap steps through the sizes.
+  const drag = useRef<{ y: number; moved: boolean } | null>(null);
+  const onHandleDown = (e: React.PointerEvent) => {
+    drag.current = { y: e.clientY, moved: false };
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+  const onHandleUp = (e: React.PointerEvent) => {
+    const d = drag.current;
+    drag.current = null;
+    if (!d) return;
+    const dy = e.clientY - d.y;
+    const i = SHEET_ORDER.indexOf(sheet);
+    if (Math.abs(dy) < 8) setSheet(SHEET_ORDER[(i + 1) % SHEET_ORDER.length]);
+    else if (dy < 0) setSheet(SHEET_ORDER[Math.min(i + (dy < -180 ? 2 : 1), 2)]);
+    else setSheet(SHEET_ORDER[Math.max(i - (dy > 180 ? 2 : 1), 0)]);
+  };
+
+  const sheetHeight = { peek: "9.5rem", half: "55%", full: "calc(100% - 3.5rem)" }[sheet];
+
+  const listPanel = (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="space-y-3 border-b border-white/10 px-4 pb-4 pt-1 lg:space-y-4 lg:p-5">
+        <label className="relative block">
+          <span className="sr-only">Search places and sessions</span>
+          <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-paper/60" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onFocus={() => setSheet("full")}
+            placeholder="Search, e.g. INB, LMS005, keynote"
+            className="min-h-12 w-full rounded-[3px] border border-white/20 bg-white/5 pl-10 pr-3 text-[1rem] text-paper placeholder:text-paper/50 focus:border-cyan"
+          />
+        </label>
+        <div role="group" aria-label="Show" className="flex gap-2">
+          {(
+            [
+              ["day", "On the day"],
+              ["all", "All places"],
+            ] as const
+          ).map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              aria-pressed={filter === v}
+              onClick={() => setFilter(v)}
+              className={cn(
+                "min-h-10 rounded-[3px] px-4 text-sm font-semibold transition-colors",
+                filter === v ? "bg-paper text-navy" : "border border-white/20 text-paper/80 hover:border-white/50",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        {!q && itinerary.length > 0 && (
+          <section aria-labelledby="where-title" className="border-b border-white/10 p-4 lg:p-5">
+            <h2 id="where-title" className="font-ui text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-paper/65">
+              Where to be
+            </h2>
+            <ol className="mt-3 space-y-1">
+              {itinerary.map((s) => {
+                const p = placeForRoom.get(s.roomId!)!;
+                return (
+                  <li key={s.id}>
+                    <button type="button" onClick={() => choose(p.id)} className="group grid min-h-12 w-full grid-cols-[3.5rem_1fr] gap-3 rounded-[3px] px-2 py-2 text-left hover:bg-white/5">
+                      <span className="font-display text-lg tabular-nums text-cyan">{s.starts}</span>
+                      <span>
+                        <span className="block text-sm font-medium text-paper">{s.title}</span>
+                        <span className="block text-xs text-paper/65">
+                          {p.code ?? p.name}
+                          {!p.locationConfirmed && " · room to be confirmed"}
+                        </span>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        )}
+
+        <PlaceGroup title="Conference venues" places={visibleDay} childrenOf={children} matches={matches} q={q} fix={fix} byId={byId} onSelect={choose} />
+        {visibleAround.length > 0 && (
+          <PlaceGroup title="Around campus" places={visibleAround} childrenOf={children} matches={matches} q={q} fix={fix} byId={byId} onSelect={choose} />
+        )}
+        {visibleDay.length === 0 && visibleAround.length === 0 && (
+          <p className="p-5 text-sm text-paper/75">Nothing matches &ldquo;{query}&rdquo;. Try a building code such as INB.</p>
+        )}
+        {filter === "day" && !q && (
+          <p className="p-5 pt-0 text-sm text-paper/65">
+            Choose <strong className="font-semibold text-paper">All places</strong> to see other campus buildings and landmarks.
+          </p>
+        )}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="surface-midnight pt-24 sm:pt-28">
-      <header className="container-page flex flex-wrap items-end justify-between gap-x-10 gap-y-4 border-b border-white/15 pb-6 pt-8 sm:pt-12">
+    <div className="surface-midnight pt-[var(--header-h)] lg:pt-28">
+      <header className="container-page hidden flex-wrap items-end justify-between gap-x-10 gap-y-4 border-b border-white/15 pb-6 pt-12 lg:flex">
         <div>
           <p className="eyebrow text-cyan">Brayford Pool campus · {dateLabel}</p>
           <h1 className="mt-4 text-display-md font-normal">
@@ -242,16 +380,17 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
           </h1>
         </div>
         <p className="max-w-md text-sm leading-relaxed text-paper/75">
-          Search for a building or session, tap a pin for details, and open walking directions in your own maps app.
-          Rooms still to be confirmed are marked.
+          Search for a building or session, tap a pin for details, and open walking directions in your own maps app. Rooms still to be confirmed are
+          marked.
         </p>
       </header>
+      <h1 className="sr-only lg:hidden">Campus map</h1>
 
-      <div className="grid lg:h-[calc(100svh-var(--header-h))] lg:min-h-[640px] lg:grid-cols-[400px_1fr]">
+      <div className="relative h-[calc(100svh-var(--header-h)-4rem-env(safe-area-inset-bottom))] min-h-[480px] overflow-hidden lg:grid lg:h-[calc(100svh-var(--header-h))] lg:min-h-[640px] lg:grid-cols-[400px_1fr] lg:overflow-visible">
         {/* Map */}
-        <div className="relative h-[58svh] min-h-[360px] bg-paper-200 lg:order-2 lg:h-full">
+        <div className="absolute inset-0 bg-paper-200 lg:relative lg:order-2 lg:h-full">
           <div ref={mapEl} className="absolute inset-0" role="region" aria-label="Interactive campus map. The list of places contains the same information." />
-          <div className="pointer-events-none absolute inset-x-3 top-3 z-[500] flex justify-end gap-2">
+          <div className="pointer-events-none absolute inset-x-3 top-10 z-[500] flex justify-end gap-2 lg:top-3">
             <button
               type="button"
               onClick={locate}
@@ -261,20 +400,40 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
               {fix ? "Show me" : locating ? "Finding you" : "Where am I?"}
             </button>
           </div>
-          {geoError && (
-            <p role="status" className="absolute inset-x-3 bottom-3 z-[500] max-w-md rounded-[3px] bg-white px-4 py-3 text-sm text-ink shadow-lg">
-              {geoError}
-            </p>
-          )}
-          {pinnedCount === 0 && (
-            <p className="absolute inset-x-3 bottom-3 z-[500] rounded-[3px] bg-white px-4 py-3 text-sm text-ink shadow-lg">
-              Pins will appear once locations are confirmed. Use the list for directions.
-            </p>
+          {(geoError || tilesFailed || pinnedCount === 0) && (
+            <div className="absolute inset-x-3 top-24 z-[500] space-y-2 lg:bottom-3 lg:top-auto lg:max-w-md">
+              {geoError && <p role="status" className="rounded-[3px] bg-white px-4 py-3 text-sm text-ink shadow-lg">{geoError}</p>}
+              {tilesFailed && (
+                <p role="status" className="rounded-[3px] bg-white px-4 py-3 text-sm text-ink shadow-lg">
+                  The map images couldn&apos;t load on this connection. Every place and its walking directions are still in the list.
+                </p>
+              )}
+              {pinnedCount === 0 && <p className="rounded-[3px] bg-white px-4 py-3 text-sm text-ink shadow-lg">Pins will appear once locations are confirmed. Use the list for directions.</p>}
+            </div>
           )}
         </div>
 
-        {/* Panel */}
-        <aside aria-label="Places" className="flex min-h-0 flex-col border-white/15 bg-midnight lg:order-1 lg:border-r">
+        {/* Panel: a pull-up sheet on phones, a sidebar on larger screens */}
+        <aside
+          ref={sheetRef}
+          aria-label="Places"
+          style={{ ["--sheet-h" as string]: sheetHeight }}
+          className="absolute inset-x-0 bottom-0 z-[600] flex h-[var(--sheet-h)] flex-col rounded-t-xl border-t border-white/15 bg-midnight shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.6)] transition-[height] duration-300 ease-[var(--ease-out-expo)] lg:relative lg:z-auto lg:order-1 lg:h-auto lg:rounded-none lg:border-r lg:border-t-0 lg:shadow-none lg:transition-none"
+        >
+          <button
+            type="button"
+            onPointerDown={onHandleDown}
+            onPointerUp={onHandleUp}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowUp") setSheet(SHEET_ORDER[Math.min(SHEET_ORDER.indexOf(sheet) + 1, 2)]);
+              if (e.key === "ArrowDown") setSheet(SHEET_ORDER[Math.max(SHEET_ORDER.indexOf(sheet) - 1, 0)]);
+            }}
+            aria-label={sheet === "full" ? "Shrink the list" : "Expand the list"}
+            aria-expanded={sheet !== "peek"}
+            className="flex h-8 w-full shrink-0 touch-none items-center justify-center lg:hidden"
+          >
+            <span aria-hidden className="h-1.5 w-12 rounded-full bg-white/30" />
+          </button>
           {current ? (
             <PlaceDetail
               place={current}
@@ -284,89 +443,13 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
               pinned={Boolean(currentPos)}
               fromYou={fromYou}
               onClose={() => setSelected(null)}
-              onSelect={setSelected}
+              onSelect={choose}
               onCopy={copy}
               copied={copied}
+              unpinnedVenue={unpinnedVenues.some((v) => v.id === current.id || v.id === current.parentId)}
             />
           ) : (
-            <div className="flex min-h-0 flex-1 flex-col">
-              <div className="space-y-4 border-b border-white/10 p-5">
-                <label className="relative block">
-                  <span className="sr-only">Search places and sessions</span>
-                  <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-paper/60" />
-                  <input
-                    type="search"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search, e.g. INB, LMS005, keynote"
-                    className="min-h-12 w-full rounded-[3px] border border-white/20 bg-white/5 pl-10 pr-3 text-paper placeholder:text-paper/50 focus:border-cyan"
-                  />
-                </label>
-                <div role="group" aria-label="Show" className="flex gap-2">
-                  {(
-                    [
-                      ["day", "On the day"],
-                      ["all", "All places"],
-                    ] as const
-                  ).map(([v, label]) => (
-                    <button
-                      key={v}
-                      type="button"
-                      aria-pressed={filter === v}
-                      onClick={() => setFilter(v)}
-                      className={cn(
-                        "min-h-10 rounded-[3px] px-4 text-sm font-semibold transition-colors",
-                        filter === v ? "bg-paper text-navy" : "border border-white/20 text-paper/80 hover:border-white/50",
-                      )}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                {!q && itinerary.length > 0 && (
-                  <section aria-labelledby="where-title" className="border-b border-white/10 p-5">
-                    <h2 id="where-title" className="font-ui text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-paper/65">
-                      Where to be
-                    </h2>
-                    <ol className="mt-3 space-y-1">
-                      {itinerary.map((s) => {
-                        const p = placeForRoom.get(s.roomId!)!;
-                        return (
-                          <li key={s.id}>
-                            <button type="button" onClick={() => setSelected(p.id)} className="group grid w-full grid-cols-[3.5rem_1fr] gap-3 rounded-[3px] px-2 py-2 text-left hover:bg-white/5">
-                              <span className="font-display text-lg tabular-nums text-cyan">{s.starts}</span>
-                              <span>
-                                <span className="block text-sm font-medium text-paper">{s.title}</span>
-                                <span className="block text-xs text-paper/65">
-                                  {p.code ?? p.name}
-                                  {!p.locationConfirmed && " · room to be confirmed"}
-                                </span>
-                              </span>
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ol>
-                  </section>
-                )}
-
-                <PlaceGroup title="Conference venues" places={visibleDay} childrenOf={children} matches={matches} q={q} fix={fix} byId={byId} onSelect={setSelected} />
-                {visibleAround.length > 0 && (
-                  <PlaceGroup title="Around campus" places={visibleAround} childrenOf={children} matches={matches} q={q} fix={fix} byId={byId} onSelect={setSelected} />
-                )}
-                {visibleDay.length === 0 && visibleAround.length === 0 && (
-                  <p className="p-5 text-sm text-paper/75">Nothing matches &ldquo;{query}&rdquo;. Try a building code such as INB.</p>
-                )}
-                {filter === "day" && !q && (
-                  <p className="p-5 pt-0 text-sm text-paper/65">
-                    Choose <strong className="font-semibold text-paper">All places</strong> to see other campus buildings and landmarks.
-                  </p>
-                )}
-              </div>
-            </div>
+            listPanel
           )}
         </aside>
       </div>
@@ -447,7 +530,9 @@ function PlaceDetail({
   onSelect,
   onCopy,
   copied,
+  unpinnedVenue = false,
 }: {
+  unpinnedVenue?: boolean;
   place: MapPlace;
   parent?: MapPlace;
   rooms: MapPlace[];
@@ -464,7 +549,7 @@ function PlaceDetail({
   // Directions go to the building for rooms.
   const target = place.lat == null && parent ? parent : place;
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">
+    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-6 pt-1 sm:px-6 lg:pt-6">
       <div className="flex items-start justify-between gap-4">
         <p className="eyebrow text-cyan">{KIND_LABEL[place.kind]}{place.code ? ` · ${place.code}` : ""}</p>
         <button type="button" onClick={onClose} className="-mr-2 -mt-2 grid size-11 place-items-center rounded-[3px] text-paper/80 hover:bg-white/10" aria-label="Back to all places">
@@ -492,7 +577,10 @@ function PlaceDetail({
         )}
         {!pinned && (
           <li className="flex gap-2 text-paper/75">
-            <MapPin aria-hidden className="mt-0.5 size-4 shrink-0" /> Not pinned on this map yet. The directions link searches for it by name.
+            <MapPin aria-hidden className="mt-0.5 size-4 shrink-0" />
+            {unpinnedVenue
+              ? "Not pinned on this map yet. The walking directions below find the building by name."
+              : "Not pinned on this map yet. The directions link searches for it by name."}
           </li>
         )}
         {fromYou != null && (

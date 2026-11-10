@@ -19,35 +19,32 @@ Built with Next.js (App Router, TypeScript), Tailwind CSS, Motion, Supabase
 
 ## What's included
 
-**Public site:** home, about, Conference 2026 (with FAQs, venue and calendar
-download), interactive programme (timeline, cards and personal agenda with
-conflict detection, filters, search, .ics export), speakers, workshops,
-Research & Abstracts hub and showcase, opportunities, gallery with lightbox,
-archive by year, contact form, conference-day page, interactive campus map (`/map`: search, building and room
-pins, "where am I", walking directions, sessions by room), privacy, cookies,
-accessibility and terms pages, ⌘K search with a guided conference assistant,
-sitemap, robots, Open Graph images and verified-only structured data.
+The public site is deliberately small and built for phones, since most people use it on the day:
+home, programme (with a personal agenda and calendar export), campus map, speakers, venue and
+FAQs, about, contact and the legal pages. Phones get a bottom bar with Home, Programme, Map and
+My ticket.
 
-**Delegate portal (`/portal`):** registration status and a check-in QR code
-(contains a reference only), saved agenda synced across devices,
-announcements, abstract submission with live word counts and drafts, presenter
-portal with decisions and secure poster upload, profile and account deletion.
+**Accounts.** Everyone registers with an account type: delegate, oral presenter, poster
+presenter, supporting committee, executive committee, vice president or president. New accounts
+are *awaiting review* until the committee approves, waitlists or declines them. Waitlisted people
+see their place in the queue.
 
-**Reviewer dashboard (`/review`):** blind review of assigned abstracts against a
-configurable weighted rubric, with drafts and locked submission.
+**Portal (`/portal`).** Ticket QR code once approved, account status, saved agenda,
+announcements, profile, access and dietary needs (with explicit consent), email and photography
+choices, a full data download and account deletion. Oral presenters upload slides (PDF,
+PowerPoint or Keynote) and poster presenters upload posters (PDF, PNG or JPG), up to 50 MB, with
+versions and committee feedback.
 
-**Admin dashboard (`/admin`):** live statistics; conference settings (status,
-times, registration link, event-day and post-event modes, poster deadline and
-requirements, abstract call configuration); managers for sessions, speakers,
-workshops, rooms, announcements, FAQs, opportunities, gallery, resources,
-institutions, committee, history timeline and editions; abstract management
-(assign reviewers, compare scores, decisions, showcase publishing, CSV export);
-review criteria; posters; registrations (with CSV export); QR check-in desk;
-users and roles; contact enquiries; audit log.
+**Committee dashboard (`/admin`).** What each person sees depends on their account type:
 
-**Roles:** `delegate` (portal), `reviewer` (+ assigned reviews), `editor`
-(+ public content and settings), `admin` (everything, including personal data).
-Every rule is enforced twice: in server code and by Postgres row level security.
+| Account | Can |
+| --- | --- |
+| Supporting committee | Edit the website content (programme, speakers, map, FAQs, announcements, settings), review slides and posters, give feedback, run check-in |
+| Executive committee | All of the above, plus approve, waitlist or decline accounts, registrations, enquiries and the audit log |
+| President and vice president | All of the above, plus approve executive accounts, send group emails by account type and status, and manage site roles |
+
+Every rule is enforced twice: in server code and by Postgres row level security
+(`supabase/tests/rls.test.sql`).
 
 The site works without Supabase too: public pages fall back to the bundled
 content in `src/content/seed.ts`, and sign-in features show as unavailable.
@@ -69,26 +66,33 @@ Other commands: `npm run build`, `npm start`, `npm run lint`, `npm run typecheck
 1. In the Supabase dashboard, open **SQL Editor** and run, in order:
    1. `supabase/migrations/20261110000000_initial_schema.sql` (tables, security policies, storage buckets)
    2. `supabase/migrations/20261110010000_map_places.sql` (campus map places)
-   3. `supabase/seed.sql` (the 2026 edition, confirmed timetable, rooms, committee, map places, six workshops, FAQs and review criteria)
+   3. `supabase/migrations/20261111000000_accounts_and_submissions.sql` (account types and review,
+      slide and poster submissions, feedback, consent records, group email log)
+   4. `supabase/seed.sql` (the 2026 edition, confirmed timetable, rooms, committee, map places, FAQs)
 
-   **Already seeded the database before November 2026's timetable update?** Run
-   `supabase/updates/2026-11-10-programme-committee-map.sql` once instead of the seed. It creates
-   the map table, adds the confirmed timetable, the INB and LMS005 rooms, the committee and the map
-   places, and removes the old untimed placeholder sessions. It is safe to run more than once.
+   **Database already set up?** Run only the ones you haven't run yet. Existing accounts are
+   marked approved by migration 3, so nobody loses access.
 
    Or, with the Supabase CLI: `supabase link` then `supabase db push` and run the seed file.
    The seed is generated from `src/content/seed.ts` with `npx -y tsx scripts/generate-seed.ts`.
 2. **Authentication → URL Configuration:** set *Site URL* to `https://inspirelincoln.uk` and add
-   `https://inspirelincoln.uk/auth/callback` (and your Vercel preview URL pattern, e.g.
-   `https://*-<team>.vercel.app/auth/callback`) to *Redirect URLs*. Email confirmation and
-   password reset links depend on this.
-3. **Authentication → Emails:** Supabase's built-in email sender is rate-limited and meant for testing.
-   Before opening sign-ups to delegates, add custom SMTP (Resend works well) under *SMTP Settings*.
-4. **Make yourself an admin.** Sign up on the site, then run in the SQL editor:
+   `https://inspirelincoln.uk/**` (and your Vercel preview pattern, e.g.
+   `https://*-<team>.vercel.app/**`) to *Redirect URLs*.
+3. **Send auth emails from inspirelincoln.uk.** In Resend, add the domain `inspirelincoln.uk` and
+   add the DNS records it shows at Spaceship. Then in Supabase, **Authentication → Emails → SMTP
+   Settings**, turn on custom SMTP:
+   host `smtp.resend.com`, port `465`, username `resend`, password a Resend API key,
+   sender email `noreply@inspirelincoln.uk`, sender name `INSPIRE`.
+4. **Branded email templates.** In **Authentication → Emails → Templates**, for each template paste
+   the subject from `supabase/templates/SUBJECTS.md` and the body from the matching file in
+   `supabase/templates/` (confirm sign up, reset password, magic link, change email, invite,
+   reauthentication). Links go through `/auth/confirm`, so they work even when opened in a
+   different browser. Regenerate with `npx -y tsx scripts/generate-email-templates.ts`.
+5. **Make the first leader.** Sign up on the site as President, then run in the SQL editor:
    ```sql
-   update public.profiles set role = 'admin' where email = 'you@example.com';
+   update public.profiles set account_status = 'approved' where email = 'you@example.com';
    ```
-   After that, manage everyone else's roles from **Admin → Users & roles**.
+   From then on, approve everyone else from **Committee dashboard → Accounts**.
 
 ## Deploy to Vercel and point the domain
 
@@ -111,25 +115,28 @@ Other commands: `npm run build`, `npm start`, `npm run lint`, `npm run typecheck
 | Service | What for | Required? | Where the credential goes |
 | --- | --- | --- | --- |
 | Supabase | Database, sign-in, file storage | Yes, for anything beyond static pages | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` in Vercel |
-| Supabase service role key | Lets delegates delete their own account | Recommended | `SUPABASE_SERVICE_ROLE_KEY` in Vercel only (server-side) |
+| Supabase service role key | Faster account deletion (a database function covers it otherwise) | Optional | `SUPABASE_SERVICE_ROLE_KEY` in Vercel only (server-side) |
 | Vercel | Hosting | Yes | Not needed |
 | Spaceship | DNS for inspirelincoln.uk | Yes | DNS records only |
-| Resend | Contact form email notifications; recommended SMTP for auth emails | Optional | `RESEND_API_KEY`, `EMAIL_FROM`, `CONTACT_TO_EMAIL` in Vercel; SMTP in Supabase |
+| Resend | Sign-up and password emails (via Supabase SMTP), account decisions, feedback, group emails, contact form | Strongly recommended | `RESEND_API_KEY`, `EMAIL_FROM`, `CONTACT_TO_EMAIL` in Vercel; SMTP in Supabase |
+| Privacy notice | Shows where Supabase stores data | Recommended | `NEXT_PUBLIC_DATA_REGION` in Vercel, e.g. `London (eu-west-2)` |
 | External registration platform | Ticketing, if used | Optional | Paste the link in Admin → Conference settings |
 
 The sending domain for `EMAIL_FROM` must be verified in Resend (add the DNS records Resend gives you at Spaceship).
 
 Never commit secrets or paste the service role key anywhere public.
 
-## Running the conference from the admin dashboard
+## Running the conference from the committee dashboard
 
-- **Before registration opens:** in *Conference settings*, set the status to "Registration opening soon".
-  When it opens, add the registration link and set "Registration open". The header button,
-  homepage and Conference page update straight away.
-- **Abstracts:** tick "Accept new abstract submissions" and adjust word limits, categories and
-  eligibility. Add reviewers under *Users & roles*, check *Review criteria*, then assign reviewers
-  from each abstract. Record decisions there; authors see them in their portal. Accepted authors
-  who consented can be published to the showcase.
+- **Accounts:** new registrations wait under *Accounts → Awaiting review*. Check the details, change
+  the account type if needed, then approve, waitlist or decline. Ticking "Email them" sends a
+  branded email with your optional note. Approving confirms their place and gives them a ticket.
+- **Slides and posters:** under *Submissions*, open one to preview it, then comment, request
+  changes or approve. The presenter is emailed and sees the feedback, with your name and position,
+  in their portal.
+- **Group emails (president and vice president):** under *Group email*, pick account types and
+  statuses, choose "Conference update" or "News or promotion" (promotional emails only go to people
+  who opted in, as the law requires), count recipients, send yourself a test, then send.
 - **Programme:** set start/end times in settings to enable the precise countdown and calendar
   files. Add times, rooms and speakers to sessions as they are confirmed; untimed sessions are
   labelled provisional.
@@ -139,13 +146,13 @@ Never commit secrets or paste the service role key anywhere public.
   same pin. Link a place to a programme room to list that room's sessions on the map. Tick
   "Location confirmed" when a room is final. Map tiles come from CARTO (OpenStreetMap data) and load
   in the visitor's browser.
-- **Registrations:** delegates create an account; add them under *Registrations* by their account email.
-  Confirmed delegates get a QR code.
 - **On the day:** turn on *Event-day mode*, open *Check-in* on a phone or laptop at the desk and scan
   QR codes (camera scanning works in Chrome/Edge on Android; manual code entry works everywhere).
-- **Afterwards:** set status to "Conference concluded" and turn on *Post-conference mode*. Add
-  gallery images and archive highlights. For the next year, create a new edition and switch to it.
-- **Retention:** delete contact enquiries once resolved (the privacy page says within 12 months).
+- **Afterwards:** set status to "Conference concluded" and turn on *Post-conference mode*.
+  For the next year, create a new edition and switch to it.
+- **Retention:** the privacy notice promises deletion dates: contact enquiries within 12 months,
+  access and dietary needs by 28 February 2027, tickets and submissions by 31 March 2027, audit
+  logs after 24 months. Diarise these.
 
 ## Content rules
 
