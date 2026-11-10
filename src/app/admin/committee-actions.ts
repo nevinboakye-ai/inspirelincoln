@@ -30,7 +30,11 @@ export async function reviewAccount(_: ActionResult, form: FormData): Promise<Ac
 
   const { data, error } = await db.rpc("review_account", { target: v.id, new_status: v.status, new_type: v.type, note: v.note || null });
   if (error) {
-    const msg = error.message.includes("president") ? "Only the president or vice president can approve executive committee accounts." : "Could not save the decision.";
+    const msg = error.message.includes("site owner")
+      ? "Only the site owner can change the site owner's account."
+      : error.message.includes("president")
+        ? "Only the president or vice president can approve executive committee accounts."
+        : "Could not save the decision.";
     return { ok: false, error: msg };
   }
   const p = Array.isArray(data) ? data[0] : data;

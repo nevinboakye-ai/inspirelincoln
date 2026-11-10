@@ -7,17 +7,21 @@ const p = (accountType: Parameters<typeof accessFor>[0]["accountType"], accountS
 
 describe("account access", () => {
   it("gives nothing extra until an account is approved", () => {
-    expect(accessFor(p("president", "pending"))).toEqual({ committee: false, exec: false, leadership: false });
+    expect(accessFor(p("president", "pending"))).toEqual({ committee: false, exec: false, leadership: false, owner: false });
     expect(accessFor(p("executive_committee", "waitlisted")).exec).toBe(false);
   });
   it("matches each committee level", () => {
-    expect(accessFor(p("supporting_committee", "approved"))).toEqual({ committee: true, exec: false, leadership: false });
-    expect(accessFor(p("executive_committee", "approved"))).toEqual({ committee: true, exec: true, leadership: false });
-    expect(accessFor(p("vice_president", "approved"))).toEqual({ committee: true, exec: true, leadership: true });
-    expect(accessFor(p("delegate", "approved"))).toEqual({ committee: false, exec: false, leadership: false });
+    expect(accessFor(p("supporting_committee", "approved"))).toEqual({ committee: true, exec: false, leadership: false, owner: false });
+    expect(accessFor(p("executive_committee", "approved"))).toEqual({ committee: true, exec: true, leadership: false, owner: false });
+    expect(accessFor(p("vice_president", "approved"))).toEqual({ committee: true, exec: true, leadership: true, owner: false });
+    expect(accessFor(p("delegate", "approved"))).toEqual({ committee: false, exec: false, leadership: false, owner: false });
   });
   it("treats a site admin as leadership whatever their account", () => {
     expect(accessFor(p("delegate", "pending", "admin")).leadership).toBe(true);
+  });
+  it("puts the site owner above the president", () => {
+    expect(accessFor(p("president", "approved")).owner).toBe(false);
+    expect(accessFor(p("vice_president", "approved", "admin"))).toEqual({ committee: true, exec: true, leadership: true, owner: true });
   });
   it("maps to the role tiers the gates use", () => {
     expect(effectiveRole(p("executive_committee", "approved"))).toBe("admin");
