@@ -3,23 +3,25 @@ import { requireAccess } from "@/lib/auth";
 import { AdminHeader } from "@/components/admin/ui";
 import { Badge } from "@/components/ui/badge";
 import { RosterAddForm } from "@/components/admin/roster-form";
-import { removeRosterEntry } from "@/app/admin/people-actions";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { ACCOUNT_TYPE_LABEL } from "@/lib/accounts";
 import type { AccountType } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Selected delegates" };
 export const dynamic = "force-dynamic";
 
-type Row = { email: string; full_name: string; institution: string | null; year_of_study: string | null; account_type: AccountType; presentation_title: string | null; note: string | null };
+type Row = { id: string; email: string; full_name: string; institution: string | null; year_of_study: string | null; account_type: AccountType; presentation_title: string | null; note: string | null };
 
-export default async function RosterPage({ searchParams }: { searchParams: Promise<{ q?: string; show?: string }> }) {
+export default async function RosterPage({ searchParams }: { searchParams: Promise<{ q?: string; show?: string; removed?: string }> }) {
   const sp = await searchParams;
   const { db } = await requireAccess("review_accounts", "/admin/accounts/roster");
   const [{ data, error }, { data: accounts }] = await Promise.all([
-    db.from("delegate_roster").select("email, full_name, institution, year_of_study, account_type, presentation_title, note").order("full_name").limit(2000),
-    db.from("profiles").select("email").limit(5000),
+    db.from("delegate_roster").select("id, email, full_name, institution, year_of_study, account_type, presentation_title, note").order("full_name").limit(2000),
+    db.from("profiles").select("id, email").limit(5000),
   ]);
-  const joined = new Set((accounts ?? []).map((a) => a.email.toLowerCase()));
+  const accountId = new Map((accounts ?? []).map((a) => [a.email.toLowerCase(), a.id as string]));
+  const joined = new Set(accountId.keys());
   const all = (data ?? []) as Row[];
   const term = sp.q?.trim().toLowerCase();
   const rows = all.filter(
@@ -37,6 +39,8 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
         title="Selected delegates"
         description="People on this list are approved as soon as they set up their account with this email, so they never wait for review. Anyone else who registers still appears in Accounts for review."
       />
+
+      {sp.removed && <p role="status" className="rounded-md border border-success/25 bg-success/[0.06] p-4 text-sm font-medium text-success">Removed from the selected list.</p>}
 
       {error ? (
         <p className="rounded-xl border border-warning/30 bg-warning/10 p-5 text-sm text-ink">The selected list isn&apos;t set up in the database yet. Run the delegate network migration first.</p>
@@ -90,7 +94,7 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
                 {rows.map((r) => (
                   <tr key={r.email} className="align-top">
                     <td className="px-4 py-3">
-                      <span className="block font-medium text-ink">{r.full_name}</span>
+                      <Link href={`/admin/accounts/selected/${r.id}`} className="block font-medium text-ink underline-offset-4 hover:underline">{r.full_name}</Link>
                       <span className="block break-all text-xs text-slate">{r.email}</span>
                       {r.note && <span className="mt-1 block max-w-md text-xs text-[#7a4a00]">{r.note}</span>}
                     </td>
@@ -99,14 +103,17 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
                       <Badge tone={r.account_type === "delegate" ? "neutral" : "violet"}>{ACCOUNT_TYPE_LABEL[r.account_type]}</Badge>
                       {r.presentation_title && <span className="mt-1 block max-w-xs text-xs text-slate">{r.presentation_title}</span>}
                     </td>
-                    <td className="px-4 py-3">{joined.has(r.email) ? <Badge tone="success">Set up</Badge> : <Badge>Not yet</Badge>}</td>
+                    <td className="px-4 py-3">
+                      {joined.has(r.email) ? (
+                        <Link href={`/admin/accounts/${accountId.get(r.email)}`} className="inline-flex min-h-10 items-center"><Badge tone="success">Set up</Badge><span className="sr-only">, open {r.full_name}&apos;s account</span></Link>
+                      ) : (
+                        <Badge>Not yet</Badge>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-right">
-                      <form action={removeRosterEntry}>
-                        <input type="hidden" name="email" value={r.email} />
-                        <button className="min-h-10 rounded-[3px] px-3 text-xs font-semibold text-danger hover:bg-danger/5">
-                          Remove<span className="sr-only"> {r.full_name}</span>
-                        </button>
-                      </form>
+                      <Link href={`/admin/accounts/selected/${r.id}`} className="inline-flex min-h-10 items-center gap-1 whitespace-nowrap rounded-[3px] px-3 text-xs font-semibold text-ink hover:bg-paper">
+                        Edit or email<span className="sr-only"> {r.full_name}</span> <ArrowRight aria-hidden className="size-3.5" />
+                      </Link>
                     </td>
                   </tr>
                 ))}
