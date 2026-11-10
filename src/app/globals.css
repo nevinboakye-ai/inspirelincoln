@@ -1,0 +1,190 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------
+   INSPIRE design tokens
+   8px spacing system (Tailwind's 0.25rem scale, used in multiples of 2),
+   a 4-step radius scale and a restrained colour system.
+   ------------------------------------------------------------------ */
+@theme {
+  --color-midnight: #040b16;
+  --color-navy: #071426;
+  --color-navy-800: #0b1d35;
+  --color-navy-700: #122944;
+  --color-navy-600: #1c3658;
+  --color-electric: #3478f6;
+  --color-electric-600: #1f5fd6;
+  --color-electric-700: #1849a8;
+  --color-cyan: #39d5f2;
+  --color-cyan-300: #8ae6f8;
+  --color-violet: #8578f9;
+  --color-violet-300: #b7affc;
+  --color-paper: #f7f9fc;
+  --color-paper-200: #eef2f8;
+  --color-paper-300: #e1e7f0;
+  --color-slate: #55647a;
+  --color-slate-700: #3d4a5e;
+  --color-ink: #0d1726;
+  --color-success: #0e6f4f;
+  --color-warning: #a8570c;
+  --color-danger: #c42b3b;
+
+  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+
+  --text-display-xl: clamp(3rem, 8.5vw, 8.25rem);
+  --text-display-xl--line-height: 0.92;
+  --text-display-xl--letter-spacing: -0.045em;
+  --text-display-lg: clamp(2.5rem, 6vw, 5.5rem);
+  --text-display-lg--line-height: 0.98;
+  --text-display-lg--letter-spacing: -0.04em;
+  --text-display-md: clamp(2rem, 4.2vw, 3.75rem);
+  --text-display-md--line-height: 1.04;
+  --text-display-md--letter-spacing: -0.03em;
+  --text-display-sm: clamp(1.5rem, 2.6vw, 2.25rem);
+  --text-display-sm--line-height: 1.12;
+  --text-display-sm--letter-spacing: -0.02em;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-pulse-soft: pulse-soft 2.4s ease-in-out infinite;
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
+  }
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --header-h: 72px;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    scroll-padding-top: calc(var(--header-h) + 16px);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+  }
+
+  body {
+    @apply bg-paper font-sans text-ink antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display;
+    text-wrap: balance;
+  }
+
+  p { text-wrap: pretty; }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-cyan) 40%, transparent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-cyan);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+  .surface-light :focus-visible,
+  .bg-paper :focus-visible,
+  .bg-white :focus-visible {
+    outline-color: var(--color-electric-600);
+  }
+
+  [hidden] { display: none !important; }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-[1320px] px-5 sm:px-8 lg:px-12;
+  }
+  .container-narrow {
+    @apply mx-auto w-full max-w-[860px] px-5 sm:px-8;
+  }
+
+  .eyebrow {
+    @apply font-display text-[0.75rem] font-medium uppercase tracking-[0.22em];
+  }
+
+  .surface-dark {
+    @apply bg-navy text-paper;
+  }
+  .surface-midnight {
+    @apply bg-midnight text-paper;
+  }
+
+  /* Hairline grid used as a scientific-paper motif on dark sections */
+  .grid-lines {
+    background-image:
+      linear-gradient(to right, rgb(255 255 255 / 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.045) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+  .grid-lines-light {
+    background-image:
+      linear-gradient(to right, rgb(7 20 38 / 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(7 20 38 / 0.05) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+
+  .prose-inspire {
+    @apply max-w-[68ch] text-[1.0625rem] leading-[1.75] text-slate-700;
+  }
+  .prose-inspire h2 { @apply mt-12 mb-4 text-2xl font-semibold text-ink; }
+  .prose-inspire h3 { @apply mt-8 mb-3 text-xl font-semibold text-ink; }
+  .prose-inspire p { @apply mb-5; }
+  .prose-inspire ul { @apply mb-5 list-disc space-y-2 pl-6; }
+  .prose-inspire ol { @apply mb-5 list-decimal space-y-2 pl-6; }
+  .prose-inspire a { @apply font-medium text-electric-600 underline decoration-electric-600/30 underline-offset-4 hover:decoration-electric-600; }
+  .prose-inspire strong { @apply font-semibold text-ink; }
+
+  .link-underline {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 0.4s var(--ease-out-expo);
+  }
+  .link-underline:hover { background-size: 100% 1px; }
+
+  .fade-edge-x {
+    mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  }
+
+  .noise::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
