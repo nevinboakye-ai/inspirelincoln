@@ -744,7 +744,7 @@ create policy "site_content: editors write" on public.site_content for all using
 
 alter table public.contact_enquiries enable row level security;
 -- Anyone may submit an enquiry; nobody but admins may read them.
-create policy "enquiries: anyone insert" on public.contact_enquiries for insert with check (consent and status = 'new' and not delivered);
+create policy "enquiries: anyone insert" on public.contact_enquiries for insert with check (consent and status = 'new');
 create policy "enquiries: admins read" on public.contact_enquiries for select using (public.is_admin());
 create policy "enquiries: admins update" on public.contact_enquiries for update using (public.is_admin());
 create policy "enquiries: admins delete" on public.contact_enquiries for delete using (public.is_admin());

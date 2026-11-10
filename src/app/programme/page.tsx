@@ -30,7 +30,7 @@ export default async function ProgrammePage() {
         }
         intro={`${formatEventDate(edition.date)} at ${edition.venueName}. Browse every session, filter by what interests you and save sessions to your personal agenda.`}
         visual={
-          <svg aria-hidden viewBox="0 0 800 400" preserveAspectRatio="none" className="absolute bottom-0 right-0 h-full w-2/3 opacity-40">
+          <svg aria-hidden viewBox="0 0 800 400" preserveAspectRatio="none" className="absolute bottom-0 right-0 h-[65%] w-2/3 opacity-40">
             {Array.from({ length: 9 }, (_, i) => (
               <rect key={i} x={120 + i * 72} y={60 + ((i * 37) % 140)} width={14 + ((i * 23) % 40)} height={6} rx={3} fill={["#39D5F2", "#3478F6", "#8578F9"][i % 3]} opacity={0.7}>
                 <animate attributeName="width" values={`${20 + i * 3};${80 + i * 6};${20 + i * 3}`} dur={`${6 + i}s`} repeatCount="indefinite" />
