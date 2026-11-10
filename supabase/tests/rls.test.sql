@@ -230,6 +230,21 @@ reset role;
 select pg_temp.as_user('00000000-0000-0000-0000-0000000000f1');
 select pg_temp.expect(public.is_leadership(), 'approved president has leadership access');
 select public.review_account('00000000-0000-0000-0000-0000000000f2', 'approved');
+-- The site owner sits above the president.
+do $$ begin
+  update public.profiles set role = 'editor' where id = '00000000-0000-0000-0000-0000000000f3';
+  raise exception 'FAILED: president changed a site role';
+exception when raise_exception then
+  if sqlerrm like 'FAILED%' then raise; end if;
+  raise notice 'ok - president cannot change site roles';
+end $$;
+do $$ begin
+  perform public.review_account('00000000-0000-0000-0000-00000000000a', 'declined');
+  raise exception 'FAILED: president declined the site owner';
+exception when raise_exception then
+  if sqlerrm like 'FAILED%' then raise; end if;
+  raise notice 'ok - president cannot change the site owner''s account';
+end $$;
 reset role;
 
 -- Executive members review accounts but cannot approve other executives.
@@ -252,7 +267,7 @@ do $$ begin
   raise exception 'FAILED: exec changed site role';
 exception when raise_exception then
   if sqlerrm like 'FAILED%' then raise; end if;
-  raise notice 'ok - only leadership can change site roles';
+  raise notice 'ok - exec cannot change site roles';
 end $$;
 reset role;
 select pg_temp.expect((select status from public.registrations where user_id = '00000000-0000-0000-0000-0000000000f6') = 'waitlisted', 'waitlisting also waitlists the registration');

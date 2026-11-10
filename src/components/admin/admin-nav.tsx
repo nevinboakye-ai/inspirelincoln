@@ -8,7 +8,7 @@ import {
 import { cn } from "@/lib/cn";
 import type { Access } from "@/lib/accounts";
 
-type Level = "committee" | "exec" | "leadership";
+type Level = "committee" | "exec" | "leadership" | "owner";
 type LinkDef = { href: string; label: string; icon: typeof Gauge; level?: Level };
 
 const GROUPS: { title: string; links: LinkDef[] }[] = [
@@ -47,7 +47,7 @@ const GROUPS: { title: string; links: LinkDef[] }[] = [
       { href: "/admin/registrations", label: "Registrations", icon: Ticket, level: "exec" },
       { href: "/admin/enquiries", label: "Enquiries", icon: Inbox, level: "exec" },
       { href: "/admin/abstracts", label: "Abstracts", icon: ClipboardCheck, level: "exec" },
-      { href: "/admin/users", label: "Site roles", icon: ShieldCheck, level: "leadership" },
+      { href: "/admin/users", label: "Site roles", icon: ShieldCheck, level: "owner" },
       { href: "/admin/audit", label: "Audit log", icon: ScrollText, level: "exec" },
     ],
   },
@@ -55,7 +55,7 @@ const GROUPS: { title: string; links: LinkDef[] }[] = [
 
 export function AdminNav({ access, name, position }: { access: Access; name: string; position: string }) {
   const path = usePathname();
-  const allowed = (l: LinkDef) => !l.level || (l.level === "committee" ? access.committee : l.level === "exec" ? access.exec : access.leadership);
+  const allowed = (l: LinkDef) => !l.level || (l.level === "committee" ? access.committee : l.level === "exec" ? access.exec : l.level === "owner" ? access.owner : access.leadership);
   return (
     <nav aria-label="Committee dashboard" className="min-w-0 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
       <div className="mb-5 flex items-center gap-3">

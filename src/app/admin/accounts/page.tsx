@@ -31,7 +31,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
 
   let q = db
     .from("profiles")
-    .select("id, email, full_name, institution, programme, career_stage, committee_position, presentation_title, heard_about, account_type, account_status, review_note, reviewed_at, created_at, photo_opt_out")
+    .select("id, role, email, full_name, institution, programme, career_stage, committee_position, presentation_title, heard_about, account_type, account_status, review_note, reviewed_at, created_at, photo_opt_out")
     .eq("account_status", status)
     .order("created_at", { ascending: status === "pending" || status === "waitlisted" })
     .limit(500);
@@ -120,7 +120,11 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
               </dl>
               {p.review_note && <p className="mt-3 text-sm text-slate-700">Last note: {p.review_note}{p.reviewed_at ? ` (${when(p.reviewed_at)})` : ""}</p>}
               <div className="mt-5 border-t border-navy/10 pt-5">
-                <AccountReviewForm id={p.id} type={t} status={p.account_status as AccountStatus} canLead={profile.access.leadership} name={p.full_name || p.email} />
+                {p.role === "admin" && !profile.access.owner ? (
+                  <p className="text-sm text-slate-700">This is the site owner&apos;s account. Only the site owner can change it.</p>
+                ) : (
+                  <AccountReviewForm id={p.id} type={t} status={p.account_status as AccountStatus} canLead={profile.access.leadership} name={p.full_name || p.email} />
+                )}
               </div>
             </li>
           );

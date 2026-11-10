@@ -14,7 +14,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="min-h-screen bg-paper pb-28 pt-24 lg:pb-24">
       <div className="mx-auto grid max-w-[1500px] gap-8 px-4 sm:px-6 lg:grid-cols-[15rem_1fr] lg:gap-10 lg:px-8">
-        <AdminNav access={profile.access} name={profile.fullName ?? profile.email} position={profile.siteRole === "admin" && !profile.committeePosition ? "Site admin" : position} />
+        <AdminNav access={profile.access} name={profile.fullName ?? profile.email} position={profile.access.owner ? [position, "Site owner"].filter(Boolean).join(" · ") : position} />
         <div id="admin-main" className="min-w-0">{children}</div>
       </div>
     </div>

@@ -41,7 +41,8 @@ versions and committee feedback.
 | --- | --- |
 | Supporting committee | Edit the website content (programme, speakers, map, FAQs, announcements, settings), review slides and posters, give feedback, run check-in |
 | Executive committee | All of the above, plus approve, waitlist or decline accounts, registrations, enquiries and the audit log |
-| President and vice president | All of the above, plus approve executive accounts, send group emails by account type and status, and manage site roles |
+| President and vice president | All of the above, plus approve executive accounts and send group emails by account type and status |
+| Site owner (site role `admin`) | Everything, above the president: only a site owner can change site roles, and nobody else can change a site owner's account |
 
 Every rule is enforced twice: in server code and by Postgres row level security
 (`supabase/tests/rls.test.sql`).
@@ -68,7 +69,8 @@ Other commands: `npm run build`, `npm start`, `npm run lint`, `npm run typecheck
    2. `supabase/migrations/20261110010000_map_places.sql` (campus map places)
    3. `supabase/migrations/20261111000000_accounts_and_submissions.sql` (account types and review,
       slide and poster submissions, feedback, consent records, group email log)
-   4. `supabase/seed.sql` (the 2026 edition, confirmed timetable, rooms, committee, map places, FAQs)
+   4. `supabase/migrations/20261112000000_site_owner.sql` (site owner above the president)
+   5. `supabase/seed.sql` (the 2026 edition, confirmed timetable, rooms, committee, map places, FAQs)
 
    **Database already set up?** Run only the ones you haven't run yet. Existing accounts are
    marked approved by migration 3, so nobody loses access.
@@ -88,9 +90,9 @@ Other commands: `npm run build`, `npm start`, `npm run lint`, `npm run typecheck
    `supabase/templates/` (confirm sign up, reset password, magic link, change email, invite,
    reauthentication). Links go through `/auth/confirm`, so they work even when opened in a
    different browser. Regenerate with `npx -y tsx scripts/generate-email-templates.ts`.
-5. **Make the first leader.** Sign up on the site as President, then run in the SQL editor:
+5. **Make the site owner.** Sign up on the site with your committee account type, then run in the SQL editor:
    ```sql
-   update public.profiles set account_status = 'approved' where email = 'you@example.com';
+   update public.profiles set role = 'admin', account_status = 'approved' where email = 'you@example.com';
    ```
    From then on, approve everyone else from **Committee dashboard → Accounts**.
 

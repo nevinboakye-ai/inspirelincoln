@@ -46,8 +46,10 @@ export interface Access {
   committee: boolean;
   /** Approved executive member, VP, president or site admin. Reviews accounts, sees personal data. */
   exec: boolean;
-  /** President, vice president or site admin. Can approve executive accounts and change site roles. */
+  /** President, vice president or site owner. Approves executive accounts, sends group emails. */
   leadership: boolean;
+  /** Site owner (site role admin). Above the president: changes site roles, and only they can change their own account. */
+  owner: boolean;
 }
 
 /** Mirrors public.is_committee(), is_exec() and is_leadership() in the database. */
@@ -56,7 +58,7 @@ export function accessFor(p: { role: UserRole; accountType: AccountType; account
   const leadership = p.role === "admin" || (approved && LEADERSHIP_TYPES.includes(p.accountType));
   const exec = p.role === "admin" || (approved && EXEC_TYPES.includes(p.accountType));
   const committee = p.role === "admin" || p.role === "editor" || (approved && COMMITTEE_TYPES.includes(p.accountType));
-  return { committee, exec, leadership };
+  return { committee, exec, leadership, owner: p.role === "admin" };
 }
 
 /** The permission tier the existing role gates understand. */
