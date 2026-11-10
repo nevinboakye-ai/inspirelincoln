@@ -25,7 +25,7 @@ export default async function TodayPage() {
           <p className="eyebrow flex items-center gap-3 text-cyan">
             <span className="size-2 animate-pulse-soft rounded-full bg-cyan" /> Conference day · {edition.name}
           </p>
-          <h1 className="mt-6 text-display-lg font-semibold">Your day at INSPIRE</h1>
+          <h1 className="mt-6 text-display-lg font-normal">Your day at INSPIRE</h1>
           <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-paper/75">
             <li className="flex items-center gap-2">
               <CalendarDays aria-hidden className="size-4 text-cyan" /> {formatEventDate(edition.date)}
@@ -43,10 +43,13 @@ export default async function TodayPage() {
             <NowNext sessions={sessions} />
           </div>
           <div className="mt-10 flex flex-wrap gap-3">
-            <Link href="/programme?view=agenda" className="inline-flex min-h-12 items-center gap-2 rounded-full bg-cyan px-6 font-display font-semibold text-midnight">
+            <Link href="/programme?view=agenda" className="inline-flex min-h-12 items-center gap-2 rounded-[3px] bg-cyan px-6 font-ui font-semibold text-midnight">
               <BookmarkCheck aria-hidden className="size-4" /> My agenda
             </Link>
-            <Link href="/conference#venue" className="inline-flex min-h-12 items-center gap-2 rounded-full border border-white/20 px-6 font-display font-medium">
+            <Link href="/map" className="inline-flex min-h-12 items-center gap-2 rounded-[3px] bg-paper px-6 font-ui font-semibold text-navy">
+              <MapPin aria-hidden className="size-4" /> Campus map
+            </Link>
+            <Link href="/conference#venue" className="inline-flex min-h-12 items-center gap-2 rounded-[3px] border border-white/20 px-6 font-ui font-medium">
               Venue &amp; travel <ArrowRight aria-hidden className="size-4" />
             </Link>
           </div>

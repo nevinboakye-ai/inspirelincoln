@@ -60,7 +60,7 @@ export default async function AdminHome() {
       <AdminHeader
         title="Dashboard"
         description={<>{edition.name} · {formatEventDate(edition.date)} · {days > 0 ? `${days} day${days === 1 ? "" : "s"} to go` : days === 0 ? "Today" : "Concluded"} · Status: <strong>{edition.status ? CONFERENCE_STATUS_LABEL[edition.status] : "Not set"}</strong></>}
-        actions={<Link href="/admin/settings" className="inline-flex min-h-11 items-center rounded-full bg-navy px-5 text-sm font-semibold text-paper">Conference settings</Link>}
+        actions={<Link href="/admin/settings" className="inline-flex min-h-11 items-center rounded-[3px] bg-navy px-5 text-sm font-semibold text-paper">Conference settings</Link>}
       />
       <p className="text-sm text-slate">All figures are live counts from the database.</p>
       {admin && (

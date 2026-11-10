@@ -23,7 +23,8 @@ Built with Next.js (App Router, TypeScript), Tailwind CSS, Motion, Supabase
 download), interactive programme (timeline, cards and personal agenda with
 conflict detection, filters, search, .ics export), speakers, workshops,
 Research & Abstracts hub and showcase, opportunities, gallery with lightbox,
-archive by year, contact form, conference-day page, privacy, cookies,
+archive by year, contact form, conference-day page, interactive campus map (`/map`: search, building and room
+pins, "where am I", walking directions, sessions by room), privacy, cookies,
 accessibility and terms pages, ⌘K search with a guided conference assistant,
 sitemap, robots, Open Graph images and verified-only structured data.
 
@@ -67,7 +68,13 @@ Other commands: `npm run build`, `npm start`, `npm run lint`, `npm run typecheck
 
 1. In the Supabase dashboard, open **SQL Editor** and run, in order:
    1. `supabase/migrations/20261110000000_initial_schema.sql` (tables, security policies, storage buckets)
-   2. `supabase/seed.sql` (the 2026 edition, provisional programme, six workshops, FAQs and review criteria)
+   2. `supabase/migrations/20261110010000_map_places.sql` (campus map places)
+   3. `supabase/seed.sql` (the 2026 edition, confirmed timetable, rooms, committee, map places, six workshops, FAQs and review criteria)
+
+   **Already seeded the database before November 2026's timetable update?** Run
+   `supabase/updates/2026-11-10-programme-committee-map.sql` once instead of the seed. It creates
+   the map table, adds the confirmed timetable, the INB and LMS005 rooms, the committee and the map
+   places, and removes the old untimed placeholder sessions. It is safe to run more than once.
 
    Or, with the Supabase CLI: `supabase link` then `supabase db push` and run the seed file.
    The seed is generated from `src/content/seed.ts` with `npx -y tsx scripts/generate-seed.ts`.
@@ -126,6 +133,12 @@ Never commit secrets or paste the service role key anywhere public.
 - **Programme:** set start/end times in settings to enable the precise countdown and calendar
   files. Add times, rooms and speakers to sessions as they are confirmed; untimed sessions are
   labelled provisional.
+- **Campus map:** under *Map places*, click the map to pin a place or drag its pin. Only pin what you
+  have checked on site. The Ross Lucas Medical Sciences Building (LMS) ships without a pin because no
+  published coordinates were available; pin it once and LMS005 and the other rooms inside it use the
+  same pin. Link a place to a programme room to list that room's sessions on the map. Tick
+  "Location confirmed" when a room is final. Map tiles come from CARTO (OpenStreetMap data) and load
+  in the visitor's browser.
 - **Registrations:** delegates create an account; add them under *Registrations* by their account email.
   Confirmed delegates get a QR code.
 - **On the day:** turn on *Event-day mode*, open *Check-in* on a phone or laptop at the desk and scan

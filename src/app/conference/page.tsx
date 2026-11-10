@@ -13,7 +13,6 @@ import { WorkshopGrid } from "@/components/home/sections";
 import { SpeakerCarousel } from "@/components/home/speaker-carousel";
 import { THEME_TOPICS } from "@/content/theme-topics";
 import { EventJsonLd } from "@/components/seo/event-json-ld";
-import { NeuralField } from "@/components/visual/neural-field";
 import { getConferenceBundle, getFaqs } from "@/lib/data/content";
 import { eventEnd, eventStart, formatEventDate } from "@/lib/time";
 import { CONFERENCE_STATUS_LABEL, type Edition } from "@/lib/types";
@@ -51,7 +50,7 @@ function Registration({ edition }: { edition: Edition }) {
       <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
         <div>
           <p className="eyebrow text-cyan">Registration</p>
-          <h2 id="registration-title" className="mt-4 text-display-md font-semibold">
+          <h2 id="registration-title" className="mt-4 text-display-md font-normal">
             {heading}
           </h2>
           {edition.registrationNote && <p className="mt-4 max-w-2xl text-lg text-paper/70">{edition.registrationNote}</p>}
@@ -64,11 +63,11 @@ function Registration({ edition }: { edition: Edition }) {
         </div>
         <div className="flex flex-wrap gap-3">
           {s === "registration_open" && edition.registrationUrl && (
-            <a href={edition.registrationUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-14 items-center gap-2 rounded-full bg-cyan px-7 font-display font-semibold text-midnight hover:bg-cyan-300">
+            <a href={edition.registrationUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-14 items-center gap-2 rounded-[3px] bg-cyan px-7 font-ui font-semibold text-midnight hover:bg-cyan-300">
               Register now <ExternalLink aria-hidden className="size-4" />
             </a>
           )}
-          <Link href="/portal" className="inline-flex min-h-14 items-center gap-2 rounded-full border border-white/20 px-7 font-display font-medium hover:border-white/40">
+          <Link href="/portal" className="inline-flex min-h-14 items-center gap-2 rounded-[3px] border border-white/20 px-7 font-ui font-medium hover:border-white/40">
             My Conference
           </Link>
         </div>
@@ -107,7 +106,6 @@ export default async function ConferencePage() {
           </>
         }
         intro={edition.themeStatement}
-        visual={<NeuralField density={0.6} className="opacity-70 [mask-image:linear-gradient(to_left,black,transparent_70%)]" />}
       >
         <dl className="mt-12 grid max-w-4xl gap-px overflow-hidden rounded-lg border border-white/10 bg-white/10 sm:grid-cols-3">
           {[
@@ -116,7 +114,7 @@ export default async function ConferencePage() {
             { icon: MapPin, label: "Venue", value: venueLine },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="bg-midnight/80 p-5">
-              <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-paper/50">
+              <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-paper/65">
                 <Icon aria-hidden className="size-3.5 text-cyan" /> {label}
               </dt>
               <dd className="mt-2 font-medium">{value}</dd>
@@ -124,10 +122,10 @@ export default async function ConferencePage() {
           ))}
         </dl>
         <div className="mt-8 flex flex-wrap items-start gap-3">
-          <Link href="#registration" className="inline-flex min-h-12 items-center gap-2 rounded-full bg-cyan px-6 font-display font-semibold text-midnight hover:bg-cyan-300">
+          <Link href="#registration" className="inline-flex min-h-12 items-center gap-2 rounded-[3px] bg-cyan px-6 font-ui font-semibold text-midnight hover:bg-cyan-300">
             {statusLabel ?? "Registration"} <ArrowRight aria-hidden className="size-4" />
           </Link>
-          <Link href="/programme" className="inline-flex min-h-12 items-center rounded-full border border-white/20 px-6 font-display font-medium hover:border-white/40">
+          <Link href="/programme" className="inline-flex min-h-12 items-center rounded-[3px] border border-white/20 px-6 font-ui font-medium hover:border-white/40">
             Programme
           </Link>
           <IcsButton
@@ -175,7 +173,7 @@ export default async function ConferencePage() {
           <ol className="mt-14 grid gap-px overflow-hidden rounded-lg border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
             {expect.map((e, i) => (
               <li key={e.title} className="bg-navy p-7">
-                <span className="font-display text-sm text-cyan">{String(i + 1).padStart(2, "0")}</span>
+                <span className="font-ui text-sm text-cyan">{String(i + 1).padStart(2, "0")}</span>
                 <h3 className="mt-6 font-display text-xl font-medium">{e.title}</h3>
                 <p className="mt-2 text-paper/65">{e.body}</p>
               </li>
@@ -189,7 +187,7 @@ export default async function ConferencePage() {
             </div>
             <ul className="flex flex-wrap gap-3 lg:col-span-8">
               {["Medical students", "Aspiring clinician-researchers", "Early-career researchers", "Academic clinicians", "Healthcare innovators"].map((a) => (
-                <li key={a} className="rounded-full border border-white/15 px-5 py-3 font-display text-lg">
+                <li key={a} className="rounded-[3px] border border-white/15 px-5 py-3 font-ui text-lg">
                   {a}
                 </li>
               ))}
@@ -208,7 +206,7 @@ export default async function ConferencePage() {
               title={<span id="research-opps-title">Present your work</span>}
               intro="Student research poster presentations are at the heart of INSPIRE. Accepted presenters share their work with delegates and discuss it with clinicians and researchers."
             />
-            <Link href="/research" className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-full bg-navy px-6 font-display font-medium text-paper hover:bg-navy-700">
+            <Link href="/research" className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-[3px] bg-navy px-6 font-ui font-medium text-paper hover:bg-navy-700">
               Research &amp; Abstracts hub <ArrowRight aria-hidden className="size-4" />
             </Link>
           </Reveal>
@@ -230,7 +228,7 @@ export default async function ConferencePage() {
         <div className="container-page">
           <div className="mb-12 flex flex-wrap items-end justify-between gap-6">
             <SectionHeading eyebrow="Workshop highlights" title={<span id="ws-title">Six clinician-led workshops</span>} />
-            <Link href="/workshops" className="inline-flex items-center gap-2 font-display font-medium text-electric-600">
+            <Link href="/workshops" className="inline-flex items-center gap-2 font-ui font-medium text-electric-600">
               All workshops <ArrowRight aria-hidden className="size-4" />
             </Link>
           </div>
@@ -243,7 +241,7 @@ export default async function ConferencePage() {
         <div className="container-page">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <SectionHeading dark eyebrow="Speaker previews" title={<span id="sp-title">Who you will hear from</span>} />
-            <Link href="/speakers" className="inline-flex items-center gap-2 font-display font-medium text-cyan">
+            <Link href="/speakers" className="inline-flex items-center gap-2 font-ui font-medium text-cyan">
               All speakers <ArrowRight aria-hidden className="size-4" />
             </Link>
           </div>
@@ -264,14 +262,20 @@ export default async function ConferencePage() {
                 <p className="mt-1 text-paper/70">{edition.venueInstitution}</p>
                 <p className="mt-4 text-paper/80">{edition.venueAddress}</p>
                 {edition.venueNotes && <p className="mt-4 text-paper/70">{edition.venueNotes}</p>}
-                <a
-                  href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(edition.venueAddress)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-8 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 px-5 text-sm font-semibold hover:border-white/40"
-                >
-                  Open in maps <ExternalLink aria-hidden className="size-4" />
-                </a>
+                <div className="mt-8 flex flex-wrap gap-2">
+                  <Link href="/map" className="inline-flex min-h-11 items-center gap-2 rounded-[3px] bg-paper px-5 text-sm font-semibold text-navy hover:bg-white">
+                    Campus map <ArrowRight aria-hidden className="size-4" />
+                  </Link>
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=${encodeURIComponent(`${edition.venueName}, ${edition.venueAddress}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-[3px] border border-white/20 px-5 text-sm font-semibold hover:border-white/40"
+                  >
+                    Directions <ExternalLink aria-hidden className="size-4" />
+                    <span className="sr-only">(opens Google Maps)</span>
+                  </a>
+                </div>
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:col-span-7">
@@ -287,8 +291,8 @@ export default async function ConferencePage() {
                 team.
               </TravelCard>
               <TravelCard icon={MapPin} title="On the day">
-                Signage and volunteers will guide you from the campus entrance to registration. Room details will appear on the
-                programme once confirmed.
+                Most of the day is in the Ross Lucas Medical Sciences Building. One group of oral presentations is in the Isaac
+                Newton Building. The campus map shows both, with rooms added as they are confirmed.
               </TravelCard>
             </div>
           </div>

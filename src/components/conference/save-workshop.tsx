@@ -12,7 +12,7 @@ export function SaveWorkshopButton({ id, title }: { id: string; title: string })
       aria-pressed={saved}
       onClick={() => agenda.toggleWorkshop(id, title)}
       className={cn(
-        "inline-flex min-h-12 items-center gap-2 rounded-full px-6 font-display font-semibold transition-colors",
+        "inline-flex min-h-12 items-center gap-2 rounded-[3px] px-6 font-ui font-semibold transition-colors",
         saved ? "bg-paper text-midnight" : "bg-cyan text-midnight hover:bg-cyan-300",
       )}
     >

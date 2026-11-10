@@ -1,13 +1,20 @@
 "use client";
-import { motion, useScroll, useTransform } from "motion/react";
-import { ArrowDown, ArrowRight, CalendarDays, MapPin } from "lucide-react";
+import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
+import { ArrowRight } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
-import { NeuralField } from "@/components/visual/neural-field";
 import { Countdown } from "@/components/visual/countdown";
 import { CONFERENCE_STATUS_LABEL, type ConferenceStatus } from "@/lib/types";
 
 const ease = [0.16, 1, 0.3, 1] as const;
+
+/** Splits the theme into "headline: rest" so the subtitle can be set in italic. */
+function splitTheme(theme: string) {
+  const i = theme.indexOf(":");
+  if (i === -1) return { lead: theme, rest: "" };
+  return { lead: theme.slice(0, i).trim(), rest: theme.slice(i + 1).trim() };
+}
 
 export function Hero({
   year,
@@ -29,119 +36,153 @@ export function Hero({
   status: ConferenceStatus | null;
 }) {
   const ref = useRef<HTMLElement>(null);
+  const reduce = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const contentY = useTransform(scrollYProgress, [0, 1], [0, 120]);
-  const contentOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
-  const fieldScale = useTransform(scrollYProgress, [0, 1], [1, 1.15]);
-
-  const headline = ["THE FUTURE", "OF MEDICINE", "STARTS HERE."];
+  const crestY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : 90]);
+  const textY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : 40]);
+  const { lead, rest } = splitTheme(theme);
 
   return (
-    <section ref={ref} aria-labelledby="hero-title" className="surface-midnight noise relative isolate flex min-h-[100svh] items-end overflow-hidden pb-16 pt-32 sm:pb-20">
-      {/* Layered light and depth */}
+    <section ref={ref} aria-labelledby="hero-title" className="surface-midnight noise relative isolate overflow-hidden pt-[calc(var(--header-h)+3rem)]">
+      {/* Heraldic quartering: a cross of hairlines that the crest sits on. */}
       <div aria-hidden className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_70%_30%,rgba(52,120,246,0.28),transparent_60%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_15%_80%,rgba(133,120,249,0.18),transparent_70%)]" />
-        <div className="grid-lines absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]" />
-        <motion.div style={{ scale: fieldScale }} className="absolute inset-0">
-          <NeuralField />
-        </motion.div>
-        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-midnight to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_70%_at_72%_42%,rgba(58,95,148,0.38),transparent_70%)]" />
+        <div className="absolute inset-y-0 left-[58%] hidden w-px bg-gradient-to-b from-transparent via-white/15 to-transparent lg:block" />
+        <div className="absolute inset-x-0 top-[52%] h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="quarter-lattice absolute inset-0 opacity-60 [mask-image:radial-gradient(ellipse_at_70%_45%,black,transparent_70%)]" />
       </div>
 
-      <motion.div style={{ y: contentY, opacity: contentOpacity }} className="container-page relative w-full">
-        <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
+      <div className="container-page relative">
+        {/* Dateline, set like the masthead of a journal */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.8, ease }}
-          className="eyebrow flex flex-wrap items-center gap-3 text-cyan"
+          className="flex flex-wrap items-center justify-between gap-x-8 gap-y-2 border-y border-white/15 py-3 font-ui text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-paper/75"
         >
-          <span aria-hidden className="h-px w-10 bg-cyan/60" />
-          INSPIRE National Medical Research Conference {year}
-          {status && (
-            <span className="rounded-full border border-cyan/30 bg-cyan/10 px-2.5 py-0.5 text-[0.65rem] tracking-[0.14em] text-cyan">
-              {CONFERENCE_STATUS_LABEL[status]}
-            </span>
-          )}
-        </motion.p>
+          <span className="hidden sm:inline">National Medical Research Conference</span>
+          <span>{dateLabel}</span>
+          {status && <span className="text-cyan">{CONFERENCE_STATUS_LABEL[status]}</span>}
+        </motion.div>
 
-        <h1 id="hero-title" className="mt-8 text-display-xl font-semibold">
-          {headline.map((line, i) => (
-            <span key={line} className="block overflow-hidden pb-[0.06em]">
-              <motion.span
-                className={i === 2 ? "block bg-gradient-to-r from-paper via-cyan-300 to-violet-300 bg-clip-text text-transparent" : "block"}
-                initial={{ y: "105%" }}
-                animate={{ y: 0 }}
-                transition={{ duration: 1.1, delay: 0.15 + i * 0.12, ease }}
-              >
-                {line}
-              </motion.span>
-            </span>
-          ))}
-        </h1>
+        <div className="grid items-center gap-12 pb-16 pt-12 sm:pt-16 lg:grid-cols-12 lg:gap-8 lg:pb-24">
+          <motion.div style={{ y: textY }} className="lg:col-span-7">
+            <p className="eyebrow text-cyan">INSPIRE {year}</p>
+            <h1 id="hero-title" className="mt-6 text-display-xl font-normal">
+              <span className="block overflow-hidden pb-[0.08em]">
+                <motion.span className="block" initial={{ y: "105%" }} animate={{ y: 0 }} transition={{ duration: 1.1, delay: 0.1, ease }}>
+                  {lead}
+                </motion.span>
+              </span>
+              {rest && (
+                <span className="block overflow-hidden pb-[0.12em]">
+                  <motion.span
+                    className="block text-[0.58em] font-light italic leading-[1.05] text-cyan"
+                    initial={{ y: "110%" }}
+                    animate={{ y: 0 }}
+                    transition={{ duration: 1.1, delay: 0.25, ease }}
+                  >
+                    {rest}
+                  </motion.span>
+                </span>
+              )}
+            </h1>
 
-        <div className="mt-10 grid gap-10 lg:grid-cols-12 lg:items-end">
-          <motion.div
-            className="lg:col-span-6"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.6, ease }}
-          >
-            <p className="font-display text-xl font-medium text-paper sm:text-2xl">{theme}</p>
-            <p className="mt-4 max-w-xl text-lg leading-relaxed text-paper/70">
-              Join the next generation of clinicians, researchers and innovators for a day of discovery, collaboration and
-              scientific ambition.
-            </p>
-            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-paper/80">
-              <li className="flex items-center gap-2">
-                <CalendarDays aria-hidden className="size-4 text-cyan" /> {dateLabel}
-              </li>
-              <li className="flex items-center gap-2">
-                <MapPin aria-hidden className="size-4 text-cyan" /> {venue}
-              </li>
-            </ul>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <motion.p
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.5, ease }}
+              className="mt-8 max-w-xl text-lg leading-relaxed text-paper/75"
+            >
+              A day for medical students to present research, learn from clinicians and researchers, and take a first
+              step into academic medicine. Hosted at Lincoln Medical School.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.62, ease }}
+              className="mt-10 flex flex-wrap gap-3"
+            >
               <Link
                 href="/conference"
-                className="group inline-flex min-h-14 items-center gap-2 rounded-full bg-cyan px-7 font-display font-semibold text-midnight transition-[background-color,box-shadow] hover:bg-cyan-300 hover:shadow-[0_12px_40px_-10px_rgba(57,213,242,0.7)]"
+                className="group inline-flex min-h-14 items-center gap-3 bg-paper px-7 font-ui font-semibold text-navy transition-colors hover:bg-white"
               >
-                Explore the Conference
+                Explore the conference
                 <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
               </Link>
               <Link
                 href="/programme"
-                className="inline-flex min-h-14 items-center gap-2 rounded-full border border-white/20 bg-white/5 px-7 font-display font-medium text-paper backdrop-blur-sm transition-colors hover:border-white/40 hover:bg-white/10"
+                className="inline-flex min-h-14 items-center gap-2 border border-white/30 px-7 font-ui font-medium text-paper transition-colors hover:border-white/70 hover:bg-white/5"
               >
-                View the Programme
+                The programme
               </Link>
-            </div>
+              <Link
+                href="/map"
+                className="inline-flex min-h-14 items-center gap-2 px-3 font-ui font-medium text-paper underline decoration-white/30 underline-offset-[6px] transition-colors hover:decoration-white"
+              >
+                Campus map
+              </Link>
+            </motion.div>
           </motion.div>
 
-          <motion.div
-            className="lg:col-span-6 lg:justify-self-end"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.8, ease }}
-          >
-            <Countdown startIso={startIso} endIso={endIso} hasConfirmedTime={hasConfirmedTime} year={year} />
+          <motion.div style={{ y: crestY }} className="relative mx-auto w-[min(62vw,300px)] lg:col-span-5 lg:w-[min(30vw,360px)]">
+            <CrestReveal />
           </motion.div>
         </div>
-      </motion.div>
 
-      <a
-        href="#introduction"
-        className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-paper/65 transition-colors hover:text-paper md:flex"
-      >
-        Scroll
-        <span className="relative flex h-10 w-6 justify-center rounded-full border border-white/20">
-          <motion.span
-            className="mt-2 block size-1 rounded-full bg-cyan"
-            animate={{ y: [0, 14, 0], opacity: [1, 0.3, 1] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          />
-        </span>
-        <ArrowDown aria-hidden className="sr-only" />
-      </a>
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, delay: 0.8, ease }}
+          className="grid gap-8 pb-14 md:grid-cols-12 md:items-end"
+        >
+          <dl className="grid grid-cols-2 gap-6 font-ui text-sm md:col-span-5">
+            <div>
+              <dt className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-paper/65">Date</dt>
+              <dd className="mt-2 font-display text-xl text-paper">{dateLabel}</dd>
+            </div>
+            <div>
+              <dt className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-paper/65">Venue</dt>
+              <dd className="mt-2 font-display text-xl text-paper">{venue}</dd>
+            </div>
+          </dl>
+          <div className="md:col-span-7">
+            <Countdown startIso={startIso} endIso={endIso} hasConfirmedTime={hasConfirmedTime} year={year} />
+          </div>
+        </motion.div>
+      </div>
     </section>
+  );
+}
+
+/** The crest, revealed one quarter at a time, with a slow outline drawn around it. */
+function CrestReveal() {
+  const reduce = useReducedMotion();
+  const quarters = [
+    "inset(0 50% 50% 0)",
+    "inset(0 0 50% 50%)",
+    "inset(50% 50% 0 0)",
+    "inset(50% 0 0 50%)",
+  ];
+  return (
+    <div className="relative aspect-[338/397]">
+      <div aria-hidden className="absolute -inset-[10%] rounded-full border border-white/10" />
+      <div aria-hidden className="absolute -inset-[22%] rounded-full border border-dashed border-white/[0.07]" />
+      {quarters.map((clip, i) => (
+        <motion.div
+          key={clip}
+          aria-hidden
+          className="absolute inset-0"
+          style={{ clipPath: clip }}
+          initial={reduce ? false : { opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.9, delay: 0.35 + i * 0.14, ease }}
+        >
+          <Image src="/brand/crest-white.png" alt="" fill priority sizes="360px" className="object-contain" />
+        </motion.div>
+      ))}
+      <span className="sr-only">The INSPIRE crest: a shield quartered with an open book, the rod of Asclepius twice, and an atom.</span>
+    </div>
   );
 }

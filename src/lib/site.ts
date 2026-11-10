@@ -48,6 +48,7 @@ export const NAV: NavGroup[] = [
       { label: "Programme", href: "/programme", description: "The interactive schedule and your agenda" },
       { label: "Speakers", href: "/speakers", description: "Keynotes and session leads" },
       { label: "Workshops", href: "/workshops", description: "Six clinician-led, interactive workshops" },
+      { label: "Campus map", href: "/map", description: "Find the buildings and rooms on the day" },
     ],
     feature: {
       title: "Digital Health: From Innovation to Evidence",
@@ -74,6 +75,7 @@ export const FOOTER_LINKS = {
     { label: "Conference 2026", href: "/conference" },
     { label: "Programme", href: "/programme" },
     { label: "Speakers", href: "/speakers" },
+    { label: "Campus map", href: "/map" },
   ],
   participate: [
     { label: "Workshops", href: "/workshops" },

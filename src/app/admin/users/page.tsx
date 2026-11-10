@@ -19,9 +19,9 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
       <AdminHeader title="Users and roles" description="Delegate: portal only. Reviewer: plus assigned abstract reviews. Editor: plus public content. Admin: everything, including personal data. Give the least access needed." />
       <form className="flex flex-wrap gap-2" role="search">
         <label htmlFor="q" className="sr-only">Search</label>
-        <input id="q" name="q" defaultValue={sp.q} placeholder="Search name, email, institution…" className="min-h-11 min-w-56 flex-1 rounded-full border border-navy/15 bg-white px-4 text-sm" />
+        <input id="q" name="q" defaultValue={sp.q} placeholder="Search name, email, institution…" className="min-h-11 min-w-56 flex-1 rounded-[3px] border border-navy/15 bg-white px-4 text-sm" />
         <label htmlFor="role" className="sr-only">Role</label>
-        <select id="role" name="role" defaultValue={sp.role ?? ""} className="min-h-11 rounded-full border border-navy/15 bg-white px-4 text-sm">
+        <select id="role" name="role" defaultValue={sp.role ?? ""} className="min-h-11 rounded-[3px] border border-navy/15 bg-white px-4 text-sm">
           <option value="">All roles</option><option value="delegate">Delegates</option><option value="reviewer">Reviewers</option><option value="editor">Editors</option><option value="admin">Admins</option>
         </select>
         <button className={btn.secondary}>Filter</button>

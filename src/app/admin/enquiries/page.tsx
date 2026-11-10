@@ -22,7 +22,7 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
       {!emailConfigured() && <Notice tone="warning">Email delivery isn&apos;t configured, so enquiries are only stored here. Add the Resend settings to also receive them by email.</Notice>}
       <form className="flex gap-2">
         <label htmlFor="status" className="sr-only">Status</label>
-        <select id="status" name="status" defaultValue={sp.status ?? ""} className="min-h-11 rounded-full border border-navy/15 bg-white px-4 text-sm">
+        <select id="status" name="status" defaultValue={sp.status ?? ""} className="min-h-11 rounded-[3px] border border-navy/15 bg-white px-4 text-sm">
           <option value="">All</option><option value="new">New</option><option value="in_progress">In progress</option><option value="closed">Closed</option>
         </select>
         <button className={btn.secondary}>Filter</button>

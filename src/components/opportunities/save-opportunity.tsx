@@ -27,7 +27,7 @@ export function SaveOpportunity({ id, title }: { id: string; title: string }) {
   if (uid === undefined) return null;
   if (!uid) {
     return (
-      <Link href="/login" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-navy/15 px-4 text-sm font-medium text-ink hover:border-navy/40">
+      <Link href="/login" className="inline-flex min-h-11 items-center gap-2 rounded-[3px] border border-navy/15 px-4 text-sm font-medium text-ink hover:border-navy/40">
         <Bookmark aria-hidden className="size-4" /> Sign in to save
       </Link>
     );
@@ -43,7 +43,7 @@ export function SaveOpportunity({ id, title }: { id: string; title: string }) {
     } else toast({ tone: "success", title: next ? "Opportunity saved" : "Removed from saved", body: title });
   };
   return (
-    <button type="button" aria-pressed={saved} onClick={toggle} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-navy/15 px-4 text-sm font-medium text-ink hover:border-navy/40">
+    <button type="button" aria-pressed={saved} onClick={toggle} className="inline-flex min-h-11 items-center gap-2 rounded-[3px] border border-navy/15 px-4 text-sm font-medium text-ink hover:border-navy/40">
       {saved ? <BookmarkCheck aria-hidden className="size-4 text-electric-600" /> : <Bookmark aria-hidden className="size-4" />}
       {saved ? "Saved" : "Save"}
     </button>

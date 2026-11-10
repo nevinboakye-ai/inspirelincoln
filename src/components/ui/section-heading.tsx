@@ -26,7 +26,7 @@ export function SectionHeading({
           {eyebrow}
         </p>
       )}
-      <Tag className={cn("text-display-md font-semibold", dark ? "text-paper" : "text-ink")}>{title}</Tag>
+      <Tag className={cn("text-display-md font-normal", dark ? "text-paper" : "text-ink")}>{title}</Tag>
       {intro && (
         <p className={cn("mt-6 text-lg leading-relaxed", dark ? "text-paper/70" : "text-slate-700")}>{intro}</p>
       )}

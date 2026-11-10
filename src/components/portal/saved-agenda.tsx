@@ -52,7 +52,7 @@ export function SavedAgenda({ sessions, workshops }: { sessions: Session[]; work
           </ul>
         </div>
       )}
-      <Link href="/programme?view=agenda" className="inline-flex min-h-11 items-center rounded-full border border-navy/15 px-4 text-sm font-medium text-ink hover:border-navy/40">
+      <Link href="/programme?view=agenda" className="inline-flex min-h-11 items-center rounded-[3px] border border-navy/15 px-4 text-sm font-medium text-ink hover:border-navy/40">
         Manage agenda &amp; export
       </Link>
     </div>

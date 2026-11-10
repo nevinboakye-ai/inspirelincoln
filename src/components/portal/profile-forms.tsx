@@ -36,7 +36,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
       <Field id="yearOfStudy" label="Year of study">
         <input id="yearOfStudy" name="yearOfStudy" defaultValue={profile.yearOfStudy ?? ""} className={inputClass} />
       </Field>
-      <button type="submit" disabled={pending} className="inline-flex min-h-12 items-center gap-2 rounded-full bg-navy px-6 font-display font-semibold text-paper hover:bg-navy-700 disabled:opacity-60">
+      <button type="submit" disabled={pending} className="inline-flex min-h-12 items-center gap-2 rounded-[3px] bg-navy px-6 font-ui font-semibold text-paper hover:bg-navy-700 disabled:opacity-60">
         {pending && <Loader2 aria-hidden className="size-4 animate-spin" />} Save profile
       </button>
     </form>
@@ -51,7 +51,7 @@ export function DeleteAccountForm() {
       <Field id="confirm" label='Type "DELETE" to confirm' required error={state?.fieldErrors?.confirm}>
         <input id="confirm" name="confirm" autoComplete="off" className={inputClass} />
       </Field>
-      <button type="submit" disabled={pending} className="inline-flex min-h-12 items-center gap-2 rounded-full bg-danger px-6 font-display font-semibold text-white disabled:opacity-60">
+      <button type="submit" disabled={pending} className="inline-flex min-h-12 items-center gap-2 rounded-[3px] bg-danger px-6 font-ui font-semibold text-white disabled:opacity-60">
         Permanently delete my account
       </button>
     </form>

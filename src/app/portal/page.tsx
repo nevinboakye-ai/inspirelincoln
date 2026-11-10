@@ -41,7 +41,7 @@ export default async function PortalHome({ searchParams }: { searchParams: Promi
     .order("published_at", { ascending: false })
     .limit(5);
 
-  const qr = registration?.status === "confirmed" ? await QRCode.toString(`INSPIRE-CHECKIN:${registration.checkin_token}`, { type: "svg", margin: 1, color: { dark: "#071426", light: "#ffffff" } }) : null;
+  const qr = registration?.status === "confirmed" ? await QRCode.toString(`INSPIRE-CHECKIN:${registration.checkin_token}`, { type: "svg", margin: 1, color: { dark: "#1A3154", light: "#ffffff" } }) : null;
 
   return (
     <div className="space-y-6">
@@ -134,9 +134,9 @@ export default async function PortalHome({ searchParams }: { searchParams: Promi
             <p className="text-sm text-slate-700">You haven&apos;t submitted any abstracts.</p>
           )}
           <div className="mt-4 flex flex-wrap gap-2">
-            <Link href="/portal/presenter" className="inline-flex min-h-11 items-center rounded-full border border-navy/15 px-4 text-sm font-medium text-ink hover:border-navy/40">Presenter portal</Link>
+            <Link href="/portal/presenter" className="inline-flex min-h-11 items-center rounded-[3px] border border-navy/15 px-4 text-sm font-medium text-ink hover:border-navy/40">Presenter portal</Link>
             {edition.abstractConfig.submissionsOpen && (
-              <Link href="/portal/abstracts/new" className="inline-flex min-h-11 items-center rounded-full bg-navy px-4 text-sm font-medium text-paper">Submit an abstract</Link>
+              <Link href="/portal/abstracts/new" className="inline-flex min-h-11 items-center rounded-[3px] bg-navy px-4 text-sm font-medium text-paper">Submit an abstract</Link>
             )}
           </div>
         </Card>

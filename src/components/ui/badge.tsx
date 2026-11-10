@@ -6,8 +6,8 @@ type Tone = "neutral" | "electric" | "cyan" | "violet" | "success" | "warning" |
 const tones: Record<Tone, string> = {
   neutral: "bg-paper-200 text-slate-700 ring-navy/10",
   electric: "bg-electric/10 text-electric-700 ring-electric/20",
-  cyan: "bg-cyan/15 text-[#0b6577] ring-cyan/30",
-  violet: "bg-violet/12 text-[#4b3fc4] ring-violet/25",
+  cyan: "bg-cyan/15 text-[#28506E] ring-cyan/30",
+  violet: "bg-violet/12 text-[#2E4A7A] ring-violet/25",
   success: "bg-success/10 text-success ring-success/20",
   warning: "bg-warning/10 text-[#7a4a00] ring-warning/25",
   danger: "bg-danger/10 text-danger ring-danger/20",

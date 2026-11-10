@@ -109,7 +109,7 @@ export function AbstractForm({ initial, config }: { initial: AbstractValues; con
         <p className="text-sm text-slate-700">
           Up to {config.sectionWordLimit} words per section and {config.totalWordLimit} words in total. Do not include identifiable patient information.
         </p>
-        <p aria-live="polite" className={cn("sticky top-[calc(var(--header-h)+8px)] z-10 w-fit rounded-full px-4 py-2 text-sm font-semibold shadow-sm", total > config.totalWordLimit ? "bg-danger text-white" : "bg-navy text-paper")}>
+        <p aria-live="polite" className={cn("sticky top-[calc(var(--header-h)+8px)] z-10 w-fit rounded-[3px] px-4 py-2 text-sm font-semibold shadow-sm", total > config.totalWordLimit ? "bg-danger text-white" : "bg-navy text-paper")}>
           {total} / {config.totalWordLimit} words
         </p>
         {ABSTRACT_SECTIONS.map((k) => {
@@ -137,7 +137,7 @@ export function AbstractForm({ initial, config }: { initial: AbstractValues; con
 
       {config.allowFiles && (
         <Field id="file" label="Supporting file" hint={`Optional. PDF only, up to ${config.maxFileMb} MB.${v.hasFile ? " A file is already attached; uploading a new one replaces it." : ""}`} error={fe("file")}>
-          <input id="file" name="file" type="file" accept="application/pdf" className="block w-full text-sm text-slate-700 file:mr-4 file:min-h-11 file:rounded-full file:border-0 file:bg-navy file:px-5 file:font-semibold file:text-paper" />
+          <input id="file" name="file" type="file" accept="application/pdf" className="block w-full text-sm text-slate-700 file:mr-4 file:min-h-11 file:rounded-[3px] file:border-0 file:bg-navy file:px-5 file:font-semibold file:text-paper" />
         </Field>
       )}
 
@@ -163,10 +163,10 @@ export function AbstractForm({ initial, config }: { initial: AbstractValues; con
       </fieldset>
 
       <div className="flex flex-wrap gap-3">
-        <button type="submit" name="intent" value="draft" disabled={pending} className="inline-flex min-h-12 items-center gap-2 rounded-full border border-navy/20 px-6 font-display font-semibold text-ink hover:border-navy/40 disabled:opacity-60">
+        <button type="submit" name="intent" value="draft" disabled={pending} className="inline-flex min-h-12 items-center gap-2 rounded-[3px] border border-navy/20 px-6 font-ui font-semibold text-ink hover:border-navy/40 disabled:opacity-60">
           {pending ? <Loader2 aria-hidden className="size-4 animate-spin" /> : <Save aria-hidden className="size-4" />} Save draft
         </button>
-        <button type="submit" name="intent" value="submit" disabled={pending} className="inline-flex min-h-12 items-center gap-2 rounded-full bg-navy px-6 font-display font-semibold text-paper hover:bg-navy-700 disabled:opacity-60">
+        <button type="submit" name="intent" value="submit" disabled={pending} className="inline-flex min-h-12 items-center gap-2 rounded-[3px] bg-navy px-6 font-ui font-semibold text-paper hover:bg-navy-700 disabled:opacity-60">
           <Send aria-hidden className="size-4" /> Submit abstract
         </button>
       </div>

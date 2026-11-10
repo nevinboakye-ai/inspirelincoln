@@ -32,9 +32,9 @@ export default async function Registrations({ searchParams }: { searchParams: Pr
       <Panel title="Add a registration"><AddRegistrationForm /></Panel>
       <form className="flex flex-wrap gap-2" role="search">
         <label htmlFor="q" className="sr-only">Search</label>
-        <input id="q" name="q" defaultValue={sp.q} placeholder="Search name, email, reference…" className="min-h-11 min-w-56 flex-1 rounded-full border border-navy/15 bg-white px-4 text-sm" />
+        <input id="q" name="q" defaultValue={sp.q} placeholder="Search name, email, reference…" className="min-h-11 min-w-56 flex-1 rounded-[3px] border border-navy/15 bg-white px-4 text-sm" />
         <label htmlFor="status" className="sr-only">Status</label>
-        <select id="status" name="status" defaultValue={sp.status ?? ""} className="min-h-11 rounded-full border border-navy/15 bg-white px-4 text-sm">
+        <select id="status" name="status" defaultValue={sp.status ?? ""} className="min-h-11 rounded-[3px] border border-navy/15 bg-white px-4 text-sm">
           <option value="">All statuses</option><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="waitlisted">Waitlisted</option><option value="cancelled">Cancelled</option>
         </select>
         <button className={btn.secondary}>Filter</button>

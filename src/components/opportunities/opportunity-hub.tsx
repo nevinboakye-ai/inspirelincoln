@@ -45,7 +45,7 @@ export function OpportunityHub({ items }: { items: Opportunity[] }) {
             <legend className="eyebrow mb-3 text-slate">Category</legend>
             <div className="flex flex-wrap gap-2 lg:flex-col">
               {["", ...OPPORTUNITY_CATEGORIES].map((c) => (
-                <button key={c || "all"} type="button" aria-pressed={cat === c} onClick={() => setCat(c)} className={cn("min-h-10 rounded-full px-4 text-left text-sm font-medium transition-colors lg:rounded-md", cat === c ? "bg-navy text-paper" : "bg-white text-slate-700 hover:bg-paper-200")}>
+                <button key={c || "all"} type="button" aria-pressed={cat === c} onClick={() => setCat(c)} className={cn("min-h-10 rounded-[3px] px-4 text-left text-sm font-medium transition-colors lg:rounded-md", cat === c ? "bg-navy text-paper" : "bg-white text-slate-700 hover:bg-paper-200")}>
                   {c || "All categories"}
                 </button>
               ))}

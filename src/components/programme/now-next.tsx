@@ -40,11 +40,11 @@ export function NowNext({ sessions }: { sessions: Session[] }) {
   return (
     <div className="grid gap-8 lg:grid-cols-2" aria-live="polite">
       <div>
-        <h2 className="eyebrow text-paper/50">Happening now</h2>
+        <h2 className="eyebrow text-paper/65">Happening now</h2>
         <div className="mt-4 space-y-3">{current.length ? current.map((s) => <Card key={s.id} s={s} live />) : <p className="text-paper/60">No sessions are running right now.</p>}</div>
       </div>
       <div>
-        <h2 className="eyebrow text-paper/50">Up next</h2>
+        <h2 className="eyebrow text-paper/65">Up next</h2>
         <div className="mt-4 space-y-3">{next.length ? next.map((s) => <Card key={s.id} s={s} />) : <p className="text-paper/60">That&apos;s everything for today.</p>}</div>
       </div>
     </div>

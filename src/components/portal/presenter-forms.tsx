@@ -16,13 +16,13 @@ export function WithdrawForm({ id }: { id: string }) {
       {confirm ? (
         <div className="flex flex-wrap items-center gap-3">
           <p className="text-sm text-slate-700">Withdraw this abstract? This can&apos;t be undone.</p>
-          <button type="submit" disabled={pending} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-danger px-5 text-sm font-semibold text-white disabled:opacity-60">
+          <button type="submit" disabled={pending} className="inline-flex min-h-11 items-center gap-2 rounded-[3px] bg-danger px-5 text-sm font-semibold text-white disabled:opacity-60">
             {pending && <Loader2 aria-hidden className="size-4 animate-spin" />} Yes, withdraw
           </button>
-          <button type="button" onClick={() => setConfirm(false)} className="min-h-11 rounded-full px-4 text-sm font-medium text-slate-700 hover:bg-paper-200">Cancel</button>
+          <button type="button" onClick={() => setConfirm(false)} className="min-h-11 rounded-[3px] px-4 text-sm font-medium text-slate-700 hover:bg-paper-200">Cancel</button>
         </div>
       ) : (
-        <button type="button" onClick={() => setConfirm(true)} className="min-h-11 rounded-full border border-danger/30 px-5 text-sm font-semibold text-danger hover:bg-danger/[0.05]">
+        <button type="button" onClick={() => setConfirm(true)} className="min-h-11 rounded-[3px] border border-danger/30 px-5 text-sm font-semibold text-danger hover:bg-danger/[0.05]">
           Withdraw abstract
         </button>
       )}
@@ -49,9 +49,9 @@ export function PosterUploadForm({ abstractId, maxMb }: { abstractId: string; ma
         {fe("orientation") && <p className="mt-1 text-sm font-medium text-danger">{fe("orientation")}</p>}
       </fieldset>
       <Field id={`poster-${abstractId}`} label="Poster file" required hint={`PDF, PNG or JPEG, up to ${maxMb} MB.`} error={fe("poster")}>
-        <input id={`poster-${abstractId}`} name="poster" type="file" accept="application/pdf,image/png,image/jpeg" className="block w-full text-sm text-slate-700 file:mr-4 file:min-h-11 file:rounded-full file:border-0 file:bg-navy file:px-5 file:font-semibold file:text-paper" />
+        <input id={`poster-${abstractId}`} name="poster" type="file" accept="application/pdf,image/png,image/jpeg" className="block w-full text-sm text-slate-700 file:mr-4 file:min-h-11 file:rounded-[3px] file:border-0 file:bg-navy file:px-5 file:font-semibold file:text-paper" />
       </Field>
-      <button type="submit" disabled={pending} className="inline-flex min-h-12 items-center gap-2 rounded-full bg-navy px-6 font-display font-semibold text-paper hover:bg-navy-700 disabled:opacity-60">
+      <button type="submit" disabled={pending} className="inline-flex min-h-12 items-center gap-2 rounded-[3px] bg-navy px-6 font-ui font-semibold text-paper hover:bg-navy-700 disabled:opacity-60">
         {pending ? <Loader2 aria-hidden className="size-4 animate-spin" /> : <Upload aria-hidden className="size-4" />} Upload poster
       </button>
     </form>

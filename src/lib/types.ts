@@ -245,3 +245,22 @@ export interface SiteContent {
 }
 
 export type UserRole = "delegate" | "reviewer" | "editor" | "admin";
+
+export type MapPlaceKind = "venue" | "room" | "building" | "landmark" | "amenity";
+
+export interface MapPlace {
+  id: string;
+  slug: string;
+  name: string;
+  code: string | null;
+  kind: MapPlaceKind;
+  description: string;
+  /** Null until a verified location is set in the admin dashboard. */
+  lat: number | null;
+  lng: number | null;
+  parentId: string | null;
+  roomId: string | null;
+  directions: string | null;
+  /** Whether the location of this place for the conference is confirmed. */
+  locationConfirmed: boolean;
+}

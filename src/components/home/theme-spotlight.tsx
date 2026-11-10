@@ -14,9 +14,9 @@ function OrbitGraphic({ active }: { active: number | null }) {
     <svg viewBox="-200 -200 400 400" className="h-full w-full" aria-hidden>
       <defs>
         <radialGradient id="core" r="1">
-          <stop offset="0" stopColor="#39D5F2" stopOpacity="0.9" />
-          <stop offset="0.4" stopColor="#3478F6" stopOpacity="0.35" />
-          <stop offset="1" stopColor="#3478F6" stopOpacity="0" />
+          <stop offset="0" stopColor="#C9D8EC" stopOpacity="0.9" />
+          <stop offset="0.4" stopColor="#3A5F94" stopOpacity="0.35" />
+          <stop offset="1" stopColor="#3A5F94" stopOpacity="0" />
         </radialGradient>
       </defs>
       <circle r="60" fill="url(#core)" />
@@ -25,7 +25,7 @@ function OrbitGraphic({ active }: { active: number | null }) {
           key={r}
           r={r}
           fill="none"
-          stroke="#F7F9FC"
+          stroke="#F8F6F0"
           strokeOpacity={0.09 + i * 0.02}
           strokeDasharray={i === 1 ? "2 6" : undefined}
           animate={{ rotate: i % 2 ? -360 : 360 }}
@@ -41,9 +41,9 @@ function OrbitGraphic({ active }: { active: number | null }) {
           const on = active === i;
           return (
             <g key={i}>
-              <line x1={0} y1={0} x2={x} y2={y} stroke={on ? "#39D5F2" : "#F7F9FC"} strokeOpacity={on ? 0.8 : 0.08} strokeWidth={on ? 1.5 : 1} />
-              <circle cx={x} cy={y} r={on ? 12 : 7} fill={on ? "#39D5F2" : "#122944"} stroke="#39D5F2" strokeOpacity={on ? 1 : 0.6} style={{ transition: "r 0.4s" }} />
-              {on && <circle cx={x} cy={y} r={22} fill="none" stroke="#39D5F2" strokeOpacity={0.35} />}
+              <line x1={0} y1={0} x2={x} y2={y} stroke={on ? "#C9D8EC" : "#F8F6F0"} strokeOpacity={on ? 0.8 : 0.08} strokeWidth={on ? 1.5 : 1} />
+              <circle cx={x} cy={y} r={on ? 12 : 7} fill={on ? "#C9D8EC" : "#22406B"} stroke="#C9D8EC" strokeOpacity={on ? 1 : 0.6} style={{ transition: "r 0.4s" }} />
+              {on && <circle cx={x} cy={y} r={22} fill="none" stroke="#C9D8EC" strokeOpacity={0.35} />}
             </g>
           );
         })}
@@ -73,7 +73,7 @@ export function ThemeSpotlight({ theme, statement, year }: { theme: string; stat
             <p className="eyebrow mb-6 flex items-center gap-3 text-cyan">
               <span aria-hidden className="h-px w-8 bg-cyan/60" /> {year} conference theme
             </p>
-            <h2 id="theme-title" className="text-display-lg font-semibold">
+            <h2 id="theme-title" className="text-display-lg font-normal">
               {theme.split(":")[0]}:
               <span className="block bg-gradient-to-r from-cyan to-violet-300 bg-clip-text text-transparent">{theme.split(":").slice(1).join(":").trim()}</span>
             </h2>

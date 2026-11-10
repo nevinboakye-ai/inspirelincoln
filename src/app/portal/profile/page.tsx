@@ -7,7 +7,7 @@ export default async function ProfilePage() {
   const { profile } = await requireUser("/portal/profile");
   return (
     <div className="space-y-6">
-      <h1 className="text-display-sm font-semibold text-ink">Profile &amp; settings</h1>
+      <h1 className="text-display-sm font-medium text-ink">Profile &amp; settings</h1>
       <section className="rounded-xl border border-navy/10 bg-white p-6 sm:p-8">
         <ProfileForm profile={profile} />
       </section>

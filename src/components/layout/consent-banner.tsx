@@ -44,10 +44,10 @@ export function ConsentBanner() {
         understand how the site is used. See our <Link href="/cookies" className="text-cyan underline underline-offset-4">cookie policy</Link>.
       </p>
       <div className="mt-4 flex flex-wrap gap-3">
-        <button type="button" onClick={() => decide(true)} className="min-h-11 rounded-full bg-cyan px-5 text-sm font-semibold text-midnight">
+        <button type="button" onClick={() => decide(true)} className="min-h-11 rounded-[3px] bg-cyan px-5 text-sm font-semibold text-midnight">
           Accept optional cookies
         </button>
-        <button type="button" onClick={() => decide(false)} className="min-h-11 rounded-full border border-white/25 px-5 text-sm font-semibold">
+        <button type="button" onClick={() => decide(false)} className="min-h-11 rounded-[3px] border border-white/25 px-5 text-sm font-semibold">
           Essential only
         </button>
       </div>

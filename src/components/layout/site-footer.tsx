@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import type { Edition } from "@/lib/types";
@@ -9,18 +10,8 @@ export function SiteFooter({ edition }: { edition: Edition }) {
   const year = new Date().getFullYear();
   return (
     <footer className="surface-midnight relative overflow-hidden">
-      {/* Signal trace: a restrained nod to physiological monitoring and data. */}
-      <svg aria-hidden viewBox="0 0 1440 120" preserveAspectRatio="none" className="absolute inset-x-0 top-0 h-24 w-full text-cyan/25">
-        <path
-          d="M0 60 H420 L440 60 L452 30 L466 96 L480 18 L494 78 L506 60 H860 L872 60 L880 46 L890 72 L900 60 H1440"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.25"
-          vectorEffect="non-scaling-stroke"
-        />
-      </svg>
 
-      <div className="container-page relative pt-32 pb-10">
+      <div className="container-page relative pt-20 pb-10">
         <div className="grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-5">
             <Logo />
@@ -68,14 +59,16 @@ export function SiteFooter({ edition }: { edition: Edition }) {
           </nav>
         </div>
 
-        <p
-          aria-hidden
-          className="pointer-events-none mt-20 select-none bg-gradient-to-b from-white/[0.09] to-transparent bg-clip-text text-center font-display text-[22vw] font-bold leading-[0.8] tracking-[-0.06em] text-transparent lg:text-[17rem]"
-        >
-          INSPIRE
-        </p>
+        <div aria-hidden className="pointer-events-none mt-20 flex select-none items-end justify-between gap-6 border-t border-white/10 pt-10">
+          <svg viewBox="0 0 600 170" className="h-auto w-[62vw] max-w-[760px] text-white/[0.08]">
+            <text x="0" y="140" fill="currentColor" className="font-display" fontSize="180" fontStyle="italic" fontWeight="300" letterSpacing="-5">
+              Inspire
+            </text>
+          </svg>
+          <Image src="/brand/crest-white.png" alt="" width={338} height={397} className="mb-2 hidden h-40 w-auto opacity-25 md:block lg:h-52" />
+        </div>
 
-        <div className="mt-6 flex flex-col gap-4 border-t border-white/10 pt-8 text-sm text-paper/50 md:flex-row md:items-center md:justify-between">
+        <div className="mt-8 flex flex-col gap-4 border-t border-white/10 pt-8 text-sm text-paper/70 md:flex-row md:items-center md:justify-between">
           <p>© {year} INSPIRE National Medical Research Conference.</p>
           <ul className="flex flex-wrap gap-x-6 gap-y-2">
             {FOOTER_LINKS.legal.map((l) => (

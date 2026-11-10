@@ -1,29 +1,34 @@
+import Image from "next/image";
 import { cn } from "@/lib/cn";
 
-/** INSPIRE wordmark with a node-network glyph. Placeholder until official branding is supplied. */
-export function Logo({ className, compact = false }: { className?: string; compact?: boolean }) {
+/**
+ * The INSPIRE crest with a serif wordmark. `tone` picks the crest artwork:
+ * "light" (white crest) for dark backgrounds, "dark" (navy crest) for light ones.
+ */
+export function Logo({
+  className,
+  compact = false,
+  tone = "light",
+}: {
+  className?: string;
+  compact?: boolean;
+  tone?: "light" | "dark";
+}) {
   return (
-    <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <svg viewBox="0 0 32 32" aria-hidden className="size-8 shrink-0">
-        <defs>
-          <linearGradient id="lg-mark" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#39D5F2" />
-            <stop offset="1" stopColor="#8578F9" />
-          </linearGradient>
-        </defs>
-        <circle cx="16" cy="16" r="14.5" fill="none" stroke="url(#lg-mark)" strokeOpacity="0.45" strokeWidth="1" />
-        <path d="M16 6.5 L16 25.5 M16 11 L8.5 18.5 M16 15 L23.5 10.5 M16 20 L22 23" stroke="url(#lg-mark)" strokeWidth="1.6" strokeLinecap="round" />
-        <circle cx="16" cy="6.5" r="2.4" fill="#39D5F2" />
-        <circle cx="8.5" cy="18.5" r="1.8" fill="#3478F6" />
-        <circle cx="23.5" cy="10.5" r="1.8" fill="#8578F9" />
-        <circle cx="22" cy="23" r="1.5" fill="#39D5F2" />
-        <circle cx="16" cy="25.5" r="1.5" fill="#F7F9FC" />
-      </svg>
+    <span className={cn("inline-flex items-center gap-3", className)}>
+      <Image
+        src={tone === "light" ? "/brand/crest-white.png" : "/brand/crest-navy.png"}
+        alt=""
+        width={338}
+        height={397}
+        priority
+        className="h-10 w-auto shrink-0"
+      />
       {!compact && (
         <span className="flex flex-col leading-none">
-          <span className="font-display text-[1.15rem] font-semibold tracking-[0.14em]">INSPIRE</span>
-          <span className="mt-1 hidden text-[0.6rem] font-medium uppercase tracking-[0.2em] opacity-60 sm:block">
-            National Medical Research Conference
+          <span className="font-display text-[1.35rem] font-medium tracking-[0.02em]">Inspire</span>
+          <span className="mt-1 hidden font-ui text-[0.58rem] font-semibold uppercase tracking-[0.26em] opacity-70 sm:block">
+            Medical Research Conference
           </span>
         </span>
       )}

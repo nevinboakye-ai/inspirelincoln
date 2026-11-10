@@ -6,29 +6,33 @@
    a 4-step radius scale and a restrained colour system.
    ------------------------------------------------------------------ */
 @theme {
-  --color-midnight: #040b16;
-  --color-navy: #071426;
-  --color-navy-800: #0b1d35;
-  --color-navy-700: #122944;
-  --color-navy-600: #1c3658;
-  --color-electric: #3478f6;
-  --color-electric-600: #1f5fd6;
-  --color-electric-700: #1849a8;
-  --color-cyan: #39d5f2;
-  --color-cyan-300: #8ae6f8;
-  --color-violet: #8578f9;
-  --color-violet-300: #b7affc;
-  --color-paper: #f7f9fc;
-  --color-paper-200: #eef2f8;
-  --color-paper-300: #e1e7f0;
-  --color-slate: #55647a;
-  --color-slate-700: #3d4a5e;
-  --color-ink: #0d1726;
+  /* Palette drawn from the INSPIRE crest: crest navy, ink navy and ivory paper. */
+  --color-midnight: #0c182c;
+  --color-navy: #1a3154;
+  --color-navy-800: #203b63;
+  --color-navy-700: #284873;
+  --color-navy-600: #345a8c;
+  --color-electric: #3a5f94;
+  --color-electric-600: #2a4b7c;
+  --color-electric-700: #1a3154;
+  --color-cyan: #c9d8ec;
+  --color-cyan-300: #e4ecf6;
+  --color-violet: #9fb4d4;
+  --color-violet-300: #c7d4e8;
+  --color-crest: #1a3154;
+  --color-ivory: #fbfaf6;
+  --color-paper: #f6f3ec;
+  --color-paper-200: #ede8dc;
+  --color-paper-300: #ddd6c6;
+  --color-slate: #555f6e;
+  --color-slate-700: #3c4655;
+  --color-ink: #0f1b2e;
   --color-success: #0e6f4f;
   --color-warning: #a8570c;
   --color-danger: #c42b3b;
 
-  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
+  --font-ui: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
@@ -39,17 +43,17 @@
   --radius-xl: 32px;
 
   --text-display-xl: clamp(3rem, 8.5vw, 8.25rem);
-  --text-display-xl--line-height: 0.92;
-  --text-display-xl--letter-spacing: -0.045em;
+  --text-display-xl--line-height: 0.95;
+  --text-display-xl--letter-spacing: -0.03em;
   --text-display-lg: clamp(2.5rem, 6vw, 5.5rem);
   --text-display-lg--line-height: 0.98;
-  --text-display-lg--letter-spacing: -0.04em;
+  --text-display-lg--letter-spacing: -0.025em;
   --text-display-md: clamp(2rem, 4.2vw, 3.75rem);
   --text-display-md--line-height: 1.04;
-  --text-display-md--letter-spacing: -0.03em;
+  --text-display-md--letter-spacing: -0.02em;
   --text-display-sm: clamp(1.5rem, 2.6vw, 2.25rem);
   --text-display-sm--line-height: 1.12;
-  --text-display-sm--letter-spacing: -0.02em;
+  --text-display-sm--letter-spacing: -0.012em;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
@@ -90,6 +94,8 @@
 
   h1, h2, h3, h4 {
     @apply font-display;
+    font-optical-sizing: auto;
+    font-variation-settings: "SOFT" 30, "WONK" 0;
     text-wrap: balance;
   }
 
@@ -122,7 +128,7 @@
   }
 
   .eyebrow {
-    @apply font-display text-[0.75rem] font-medium uppercase tracking-[0.22em];
+    @apply font-ui text-[0.72rem] font-semibold uppercase tracking-[0.24em];
   }
 
   .surface-dark {
@@ -139,10 +145,23 @@
       linear-gradient(to bottom, rgb(255 255 255 / 0.045) 1px, transparent 1px);
     background-size: 64px 64px;
   }
+  /* Quartered lattice taken from the crest's cross: wide cells split by a hairline cross. */
+  .quarter-lattice {
+    background-image:
+      linear-gradient(to right, rgb(255 255 255 / 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+    background-size: 120px 140px;
+    background-position: center;
+  }
+  .rule-double {
+    border-top: 1px solid currentColor;
+    box-shadow: 0 3px 0 -2px currentColor;
+  }
+
   .grid-lines-light {
     background-image:
-      linear-gradient(to right, rgb(7 20 38 / 0.05) 1px, transparent 1px),
-      linear-gradient(to bottom, rgb(7 20 38 / 0.05) 1px, transparent 1px);
+      linear-gradient(to right, rgb(26 49 84 / 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(26 49 84 / 0.05) 1px, transparent 1px);
     background-size: 64px 64px;
   }
 
@@ -179,6 +198,45 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 }
+
+/* Campus map pins (Leaflet divIcons). A shield-shaped pin echoing the crest. */
+.map-pin {
+  display: block;
+  width: 28px;
+  height: 34px;
+  background: var(--color-navy);
+  border: 2px solid #fff;
+  border-radius: 6px 6px 14px 14px / 6px 6px 18px 18px;
+  box-shadow: 0 6px 16px -6px rgb(12 24 44 / 0.6);
+  position: relative;
+  transition: transform 0.2s var(--ease-out-expo);
+}
+.map-pin::after {
+  content: attr(data-label);
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 700 9px/1 var(--font-ui);
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+.map-pin--building, .map-pin--landmark, .map-pin--amenity { background: #fff; border-color: var(--color-navy); }
+.map-pin--building::after, .map-pin--landmark::after, .map-pin--amenity::after { color: var(--color-navy); }
+.map-pin.is-active { transform: scale(1.25) translateY(-3px); background: var(--color-electric); }
+.map-pin.is-active::after { color: #fff; }
+.map-you {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #2f7cf6;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 6px rgb(47 124 246 / 0.25);
+}
+.leaflet-container { font-family: var(--font-ui); background: var(--color-paper-200); }
+.leaflet-container a { color: var(--color-electric-600); }
+.leaflet-bar a { color: var(--color-ink) !important; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/layout/providers";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -7,11 +7,12 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { getAnnouncements, getEdition } from "@/lib/data/content";
 
-const display = Space_Grotesk({
+const display = Fraunces({
   subsets: ["latin"],
-  variable: "--font-space-grotesk",
+  variable: "--font-fraunces",
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  axes: ["SOFT", "WONK", "opsz"],
 });
 const body = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#071426",
+  themeColor: "#0c182c",
   width: "device-width",
   initialScale: 1,
 };

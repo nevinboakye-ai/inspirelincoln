@@ -35,10 +35,10 @@ export default async function ResearchPage() {
         intro="Everything you need to submit, present and share student research at INSPIRE, before, during and after the conference."
         visual={
           <svg aria-hidden viewBox="0 0 500 400" className="absolute -right-10 bottom-0 hidden h-[90%] opacity-40 lg:block">
-            <rect x="140" y="40" width="240" height="320" rx="10" fill="none" stroke="#39D5F2" strokeOpacity="0.5" />
-            <rect x="165" y="70" width="190" height="24" rx="4" fill="#39D5F2" fillOpacity="0.3" />
+            <rect x="140" y="40" width="240" height="320" rx="10" fill="none" stroke="#C9D8EC" strokeOpacity="0.5" />
+            <rect x="165" y="70" width="190" height="24" rx="4" fill="#C9D8EC" fillOpacity="0.3" />
             {[0, 1, 2, 3].map((i) => (
-              <rect key={i} x={165 + (i % 2) * 100} y={115 + Math.floor(i / 2) * 110} width="90" height="95" rx="4" fill="none" stroke="#8578F9" strokeOpacity="0.6" />
+              <rect key={i} x={165 + (i % 2) * 100} y={115 + Math.floor(i / 2) * 110} width="90" height="95" rx="4" fill="none" stroke="#9FB4D4" strokeOpacity="0.6" />
             ))}
           </svg>
         }
@@ -51,7 +51,7 @@ export default async function ResearchPage() {
             ["Showcase", "/research/showcase"],
             ["Resources", "#resources"],
           ].map(([l, h]) => (
-            <Link key={h} href={h} className="rounded-full border border-white/15 px-4 py-2 text-sm text-paper/80 hover:border-white/40 hover:text-paper">
+            <Link key={h} href={h} className="rounded-[3px] border border-white/15 px-4 py-2 text-sm text-paper/80 hover:border-white/40 hover:text-paper">
               {l}
             </Link>
           ))}
@@ -80,7 +80,7 @@ export default async function ResearchPage() {
         <div className="container-page">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <SectionHeading eyebrow="Abstract submissions" title={<span id="abs-title">Submitting an abstract</span>} />
-            <span className={cfg.submissionsOpen ? "rounded-full bg-success/10 px-4 py-2 text-sm font-semibold text-success" : "rounded-full bg-paper-200 px-4 py-2 text-sm font-semibold text-slate-700"}>
+            <span className={cfg.submissionsOpen ? "rounded-[3px] bg-success/10 px-4 py-2 text-sm font-semibold text-success" : "rounded-[3px] bg-paper-200 px-4 py-2 text-sm font-semibold text-slate-700"}>
               Submissions {cfg.submissionsOpen ? "open" : "closed"}
             </span>
           </div>
@@ -150,11 +150,11 @@ export default async function ResearchPage() {
           </div>
           <div className="mt-10 flex flex-wrap gap-3">
             {cfg.submissionsOpen ? (
-              <Link href="/portal/abstracts/new" className="inline-flex min-h-12 items-center gap-2 rounded-full bg-navy px-6 font-display font-semibold text-paper hover:bg-navy-700">
+              <Link href="/portal/abstracts/new" className="inline-flex min-h-12 items-center gap-2 rounded-[3px] bg-navy px-6 font-ui font-semibold text-paper hover:bg-navy-700">
                 <Send aria-hidden className="size-4" /> Submit an abstract
               </Link>
             ) : null}
-            <Link href="/portal" className="inline-flex min-h-12 items-center gap-2 rounded-full border border-navy/15 px-6 font-display font-medium text-ink hover:border-navy/40">
+            <Link href="/portal" className="inline-flex min-h-12 items-center gap-2 rounded-[3px] border border-navy/15 px-6 font-ui font-medium text-ink hover:border-navy/40">
               Check my submission status
             </Link>
           </div>
@@ -196,7 +196,7 @@ export default async function ResearchPage() {
               </li>
             ))}
           </ul>
-          <Link href="/portal/presenter" className="mt-10 inline-flex min-h-12 items-center gap-2 rounded-full bg-cyan px-6 font-display font-semibold text-midnight hover:bg-cyan-300">
+          <Link href="/portal/presenter" className="mt-10 inline-flex min-h-12 items-center gap-2 rounded-[3px] bg-cyan px-6 font-ui font-semibold text-midnight hover:bg-cyan-300">
             Presenter portal <ArrowRight aria-hidden className="size-4" />
           </Link>
         </div>
@@ -206,10 +206,10 @@ export default async function ResearchPage() {
         <div className="container-page flex flex-col items-start justify-between gap-8 rounded-xl border border-navy/10 bg-white p-8 sm:p-12 lg:flex-row lg:items-center">
           <div>
             <p className="eyebrow text-electric-600">Research showcase</p>
-            <h2 id="showcase-title" className="mt-3 text-display-sm font-semibold text-ink">Explore approved student research</h2>
+            <h2 id="showcase-title" className="mt-3 text-display-sm font-medium text-ink">Explore approved student research</h2>
             <p className="mt-3 max-w-2xl text-slate-700">Abstracts appear in the public showcase only when presenters have given consent and the conference team has approved them.</p>
           </div>
-          <Link href="/research/showcase" className="inline-flex min-h-12 shrink-0 items-center gap-2 rounded-full bg-navy px-6 font-display font-medium text-paper hover:bg-navy-700">
+          <Link href="/research/showcase" className="inline-flex min-h-12 shrink-0 items-center gap-2 rounded-[3px] bg-navy px-6 font-ui font-medium text-paper hover:bg-navy-700">
             View showcase <ArrowRight aria-hidden className="size-4" />
           </Link>
         </div>

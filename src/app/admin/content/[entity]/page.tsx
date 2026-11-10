@@ -42,7 +42,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
       {error && <p role="alert" className="mb-4 text-sm text-danger">Could not load records. Check that the database migration has been applied.</p>}
       <form role="search" className="mb-4 flex max-w-md gap-2">
         <label htmlFor="q" className="sr-only">Search {entity.label}</label>
-        <input id="q" name="q" defaultValue={sp.q} placeholder={`Search ${entity.label.toLowerCase()}…`} className="min-h-11 flex-1 rounded-full border border-navy/15 bg-white px-4 text-sm" />
+        <input id="q" name="q" defaultValue={sp.q} placeholder={`Search ${entity.label.toLowerCase()}…`} className="min-h-11 flex-1 rounded-[3px] border border-navy/15 bg-white px-4 text-sm" />
         <button className={btn.secondary}>Search</button>
       </form>
       <Table

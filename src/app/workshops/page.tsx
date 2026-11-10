@@ -27,7 +27,7 @@ export default async function WorkshopsPage() {
         visual={
           <div aria-hidden className="absolute right-0 top-1/2 hidden -translate-y-1/2 grid-cols-3 gap-3 opacity-40 lg:grid" style={{ width: 360 }}>
             {Array.from({ length: 6 }, (_, i) => (
-              <span key={i} className="aspect-square rounded-lg border border-cyan/30" style={{ background: i % 2 ? "rgba(133,120,249,0.12)" : "rgba(57,213,242,0.08)" }} />
+              <span key={i} className="aspect-square rounded-lg border border-cyan/30" style={{ background: i % 2 ? "rgba(159,180,212,0.12)" : "rgba(201,216,236,0.08)" }} />
             ))}
           </div>
         }

@@ -70,10 +70,10 @@ export function ReviewForm({
         </Field>
         {!isLocked && (
           <div className="flex flex-wrap gap-3">
-            <button type="submit" name="intent" value="draft" disabled={pending} className="inline-flex min-h-12 items-center gap-2 rounded-full border border-navy/20 px-6 font-display font-semibold text-ink hover:border-navy/40 disabled:opacity-60">
+            <button type="submit" name="intent" value="draft" disabled={pending} className="inline-flex min-h-12 items-center gap-2 rounded-[3px] border border-navy/20 px-6 font-ui font-semibold text-ink hover:border-navy/40 disabled:opacity-60">
               {pending ? <Loader2 aria-hidden className="size-4 animate-spin" /> : <Save aria-hidden className="size-4" />} Save draft
             </button>
-            <button type="submit" name="intent" value="submit" disabled={pending} className="inline-flex min-h-12 items-center gap-2 rounded-full bg-navy px-6 font-display font-semibold text-paper hover:bg-navy-700 disabled:opacity-60">
+            <button type="submit" name="intent" value="submit" disabled={pending} className="inline-flex min-h-12 items-center gap-2 rounded-[3px] bg-navy px-6 font-ui font-semibold text-paper hover:bg-navy-700 disabled:opacity-60">
               <Send aria-hidden className="size-4" /> Submit review
             </button>
           </div>

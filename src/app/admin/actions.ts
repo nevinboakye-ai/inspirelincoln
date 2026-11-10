@@ -76,6 +76,20 @@ export async function saveEntity(_: ActionResult, form: FormData): Promise<Actio
           else row[f.name] = s || null;
           break;
         }
+        case "location": {
+          const la = String(form.get("lat") ?? "").trim();
+          const ln = String(form.get("lng") ?? "").trim();
+          if (!la && !ln) {
+            row.lat = null;
+            row.lng = null;
+          } else if (!la || !ln || !Number.isFinite(Number(la)) || !Number.isFinite(Number(ln)) || Math.abs(Number(la)) > 90 || Math.abs(Number(ln)) > 180) {
+            fieldErrors[f.name] = "Enter both a latitude and a longitude, or remove the pin.";
+          } else {
+            row.lat = Number(la);
+            row.lng = Number(ln);
+          }
+          break;
+        }
         case "speakers":
           speakerIds = form.getAll(f.name).map(String).filter(Boolean);
           break;
@@ -91,12 +105,12 @@ export async function saveEntity(_: ActionResult, form: FormData): Promise<Actio
     } catch (e) {
       fieldErrors[f.name] = (e as Error).message;
     }
-    if (f.required && f.type !== "boolean" && (row[f.name] === null || row[f.name] === "" || row[f.name] === undefined)) fieldErrors[f.name] = `${f.label} is required.`;
+    if (f.required && f.type !== "boolean" && f.type !== "location" && (row[f.name] === null || row[f.name] === "" || row[f.name] === undefined)) fieldErrors[f.name] = `${f.label} is required.`;
     if (f.name === "slug" && s && !/^[a-z0-9-]+$/.test(s)) fieldErrors.slug = "Use lowercase letters, numbers and hyphens only.";
   }
   // Text columns that are NOT NULL default to '' rather than null.
   for (const f of entity.fields) if ((f.type === "textarea" || f.type === "text") && row[f.name] === null && !f.required) row[f.name] = "";
-  for (const k of ["credentials", "position", "institution", "specialty", "bio", "facilitator", "facilitator_bio", "notes", "organisation", "eligibility", "building", "floor", "directions", "credit", "host_institution", "highlights"])
+  for (const k of ["credentials", "position", "institution", "specialty", "bio", "facilitator", "facilitator_bio", "notes", "organisation", "eligibility", "building", "floor", "directions", "credit", "host_institution", "highlights", "code"])
     if (row[k] === "") row[k] = null;
 
   if (Object.keys(fieldErrors).length) return { ok: false, error: "Please fix the highlighted fields.", fieldErrors };
