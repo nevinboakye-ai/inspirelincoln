@@ -297,3 +297,36 @@ export async function setNetworkOpen(form: FormData) {
   await db.from("site_switches").upsert({ key: "network_open", enabled: form.get("open") === "on", updated_by: user.id, updated_at: new Date().toISOString() });
   revalidatePath("/portal/network");
 }
+
+/* ---------- Presenter attendance ---------- */
+const attendanceSchema = z.object({
+  response: z.enum(["confirmed", "unavailable"]),
+  note: z.string().trim().max(500, "Keep this to 500 characters.").optional().default(""),
+});
+
+/** An oral or poster presenter tells the committee whether they'll be there to present. They can change it later. */
+export async function saveAttendance(_: ActionResult, form: FormData): Promise<ActionResult> {
+  const { user, db, profile } = await requireUser("/portal");
+  if (profile.accountStatus !== "approved" || !submissionKindFor(profile.accountType))
+    return { ok: false, error: "Only approved oral and poster presenters can confirm attendance." };
+  const parsed = attendanceSchema.safeParse({ response: form.get("response"), note: form.get("note") ?? "" });
+  if (!parsed.success) return { ok: false, error: "Please check your answer.", fieldErrors: fieldErrors(parsed.error) };
+  const v = parsed.data;
+  const { error } = await db.from("presenter_attendance").upsert(
+    {
+      user_id: user.id,
+      response: v.response,
+      // A note only makes sense alongside "can't make it"; confirming clears an old one.
+      note: v.response === "unavailable" ? v.note || null : null,
+      responded_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" },
+  );
+  if (error) return { ok: false, error: "We couldn't save your answer. Please try again." };
+  revalidatePath("/portal");
+  revalidatePath("/admin/attendance");
+  return {
+    ok: true,
+    message: v.response === "confirmed" ? "Thank you. You're confirmed to present." : "Thank you for letting us know.",
+  };
+}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CalendarCog, FileStack, Mail, MapPin, Megaphone, UserCheck } from "lucide-react";
+import { ArrowRight, CalendarCheck2, CalendarCog, FileStack, Mail, MapPin, Megaphone, UserCheck } from "lucide-react";
 import { requireAccess } from "@/lib/auth";
 import { getEdition } from "@/lib/data/content";
 import { formatEventDate, toZonedInputValue } from "@/lib/time";
@@ -44,6 +44,10 @@ export default async function CommitteeHome({ searchParams }: { searchParams: Pr
     ? ((await db.from("registrations").select("id", { count: "exact", head: true }).eq("edition_id", edition.id).not("checked_in_at", "is", null)).count ?? 0)
     : 0;
 
+  const attendance = access.exec ? (await db.from("presenter_attendance").select("response").limit(5000)).data ?? [] : [];
+  const presenterCount = approved.filter((p) => p.account_type === "oral_presenter" || p.account_type === "poster_presenter").length;
+  const cantMake = attendance.filter((a) => a.response === "unavailable").length;
+
   const todayUk = toZonedInputValue(new Date().toISOString()).slice(0, 10);
   const days = Math.round((Date.parse(edition.date) - Date.parse(todayUk)) / 86400000);
 
@@ -59,6 +63,15 @@ export default async function CommitteeHome({ searchParams }: { searchParams: Pr
         <h2 id="todo" className="mb-3 font-display text-xl text-ink">Needs you</h2>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {access.exec && <Action href="/admin/accounts" icon={UserCheck} title="Accounts awaiting review" value={pending} note={waitlisted ? `${waitlisted} on the waitlist` : undefined} />}
+          {access.exec && (
+            <Action
+              href="/admin/attendance"
+              icon={CalendarCheck2}
+              title="Presenters who've confirmed"
+              value={`${attendance.length - cantMake} of ${presenterCount}`}
+              note={cantMake ? `${cantMake} can't make it` : "Oral and poster presenters"}
+            />
+          )}
           <Action href="/admin/submissions?status=submitted" icon={FileStack} title="Slides and posters to review" value={toReview} />
           {access.leadership && <Action href="/admin/email" icon={Mail} title="Email a group" note="Delegates, presenters or the committee" />}
         </div>

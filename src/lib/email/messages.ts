@@ -125,3 +125,24 @@ export function feedbackEmail(opts: {
   });
   return { subject: heading, ...m };
 }
+
+/** Someone on the oral waiting list has been offered an oral presentation slot. */
+export function oralSlotEmail(opts: { siteUrl: string; name: string | null }): Mail {
+  const m = renderEmail({
+    siteUrl: opts.siteUrl,
+    preheader: "An oral presentation slot has opened up at INSPIRE 2026, and it's yours.",
+    eyebrow: "Oral presentation",
+    heading: "A slot has opened up for you.",
+    paragraphs: [
+      `Hello ${first(opts.name)},`,
+      "Good news: an oral presentation slot has become available at INSPIRE 2026, and the committee would like to offer it to you.",
+      "Please log in to My Hub to confirm you'll be there to present, then upload your slides. If you can no longer present, let us know in My Hub so we can offer the slot to the next person.",
+    ],
+    details: [
+      { label: "Date", value: "Saturday 21 November 2026" },
+      { label: "Venue", value: "Lincoln Medical School, University of Lincoln" },
+    ],
+    cta: { label: "Open My Hub", url: `${opts.siteUrl}/portal` },
+  });
+  return { subject: "An oral presentation slot is yours at INSPIRE 2026", ...m };
+}

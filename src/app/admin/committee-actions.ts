@@ -1,10 +1,11 @@
 "use server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAccess } from "@/lib/auth";
 import { ACCOUNT_TYPES, canApprove } from "@/lib/accounts";
 import { sendBatch, sendEmail } from "@/lib/email/resend";
-import { accountDecisionEmail, feedbackEmail } from "@/lib/email/messages";
+import { accountDecisionEmail, feedbackEmail, oralSlotEmail } from "@/lib/email/messages";
 import { escapeHtml, renderEmail } from "@/lib/email/template";
 import { SITE_URL } from "@/lib/site";
 import { fillPlaceholders } from "@/lib/email/presets";
@@ -350,4 +351,56 @@ export async function sendDirectEmail(_: ActionResult, form: FormData): Promise<
   });
   revalidatePath("/admin/email");
   return ok ? { ok: true, message: `Sent to ${person.full_name || person.email}.` } : { ok: false, error: "Nothing was sent. Check that email is set up in Vercel." };
+}
+
+const offerSchema = z.object({
+  source: z.enum(["account", "list"]),
+  id: z.string().uuid(),
+  notify: z.boolean(),
+});
+
+/**
+ * Moves someone from the oral waiting list to oral presenter. For people with an
+ * account this approves them as an oral presenter (so My Hub asks them to confirm
+ * and upload slides). For people on the selected list who haven't logged in yet,
+ * it changes their entry so they become an oral presenter when they do.
+ */
+export async function offerOralSlot(_: ActionResult, form: FormData): Promise<ActionResult> {
+  const { db } = await requireAccess("review_accounts", "/admin/attendance");
+  const parsed = offerSchema.safeParse({ source: form.get("source"), id: form.get("id"), notify: form.get("notify") === "on" });
+  if (!parsed.success) return { ok: false, error: "Something went wrong. Refresh the page and try again." };
+  const v = parsed.data;
+
+  let to: { email: string; name: string | null } | null = null;
+  if (v.source === "account") {
+    const { data: person } = await db.from("profiles").select("account_type").eq("id", v.id).maybeSingle();
+    if (person?.account_type !== "oral_waitlist") return { ok: false, error: "This person is no longer on the oral waiting list." };
+    const { data, error } = await db.rpc("review_account", { target: v.id, new_status: "approved", new_type: "oral_presenter", note: null });
+    if (error) return { ok: false, error: "Could not move them. Please try again." };
+    const p = Array.isArray(data) ? data[0] : data;
+    if (p?.email) {
+      to = { email: p.email, name: p.full_name };
+      // Keep their selected-list entry in step, so the list and the account agree.
+      await db.from("delegate_roster").update({ account_type: "oral_presenter" }).eq("email", p.email.toLowerCase()).eq("account_type", "oral_waitlist");
+    }
+  } else {
+    const { data, error } = await db
+      .from("delegate_roster")
+      .update({ account_type: "oral_presenter" })
+      .eq("id", v.id)
+      .eq("account_type", "oral_waitlist")
+      .select("email, full_name")
+      .maybeSingle();
+    if (error) return { ok: false, error: "Could not move them. Please try again." };
+    if (!data) return { ok: false, error: "This person is no longer on the oral waiting list." };
+    to = { email: data.email, name: data.full_name };
+  }
+
+  let emailed = false;
+  if (v.notify && to) emailed = await sendEmail({ to: to.email, ...oralSlotEmail({ siteUrl: SITE_URL, name: to.name }) });
+  revalidatePath("/admin/accounts");
+  revalidatePath("/admin");
+  // They leave the waiting list, so the confirmation is shown at the top of the page.
+  const params = new URLSearchParams({ offered: to?.name || "They", mail: v.notify ? (emailed ? "sent" : "off") : "no" });
+  redirect(`/admin/attendance?${params}`);
 }
