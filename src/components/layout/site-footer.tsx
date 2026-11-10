@@ -7,7 +7,7 @@ import { formatEventDate } from "@/lib/time";
 import { Logo } from "./logo";
 import { Parallax } from "@/components/motion/effects";
 
-export function SiteFooter({ edition }: { edition: Edition }) {
+export function SiteFooter({ edition, siteOpen = true }: { edition: Edition; siteOpen?: boolean }) {
   const year = new Date().getFullYear();
   return (
     <footer className="surface-midnight relative overflow-hidden pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
@@ -31,8 +31,14 @@ export function SiteFooter({ edition }: { edition: Edition }) {
           </div>
 
           <nav aria-label="Footer" className="grid grid-cols-2 gap-x-6 gap-y-7 sm:grid-cols-3 sm:gap-8 lg:col-span-7">
-            <FooterColumn title="Explore" links={FOOTER_LINKS.explore} />
-            <FooterColumn title="Take part" links={FOOTER_LINKS.participate} />
+            {siteOpen ? (
+              <>
+                <FooterColumn title="Explore" links={FOOTER_LINKS.explore} />
+                <FooterColumn title="Take part" links={FOOTER_LINKS.participate} />
+              </>
+            ) : (
+              <FooterColumn title="My Hub" links={[{ label: "Log in", href: "/login" }, { label: "Set up your account", href: "/auth/activate" }, { label: "Register", href: "/signup" }]} />
+            )}
             <div>
               <p className="eyebrow mb-4 text-paper/65">Get in touch</p>
               <ul className="space-y-3 text-[0.95rem]">

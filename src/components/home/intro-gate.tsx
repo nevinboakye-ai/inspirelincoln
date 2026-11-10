@@ -160,7 +160,7 @@ export function IntroGate({ edition }: { edition: Edition }) {
                   Go to My Hub
                   <LayoutDashboard aria-hidden className="size-5 text-cyan transition-transform duration-300 group-hover:translate-x-1" />
                 </span>
-                <span className="text-xs text-paper/70 sm:text-sm">You&apos;re logged in. Your Delegate Card, agenda and dashboard</span>
+                <span className="text-xs text-paper/70 sm:text-sm">You&apos;re logged in. Your presentation, agenda and profile</span>
               </Link>
             </div>
             <p className="gate-guest enter-fade mt-4 text-sm sm:mt-6 text-paper/70 [animation-delay:1250ms]">

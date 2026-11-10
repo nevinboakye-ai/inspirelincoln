@@ -2,6 +2,7 @@ import Link from "next/link";
 import QRCode from "qrcode";
 import { ArrowRight, CalendarDays, Clock, Gauge, HeartHandshake, Hourglass, LayoutDashboard, MapPin, Megaphone, Ticket, UploadCloud, XCircle } from "lucide-react";
 import { requireUser } from "@/lib/auth";
+import { getSwitches } from "@/lib/switches";
 import { getConferenceBundle } from "@/lib/data/content";
 import { formatEventDate } from "@/lib/time";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,8 @@ const linkBtn = "inline-flex min-h-12 items-center justify-center gap-2 rounded-
 export default async function PortalHome({ searchParams }: { searchParams: Promise<{ denied?: string; password?: string; welcome?: string }> }) {
   const sp = await searchParams;
   const { profile, db, user } = await requireUser("/portal");
+  const switches = await getSwitches();
+  const showCard = switches.delegate_card || profile.access.owner;
   const { edition, sessions, workshops } = await getConferenceBundle();
   const kind = submissionKindFor(profile.accountType);
   const status = profile.accountStatus;
@@ -74,7 +77,15 @@ export default async function PortalHome({ searchParams }: { searchParams: Promi
       </header>
 
       {/* Account status and ticket */}
-      {status === "approved" ? (
+      {status === "approved" && !showCard ? (
+        <section className="flex items-center gap-4 rounded-xl border border-success/25 bg-success/[0.06] p-5 sm:p-6">
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-success/15 text-success"><Ticket aria-hidden className="size-5" /></span>
+          <div>
+            <h2 className="font-semibold text-ink">Your place is confirmed</h2>
+            <p className="text-sm text-slate-700">Use My Hub to get your presentation and profile ready before the day.</p>
+          </div>
+        </section>
+      ) : status === "approved" ? (
         <section aria-labelledby="card-title" className="relative overflow-hidden rounded-xl bg-midnight p-5 text-paper ring-1 ring-gold/40 sm:p-7">
           <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-gold-600 via-gold-300 to-gold-600" />
           <img src="/brand/crest-white.png" alt="" aria-hidden className="pointer-events-none absolute -right-8 -top-6 h-44 w-auto opacity-[0.06]" />
@@ -83,6 +94,9 @@ export default async function PortalHome({ searchParams }: { searchParams: Promi
               <h2 id="card-title" className="flex items-center gap-2 font-ui text-xs font-semibold uppercase tracking-[0.18em] text-gold">
                 <Ticket aria-hidden className="size-4" /> Your Delegate Card
               </h2>
+              {!switches.delegate_card && (
+                <p className="mt-2 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs text-paper/80">Only you can see this. Turn it on in the Platform dashboard.</p>
+              )}
               <p className="mt-4 font-display text-2xl leading-tight sm:text-3xl">{profile.fullName ?? profile.email}</p>
               <p className="mt-1 text-sm text-paper/75">{[profile.institution, profile.yearOfStudy].filter(Boolean).join(" · ") || ACCOUNT_TYPE_LABEL[profile.accountType]}</p>
               <p className="mt-4 flex flex-wrap gap-2">

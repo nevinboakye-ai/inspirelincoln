@@ -55,3 +55,12 @@ export async function setOverride(input: { userId: string; capability: Capabilit
   revalidatePath("/admin/platform", "layout");
   return { ok: true };
 }
+
+/** Turns one of the site switches on or off. Site owner only. */
+export async function setSwitch(form: FormData) {
+  const { db, user } = await requireAccess("owner", "/admin/platform");
+  const key = String(form.get("key"));
+  if (!["site_open", "network_open", "delegate_card", "map_open"].includes(key)) return;
+  await db.from("site_switches").upsert({ key, enabled: form.get("enabled") === "on", updated_by: user.id, updated_at: new Date().toISOString() });
+  revalidatePath("/", "layout");
+}

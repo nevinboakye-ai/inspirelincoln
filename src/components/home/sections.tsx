@@ -17,7 +17,7 @@ export function AtAGlance({ edition }: { edition: Edition; workshopCount?: numbe
   const items = [
     { href: "/programme", icon: CalendarDays, title: "Programme", body: "Every session, with times and rooms" },
     { href: "/map", icon: MapPin, title: "Campus map", body: "Find your building and room" },
-    { href: "/portal", icon: LayoutDashboard, title: "My Hub", body: "Your Delegate Card, agenda and network" },
+    { href: "/portal", icon: LayoutDashboard, title: "My Hub", body: "Your presentation, agenda and profile" },
     { href: "/conference", icon: HelpCircle, title: "Venue & FAQs", body: "Travel, access and questions" },
   ];
   return (

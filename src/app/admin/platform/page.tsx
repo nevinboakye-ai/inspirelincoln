@@ -4,6 +4,8 @@ import {
   ArrowRight, CalendarCog, Crown, FileStack, History, Mail, Search, Settings2, ShieldCheck, SlidersHorizontal, UserCheck, UserCog, Users,
 } from "lucide-react";
 import { requireAccess } from "@/lib/auth";
+import { getSwitches, SWITCHES, type SwitchKey } from "@/lib/switches";
+import { setSwitch } from "@/app/admin/platform/actions";
 import { AdminHeader, Panel } from "@/components/admin/ui";
 import { AccessMatrix } from "@/components/admin/platform-forms";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +47,7 @@ function Shortcut({ href, icon: Icon, title, note }: { href: string; icon: typeo
 export default async function PlatformPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const sp = await searchParams;
   const { db, profile } = await requireAccess("owner", "/admin/platform");
+  const switches = await getSwitches();
   const term = sp.q?.trim().slice(0, 80) ?? "";
 
   const [rulesRes, overridesRes, peopleRes, subsRes, auditRes, searchRes] = await Promise.all([
@@ -94,6 +97,33 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
           </span>
         }
       />
+
+      <Panel title="Site switches">
+        <p className="mb-4 text-sm text-slate-700">What the public and delegates can see while the website is being prepared. Changes apply straight away.</p>
+        <ul className="divide-y divide-navy/10">
+          {(Object.keys(SWITCHES) as SwitchKey[]).map((k) => {
+            const on = switches[k];
+            return (
+              <li key={k} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-2 font-semibold text-ink">
+                    {SWITCHES[k].label}
+                    <Badge tone={on ? "success" : "warning"}>{on ? "On" : "Off"}</Badge>
+                  </p>
+                  <p className="text-sm text-slate-700">{on ? SWITCHES[k].on : SWITCHES[k].off}</p>
+                </div>
+                <form action={setSwitch}>
+                  <input type="hidden" name="key" value={k} />
+                  {!on && <input type="hidden" name="enabled" value="on" />}
+                  <button className={on ? "min-h-11 rounded-[3px] border border-navy/20 bg-white px-4 text-sm font-semibold text-ink" : "min-h-11 rounded-[3px] bg-navy px-4 text-sm font-semibold text-paper"}>
+                    {on ? "Turn off" : "Turn on"}<span className="sr-only"> {SWITCHES[k].label}</span>
+                  </button>
+                </form>
+              </li>
+            );
+          })}
+        </ul>
+      </Panel>
 
       {!ready && (
         <Notice tone="warning" title="One database step left">

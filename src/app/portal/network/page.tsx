@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Sparkles, Users } from "lucide-react";
+import { Users } from "lucide-react";
+import { ComingSoon } from "@/components/ui/coming-soon";
 import { setNetworkOpen } from "@/app/portal/actions";
 import { requireUser } from "@/lib/auth";
 import { Notice } from "@/components/ui/notice";
@@ -14,7 +15,12 @@ export default async function NetworkPage() {
   const { data: sw } = await db.from("site_switches").select("enabled").eq("key", "network_open").maybeSingle();
   // If the switch table isn't there yet, keep the network closed to everyone but the owner.
   const live = Boolean(sw?.enabled);
-  if (!live && !owner) return <ComingSoon />;
+  if (!live && !owner)
+    return (
+      <ComingSoon eyebrow="Delegate network">
+        A place to meet the other delegates, from every medical school, before the day. Check back here soon.
+      </ComingSoon>
+    );
   const staff = profile.access.exec || profile.access.owner;
   const open = profile.accountStatus === "approved" || profile.siteRole === "admin" || staff;
   const [{ data, error }, { data: waiting }] = open
@@ -78,20 +84,3 @@ export default async function NetworkPage() {
   );
 }
 
-function ComingSoon() {
-  return (
-    <section aria-labelledby="soon-title" className="relative overflow-hidden rounded-xl bg-midnight p-8 text-center text-paper sm:p-14">
-      <img src="/brand/crest-white.png" alt="" aria-hidden className="pointer-events-none absolute -bottom-12 left-1/2 h-64 w-auto -translate-x-1/2 opacity-[0.05]" />
-      <div className="relative">
-        <span className="mx-auto grid size-14 place-items-center rounded-full border border-gold/40 bg-gold/10 text-gold">
-          <Sparkles aria-hidden className="size-6" />
-        </span>
-        <p className="eyebrow mt-6 text-gold">Delegate network</p>
-        <h1 id="soon-title" className="mt-3 font-display text-4xl">Coming soon</h1>
-        <p className="mx-auto mt-4 max-w-md text-paper/75">
-          A place to meet the other delegates, from every medical school, before the day. Check back here soon.
-        </p>
-      </div>
-    </section>
-  );
-}
