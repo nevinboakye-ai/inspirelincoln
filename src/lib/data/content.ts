@@ -401,3 +401,11 @@ export const getConferenceBundle = cache(async () => {
   ]);
   return { edition, sessions, speakers, workshops, rooms, announcements };
 });
+
+/** Whether the public website is open (the owner's switch). Open if the switch can't be read. */
+export const getSiteOpen = cache(async (): Promise<boolean> => {
+  const db = createPublicClient();
+  if (!db) return true;
+  const { data, error } = await db.from("site_switches").select("enabled").eq("key", "site_open").maybeSingle();
+  return error || !data ? true : data.enabled;
+});

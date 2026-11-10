@@ -7,7 +7,7 @@ import { EditShortcut } from "@/components/layout/edit-shortcut";
 import { ScrollProgress } from "@/components/motion/effects";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
-import { getAnnouncements, getEdition } from "@/lib/data/content";
+import { getAnnouncements, getEdition, getSiteOpen } from "@/lib/data/content";
 
 const display = Fraunces({
   subsets: ["latin"],
@@ -44,7 +44,7 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [edition, announcements] = await Promise.all([getEdition(), getAnnouncements()]);
+  const [edition, announcements, siteOpen] = await Promise.all([getEdition(), getAnnouncements(), getSiteOpen()]);
   const ribbon = announcements.find((a) => a.pinned && a.level !== "info") ?? null;
   return (
     <html lang="en-GB" className={`${display.variable} ${body.variable}`}>
@@ -57,11 +57,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </a>
         <Providers>
           <ScrollProgress />
-          <SiteHeader edition={{ year: edition.year, date: edition.date }} ribbon={ribbon} />
+          <SiteHeader edition={{ year: edition.year, date: edition.date }} ribbon={ribbon} siteOpen={siteOpen} />
           <main id="main" tabIndex={-1} className="outline-none">
             {children}
           </main>
-          <SiteFooter edition={edition} />
+          <SiteFooter edition={edition} siteOpen={siteOpen} />
           <EditShortcut />
         </Providers>
       </body>

@@ -1,6 +1,16 @@
 "use client";
 import { AnimatePresence, m } from "motion/react";
-import { ArrowUpRight, CalendarDays, Home, Map as MapIcon, Menu, Search, LayoutDashboard, UserRound, X } from "lucide-react";
+import {
+  ArrowUpRight,
+  CalendarDays,
+  Home,
+  Map as MapIcon,
+  Menu,
+  Search,
+  LayoutDashboard,
+  UserRound,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -13,10 +23,20 @@ import { hasSessionCookie } from "@/lib/supabase/session-hint";
 
 function isActive(pathname: string, href: string) {
   const path = href.split("#")[0];
-  return path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(`${path}/`);
+  return path === "/"
+    ? pathname === "/"
+    : pathname === path || pathname.startsWith(`${path}/`);
 }
 
-export function SiteHeader({ edition, ribbon }: { edition: { year: number; date: string }; ribbon: Announcement | null }) {
+export function SiteHeader({
+  edition,
+  ribbon,
+  siteOpen = true,
+}: {
+  edition: { year: number; date: string };
+  ribbon: Announcement | null;
+  siteOpen?: boolean;
+}) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -36,10 +56,29 @@ export function SiteHeader({ edition, ribbon }: { edition: { year: number; date:
 
   useEffect(() => setMenuOpen(false), [pathname]);
   useEffect(() => setMember(hasSessionCookie()), [pathname]);
+  // While the website is closed, only the committee sees the public pages, so
+  // everyone else gets a pared-back header with no links into them.
+  const [staff, setStaff] = useState(false);
+  useEffect(() => {
+    if (siteOpen || !member) return;
+    let live = true;
+    fetch("/api/me/access")
+      .then((r) => r.json())
+      .then(
+        (a: { edit?: boolean; owner?: boolean }) =>
+          live && setStaff(Boolean(a.edit || a.owner)),
+      )
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [siteOpen, member]);
+  const closed = !siteOpen && !staff;
 
   useEffect(() => {
     try {
-      if (ribbon && sessionStorage.getItem(`ribbon-${ribbon.id}`)) setRibbonHidden(true);
+      if (ribbon && sessionStorage.getItem(`ribbon-${ribbon.id}`))
+        setRibbonHidden(true);
     } catch {}
   }, [ribbon]);
 
@@ -81,15 +120,24 @@ export function SiteHeader({ edition, ribbon }: { edition: { year: number; date:
         <div
           className={cn(
             "border-b transition-[background-color,border-color,backdrop-filter] duration-500",
-            solid ? "border-white/10 bg-midnight/90 backdrop-blur-xl" : "border-transparent bg-transparent",
+            solid
+              ? "border-white/10 bg-midnight/90 backdrop-blur-xl"
+              : "border-transparent bg-transparent",
           )}
         >
           <div className="container-page flex h-[var(--header-h)] items-center gap-6 text-paper">
-            <Link href="/" className="rounded-sm" aria-label="INSPIRE home">
+            <Link
+              href={closed ? (member ? "/portal" : "/login") : "/"}
+              className="rounded-sm"
+              aria-label={closed ? "INSPIRE" : "INSPIRE home"}
+            >
               <Logo />
             </Link>
 
-            <nav aria-label="Main" className="ml-auto hidden lg:block">
+            <nav
+              aria-label="Main"
+              className={cn("ml-auto hidden", !closed && "lg:block")}
+            >
               <ul className="flex items-center gap-1">
                 {NAV.map((item) => {
                   const active = isActive(pathname, item.href);
@@ -100,11 +148,18 @@ export function SiteHeader({ edition, ribbon }: { edition: { year: number; date:
                         aria-current={active ? "page" : undefined}
                         className={cn(
                           "relative flex min-h-11 items-center whitespace-nowrap px-3.5 text-[0.9rem] font-medium transition-colors",
-                          active ? "text-paper" : "text-paper/70 hover:text-paper",
+                          active
+                            ? "text-paper"
+                            : "text-paper/70 hover:text-paper",
                         )}
                       >
                         {item.label}
-                        {active && <m.span layoutId="nav-indicator" className="absolute inset-x-3.5 -bottom-0.5 h-px bg-cyan" />}
+                        {active && (
+                          <m.span
+                            layoutId="nav-indicator"
+                            className="absolute inset-x-3.5 -bottom-0.5 h-px bg-cyan"
+                          />
+                        )}
                       </Link>
                     </li>
                   );
@@ -113,14 +168,16 @@ export function SiteHeader({ edition, ribbon }: { edition: { year: number; date:
             </nav>
 
             <div className="ml-auto flex items-center gap-2 lg:ml-2">
-              <button
-                type="button"
-                onClick={openCommandPalette}
-                className="flex size-11 items-center justify-center rounded-[3px] border border-white/12 text-paper/75 transition-colors hover:border-white/30 hover:text-paper"
-                aria-label="Search the site"
-              >
-                <Search aria-hidden className="size-4" />
-              </button>
+              {!closed && (
+                <button
+                  type="button"
+                  onClick={openCommandPalette}
+                  className="flex size-11 items-center justify-center rounded-[3px] border border-white/12 text-paper/75 transition-colors hover:border-white/30 hover:text-paper"
+                  aria-label="Search the site"
+                >
+                  <Search aria-hidden className="size-4" />
+                </button>
+              )}
               {!member && (
                 <Link
                   href="/signup"
@@ -143,23 +200,32 @@ export function SiteHeader({ edition, ribbon }: { edition: { year: number; date:
                   </>
                 )}
               </Link>
-              <button
-                type="button"
-                onClick={() => setMenuOpen(true)}
-                className="flex size-11 items-center justify-center rounded-[3px] border border-white/15 lg:hidden"
-                aria-label="Open menu"
-                aria-expanded={menuOpen}
-                aria-controls="mobile-nav"
-              >
-                <Menu className="size-5" />
-              </button>
+              {!closed && (
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen(true)}
+                  className="flex size-11 items-center justify-center rounded-[3px] border border-white/15 lg:hidden"
+                  aria-label="Open menu"
+                  aria-expanded={menuOpen}
+                  aria-controls="mobile-nav"
+                >
+                  <Menu className="size-5" />
+                </button>
+              )}
             </div>
           </div>
         </div>
       </header>
 
-      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} pathname={pathname} member={member} />
-      {!pathname.startsWith("/admin") && !inAuth && <BottomBar pathname={pathname} />}
+      <MobileMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        pathname={pathname}
+        member={member}
+      />
+      {!pathname.startsWith("/admin") && !inAuth && !closed && (
+        <BottomBar pathname={pathname} />
+      )}
     </>
   );
 }
@@ -185,9 +251,16 @@ function BottomBar({ pathname }: { pathname: string }) {
               <Link
                 href={t.href}
                 aria-current={active ? "page" : undefined}
-                className={cn("flex min-h-16 flex-col items-center justify-center gap-1 font-ui text-[0.7rem] font-semibold", active ? "text-cyan" : "text-paper/75")}
+                className={cn(
+                  "flex min-h-16 flex-col items-center justify-center gap-1 font-ui text-[0.7rem] font-semibold",
+                  active ? "text-cyan" : "text-paper/75",
+                )}
               >
-                <t.icon aria-hidden className="size-5" strokeWidth={active ? 2.25 : 1.75} />
+                <t.icon
+                  aria-hidden
+                  className="size-5"
+                  strokeWidth={active ? 2.25 : 1.75}
+                />
                 {t.label}
               </Link>
             </li>
@@ -198,7 +271,17 @@ function BottomBar({ pathname }: { pathname: string }) {
   );
 }
 
-function MobileMenu({ open, onClose, pathname, member }: { open: boolean; onClose: () => void; pathname: string; member: boolean }) {
+function MobileMenu({
+  open,
+  onClose,
+  pathname,
+  member,
+}: {
+  open: boolean;
+  onClose: () => void;
+  pathname: string;
+  member: boolean;
+}) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -208,7 +291,8 @@ function MobileMenu({ open, onClose, pathname, member }: { open: boolean; onClos
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
       if (e.key === "Tab" && panelRef.current) {
-        const focusable = panelRef.current.querySelectorAll<HTMLElement>("a, button");
+        const focusable =
+          panelRef.current.querySelectorAll<HTMLElement>("a, button");
         const first = focusable[0];
         const last = focusable[focusable.length - 1];
         if (e.shiftKey && document.activeElement === first) {
@@ -224,7 +308,11 @@ function MobileMenu({ open, onClose, pathname, member }: { open: boolean; onClos
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  const links = [{ label: "Home", href: "/" }, ...NAV, { label: "Contact", href: "/contact" }];
+  const links = [
+    { label: "Home", href: "/" },
+    ...NAV,
+    { label: "Contact", href: "/contact" },
+  ];
 
   return (
     <AnimatePresence>
@@ -245,18 +333,31 @@ function MobileMenu({ open, onClose, pathname, member }: { open: boolean; onClos
             <Link href="/" onClick={onClose} aria-label="INSPIRE home">
               <Logo />
             </Link>
-            <button ref={closeRef} type="button" onClick={onClose} className="flex size-11 items-center justify-center rounded-[3px] border border-white/20" aria-label="Close menu">
+            <button
+              ref={closeRef}
+              type="button"
+              onClick={onClose}
+              className="flex size-11 items-center justify-center rounded-[3px] border border-white/20"
+              aria-label="Close menu"
+            >
               <X className="size-5" />
             </button>
           </div>
           <nav aria-label="Mobile" className="container-page flex-1 py-4">
             <ul>
               {links.map((l, i) => (
-                <m.li key={l.href} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 * i, duration: 0.3 }}>
+                <m.li
+                  key={l.href}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.04 * i, duration: 0.3 }}
+                >
                   <Link
                     href={l.href}
                     onClick={onClose}
-                    aria-current={isActive(pathname, l.href) ? "page" : undefined}
+                    aria-current={
+                      isActive(pathname, l.href) ? "page" : undefined
+                    }
                     className={cn(
                       "flex min-h-14 items-center border-b border-white/[0.08] font-display text-[1.75rem] leading-none",
                       isActive(pathname, l.href) ? "text-cyan" : "text-paper",
@@ -270,19 +371,43 @@ function MobileMenu({ open, onClose, pathname, member }: { open: boolean; onClos
             <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm text-paper/70">
               {FOOTER_LINKS.legal.map((l) => (
                 <li key={l.href}>
-                  <Link href={l.href} onClick={onClose} className="inline-flex min-h-10 items-center underline-offset-4 hover:underline">{l.label}</Link>
+                  <Link
+                    href={l.href}
+                    onClick={onClose}
+                    className="inline-flex min-h-10 items-center underline-offset-4 hover:underline"
+                  >
+                    {l.label}
+                  </Link>
                 </li>
               ))}
             </ul>
           </nav>
           <div className="container-page shrink-0 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] pt-2">
-            <Link href={member ? "/portal" : "/login"} onClick={onClose} className="flex min-h-12 items-center justify-center gap-2 rounded-[3px] bg-gold font-ui font-semibold text-midnight">
-              {member ? <><LayoutDashboard aria-hidden className="size-4" /> My Hub</> : <><UserRound aria-hidden className="size-4" /> Log in</>}
+            <Link
+              href={member ? "/portal" : "/login"}
+              onClick={onClose}
+              className="flex min-h-12 items-center justify-center gap-2 rounded-[3px] bg-gold font-ui font-semibold text-midnight"
+            >
+              {member ? (
+                <>
+                  <LayoutDashboard aria-hidden className="size-4" /> My Hub
+                </>
+              ) : (
+                <>
+                  <UserRound aria-hidden className="size-4" /> Log in
+                </>
+              )}
             </Link>
             {!member && (
               <p className="mt-2 text-center text-sm text-paper/70">
                 Not on the delegate list?{" "}
-                <Link href="/signup" onClick={onClose} className="inline-flex min-h-10 items-center font-semibold text-paper underline decoration-white/40 underline-offset-4">Register</Link>
+                <Link
+                  href="/signup"
+                  onClick={onClose}
+                  className="inline-flex min-h-10 items-center font-semibold text-paper underline decoration-white/40 underline-offset-4"
+                >
+                  Register
+                </Link>
               </p>
             )}
           </div>

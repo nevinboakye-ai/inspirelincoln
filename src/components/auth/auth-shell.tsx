@@ -13,7 +13,7 @@ export function AuthShell({ title, intro, children, footer }: { title: string; i
         </div>
         <div className="flex h-full flex-col justify-end p-16">
           <p className="eyebrow text-cyan">My Hub</p>
-          <p className="mt-6 max-w-md font-display text-4xl font-semibold leading-tight">Your Delegate Card, your agenda and the people you will meet, in one place.</p>
+          <p className="mt-6 max-w-md font-display text-4xl font-semibold leading-tight">Your presentation, your profile and the people you will meet, in one place.</p>
         </div>
       </div>
       <div className="flex items-center bg-paper px-5 pb-16 pt-32 sm:px-12 lg:pt-28">
