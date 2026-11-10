@@ -3,6 +3,7 @@ import { requireAccess } from "@/lib/auth";
 import { AdminHeader } from "@/components/admin/ui";
 import { Badge } from "@/components/ui/badge";
 import { RosterAddForm } from "@/components/admin/roster-form";
+import { InlineTypeSelect } from "@/components/admin/type-select";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { ACCOUNT_TYPE_LABEL } from "@/lib/accounts";
@@ -15,12 +16,15 @@ type Row = { id: string; email: string; full_name: string; institution: string |
 
 export default async function RosterPage({ searchParams }: { searchParams: Promise<{ q?: string; show?: string; removed?: string }> }) {
   const sp = await searchParams;
-  const { db } = await requireAccess("review_accounts", "/admin/accounts/roster");
+  const { db, user, profile } = await requireAccess("review_accounts", "/admin/accounts/roster");
+  const canLead = profile.access.leadership;
   const [{ data, error }, { data: accounts }] = await Promise.all([
     db.from("delegate_roster").select("id, email, full_name, institution, year_of_study, account_type, presentation_title, note").order("full_name").limit(2000),
-    db.from("profiles").select("id, email").limit(5000),
+    db.from("profiles").select("id, email, account_type, role").limit(5000),
   ]);
-  const accountId = new Map((accounts ?? []).map((a) => [a.email.toLowerCase(), a.id as string]));
+  type Account = { id: string; email: string; account_type: AccountType; role: string | null };
+  const byEmail = new Map(((accounts ?? []) as Account[]).map((a) => [a.email.toLowerCase(), a]));
+  const accountId = new Map([...byEmail].map(([e, a]) => [e, a.id]));
   const joined = new Set(accountId.keys());
   const all = (data ?? []) as Row[];
   const term = sp.q?.trim().toLowerCase();
@@ -37,7 +41,7 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
       <AdminHeader
         back={{ href: "/admin/accounts", label: "Accounts" }}
         title="Selected delegates"
-        description="People on this list are approved as soon as they set up their account with this email, so they never wait for review. Anyone else who registers still appears in Accounts for review."
+        description="People on this list are approved as soon as they set up their account with this email, so they never wait for review. Set anyone's account type from its dropdown, including committee teams, and they'll have it from the moment they sign up. Anyone else who registers still appears in Accounts for review."
       />
 
       {sp.removed && <p role="status" className="rounded-md border border-success/25 bg-success/[0.06] p-4 text-sm font-medium text-success">Removed from the selected list.</p>}
@@ -62,7 +66,7 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
           <details className="rounded-xl border border-navy/10 bg-white p-5">
             <summary className="cursor-pointer font-semibold text-ink">Add someone to the list</summary>
             <div className="mt-5">
-              <RosterAddForm />
+              <RosterAddForm canLead={canLead} />
             </div>
           </details>
 
@@ -80,7 +84,7 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
 
           <div className="overflow-x-auto rounded-xl border border-navy/10 bg-white">
             <table className="w-full min-w-[44rem] text-left text-sm">
-              <caption className="sr-only">Selected delegates, {rows.length} shown</caption>
+              <caption className="sr-only">Selected delegates, {rows.length} shown. Each type dropdown saves as soon as you change it.</caption>
               <thead className="border-b border-navy/10 bg-paper text-xs uppercase tracking-wide text-slate">
                 <tr>
                   <th scope="col" className="px-4 py-3 font-semibold">Name</th>
@@ -100,7 +104,17 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
                     </td>
                     <td className="px-4 py-3 text-slate-700">{[r.institution, r.year_of_study].filter(Boolean).join(" · ")}</td>
                     <td className="px-4 py-3">
-                      <Badge tone={r.account_type === "delegate" ? "neutral" : "violet"}>{ACCOUNT_TYPE_LABEL[r.account_type]}</Badge>
+                      {(() => {
+                        const a = byEmail.get(r.email);
+                        // Once they've signed up, the dropdown changes their account rather than the list entry.
+                        if (a)
+                          return (a.role !== "admin" || profile.access.owner) && (a.id !== user.id || canLead) ? (
+                            <InlineTypeSelect id={a.id} type={a.account_type} kind="account" canLead={canLead} name={r.full_name} />
+                          ) : (
+                            <Badge tone="violet">{ACCOUNT_TYPE_LABEL[a.account_type]}</Badge>
+                          );
+                        return <InlineTypeSelect id={r.id} type={r.account_type} kind="roster" canLead={canLead} name={r.full_name} />;
+                      })()}
                       {r.presentation_title && <span className="mt-1 block max-w-xs text-xs text-slate">{r.presentation_title}</span>}
                     </td>
                     <td className="px-4 py-3">

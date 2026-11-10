@@ -5,8 +5,9 @@ import { addRosterEntry } from "@/app/admin/people-actions";
 import { submitWithoutReset } from "@/lib/use-action-form";
 import { Field, inputClass } from "@/components/forms/field";
 import { ResultBanner } from "@/components/portal/profile-forms";
+import { TypeOptions } from "./type-select";
 
-export function RosterAddForm() {
+export function RosterAddForm({ canLead }: { canLead: boolean }) {
   const [state, action, pending] = useActionState(addRosterEntry, null);
   const fe = (k: string) => state?.fieldErrors?.[k];
   return (
@@ -26,10 +27,7 @@ export function RosterAddForm() {
       </Field>
       <Field id="r-type" label="Type">
         <select id="r-type" name="accountType" defaultValue="delegate" className={inputClass}>
-          <option value="delegate">Delegate</option>
-          <option value="poster_presenter">Poster presenter</option>
-          <option value="oral_presenter">Oral presenter</option>
-          <option value="oral_waitlist">Oral waiting list</option>
+          <TypeOptions canLead={canLead} />
         </select>
       </Field>
       <div className="flex items-end">

@@ -3,7 +3,8 @@ import { revalidatePath } from "next/cache";
 import { requireAccess, requireRole } from "@/lib/auth";
 import type { ActionResult } from "@/app/portal/actions";
 import { currentEditionId } from "@/lib/admin/server";
-import { ROSTER_TYPES } from "@/lib/accounts";
+import { ACCOUNT_TYPES, EXEC_TYPES } from "@/lib/accounts";
+import type { AccountType } from "@/lib/types";
 
 const REG_STATUSES = ["pending", "confirmed", "waitlisted", "cancelled"];
 const ROLES = ["delegate", "reviewer", "editor", "admin"];
@@ -91,13 +92,15 @@ export async function reviewPoster(_: ActionResult, form: FormData): Promise<Act
 /* ---------- Selected delegate list ---------- */
 
 export async function addRosterEntry(_: ActionResult, form: FormData): Promise<ActionResult> {
-  const { db } = await requireAccess("review_accounts", "/admin/accounts/roster");
+  const { db, profile } = await requireAccess("review_accounts", "/admin/accounts/roster");
   const email = String(form.get("email") ?? "").trim().toLowerCase();
   const fullName = String(form.get("fullName") ?? "").trim().slice(0, 120);
   const type = String(form.get("accountType") ?? "delegate");
   if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email)) return { ok: false, fieldErrors: { email: "Enter a valid email address." } };
   if (fullName.length < 2) return { ok: false, fieldErrors: { fullName: "Enter their name." } };
-  if (!(ROSTER_TYPES as readonly string[]).includes(type)) return { ok: false, error: "Choose a type." };
+  if (!(ACCOUNT_TYPES as readonly string[]).includes(type)) return { ok: false, error: "Choose a type." };
+  if (EXEC_TYPES.includes(type as AccountType) && !profile.access.leadership)
+    return { ok: false, error: "Only the president or vice president can add someone as executive committee." };
   const { error } = await db.from("delegate_roster").upsert({
     email,
     full_name: fullName,
@@ -105,7 +108,13 @@ export async function addRosterEntry(_: ActionResult, form: FormData): Promise<A
     year_of_study: String(form.get("year") ?? "").trim().slice(0, 40) || null,
     account_type: type,
   });
-  if (error) return { ok: false, error: "Could not add this person." };
+  if (error)
+    return {
+      ok: false,
+      error: /check constraint/i.test(error.message)
+        ? "The database can't store committee types on the selected list yet. Run setup file 20 in Supabase, then try again."
+        : "Could not add this person.",
+    };
   revalidatePath("/admin/accounts/roster");
   revalidatePath("/admin/accounts");
   return { ok: true, message: `${fullName} is on the list. If they already have an account it is now approved.` };
