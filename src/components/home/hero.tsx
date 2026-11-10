@@ -86,10 +86,10 @@ export function Hero({
 
             <div className="enter-up mt-6 flex flex-wrap gap-3 [animation-delay:340ms] sm:mt-10">
               <Link
-                href="/signup"
+                href="/login"
                 className="shine group inline-flex min-h-14 items-center gap-3 bg-paper px-7 font-ui font-semibold text-navy transition-colors hover:bg-white"
               >
-                Register
+                Log in
                 <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
               </Link>
               <Link
@@ -105,6 +105,10 @@ export function Hero({
                 Campus map
               </Link>
             </div>
+            <p className="enter-fade mt-3 text-sm text-paper/65 [animation-delay:400ms]">
+              Not on the delegate list?{" "}
+              <Link href="/signup" className="font-semibold text-paper underline decoration-white/40 underline-offset-4 hover:decoration-white">Register</Link>
+            </p>
           </m.div>
 
           <m.div style={{ y: crestY }} className="relative mx-auto hidden lg:block w-[min(62vw,300px)] lg:col-span-5 lg:w-[min(30vw,360px)]">

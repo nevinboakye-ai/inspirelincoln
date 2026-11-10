@@ -11,11 +11,11 @@ export default async function SignUpPage({ searchParams }: { searchParams: Promi
   return (
     <AuthShell
       title="Register for INSPIRE"
-      intro="Three short steps. Your account holds your ticket, your agenda and, if you're presenting, your slides or poster."
+      intro="For anyone not on the selected delegate list. The committee reviews each new account. If you were selected, log in instead."
       footer={
         <>
-          Already registered?{" "}
-          <Link href={`/login?next=${encodeURIComponent(next)}`} className="font-semibold text-electric-600 underline underline-offset-4">Sign in</Link>
+          Already have an account, or on the delegate list?{" "}
+          <Link href={`/login?next=${encodeURIComponent(next)}`} className="font-semibold text-electric-600 underline underline-offset-4">Log in</Link>
         </>
       }
     >

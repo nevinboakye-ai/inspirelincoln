@@ -9,6 +9,7 @@ import { FOOTER_LINKS, NAV } from "@/lib/site";
 import { cn } from "@/lib/cn";
 import { Logo } from "./logo";
 import { openCommandPalette } from "./search-launcher";
+import { hasSessionCookie } from "@/lib/supabase/session-hint";
 
 function isActive(pathname: string, href: string) {
   const path = href.split("#")[0];
@@ -20,6 +21,8 @@ export function SiteHeader({ edition, ribbon }: { edition: { year: number; date:
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [ribbonHidden, setRibbonHidden] = useState(false);
+  // Read after hydration so server and browser markup match.
+  const [member, setMember] = useState(false);
 
   const inAccountArea = /^\/(admin|portal|review)/.test(pathname);
   const inAuth = /^\/(login|signup|auth)/.test(pathname);
@@ -32,6 +35,7 @@ export function SiteHeader({ edition, ribbon }: { edition: { year: number; date:
   }, []);
 
   useEffect(() => setMenuOpen(false), [pathname]);
+  useEffect(() => setMember(hasSessionCookie()), [pathname]);
 
   useEffect(() => {
     try {
@@ -117,17 +121,27 @@ export function SiteHeader({ edition, ribbon }: { edition: { year: number; date:
               >
                 <Search aria-hidden className="size-4" />
               </button>
+              {!member && (
+                <Link
+                  href="/signup"
+                  className="hidden min-h-11 items-center whitespace-nowrap px-3 text-sm font-medium text-paper/75 underline-offset-4 transition-colors hover:text-paper hover:underline lg:flex"
+                >
+                  Register
+                </Link>
+              )}
               <Link
-                href="/portal"
-                className="hidden min-h-11 items-center gap-2 whitespace-nowrap px-3 text-sm font-medium text-paper/80 transition-colors hover:text-paper lg:flex"
-              >
-                <UserRound aria-hidden className="size-4" /> My account
-              </Link>
-              <Link
-                href="/signup"
+                href={member ? "/portal" : "/login"}
                 className="hidden min-h-11 items-center gap-1.5 rounded-[3px] bg-cyan px-5 font-ui text-sm font-semibold text-midnight transition-colors hover:bg-cyan-300 sm:flex"
               >
-                Register <ArrowUpRight aria-hidden className="size-4" />
+                {member ? (
+                  <>
+                    <LayoutDashboard aria-hidden className="size-4" /> My Hub
+                  </>
+                ) : (
+                  <>
+                    Log in <ArrowUpRight aria-hidden className="size-4" />
+                  </>
+                )}
               </Link>
               <button
                 type="button"
@@ -144,7 +158,7 @@ export function SiteHeader({ edition, ribbon }: { edition: { year: number; date:
         </div>
       </header>
 
-      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} pathname={pathname} year={edition.year} />
+      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} pathname={pathname} member={member} />
       {!pathname.startsWith("/admin") && !inAuth && <BottomBar pathname={pathname} />}
     </>
   );
@@ -184,7 +198,7 @@ function BottomBar({ pathname }: { pathname: string }) {
   );
 }
 
-function MobileMenu({ open, onClose, pathname, year }: { open: boolean; onClose: () => void; pathname: string; year: number }) {
+function MobileMenu({ open, onClose, pathname, member }: { open: boolean; onClose: () => void; pathname: string; member: boolean }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -261,13 +275,16 @@ function MobileMenu({ open, onClose, pathname, year }: { open: boolean; onClose:
               ))}
             </ul>
           </nav>
-          <div className="container-page grid shrink-0 grid-cols-2 gap-3 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-2">
-            <Link href="/signup" onClick={onClose} className="flex min-h-12 items-center justify-center rounded-[3px] bg-cyan font-ui font-semibold text-midnight">
-              Register for {year}
+          <div className="container-page shrink-0 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] pt-2">
+            <Link href={member ? "/portal" : "/login"} onClick={onClose} className="flex min-h-12 items-center justify-center gap-2 rounded-[3px] bg-cyan font-ui font-semibold text-midnight">
+              {member ? <><LayoutDashboard aria-hidden className="size-4" /> My Hub</> : <><UserRound aria-hidden className="size-4" /> Log in</>}
             </Link>
-            <Link href="/portal" onClick={onClose} className="flex min-h-12 items-center justify-center gap-2 rounded-[3px] border border-white/20 font-ui font-medium">
-              <UserRound aria-hidden className="size-4" /> My account
-            </Link>
+            {!member && (
+              <p className="mt-2 text-center text-sm text-paper/70">
+                Not on the delegate list?{" "}
+                <Link href="/signup" onClick={onClose} className="inline-flex min-h-10 items-center font-semibold text-paper underline decoration-white/40 underline-offset-4">Register</Link>
+              </p>
+            )}
           </div>
         </m.div>
       )}

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Gauge, LayoutDashboard, LogOut, ShieldCheck, Ticket, UploadCloud, UserRound, ClipboardCheck } from "lucide-react";
+import { Gauge, LayoutDashboard, LogOut, ShieldCheck, Ticket, UploadCloud, UserRound, ClipboardCheck, Users } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 import { cn } from "@/lib/cn";
 import type { Access } from "@/lib/accounts";
@@ -11,6 +11,7 @@ export function PortalNav({ name, typeLabel, presenter, access, reviewer }: { na
   const links = [
     { href: "/portal", label: "My conference", icon: Ticket },
     ...(presenter ? [{ href: "/portal/submission", label: "My submission", icon: UploadCloud }] : []),
+    { href: "/portal/network", label: "Network", icon: Users },
     { href: "/portal/profile", label: "Profile and privacy", icon: UserRound },
     ...(reviewer && !access.committee ? [{ href: "/review", label: "Abstract reviews", icon: ClipboardCheck }] : []),
     ...(access.owner ? [{ href: "/admin/platform", label: "Platform dashboard", icon: Gauge }] : []),
@@ -49,7 +50,7 @@ export function PortalNav({ name, typeLabel, presenter, access, reviewer }: { na
         <li className="shrink-0 lg:mt-4 lg:border-t lg:border-navy/10 lg:pt-4">
           <form action={signOut}>
             <button type="submit" className="flex min-h-11 w-full items-center gap-2.5 whitespace-nowrap rounded-[3px] border border-navy/10 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-paper-200 lg:border-0 lg:bg-transparent">
-              <LogOut aria-hidden className="size-4" /> Sign out
+              <LogOut aria-hidden className="size-4" /> Log out
             </button>
           </form>
         </li>

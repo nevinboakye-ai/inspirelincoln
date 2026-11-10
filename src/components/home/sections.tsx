@@ -217,13 +217,17 @@ export function FinalCta({ edition }: { edition: Edition }) {
             Whether you are presenting your first poster or simply curious about research, there is a place for you at INSPIRE.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3 sm:mt-10">
-            <Link href="/signup" className="shine group inline-flex min-h-14 items-center gap-2 rounded-[3px] bg-cyan px-8 font-ui font-semibold text-midnight transition-[background-color,box-shadow] hover:bg-cyan-300 hover:shadow-[0_12px_40px_-10px_rgba(201,216,236,0.7)]">
-              Register <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
+            <Link href="/login" className="shine group inline-flex min-h-14 items-center gap-2 rounded-[3px] bg-cyan px-8 font-ui font-semibold text-midnight transition-[background-color,box-shadow] hover:bg-cyan-300 hover:shadow-[0_12px_40px_-10px_rgba(201,216,236,0.7)]">
+              Log in <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link href="/conference" className="inline-flex min-h-14 items-center rounded-[3px] border border-white/20 bg-white/5 px-8 font-ui font-medium backdrop-blur-sm hover:border-white/40">
               Venue & FAQs
             </Link>
           </div>
+          <p className="mt-4 text-sm text-paper/65">
+            Not on the delegate list?{" "}
+            <Link href="/signup" className="font-semibold text-paper underline decoration-white/40 underline-offset-4 hover:decoration-white">Register</Link>
+          </p>
         </Reveal>
       </div>
     </section>

@@ -3,7 +3,7 @@ import { submitWithoutReset } from "@/lib/use-action-form";
 import Link from "next/link";
 import { useActionState } from "react";
 import { Loader2 } from "lucide-react";
-import { requestReset, signIn, updatePassword, type AuthState } from "@/app/auth/actions";
+import { activateAccount, requestReset, signIn, updatePassword, type AuthState } from "@/app/auth/actions";
 import { Field, inputClass } from "@/components/forms/field";
 
 function Status({ state }: { state: AuthState }) {
@@ -41,7 +41,7 @@ export function SignInForm({ next, disabled }: { next: string; disabled: boolean
         <Link href="/auth/reset" className="font-medium text-electric-600 underline underline-offset-4">Forgotten your password?</Link>
       </div>
       <fieldset disabled={disabled}>
-        <Submit pending={pending}>Sign in</Submit>
+        <Submit pending={pending}>Log in</Submit>
       </fieldset>
     </form>
   );
@@ -74,6 +74,48 @@ export function UpdatePasswordForm() {
         <input id="confirm" name="confirm" type="password" autoComplete="new-password" className={inputClass} {...inv(state, "confirm")} />
       </Field>
       <Submit pending={pending}>Update password</Submit>
+    </form>
+  );
+}
+
+export function ActivateForm({ disabled }: { disabled: boolean }) {
+  const [state, action, pending] = useActionState(activateAccount, null);
+  if (state?.message)
+    return (
+      <div role="status" className="rounded-md border border-success/25 bg-success/[0.06] p-5 text-sm text-ink">
+        <p className="font-semibold">Check your inbox</p>
+        <p className="mt-2 text-slate-700">
+          We&apos;ve sent a link to <strong className="break-all">{state.message}</strong>. Open it to confirm your email and you&apos;ll go straight to My Hub.
+          It can take a few minutes, so check your junk folder too.
+        </p>
+      </div>
+    );
+  return (
+    <form onSubmit={submitWithoutReset(action)} noValidate className="space-y-5">
+      <Status state={state} />
+      <Field id="email" label="Email you applied with" required error={fe(state, "email")} hint="Usually your university email.">
+        <input id="email" name="email" type="email" inputMode="email" autoComplete="email" className={inputClass} {...inv(state, "email")} />
+      </Field>
+      <Field id="password" label="Choose a password" required error={fe(state, "password")} hint="At least 10 characters.">
+        <input id="password" name="password" type="password" autoComplete="new-password" className={inputClass} {...inv(state, "password")} />
+      </Field>
+      <Field id="confirm" label="Confirm password" required error={fe(state, "confirm")}>
+        <input id="confirm" name="confirm" type="password" autoComplete="new-password" className={inputClass} {...inv(state, "confirm")} />
+      </Field>
+      <div>
+        <label className="flex items-start gap-3 text-sm text-slate-700">
+          <input type="checkbox" name="privacyAck" className="mt-0.5 size-5 shrink-0 accent-navy" {...inv(state, "privacyAck")} />
+          <span>
+            I have read the{" "}
+            <Link href="/privacy" target="_blank" className="font-medium text-electric-600 underline underline-offset-4">privacy notice</Link>{" "}
+            (opens in a new tab).
+          </span>
+        </label>
+        {fe(state, "privacyAck") && <p id="privacyAck-error" className="mt-2 text-sm font-medium text-danger">{fe(state, "privacyAck")}</p>}
+      </div>
+      <fieldset disabled={disabled}>
+        <Submit pending={pending}>Set up my account</Submit>
+      </fieldset>
     </form>
   );
 }

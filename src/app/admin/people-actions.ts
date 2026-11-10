@@ -86,3 +86,33 @@ export async function reviewPoster(_: ActionResult, form: FormData): Promise<Act
   revalidatePath("/admin/posters");
   return { ok: true, message: "Saved." };
 }
+
+/* ---------- Selected delegate list ---------- */
+const ROSTER_TYPES = ["delegate", "oral_presenter", "poster_presenter"];
+
+export async function addRosterEntry(_: ActionResult, form: FormData): Promise<ActionResult> {
+  const { db } = await requireAccess("review_accounts", "/admin/accounts/roster");
+  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  const fullName = String(form.get("fullName") ?? "").trim().slice(0, 120);
+  const type = String(form.get("accountType") ?? "delegate");
+  if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email)) return { ok: false, fieldErrors: { email: "Enter a valid email address." } };
+  if (fullName.length < 2) return { ok: false, fieldErrors: { fullName: "Enter their name." } };
+  if (!ROSTER_TYPES.includes(type)) return { ok: false, error: "Choose a type." };
+  const { error } = await db.from("delegate_roster").upsert({
+    email,
+    full_name: fullName,
+    institution: String(form.get("institution") ?? "").trim().slice(0, 160) || null,
+    year_of_study: String(form.get("year") ?? "").trim().slice(0, 40) || null,
+    account_type: type,
+  });
+  if (error) return { ok: false, error: "Could not add this person." };
+  revalidatePath("/admin/accounts/roster");
+  revalidatePath("/admin/accounts");
+  return { ok: true, message: `${fullName} is on the list. If they already have an account it is now approved.` };
+}
+
+export async function removeRosterEntry(form: FormData) {
+  const { db } = await requireAccess("review_accounts", "/admin/accounts/roster");
+  await db.from("delegate_roster").delete().eq("email", String(form.get("email") ?? "").toLowerCase());
+  revalidatePath("/admin/accounts/roster");
+}

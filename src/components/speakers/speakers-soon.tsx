@@ -12,11 +12,11 @@ export function SpeakersSoon({ dark = false, className }: { dark?: boolean; clas
         Announced <span className="italic">soon</span>
       </h2>
       <p className={cn("mx-auto mt-4 max-w-md leading-relaxed", dark ? "text-paper/75" : "text-slate-700")}>
-        We&apos;re confirming this year&apos;s keynote speakers now. Register to be the first to hear who&apos;s joining us.
+        We&apos;re confirming this year&apos;s keynote speakers now.
       </p>
       <div className="mt-5 flex flex-wrap justify-center gap-3 sm:mt-8">
-        <Link href="/signup" className={cn("inline-flex min-h-12 items-center gap-2 rounded-[3px] px-6 font-ui font-semibold", dark ? "bg-paper text-navy" : "bg-navy text-paper")}>
-          Register <ArrowRight aria-hidden className="size-4" />
+        <Link href="/login" className={cn("inline-flex min-h-12 items-center gap-2 rounded-[3px] px-6 font-ui font-semibold", dark ? "bg-paper text-navy" : "bg-navy text-paper")}>
+          Log in <ArrowRight aria-hidden className="size-4" />
         </Link>
         <Link href="/programme" className={cn("inline-flex min-h-12 items-center rounded-[3px] border px-6 font-ui font-semibold", dark ? "border-white/30 text-paper" : "border-navy/15 text-ink")}>
           See the programme

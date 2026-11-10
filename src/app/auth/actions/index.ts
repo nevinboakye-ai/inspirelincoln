@@ -113,6 +113,40 @@ export async function signUp(_: AuthState, form: FormData): Promise<AuthState> {
   return { message: v.email };
 }
 
+/**
+ * First log in for someone the committee has already selected. Only an email
+ * and password are needed: the database fills in their details from the
+ * selected list and approves them. Anyone not on the list gets an account
+ * that waits for review, so this never reveals who is on the list.
+ */
+export async function activateAccount(_: AuthState, form: FormData): Promise<AuthState> {
+  const parsed = z
+    .object({ email, password, confirm: z.string(), privacyAck: z.literal(true, { message: "Please confirm you have read the privacy notice." }) })
+    .refine((v) => v.password === v.confirm, { message: "Passwords don't match.", path: ["confirm"] })
+    .safeParse({ ...Object.fromEntries(form), privacyAck: form.get("privacyAck") === "on" });
+  if (!parsed.success) return { error: "Please check the highlighted answers.", fieldErrors: fieldErrors(parsed.error) };
+  const db = await createClient();
+  if (!db) return { error: "Accounts are not available yet." };
+  const { data, error } = await db.auth.signUp({
+    email: parsed.data.email,
+    password: parsed.data.password,
+    options: {
+      data: { privacy_ack: true, policy_version: POLICY_VERSION, account_type: "delegate" },
+      emailRedirectTo: `${await origin()}/auth/callback?next=/portal`,
+    },
+  });
+  if (error) {
+    if (error.message.toLowerCase().includes("already")) return { error: "You already have an account. Log in, or reset your password if you've forgotten it." };
+    if (error.status === 429) return { error: "Too many attempts. Please wait a minute and try again." };
+    console.error("Account set-up failed:", error.status, error.code, error.message);
+    return { error: "We couldn't set up your account. Please try again later, or email inspiresoc@lincolnsu.com." };
+  }
+  // Supabase returns a user with no identities when the email is already registered.
+  if (data.user && data.user.identities?.length === 0) return { error: "You already have an account. Log in, or reset your password if you've forgotten it." };
+  if (data.session) redirect("/portal");
+  return { message: parsed.data.email };
+}
+
 export async function requestReset(_: AuthState, form: FormData): Promise<AuthState> {
   const parsed = z.object({ email }).safeParse(Object.fromEntries(form));
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };

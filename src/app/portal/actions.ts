@@ -51,6 +51,40 @@ export async function updateProfile(_: ActionResult, form: FormData): Promise<Ac
   return { ok: true, message: "Saved." };
 }
 
+/* ---------- Delegate network ---------- */
+const networkSchema = z.object({
+  bio: z.string().trim().max(600, "Keep your bio to 600 characters.").optional().default(""),
+  linkedin: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .default("")
+    .transform((v) => (v && !/^https?:\/\//i.test(v) ? `https://${v}` : v).replace(/^http:\/\//i, "https://"))
+    .refine((v) => !v || /^https:\/\/([a-z]{2,3}\.)?linkedin\.com\/[^\s]+$/i.test(v), "Paste the link to your LinkedIn profile, for example linkedin.com/in/your-name."),
+  showEmail: z.boolean(),
+  listed: z.boolean(),
+});
+
+export async function saveNetworkCard(_: ActionResult, form: FormData): Promise<ActionResult> {
+  const { user, db } = await requireUser("/portal/network");
+  const parsed = networkSchema.safeParse({
+    bio: form.get("bio") ?? "",
+    linkedin: form.get("linkedin") ?? "",
+    showEmail: form.get("showEmail") === "on",
+    listed: form.get("listed") === "on",
+  });
+  if (!parsed.success) return { ok: false, error: "Please check the highlighted answers.", fieldErrors: fieldErrors(parsed.error) };
+  const v = parsed.data;
+  const { error } = await db
+    .from("profiles")
+    .update({ bio: v.bio || null, linkedin_url: v.linkedin || null, network_show_email: v.showEmail, network_listed: v.listed })
+    .eq("id", user.id);
+  if (error) return { ok: false, error: "We couldn't save your card. Please try again." };
+  revalidatePath("/portal/network");
+  return { ok: true, message: v.listed ? "Saved. Your card is up to date." : "Saved. You're hidden from the network." };
+}
+
 /**
  * Access and dietary needs can reveal health or religious beliefs, which UK
  * GDPR treats as special category data. They are only stored with explicit

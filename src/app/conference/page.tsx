@@ -48,7 +48,7 @@ function Registration({ edition }: { edition: Edition }) {
           </h2>
           {edition.registrationNote && <p className="mt-4 max-w-2xl text-lg text-paper/70">{edition.registrationNote}</p>}
           {!edition.registrationNote && s !== "concluded" && (
-            <p className="mt-4 max-w-2xl text-lg text-paper/70">Create an account in three short steps. The committee confirms your place by email, or adds you to the waitlist if we&apos;re full.</p>
+            <p className="mt-4 max-w-2xl text-lg text-paper/70">Selected delegates can log in with the email they applied with. Not on the list? Register and the committee will review your account.</p>
           )}
           {s === "concluded" && (
             <p className="mt-6 text-paper/75">Thank you to everyone who took part.</p>
@@ -56,12 +56,12 @@ function Registration({ edition }: { edition: Edition }) {
         </div>
         <div className="flex flex-wrap gap-3">
           {s !== "registration_closed" && s !== "concluded" && (
-            <Link href="/signup" className="inline-flex min-h-14 items-center gap-2 rounded-[3px] bg-cyan px-7 font-ui font-semibold text-midnight hover:bg-cyan-300">
-              Register <ArrowRight aria-hidden className="size-4" />
+            <Link href="/signup" className="inline-flex min-h-14 items-center gap-2 rounded-[3px] border border-white/20 px-7 font-ui font-medium hover:border-white/40">
+              Register
             </Link>
           )}
-          <Link href="/portal" className="inline-flex min-h-14 items-center gap-2 rounded-[3px] border border-white/20 px-7 font-ui font-medium hover:border-white/40">
-            My Conference
+          <Link href="/login" className="order-first inline-flex min-h-14 items-center gap-2 rounded-[3px] bg-cyan px-7 font-ui font-semibold text-midnight hover:bg-cyan-300">
+            Log in <ArrowRight aria-hidden className="size-4" />
           </Link>
         </div>
       </div>

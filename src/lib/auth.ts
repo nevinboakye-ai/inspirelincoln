@@ -22,6 +22,12 @@ export interface Profile {
   accountType: AccountType;
   accountStatus: AccountStatus;
   reviewNote: string | null;
+  bio: string | null;
+  linkedinUrl: string | null;
+  /** Show the account email on the delegate network. */
+  networkShowEmail: boolean;
+  /** Appear on the delegate network at all. */
+  networkListed: boolean;
   /** The permission tier used by role gates, derived from the account type and status. */
   role: UserRole;
   /** The role stored on the profile, used only as a site admin override. */
@@ -66,6 +72,10 @@ export const getCurrentUser = cache(async () => {
     accountType: base.accountType,
     accountStatus: base.accountStatus,
     reviewNote: p?.review_note ?? null,
+    bio: p?.bio ?? null,
+    linkedinUrl: p?.linkedin_url ?? null,
+    networkShowEmail: Boolean(p?.network_show_email),
+    networkListed: p?.network_listed ?? true,
     role: effectiveRole(access, base.role),
     siteRole: base.role,
     access,
