@@ -1,5 +1,5 @@
 "use client";
-import { AnimatePresence, LayoutGroup, motion } from "motion/react";
+import { AnimatePresence, LayoutGroup, m } from "motion/react";
 import {
   AlertTriangle,
   BookmarkCheck,
@@ -211,7 +211,7 @@ export function ProgrammeExplorer({ sessions, speakers, workshops, rooms, editio
                 onClick={() => changeView(v)}
                 className={cn("relative flex min-h-10 items-center gap-2 rounded-[3px] px-4 text-sm font-medium transition-colors", view === v ? "text-paper" : "text-slate-700 hover:text-ink")}
               >
-                {view === v && <motion.span layoutId="view-pill" className="absolute inset-0 rounded-full bg-navy" transition={{ type: "spring", stiffness: 500, damping: 40 }} />}
+                {view === v && <m.span layoutId="view-pill" className="absolute inset-0 rounded-full bg-navy" transition={{ type: "spring", stiffness: 500, damping: 40 }} />}
                 <Icon aria-hidden className="relative size-4" />
                 <span className="relative">{label}</span>
               </button>
@@ -329,15 +329,15 @@ export function ProgrammeExplorer({ sessions, speakers, workshops, rooms, editio
         <EmptyState view={view} onClear={clearFilters} filtersActive={Boolean(filtersActive)} />
       ) : view === "cards" ? (
         <LayoutGroup>
-          <motion.ul layout className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <m.ul layout className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <AnimatePresence initial={false}>
               {filtered.map((s) => (
-                <motion.li key={s.id} layout initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.97 }}>
+                <m.li key={s.id} layout initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.97 }}>
                   <SessionCard session={s} onOpen={open} speakerById={speakerById} location={sessionLocation(s)} conflict={agendaConflicts.has(s.id)} parallel={parallelCount(s)} />
-                </motion.li>
+                </m.li>
               ))}
             </AnimatePresence>
-          </motion.ul>
+          </m.ul>
         </LayoutGroup>
       ) : (
         <ol className="relative">
@@ -353,9 +353,9 @@ export function ProgrammeExplorer({ sessions, speakers, workshops, rooms, editio
               </div>
               <ul className={cn("grid gap-3", g.label && g.items.length > 1 && "lg:grid-cols-2")}>
                 {g.items.map((s) => (
-                  <motion.li key={s.id} layout="position">
+                  <li key={s.id}>
                     <SessionRow session={s} onOpen={open} speakerById={speakerById} location={sessionLocation(s)} conflict={agendaConflicts.has(s.id)} parallel={parallelCount(s)} />
-                  </motion.li>
+                  </li>
                 ))}
               </ul>
             </li>
@@ -428,9 +428,9 @@ function SaveButton({ session, compact = false }: { session: Session; compact?: 
         saved ? "border-electric-600 bg-electric-600 text-white" : "border-navy/15 bg-white text-ink hover:border-electric-600 hover:text-electric-600",
       )}
     >
-      <motion.span key={String(saved)} initial={{ scale: 0.6, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 500, damping: 18 }}>
+      <m.span key={String(saved)} initial={{ scale: 0.6, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 500, damping: 18 }}>
         {saved ? <BookmarkCheck aria-hidden className="size-[1.1rem]" /> : <BookmarkPlus aria-hidden className="size-[1.1rem]" />}
-      </motion.span>
+      </m.span>
       {!compact && (saved ? "In my agenda" : "Add to my agenda")}
     </button>
   );

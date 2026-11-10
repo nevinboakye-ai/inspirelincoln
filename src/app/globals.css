@@ -284,7 +284,23 @@
 }
 
 /* Each page settles in on navigation. "backwards" so no transform is left behind. */
-.page-enter { animation: page-in 0.6s var(--ease-out-expo) backwards; }
+.page-enter { animation: page-in 0.35s var(--ease-out-expo) backwards; }
+
+/*
+ * First-paint entrances. These are CSS, not JavaScript, so they start the moment
+ * the page appears and buttons are visible straight away, even on a slow phone.
+ * Set a delay with [animation-delay:…].
+ */
+@keyframes enter-fade { from { opacity: 0; } }
+@keyframes enter-up { from { opacity: 0; transform: translateY(14px); } }
+@keyframes enter-rise { from { transform: translateY(105%); } }
+@keyframes enter-pop { from { opacity: 0; transform: scale(0.96); } }
+@keyframes enter-draw { from { transform: scaleX(0); } }
+.enter-fade { animation: enter-fade 0.6s var(--ease-out-expo) backwards; }
+.enter-up { animation: enter-up 0.7s var(--ease-out-expo) backwards; }
+.enter-rise { animation: enter-rise 0.9s var(--ease-out-expo) backwards; }
+.enter-pop { animation: enter-pop 0.8s var(--ease-out-expo) backwards; }
+.enter-draw { transform-origin: left; animation: enter-draw 0.8s var(--ease-out-expo) backwards; }
 
 .animate-drift { animation: drift 22s ease-in-out infinite alternate; will-change: transform; }
 .animate-breathe { animation: breathe 9s ease-in-out infinite; }
@@ -325,5 +341,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .animate-drift, .animate-breathe, .pulse-tracer { animation: none !important; }
+  .enter-rise, .enter-pop, .enter-draw, .enter-up { animation-name: enter-fade !important; }
   .shine::after { display: none; }
 }

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Speaker } from "@/lib/types";
@@ -56,10 +56,10 @@ export function SpeakerDirectory({ speakers }: { speakers: Speaker[] }) {
       {filtered.length === 0 ? (
         <p className="mt-6 rounded-lg border border-dashed border-navy/20 bg-white p-10 text-center text-slate-700">No speakers match those filters.</p>
       ) : (
-        <motion.ul layout className="mt-6 grid gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+        <m.ul layout className="mt-6 grid gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
           <AnimatePresence>
             {filtered.map((s) => (
-              <motion.li key={s.id} layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <m.li key={s.id} layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                 <Link href={`/speakers/${s.slug}`} className="group block">
                   <SpeakerPortrait name={s.fullName} url={s.portraitUrl} className="aspect-[4/5] rounded-lg" />
                   <p className="mt-4 font-display text-xl font-medium text-ink group-hover:text-electric-600">{s.fullName}</p>
@@ -67,10 +67,10 @@ export function SpeakerDirectory({ speakers }: { speakers: Speaker[] }) {
                   <p className="mt-1 text-sm text-slate-700">{[s.position, s.institution].filter(Boolean).join(", ")}</p>
                   {s.specialty && <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-electric-600">{s.specialty}</p>}
                 </Link>
-              </motion.li>
+              </m.li>
             ))}
           </AnimatePresence>
-        </motion.ul>
+        </m.ul>
       )}
     </div>
   );

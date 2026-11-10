@@ -1,5 +1,5 @@
 "use client";
-import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
+import { m, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
 import { usePathname } from "next/navigation";
 import { useRef, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
@@ -15,12 +15,12 @@ export function MaskRise({ children, delay = 0, onMount = false, className }: { 
   const reduce = useReducedMotion();
   // The wrapper is watched, not the text: the text starts clipped by the mask, so it never "enters" the view itself.
   return (
-    <motion.span
+    <m.span
       className={cn("block overflow-hidden pb-[0.1em]", className)}
       initial="hidden"
       {...(onMount ? { animate: "show" } : { whileInView: "show", viewport: inView })}
     >
-      <motion.span
+      <m.span
         className="block"
         variants={{
           hidden: reduce ? { opacity: 0 } : { y: "105%" },
@@ -28,15 +28,15 @@ export function MaskRise({ children, delay = 0, onMount = false, className }: { 
         }}
       >
         {children}
-      </motion.span>
-    </motion.span>
+      </m.span>
+    </m.span>
   );
 }
 
 /** A short rule that draws itself from the left, used beside eyebrows. */
 export function LineDraw({ className, delay = 0, onMount = false }: { className?: string; delay?: number; onMount?: boolean }) {
   return (
-    <motion.span
+    <m.span
       aria-hidden
       className={cn("block h-px origin-left", className)}
       initial={{ scaleX: 0 }}
@@ -46,22 +46,13 @@ export function LineDraw({ className, delay = 0, onMount = false }: { className?
   );
 }
 
-/** Fades in after a delay on first load (for page intros under a rising title). */
-export function FadeUp({ children, delay = 0, className }: { children: ReactNode; delay?: number; className?: string }) {
-  return (
-    <motion.div className={className} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay, ease }}>
-      {children}
-    </motion.div>
-  );
-}
-
 /** A thin bar under the header showing how far down the page you are. */
 export function ScrollProgress() {
   const path = usePathname();
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 220, damping: 40, restDelta: 0.001 });
   if (/^\/(admin|portal|map|login|signup|auth|review)/.test(path)) return null;
-  return <motion.div aria-hidden style={{ scaleX }} className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-0.5 origin-left bg-gradient-to-r from-electric via-cyan to-violet" />;
+  return <m.div aria-hidden style={{ scaleX }} className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-0.5 origin-left bg-gradient-to-r from-electric via-cyan to-violet" />;
 }
 
 /** Moves its children gently against the scroll for depth. */
@@ -71,9 +62,9 @@ export function Parallax({ children, distance = 60, axis = "y", className }: { c
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const v = useTransform(scrollYProgress, [0, 1], reduce ? [0, 0] : [distance, -distance]);
   return (
-    <motion.div ref={ref} style={axis === "x" ? { x: v } : { y: v }} className={className}>
+    <m.div ref={ref} style={axis === "x" ? { x: v } : { y: v }} className={className}>
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -86,7 +77,7 @@ export function ScrollLine({ className }: { className?: string }) {
   return (
     <span ref={ref} aria-hidden className={cn("absolute w-px", className)}>
       <span className="absolute inset-0 bg-navy/10" />
-      <motion.span style={{ scaleY: reduce ? 1 : scaleY }} className="absolute inset-0 origin-top bg-gradient-to-b from-electric via-cyan to-violet" />
+      <m.span style={{ scaleY: reduce ? 1 : scaleY }} className="absolute inset-0 origin-top bg-gradient-to-b from-electric via-cyan to-violet" />
     </span>
   );
 }
@@ -109,7 +100,7 @@ export function PulseLine({ className }: { className?: string }) {
           <stop offset="1" stopColor="#c9d8ec" stopOpacity="0" />
         </linearGradient>
       </defs>
-      <motion.path
+      <m.path
         d={d}
         stroke="url(#pulse-fade)"
         strokeWidth="1.25"

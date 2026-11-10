@@ -1,9 +1,10 @@
 "use client";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { Pencil, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { hasSessionCookie } from "@/lib/supabase/session-hint";
 
 type Target = { label: string; href: string };
 
@@ -36,7 +37,8 @@ export function EditShortcut() {
   const entry = EDITORS.find((e) => e.match(path));
 
   useEffect(() => {
-    if (!entry) return;
+    // Only signed-in people can edit, so guests skip the check entirely.
+    if (!entry || !hasSessionCookie()) return;
     let live = true;
     loadAccess().then((a) => live && setCanEdit(Boolean(a.edit)));
     return () => {
@@ -63,7 +65,7 @@ export function EditShortcut() {
     <div ref={panel} className="fixed bottom-[calc(env(safe-area-inset-bottom)+5rem)] left-4 z-40 lg:bottom-6 lg:left-6">
       <AnimatePresence>
         {open && (
-          <motion.div
+          <m.div
             id="edit-shortcut-menu"
             initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -81,10 +83,10 @@ export function EditShortcut() {
                 </li>
               ))}
             </ul>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
-      <motion.button
+      <m.button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
@@ -96,7 +98,7 @@ export function EditShortcut() {
         className="flex min-h-11 items-center gap-2 rounded-full bg-cyan px-4 font-ui text-sm font-semibold text-midnight shadow-[0_10px_30px_-12px_rgba(14,27,49,0.6)]"
       >
         {open ? <X aria-hidden className="size-4" /> : <Pencil aria-hidden className="size-4" />} {open ? "Close" : "Edit this page"}
-      </motion.button>
+      </m.button>
     </div>
   );
 }

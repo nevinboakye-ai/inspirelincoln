@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m as motion } from "motion/react";
 import { ExternalLink, Plus } from "lucide-react";
 import { useState } from "react";
 import type { CommitteeMember } from "@/lib/types";

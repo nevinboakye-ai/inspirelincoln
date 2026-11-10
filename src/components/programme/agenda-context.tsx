@@ -1,6 +1,7 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { getBrowserClient } from "@/lib/supabase/client";
+import { usePathname } from "next/navigation";
+import { hasSessionCookie } from "@/lib/supabase/session-hint";
 import { useToast } from "@/components/ui/toast";
 
 const STORAGE_KEY = "inspire-agenda-v1";
@@ -40,6 +41,9 @@ function writeLocal(sessions: Set<string>, workshops: Set<string>) {
 
 const isUuid = (s: string) => /^[0-9a-f-]{36}$/i.test(s);
 
+/** The sign-in library is only downloaded for people who are signed in. */
+const loadClient = () => import("@/lib/supabase/client").then((m) => m.getBrowserClient());
+
 /**
  * Personal agenda. Guests keep their agenda in this browser. Signed-in
  * delegates have it stored in Supabase (agenda_items / saved_workshops,
@@ -52,17 +56,27 @@ export function AgendaProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const toast = useToast();
 
+  // Re-checked on each navigation, so signing in or out elsewhere is picked up.
+  const path = usePathname();
+  const [hasSession, setHasSession] = useState(false);
+  useEffect(() => setHasSession(hasSessionCookie()), [path]);
+
   useEffect(() => {
     const local = readLocal();
     setSessions(new Set(local.sessions));
     setWorkshops(new Set(local.workshops));
-    const db = getBrowserClient();
-    if (!db) {
+    if (!hasSession) {
+      setUserId(null);
       setReady(true);
       return;
     }
     let cancelled = false;
     (async () => {
+      const db = await loadClient();
+      if (!db || cancelled) {
+        setReady(true);
+        return;
+      }
       const { data } = await db.auth.getUser();
       const uid = data.user?.id ?? null;
       if (!uid || cancelled) {
@@ -91,17 +105,16 @@ export function AgendaProvider({ children }: { children: React.ReactNode }) {
       writeLocal(s, ws);
       setReady(true);
     })();
-    const { data: sub } = db.auth.onAuthStateChange((_e: string, session: { user: { id: string } } | null) => setUserId(session?.user.id ?? null));
     return () => {
       cancelled = true;
-      sub.subscription.unsubscribe();
     };
-  }, []);
+  }, [hasSession]);
 
   const persist = useCallback(
     async (table: "agenda_items" | "saved_workshops", column: "session_id" | "workshop_id", id: string, add: boolean) => {
-      const db = getBrowserClient();
-      if (!db || !userId || !isUuid(id)) return true;
+      if (!userId || !isUuid(id)) return true;
+      const db = await loadClient();
+      if (!db) return true;
       const res = add
         ? await db.from(table).upsert({ user_id: userId, [column]: id }, { ignoreDuplicates: true })
         : await db.from(table).delete().eq("user_id", userId).eq(column, id);

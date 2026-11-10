@@ -1,21 +1,17 @@
 "use client";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { ArrowRight, CornerDownLeft, MessageCircleQuestion, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { searchItems, type QuickAnswer, type SearchIndex, type SearchItem } from "@/lib/search/types";
 import { cn } from "@/lib/cn";
 
-export function openCommandPalette() {
-  window.dispatchEvent(new CustomEvent("inspire:search"));
-}
-
 /**
  * Global search (⌘K / Ctrl+K / "/") across pages, sessions, speakers, workshops,
  * resources and FAQs, plus a guided "quick answers" finder. This is keyword
  * search over site content; it is not an AI assistant.
  */
-export function CommandPalette() {
+export function CommandPalette({ defaultOpen = false }: { defaultOpen?: boolean }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [index, setIndex] = useState<SearchIndex | null>(null);
@@ -70,6 +66,12 @@ export function CommandPalette() {
       window.removeEventListener("inspire:search", onOpen);
     };
   }, [open, show, close]);
+
+  // Opened by the launcher on first use.
+  useEffect(() => {
+    if (defaultOpen) show();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -130,7 +132,7 @@ export function CommandPalette() {
   return (
     <AnimatePresence>
       {open && (
-        <motion.div
+        <m.div
           className="fixed inset-0 z-[80] flex items-start justify-center px-4 pt-[10vh]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -138,7 +140,7 @@ export function CommandPalette() {
           transition={{ duration: 0.2 }}
         >
           <div className="absolute inset-0 bg-midnight/70 backdrop-blur-sm" onClick={close} aria-hidden />
-          <motion.div
+          <m.div
             role="dialog"
             aria-modal="true"
             aria-label="Search INSPIRE"
@@ -269,8 +271,8 @@ export function CommandPalette() {
               </span>
               <span>Keyword search across the site</span>
             </div>
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

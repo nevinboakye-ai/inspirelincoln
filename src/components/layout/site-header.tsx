@@ -1,5 +1,5 @@
 "use client";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { ArrowUpRight, CalendarDays, Home, Map as MapIcon, Menu, Search, Ticket, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -8,7 +8,7 @@ import type { Announcement } from "@/lib/types";
 import { FOOTER_LINKS, NAV } from "@/lib/site";
 import { cn } from "@/lib/cn";
 import { Logo } from "./logo";
-import { openCommandPalette } from "./command-palette";
+import { openCommandPalette } from "./search-launcher";
 
 function isActive(pathname: string, href: string) {
   const path = href.split("#")[0];
@@ -100,7 +100,7 @@ export function SiteHeader({ edition, ribbon }: { edition: { year: number; date:
                         )}
                       >
                         {item.label}
-                        {active && <motion.span layoutId="nav-indicator" className="absolute inset-x-3.5 -bottom-0.5 h-px bg-cyan" />}
+                        {active && <m.span layoutId="nav-indicator" className="absolute inset-x-3.5 -bottom-0.5 h-px bg-cyan" />}
                       </Link>
                     </li>
                   );
@@ -215,7 +215,7 @@ function MobileMenu({ open, onClose, pathname, year }: { open: boolean; onClose:
   return (
     <AnimatePresence>
       {open && (
-        <motion.div
+        <m.div
           id="mobile-nav"
           ref={panelRef}
           role="dialog"
@@ -238,7 +238,7 @@ function MobileMenu({ open, onClose, pathname, year }: { open: boolean; onClose:
           <nav aria-label="Mobile" className="container-page flex-1 py-4">
             <ul>
               {links.map((l, i) => (
-                <motion.li key={l.href} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 * i, duration: 0.3 }}>
+                <m.li key={l.href} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 * i, duration: 0.3 }}>
                   <Link
                     href={l.href}
                     onClick={onClose}
@@ -250,7 +250,7 @@ function MobileMenu({ open, onClose, pathname, year }: { open: boolean; onClose:
                   >
                     {l.label}
                   </Link>
-                </motion.li>
+                </m.li>
               ))}
             </ul>
             <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm text-paper/70">
@@ -269,7 +269,7 @@ function MobileMenu({ open, onClose, pathname, year }: { open: boolean; onClose:
               <UserRound aria-hidden className="size-4" /> My account
             </Link>
           </div>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

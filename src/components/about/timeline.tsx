@@ -1,5 +1,5 @@
 "use client";
-import { motion, useScroll, useSpring } from "motion/react";
+import { m, useScroll, useSpring } from "motion/react";
 import { useRef } from "react";
 import type { TimelineEvent } from "@/lib/types";
 
@@ -10,7 +10,7 @@ export function HistoryTimeline({ events }: { events: TimelineEvent[] }) {
   const scaleY = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
   return (
     <ol ref={ref} className="relative ml-3 space-y-12 border-l border-white/10 pl-10 sm:ml-0">
-      <motion.span aria-hidden style={{ scaleY }} className="absolute -left-px top-0 h-full w-px origin-top bg-gradient-to-b from-cyan to-violet" />
+      <m.span aria-hidden style={{ scaleY }} className="absolute -left-px top-0 h-full w-px origin-top bg-gradient-to-b from-cyan to-violet" />
       {events.map((e) => (
         <li key={e.id} className="relative">
           <span aria-hidden className="absolute -left-[2.85rem] top-1.5 size-3.5 rounded-full border-2 border-cyan bg-midnight" />
