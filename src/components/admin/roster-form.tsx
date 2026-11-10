@@ -29,6 +29,7 @@ export function RosterAddForm() {
           <option value="delegate">Delegate</option>
           <option value="poster_presenter">Poster presenter</option>
           <option value="oral_presenter">Oral presenter</option>
+          <option value="oral_waitlist">Oral waiting list</option>
         </select>
       </Field>
       <div className="flex items-end">

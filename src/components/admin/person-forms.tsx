@@ -5,7 +5,7 @@ import { updatePerson, updateRosterPerson } from "@/app/admin/person-actions";
 import { ResultBanner } from "@/components/portal/profile-forms";
 import { Field, describedBy, inputClass } from "@/components/forms/field";
 import { submitWithoutReset } from "@/lib/use-action-form";
-import { CAREER_STAGES } from "@/lib/accounts";
+import { CAREER_STAGES, type RosterType } from "@/lib/accounts";
 import { btn } from "./ui";
 
 type PersonDetails = {
@@ -88,7 +88,7 @@ type RosterDetails = {
   email: string;
   institution: string | null;
   yearOfStudy: string | null;
-  accountType: "delegate" | "oral_presenter" | "poster_presenter";
+  accountType: RosterType;
   presentationTitle: string | null;
   note: string | null;
 };
@@ -121,6 +121,7 @@ export function RosterPersonForm({ person }: { person: RosterDetails }) {
             <option value="delegate">Delegate</option>
             <option value="poster_presenter">Poster presenter</option>
             <option value="oral_presenter">Oral presenter</option>
+            <option value="oral_waitlist">Oral waiting list</option>
           </select>
         </Field>
         <Input id="r-title" name="presentationTitle" label="Presentation title" value={person.presentationTitle} error={fe("presentationTitle")} max={300} />

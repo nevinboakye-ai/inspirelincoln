@@ -60,7 +60,7 @@ function Card({
   );
 }
 
-const TONE: Partial<Record<AccountType, LanyardTone>> = { delegate: "delegate", poster_presenter: "poster", oral_presenter: "oral" };
+const TONE: Partial<Record<AccountType, LanyardTone>> = { delegate: "delegate", poster_presenter: "poster", oral_presenter: "oral", oral_waitlist: "delegate" };
 
 const linkBtn =
   "inline-flex min-h-12 items-center justify-center gap-2 rounded-[3px] px-5 font-ui text-sm font-semibold";
@@ -159,6 +159,11 @@ export default async function PortalHome({
         <Notice tone="warning">You don&apos;t have access to that area.</Notice>
       )}
       {sp.password && <Notice>Your password has been updated.</Notice>}
+      {profile.accountType === "oral_waitlist" && status === "approved" && (
+        <Notice title="You're on the waiting list for an oral presentation">
+          Your delegate place is confirmed. If a presentation slot opens up, the committee will be in touch and your hub will change to let you upload your slides.
+        </Notice>
+      )}
       {sp.welcome === "first" ? (
         <Notice title="Welcome to INSPIRE">Your password is saved. This is My Hub, where you can get everything ready for the day.</Notice>
       ) : sp.welcome ? (
@@ -401,7 +406,7 @@ export default async function PortalHome({
               theme={edition.theme}
               name={profile.fullName ?? profile.email}
               detail={[profile.institution, profile.yearOfStudy].filter(Boolean).join(" · ") || null}
-              role={TONE[profile.accountType] ? ACCOUNT_TYPE_LABEL[profile.accountType] : profile.committeePosition || ACCOUNT_TYPE_LABEL[profile.accountType]}
+              role={profile.accountType === "oral_waitlist" ? ACCOUNT_TYPE_LABEL.delegate : TONE[profile.accountType] ? ACCOUNT_TYPE_LABEL[profile.accountType] : profile.committeePosition || ACCOUNT_TYPE_LABEL[profile.accountType]}
               tone={TONE[profile.accountType] ?? "committee"}
               dateLabel={formatEventDate(edition.date, { weekday: "short", month: "short" })}
               venue={edition.venueName}

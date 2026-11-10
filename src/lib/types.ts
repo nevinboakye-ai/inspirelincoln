@@ -250,6 +250,7 @@ export type AccountType =
   | "delegate"
   | "oral_presenter"
   | "poster_presenter"
+  | "oral_waitlist"
   | "supporting_committee"
   | "academic_team"
   | "publicity_team"

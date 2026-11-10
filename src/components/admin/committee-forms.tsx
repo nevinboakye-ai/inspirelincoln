@@ -7,7 +7,7 @@ import type { ActionResult } from "@/app/portal/actions";
 import { ResultBanner } from "@/components/portal/profile-forms";
 import { Field, inputClass } from "@/components/forms/field";
 import { submitWithoutReset } from "@/lib/use-action-form";
-import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES, COMMITTEE_TYPES, EXEC_TYPES } from "@/lib/accounts";
+import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES, COMMITTEE_TYPES, EXEC_TYPES, ROSTER_TYPES } from "@/lib/accounts";
 import type { AccountStatus, AccountType } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { btn } from "./ui";
@@ -202,7 +202,7 @@ export function BroadcastForm({ counts, selected }: { counts: Partial<Record<Acc
         </div>
         <p className="mt-2 flex flex-wrap gap-x-4 text-sm">
           <button type="button" onClick={() => setTypes([...ACCOUNT_TYPES])} className="min-h-10 font-semibold text-electric-600">Select every group</button>
-          <button type="button" onClick={() => setTypes(["delegate", "oral_presenter", "poster_presenter"])} className="min-h-10 font-semibold text-electric-600">All delegates and presenters</button>
+          <button type="button" onClick={() => setTypes([...ROSTER_TYPES])} className="min-h-10 font-semibold text-electric-600">All delegates and presenters</button>
           <button type="button" onClick={() => setTypes([...COMMITTEE_TYPES])} className="min-h-10 font-semibold text-electric-600">The whole committee</button>
         </p>
         {fe("types") && <p className="mt-2 text-sm font-medium text-danger">{fe("types")}</p>}
