@@ -4,6 +4,7 @@ export const ACCOUNT_TYPES: AccountType[] = [
   "delegate",
   "oral_presenter",
   "poster_presenter",
+  "oral_waitlist",
   "supporting_committee",
   "academic_team",
   "publicity_team",
@@ -18,6 +19,7 @@ export const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
   delegate: "Delegate",
   oral_presenter: "Oral presenter",
   poster_presenter: "Poster presenter",
+  oral_waitlist: "Oral waiting list",
   supporting_committee: "Supporting committee",
   academic_team: "Academic Team",
   publicity_team: "Publicity Team",
@@ -32,6 +34,7 @@ export const ACCOUNT_TYPE_BLURB: Record<AccountType, string> = {
   delegate: "Attending the conference, talks and workshops.",
   oral_presenter: "Giving a talk. You'll upload your slides here.",
   poster_presenter: "Presenting a poster. You'll upload it for feedback.",
+  oral_waitlist: "Attending as a delegate, on the waiting list for an oral presentation.",
   supporting_committee: "Helping run INSPIRE on the supporting committee.",
   academic_team: "Supporting committee: the Academic Team.",
   publicity_team: "Supporting committee: the Publicity Team.",
@@ -48,6 +51,10 @@ export const ACCOUNT_STATUS_LABEL: Record<AccountStatus, { label: string; tone: 
   waitlisted: { label: "Waitlisted", tone: "warning" },
   declined: { label: "Not approved", tone: "danger" },
 };
+
+/** Types that can go on the selected delegate list: everyone attending who isn't committee. */
+export const ROSTER_TYPES = ["delegate", "poster_presenter", "oral_presenter", "oral_waitlist"] as const satisfies readonly AccountType[];
+export type RosterType = (typeof ROSTER_TYPES)[number];
 
 /** The supporting committee and its teams. */
 export const SUPPORTING_TYPES: AccountType[] = ["supporting_committee", "academic_team", "publicity_team", "finance_team", "logistics_team"];
@@ -82,6 +89,7 @@ export const DEFAULT_RULES: Record<AccountType, Capability[]> = {
   delegate: [],
   oral_presenter: [],
   poster_presenter: [],
+  oral_waitlist: [],
   supporting_committee: ["edit_website", "review_submissions"],
   academic_team: ["edit_website", "review_submissions"],
   publicity_team: ["edit_website", "review_submissions"],

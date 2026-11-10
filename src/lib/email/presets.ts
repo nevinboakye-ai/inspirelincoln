@@ -1,4 +1,5 @@
 import type { AccountStatus, AccountType } from "@/lib/types";
+import { ROSTER_TYPES } from "@/lib/accounts";
 
 /**
  * Ready-made emails for the committee, based on the committee's own drafts.
@@ -30,7 +31,7 @@ const QUESTIONS = "Should you have any questions, please do not hesitate to get 
 
 const LOG_IN = `Log in to My Hub at {website} with the details below. The first time you log in, you'll be asked to choose your own password.`;
 
-const PRESENTERS: AccountType[] = ["delegate", "oral_presenter", "poster_presenter"];
+const PRESENTERS: AccountType[] = [...ROSTER_TYPES];
 
 export const EMAIL_PRESETS: EmailPreset[] = [
   {
@@ -152,9 +153,9 @@ ${SIGN_OFF}`,
   {
     id: "waitlist-oral",
     name: "Waiting list for oral presentation, delegate place offered",
-    use: "For people on the waiting list to present who keep a delegate place. Untick anyone who doesn't fit before sending.",
+    use: "For everyone in the Oral waiting list group. They keep a delegate place.",
     subject: "Your INSPIRE 2026 abstract: waiting list for oral presentation",
-    audience: { types: ["delegate"], statuses: ["approved"], includeSelected: true },
+    audience: { types: ["oral_waitlist"], statuses: ["approved"], includeSelected: true },
     login: true,
     body: `Dear {first_name},
 

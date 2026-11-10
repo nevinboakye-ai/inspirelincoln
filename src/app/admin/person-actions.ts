@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAccess } from "@/lib/auth";
+import { ROSTER_TYPES } from "@/lib/accounts";
 import type { ActionResult } from "@/app/portal/actions";
 
 const text = (max: number) => z.string().trim().max(max, `Keep this under ${max} characters.`).optional().default("");
@@ -66,7 +67,6 @@ export async function updatePerson(_: ActionResult, form: FormData): Promise<Act
   return { ok: true, message: emailChanged ? "Saved. They now log in with the new email." : "Saved." };
 }
 
-const ROSTER_TYPES = ["delegate", "oral_presenter", "poster_presenter"] as const;
 
 const rosterSchema = z.object({
   id: z.string().uuid(),

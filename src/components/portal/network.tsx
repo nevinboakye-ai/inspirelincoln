@@ -99,6 +99,7 @@ const TONE_STYLE: Record<string, { band: string; avatar: string }> = {
   oral_presenter: { band: "bg-cyan", avatar: "bg-cyan/20 text-navy" },
   poster_presenter: { band: "bg-gold", avatar: "bg-gold/25 text-midnight" },
   delegate: { band: "bg-navy", avatar: "bg-navy text-cyan" },
+  oral_waitlist: { band: "bg-navy", avatar: "bg-navy text-cyan" },
   other: { band: "bg-midnight", avatar: "bg-midnight text-gold-300" },
 };
 const toneFor = (t: AccountType) => TONE_STYLE[t] ?? TONE_STYLE.other;

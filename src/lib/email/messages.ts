@@ -1,4 +1,4 @@
-import { ACCOUNT_TYPE_LABEL, SUBMISSION_LABEL } from "@/lib/accounts";
+import { ACCOUNT_TYPE_LABEL, COMMITTEE_TYPES, SUBMISSION_LABEL } from "@/lib/accounts";
 import type { AccountStatus, AccountType, SubmissionKind } from "@/lib/types";
 import { escapeHtml, renderEmail } from "./template";
 
@@ -18,7 +18,7 @@ export function accountDecisionEmail(opts: {
   const noteBlock = note ? [`A note from the committee: &ldquo;${escapeHtml(note)}&rdquo;`] : [];
   if (status === "approved") {
     const presenter = type === "oral_presenter" || type === "poster_presenter";
-    const committee = !presenter && type !== "delegate";
+    const committee = COMMITTEE_TYPES.includes(type);
     const m = renderEmail({
       siteUrl,
       preheader: `Your INSPIRE account is approved as ${label}.`,
