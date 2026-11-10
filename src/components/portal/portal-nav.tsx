@@ -6,12 +6,12 @@ import { signOut } from "@/app/auth/actions";
 import { cn } from "@/lib/cn";
 import type { Access } from "@/lib/accounts";
 
-export function PortalNav({ name, typeLabel, presenter, access, reviewer }: { name: string; typeLabel: string; presenter: boolean; access: Access; reviewer: boolean }) {
+export function PortalNav({ name, typeLabel, presenter, access, reviewer, showNetwork }: { name: string; typeLabel: string; presenter: boolean; access: Access; reviewer: boolean; showNetwork: boolean }) {
   const path = usePathname();
   const links = [
     { href: "/portal", label: "My conference", icon: Ticket },
     ...(presenter ? [{ href: "/portal/submission", label: "My submission", icon: UploadCloud }] : []),
-    { href: "/portal/network", label: "Network", icon: Users },
+    ...(showNetwork ? [{ href: "/portal/network", label: "Network", icon: Users }] : []),
     { href: "/portal/profile", label: "Profile and privacy", icon: UserRound },
     ...(reviewer && !access.committee ? [{ href: "/review", label: "Abstract reviews", icon: ClipboardCheck }] : []),
     ...(access.owner ? [{ href: "/admin/platform", label: "Platform dashboard", icon: Gauge }] : []),

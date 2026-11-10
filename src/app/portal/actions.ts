@@ -82,6 +82,7 @@ export async function saveNetworkCard(_: ActionResult, form: FormData): Promise<
     .eq("id", user.id);
   if (error) return { ok: false, error: "We couldn't save your card. Please try again." };
   revalidatePath("/portal/network");
+  revalidatePath("/portal/profile");
   return { ok: true, message: v.listed ? "Saved. Your card is up to date." : "Saved. You're hidden from the network." };
 }
 

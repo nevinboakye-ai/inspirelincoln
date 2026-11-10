@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export const SWITCHES = {
   site_open: { label: "Public website", on: "Open to everyone", off: "Closed: visitors only see log in and account set-up, delegates only see My Hub. Committee members still see everything." },
-  network_open: { label: "Delegate network", on: "Open to confirmed delegates", off: "Coming soon for everyone but you" },
+  network_open: { label: "Delegate network", on: "Open to confirmed delegates", off: "Hidden from everyone but you" },
   delegate_card: { label: "Delegate Card", on: "Shown in My Hub", off: "Hidden from delegates" },
   map_open: { label: "Campus map", on: "Open", off: "Coming soon. Committee members can still preview it" },
 } as const;

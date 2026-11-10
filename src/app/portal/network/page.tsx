@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Users } from "lucide-react";
-import { ComingSoon } from "@/components/ui/coming-soon";
+import { redirect } from "next/navigation";
 import { setNetworkOpen } from "@/app/portal/actions";
 import { requireUser } from "@/lib/auth";
 import { Notice } from "@/components/ui/notice";
@@ -15,12 +15,8 @@ export default async function NetworkPage() {
   const { data: sw } = await db.from("site_switches").select("enabled").eq("key", "network_open").maybeSingle();
   // If the switch table isn't there yet, keep the network closed to everyone but the owner.
   const live = Boolean(sw?.enabled);
-  if (!live && !owner)
-    return (
-      <ComingSoon eyebrow="Delegate network">
-        A place to meet the other delegates, from every medical school, before the day. Check back here soon.
-      </ComingSoon>
-    );
+  // Hidden entirely from everyone but the owner until it is opened.
+  if (!live && !owner) redirect("/portal");
   const staff = profile.access.exec || profile.access.owner;
   const open = profile.accountStatus === "approved" || profile.siteRole === "admin" || staff;
   const [{ data, error }, { data: waiting }] = open
@@ -47,7 +43,7 @@ export default async function NetworkPage() {
             {live ? (
               <><strong>The network is open.</strong> Every confirmed delegate can see it.</>
             ) : (
-              <><strong>Only you can see this.</strong> Everyone else sees &ldquo;Coming soon&rdquo; until you open it.</>
+              <><strong>Only you can see this.</strong> It is hidden from everyone else, and not in their menu, until you open it.</>
             )}
           </p>
           {!live && <input type="hidden" name="open" value="on" />}
