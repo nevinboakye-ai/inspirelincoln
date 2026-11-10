@@ -1,7 +1,8 @@
 "use client";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Loader2, Send } from "lucide-react";
-import { giveFeedback, reviewAccount, sendBroadcast, sendDirectEmail, type BroadcastResult } from "@/app/admin/committee-actions";
+import { giveFeedback, previewRecipients, reviewAccount, sendBroadcast, sendDirectEmail, type BroadcastResult, type RecipientRow } from "@/app/admin/committee-actions";
+import { Badge } from "@/components/ui/badge";
 import type { ActionResult } from "@/app/portal/actions";
 import { ResultBanner } from "@/components/portal/profile-forms";
 import { Field, inputClass } from "@/components/forms/field";
@@ -96,11 +97,40 @@ export function FeedbackForm({ submissionId }: { submissionId: string }) {
   );
 }
 
+const STATUS_ORDER = ["approved", "waitlisted", "pending", "declined"] as const;
+
 export function BroadcastForm({ counts, selected }: { counts: Partial<Record<AccountType, number>>; selected: number }) {
   const [state, action, pending] = useActionState<BroadcastResult, FormData>(sendBroadcast, null);
   const [confirming, setConfirming] = useState(false);
   const [purpose, setPurpose] = useState<"service" | "marketing">("service");
+  const [types, setTypes] = useState<AccountType[]>(["delegate"]);
+  const [statuses, setStatuses] = useState<AccountStatus[]>(["approved"]);
+  const [includeSelected, setIncludeSelected] = useState(false);
+  const [excluded, setExcluded] = useState<Set<string>>(new Set());
+  const [people, setPeople] = useState<RecipientRow[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const fe = (k: string) => state?.fieldErrors?.[k];
+  const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
+
+  // Keep the recipient list in step with the choices, a moment after the last change.
+  useEffect(() => {
+    let live = true;
+    const t = setTimeout(async () => {
+      setLoading(true);
+      const r = await previewRecipients({ types, statuses, purpose, includeSelected });
+      if (!live) return;
+      setLoading(false);
+      setPeople(r.ok ? r.people : []);
+      setLoadError(r.ok ? null : r.error);
+    }, 250);
+    return () => {
+      live = false;
+      clearTimeout(t);
+    };
+  }, [types, statuses, purpose, includeSelected]);
+
+  const sending = (people ?? []).filter((p) => !excluded.has(p.email));
   return (
     <form onSubmit={submitWithoutReset(action)} className="space-y-6" onChange={() => setConfirming(false)}>
       <ResultBanner state={state} />
@@ -108,27 +138,39 @@ export function BroadcastForm({ counts, selected }: { counts: Partial<Record<Acc
         <legend className="mb-2 text-sm font-semibold text-ink">Send to <span className="text-danger">*</span></legend>
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           {ACCOUNT_TYPES.map((t) => (
-            <label key={t} className="flex min-h-11 items-center gap-3 rounded-[3px] border border-navy/15 bg-white px-3 text-sm">
-              <input type="checkbox" name="types" value={t} className="size-4 accent-navy" defaultChecked={t === "delegate"} />
+            <label key={t} className={cn("flex min-h-11 items-center gap-3 rounded-[3px] border bg-white px-3 text-sm", types.includes(t) ? "border-navy ring-1 ring-navy" : "border-navy/15")}>
+              <input type="checkbox" name="types" value={t} checked={types.includes(t)} onChange={() => setTypes(toggle(types, t))} className="size-4 accent-navy" />
               <span className="flex-1 text-ink">{ACCOUNT_TYPE_LABEL[t]}</span>
               <span className="text-xs text-slate">{counts[t] ?? 0}</span>
             </label>
           ))}
         </div>
+        <p className="mt-2 flex flex-wrap gap-x-4 text-sm">
+          <button type="button" onClick={() => setTypes([...ACCOUNT_TYPES])} className="min-h-10 font-semibold text-electric-600">Select every group</button>
+          <button type="button" onClick={() => setTypes(["delegate", "oral_presenter", "poster_presenter"])} className="min-h-10 font-semibold text-electric-600">All delegates and presenters</button>
+          <button type="button" onClick={() => setTypes(["supporting_committee", "executive_committee", "vice_president", "president"])} className="min-h-10 font-semibold text-electric-600">The whole committee</button>
+        </p>
         {fe("types") && <p className="mt-2 text-sm font-medium text-danger">{fe("types")}</p>}
       </fieldset>
       <fieldset>
         <legend className="mb-2 text-sm font-semibold text-ink">Whose account is</legend>
         <div className="flex flex-wrap gap-2">
-          {(["approved", "waitlisted", "pending", "declined"] as const).map((s) => (
+          {STATUS_ORDER.map((s) => (
             <label key={s} className="flex min-h-11 items-center gap-2 rounded-[3px] border border-navy/15 bg-white px-3 text-sm">
-              <input type="checkbox" name="statuses" value={s} defaultChecked={s === "approved"} className="size-4 accent-navy" /> {ACCOUNT_STATUS_LABEL[s].label}
+              <input type="checkbox" name="statuses" value={s} checked={statuses.includes(s)} onChange={() => setStatuses(toggle(statuses, s))} className="size-4 accent-navy" /> {ACCOUNT_STATUS_LABEL[s].label}
             </label>
           ))}
         </div>
         {fe("statuses") && <p className="mt-2 text-sm font-medium text-danger">{fe("statuses")}</p>}
         <label className={cn("mt-3 flex gap-3 rounded-[3px] border border-dashed p-3 text-sm", purpose === "service" ? "border-gold-600/60 bg-gold/10" : "border-navy/15 bg-white opacity-60")}>
-          <input type="checkbox" name="includeSelected" disabled={purpose !== "service"} className="mt-0.5 size-4 accent-navy" />
+          <input
+            type="checkbox"
+            name="includeSelected"
+            checked={includeSelected && purpose === "service"}
+            onChange={(e) => setIncludeSelected(e.target.checked)}
+            disabled={purpose !== "service"}
+            className="mt-0.5 size-4 accent-navy"
+          />
           <span>
             <span className="block font-semibold text-ink">Also send to selected delegates who haven&apos;t set up an account yet ({selected})</span>
             <span className="text-slate-700">
@@ -152,6 +194,10 @@ export function BroadcastForm({ counts, selected }: { counts: Partial<Record<Acc
           </label>
         </div>
       </fieldset>
+
+      <RecipientList people={people} loading={loading} error={loadError} excluded={excluded} setExcluded={setExcluded} />
+      {[...excluded].map((e) => <input key={e} type="hidden" name="exclude" value={e} />)}
+
       <Field id="subject" label="Subject" required error={fe("subject")}>
         <input id="subject" name="subject" maxLength={160} className={inputClass} />
       </Field>
@@ -159,33 +205,141 @@ export function BroadcastForm({ counts, selected }: { counts: Partial<Record<Acc
         <textarea id="body" name="body" rows={10} maxLength={10000} className={inputClass} />
       </Field>
       <div className="flex flex-wrap items-center gap-2">
-        <button name="intent" value="preview" disabled={pending} className={btn.secondary}>Count recipients</button>
         <button name="intent" value="test" disabled={pending} className={btn.secondary}>Send me a test</button>
         {confirming ? (
           <>
-            <button name="intent" value="send" disabled={pending} className={btn.primary}>
-              {pending ? <Loader2 aria-hidden className="size-4 animate-spin" /> : <Send aria-hidden className="size-4" />} Yes, send it now
+            <button name="intent" value="send" disabled={pending || !sending.length} className={btn.primary}>
+              {pending ? <Loader2 aria-hidden className="size-4 animate-spin" /> : <Send aria-hidden className="size-4" />} Yes, send to {sending.length} {sending.length === 1 ? "person" : "people"}
             </button>
             <button type="button" onClick={() => setConfirming(false)} className="min-h-11 px-3 text-sm font-medium text-slate-700">Cancel</button>
           </>
         ) : (
-          <button type="button" onClick={() => setConfirming(true)} disabled={pending} className={btn.primary}>
-            <Send aria-hidden className="size-4" /> Send
+          <button type="button" onClick={() => setConfirming(true)} disabled={pending || !sending.length} className={btn.primary}>
+            <Send aria-hidden className="size-4" /> Send to {sending.length} {sending.length === 1 ? "person" : "people"}
           </button>
         )}
       </div>
-      {confirming && <p className="text-sm text-slate-700">Emails can&apos;t be recalled once sent. Check the recipient count first.</p>}
+      {confirming && <p className="text-sm text-slate-700">Emails can&apos;t be recalled once sent. Check the list of recipients above first.</p>}
     </form>
+  );
+}
+
+/** Everyone the group email will reach. Untick someone to leave them out of this email. */
+function RecipientList({
+  people,
+  loading,
+  error,
+  excluded,
+  setExcluded,
+}: {
+  people: RecipientRow[] | null;
+  loading: boolean;
+  error: string | null;
+  excluded: Set<string>;
+  setExcluded: (s: Set<string>) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(true);
+  const all = people ?? [];
+  const q = query.trim().toLowerCase();
+  const shown = q ? all.filter((p) => [p.full_name, p.email, p.institution, ACCOUNT_TYPE_LABEL[p.account_type]].some((v) => v?.toLowerCase().includes(q))) : all;
+  const included = all.filter((p) => !excluded.has(p.email)).length;
+  const notJoined = all.filter((p) => !p.joined && !excluded.has(p.email)).length;
+  // Only count people unticked from the current list; someone unticked earlier may no longer be in it.
+  const unticked = all.length - included;
+  const flip = (email: string) => {
+    const next = new Set(excluded);
+    if (next.has(email)) next.delete(email);
+    else next.add(email);
+    setExcluded(next);
+  };
+  return (
+    <section aria-labelledby="recipients-title" className="rounded-xl border border-navy/15 bg-paper/60">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+        <div aria-live="polite">
+          <h3 id="recipients-title" className="font-semibold text-ink">
+            {people === null ? "Finding recipients" : `${included} ${included === 1 ? "person" : "people"} will get this`}
+            {loading && people !== null && <Loader2 aria-label="Updating" className="ml-2 inline size-4 animate-spin text-slate" />}
+          </h3>
+          {people !== null && (
+            <p className="text-sm text-slate-700">
+              {notJoined ? `Including ${notJoined} selected ${notJoined === 1 ? "delegate who hasn't" : "delegates who haven't"} set up an account. ` : ""}
+              {unticked ? `${unticked} unticked. ` : ""}
+              Untick anyone you want to leave out.
+            </p>
+          )}
+        </div>
+        <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls={open && all.length > 0 ? "recipient-rows" : undefined} className="min-h-10 px-2 text-sm font-semibold text-electric-600">
+          {open ? "Hide list" : "Show list"}
+        </button>
+      </div>
+      {error && <p className="px-4 pb-4 text-sm font-medium text-danger">{error}</p>}
+      {open && all.length > 0 && (
+        <div id="recipient-rows" className="border-t border-navy/10">
+          <div className="flex flex-wrap items-center gap-2 p-3">
+            <label htmlFor="recipient-search" className="sr-only">Search recipients</label>
+            <input
+              id="recipient-search"
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
+              placeholder="Search the list"
+              className="min-h-10 min-w-0 flex-1 rounded-[3px] border border-navy/15 bg-white px-3 text-sm"
+            />
+            {unticked > 0 && (
+              <button type="button" onClick={() => setExcluded(new Set())} className="min-h-10 px-2 text-sm font-semibold text-electric-600">Tick everyone again</button>
+            )}
+          </div>
+          <ul className="max-h-96 divide-y divide-navy/5 overflow-y-auto bg-white">
+            {shown.map((p) => {
+              const on = !excluded.has(p.email);
+              return (
+                <li key={p.email}>
+                  <label className={cn("flex min-h-12 cursor-pointer items-center gap-3 px-4 py-2 text-sm", !on && "bg-paper/70")}>
+                    <input type="checkbox" checked={on} onChange={() => flip(p.email)} className="size-4 shrink-0 accent-navy" />
+                    <span className={cn("min-w-0 flex-1", !on && "text-slate line-through")}>
+                      <span className="block font-medium text-ink">{p.full_name || p.email}</span>
+                      <span className="block break-all text-xs text-slate">{[p.email, p.institution].filter(Boolean).join(" · ")}</span>
+                    </span>
+                    <span className="hidden shrink-0 flex-wrap justify-end gap-1 sm:flex">
+                      <Badge tone="violet">{ACCOUNT_TYPE_LABEL[p.account_type]}</Badge>
+                      {p.joined ? (
+                        p.account_status && p.account_status !== "approved" && <Badge tone={ACCOUNT_STATUS_LABEL[p.account_status].tone}>{ACCOUNT_STATUS_LABEL[p.account_status].label}</Badge>
+                      ) : (
+                        <Badge tone="warning">Not joined yet</Badge>
+                      )}
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
+            {!shown.length && <li className="px-4 py-6 text-center text-sm text-slate-700">Nobody in the list matches &ldquo;{query}&rdquo;.</li>}
+          </ul>
+        </div>
+      )}
+      {people !== null && !all.length && !error && <p className="border-t border-navy/10 px-4 py-6 text-center text-sm text-slate-700">Nobody matches these choices yet.</p>}
+    </section>
   );
 }
 
 type DirectoryPerson = { email: string; full_name: string | null; detail: string; joined: boolean };
 
 /** Email one person: an account holder or someone on the selected list. */
-export function DirectEmailForm({ people }: { people: DirectoryPerson[] }) {
+export function DirectEmailForm({
+  people,
+  initial = null,
+  locked = false,
+  defaults,
+}: {
+  people: DirectoryPerson[];
+  initial?: DirectoryPerson | null;
+  locked?: boolean;
+  defaults?: { subject: string; body: string };
+}) {
   const [state, action, pending] = useActionState<ActionResult, FormData>(sendDirectEmail, null);
   const [query, setQuery] = useState("");
-  const [to, setTo] = useState<DirectoryPerson | null>(null);
+  const [to, setTo] = useState<DirectoryPerson | null>(initial);
   const [confirming, setConfirming] = useState(false);
   const fe = (k: string) => state?.fieldErrors?.[k];
   const q = query.trim().toLowerCase();
@@ -200,7 +354,9 @@ export function DirectEmailForm({ people }: { people: DirectoryPerson[] }) {
             <p className="font-semibold text-ink">{to.full_name || to.email}</p>
             <p className="break-all text-sm text-slate-700">{to.email} · {to.detail}</p>
           </div>
-          <button type="button" onClick={() => { setTo(null); setQuery(""); }} className="min-h-10 px-3 text-sm font-semibold text-electric-600">Change</button>
+          {!locked && (
+            <button type="button" onClick={() => { setTo(null); setQuery(""); }} className="min-h-10 px-3 text-sm font-semibold text-electric-600">Change</button>
+          )}
         </div>
       ) : (
         <Field id="direct-to" label="To" required error={fe("to")} hint="Search by name, email or university.">
@@ -235,10 +391,10 @@ export function DirectEmailForm({ people }: { people: DirectoryPerson[] }) {
         <p className="text-sm text-slate-700">They haven&apos;t set up an account yet, so their email includes a button to do it.</p>
       )}
       <Field id="direct-subject" label="Subject" required error={fe("subject")}>
-        <input id="direct-subject" name="subject" maxLength={160} className={inputClass} />
+        <input id="direct-subject" name="subject" maxLength={160} defaultValue={defaults?.subject} className={inputClass} />
       </Field>
       <Field id="direct-body" label="Message" required error={fe("body")} hint="Plain text. We add a greeting with their first name and your sign-off. Replies come to your email.">
-        <textarea id="direct-body" name="body" rows={6} maxLength={10000} className={inputClass} />
+        <textarea id="direct-body" name="body" rows={6} maxLength={10000} defaultValue={defaults?.body} className={inputClass} />
       </Field>
       <div className="flex flex-wrap items-center gap-2">
         <button name="intent" value="test" disabled={pending} className={btn.secondary}>Send me a test</button>

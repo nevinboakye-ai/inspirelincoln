@@ -96,6 +96,51 @@ export type BroadcastResult = (ActionResult & { count?: number }) | null;
 
 type Recipient = { email: string; full_name: string | null; joined: boolean };
 
+/** Someone a group email will go to, as shown in the recipient list. */
+export type RecipientRow = Recipient & { account_type: AccountType; account_status: AccountStatus | null; institution: string | null; id: string | null };
+
+type Selection = { types: AccountType[]; statuses: AccountStatus[]; purpose: "service" | "marketing"; includeSelected: boolean };
+
+/** Everyone a group email would reach, with duplicates removed and accounts taking priority over the selected list. */
+async function resolveRecipients(db: Awaited<ReturnType<typeof requireAccess>>["db"], v: Selection): Promise<{ ok: true; people: RecipientRow[] } | { ok: false }> {
+  // Selected people haven't agreed to news, so they only get conference updates.
+  const withSelected = v.includeSelected && v.purpose === "service";
+  const [accounts, selected] = await Promise.all([
+    v.statuses.length && v.types.length
+      ? db.rpc("broadcast_recipients", { types: v.types, statuses: v.statuses, marketing_only: v.purpose === "marketing" })
+      : Promise.resolve({ data: [], error: null }),
+    withSelected && v.types.length ? db.rpc("selected_recipients", { types: v.types }) : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (accounts.error || selected.error) return { ok: false };
+  const seen = new Set<string>();
+  const people: RecipientRow[] = [];
+  for (const [rows, joined] of [[accounts.data, true], [selected.data, false]] as const)
+    for (const r of (rows ?? []) as { email: string; full_name: string | null; account_type: AccountType; account_status?: AccountStatus; institution: string | null; id?: string }[]) {
+      const e = r.email?.toLowerCase();
+      if (!e || seen.has(e)) continue;
+      seen.add(e);
+      people.push({ email: e, full_name: r.full_name, joined, account_type: r.account_type, account_status: r.account_status ?? null, institution: r.institution, id: r.id ?? null });
+    }
+  people.sort((a, b) => (a.full_name || a.email).localeCompare(b.full_name || b.email, "en-GB"));
+  return { ok: true, people };
+}
+
+const selectionSchema = z.object({
+  types: z.array(z.enum(ACCOUNT_TYPES as [AccountType, ...AccountType[]])),
+  statuses: z.array(z.enum(["pending", "approved", "waitlisted", "declined"])),
+  purpose: z.enum(["service", "marketing"]),
+  includeSelected: z.boolean(),
+});
+
+/** The live list of who a group email will reach, shown while the committee chooses groups. */
+export async function previewRecipients(input: Selection): Promise<{ ok: true; people: RecipientRow[] } | { ok: false; error: string }> {
+  const { db } = await requireAccess("send_email", "/admin/email");
+  const parsed = selectionSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Choose who to send to." };
+  const r = await resolveRecipients(db, parsed.data);
+  return r.ok ? r : { ok: false, error: "Could not load the recipients." };
+}
+
 function senderLine(profile: { fullName: string | null; accountStatus: string; accountType: AccountType; committeePosition: string | null }) {
   return [profile.fullName, profile.accountStatus === "approved" ? (profile.accountType === "president" ? "President" : profile.accountType === "vice_president" ? "Vice president" : profile.committeePosition) : null]
     .filter(Boolean)
@@ -141,24 +186,13 @@ export async function sendBroadcast(_: BroadcastResult, form: FormData): Promise
     return { ok: false, error: "Please check the highlighted fields.", fieldErrors: fe };
   }
   const v = parsed.data;
-  // Selected people haven't agreed to news, so they only get conference updates.
   const withSelected = v.includeSelected && v.purpose === "service";
   if (!v.statuses.length && !withSelected) return { ok: false, error: "Please check the highlighted fields.", fieldErrors: { statuses: "Choose at least one account status, or include selected delegates." } };
 
-  const [accounts, selected] = await Promise.all([
-    v.statuses.length
-      ? db.rpc("broadcast_recipients", { types: v.types, statuses: v.statuses, marketing_only: v.purpose === "marketing" })
-      : Promise.resolve({ data: [], error: null }),
-    withSelected ? db.rpc("selected_recipients", { types: v.types }) : Promise.resolve({ data: [], error: null }),
-  ]);
-  if (accounts.error || selected.error) return { ok: false, error: "Could not load the recipients." };
-  const seen = new Set<string>();
-  const recipients: Recipient[] = [];
-  for (const [rows, joined] of [[accounts.data, true], [selected.data, false]] as const)
-    for (const r of (rows ?? []) as { email: string; full_name: string | null }[]) {
-      const e = r.email?.toLowerCase();
-      if (e && !seen.has(e)) (seen.add(e), recipients.push({ email: e, full_name: r.full_name, joined }));
-    }
+  const found = await resolveRecipients(db, v);
+  if (!found.ok) return { ok: false, error: "Could not load the recipients." };
+  const excluded = new Set(form.getAll("exclude").map((e) => String(e).toLowerCase()));
+  const recipients = found.people.filter((r) => !excluded.has(r.email));
   const waiting = recipients.filter((r) => !r.joined).length;
 
   if (v.intent === "preview")
@@ -174,7 +208,7 @@ export async function sendBroadcast(_: BroadcastResult, form: FormData): Promise
     return ok ? { ok: true, message: `A test has been sent to ${user.email}.` } : { ok: false, error: "Email isn't set up yet. Add the Resend settings in Vercel first." };
   }
 
-  if (!recipients.length) return { ok: false, error: "Nobody matches those groups." };
+  if (!recipients.length) return { ok: false, error: found.people.length ? "Everyone in those groups has been unticked." : "Nobody matches those groups." };
   const delivered = await sendBatch(recipients.map((r) => ({ to: r.email, subject: v.subject, ...buildEmail({ ...v, sender, name: r.full_name, joined: r.joined }) })));
   await db.from("email_broadcasts").insert({
     sent_by: user.id,
