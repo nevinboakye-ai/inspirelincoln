@@ -47,6 +47,9 @@ function resolve(place: MapPlace, byId: Map<string, MapPlace>): { lat: number; l
   return null;
 }
 
+/** Where people arrive in Lincoln; every other place in town is listed as a sight. */
+const TRAVEL = new Set(["lincoln-station", "lincoln-bus-station"]);
+
 /** Places in town rather than on campus, such as the stations and the cathedral. */
 function inTown(place: MapPlace) {
   return place.lat != null && place.lng != null && distanceMetres({ lat: place.lat, lng: place.lng }, { lat: CAMPUS_CENTRE[0], lng: CAMPUS_CENTRE[1] }) > 450;
@@ -132,7 +135,7 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
           const safe = (t: string) => t.replace(/[<>&"]/g, "");
           const icon = leaflet.divIcon({
             className: "",
-            html: `<span class="map-marker"><span class="map-pin map-pin--${p.kind}" data-label="${safe(label)}"></span>${p.kind === "venue" || inTown(p) ? `<span class="map-label">${safe(pinLabel(p))}</span>` : ""}</span>`,
+            html: `<span class="map-marker"><span class="map-pin map-pin--${p.kind}" data-label="${safe(label)}"></span>${p.kind === "venue" || inTown(p) ? `<span class="map-label${p.kind === "venue" ? "" : " map-label--town"}">${safe(pinLabel(p))}</span>` : ""}</span>`,
             iconSize: [28, 34],
             iconAnchor: [14, 32],
           });
@@ -186,6 +189,8 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
         // People can roam the whole drawn area (campus, the stations and up to the cathedral)
         // and zoom out until all of it is on screen, but not drift off into blank space.
         const area = leaflet.latLngBounds(campus.bounds);
+        // Never fence a pin off: if a place lies past the drawing, the map can still reach it.
+        for (const p of places) if (p.lat != null && p.lng != null) area.extend([p.lat, p.lng]);
         m.options.maxBoundsViscosity = 1;
         const fit = () => {
           // Zoom out until the drawing fills the screen (about the whole city centre on a laptop),
@@ -306,10 +311,14 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
   const onDay = top.filter((p) => p.kind === "venue");
   const around = top.filter((p) => p.kind !== "venue" && !inTown(p));
   const town = top.filter((p) => p.kind !== "venue" && inTown(p));
+  const arrive = town.filter((p) => TRAVEL.has(p.slug));
+  const sights = town.filter((p) => !TRAVEL.has(p.slug));
   const visibleDay = onDay.filter((p) => matches(p) || (children.get(p.id) ?? []).some(matches));
   const visibleAround = filter === "all" || q ? around.filter(matches) : [];
   // Always listed: on the day, the stations are where most people arrive.
-  const visibleTown = town.filter(matches);
+  const visibleArrive = arrive.filter(matches);
+  const visibleSights = sights.filter(matches);
+  const visibleTown = [...visibleArrive, ...visibleSights];
 
   const current = selected ? byId.get(selected) : undefined;
   const currentPos = current ? resolve(current, byId) : null;
@@ -431,7 +440,14 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
           <PlaceGroup title="Around campus" places={visibleAround} childrenOf={children} matches={matches} q={q} fix={fix} byId={byId} onSelect={choose} />
         )}
         {visibleTown.length > 0 && (
-          <PlaceGroup title="Around Lincoln" places={visibleTown} childrenOf={children} matches={matches} q={q} fix={fix} byId={byId} onSelect={choose} />
+          <>
+            {visibleArrive.length > 0 && (
+              <PlaceGroup title="Getting here" places={visibleArrive} childrenOf={children} matches={matches} q={q} fix={fix} byId={byId} onSelect={choose} />
+            )}
+            {visibleSights.length > 0 && (
+              <PlaceGroup title="Things to see in Lincoln" places={visibleSights} childrenOf={children} matches={matches} q={q} fix={fix} byId={byId} onSelect={choose} />
+            )}
+          </>
         )}
         {visibleDay.length === 0 && visibleAround.length === 0 && visibleTown.length === 0 && (
           <p className="p-5 text-sm text-paper/75">Nothing matches &ldquo;{query}&rdquo;. Try a building code such as INB.</p>

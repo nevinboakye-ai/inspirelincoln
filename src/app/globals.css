@@ -467,6 +467,8 @@ dialog.gate.is-leaving { background: transparent; }
 }
 .leaflet-container[data-labels="off"] .map-bldg-label { display: none; }
 .leaflet-container[data-labels="off"] .map-water-label { font-size: 12px; }
+/* Names beside the town pins appear once you zoom in, so the zoomed-out city stays tidy. */
+.leaflet-container[data-labels="off"] .map-label--town { display: none; }
 .leaflet-popup-content-wrapper { border-radius: 6px; box-shadow: 0 12px 32px -12px rgb(12 24 44 / 0.45); }
 .leaflet-popup-content { margin: 14px 16px; font-family: var(--font-ui); }
 .map-popup-title { margin: 0; font: 400 1.05rem/1.25 var(--font-display); color: var(--color-ink); }
