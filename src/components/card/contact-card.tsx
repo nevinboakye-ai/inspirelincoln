@@ -1,6 +1,7 @@
 import { Mail, Presentation } from "lucide-react";
 import type { ReactNode } from "react";
-import { cardRoles, initials, type CardData } from "@/lib/card";
+import { cardRoles, type CardData } from "@/lib/card";
+import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/cn";
 
 export function LinkedInMark({ className = "size-4" }: { className?: string }) {
@@ -36,9 +37,7 @@ export function ContactCard({ card, eyebrow, headingLevel = 1, children, classNa
         <div className="relative">
           {eyebrow && <p className="eyebrow mb-4 text-gold">{eyebrow}</p>}
           <div className="flex items-center gap-4">
-            <span aria-hidden className="grid size-16 shrink-0 place-items-center rounded-full bg-paper/10 font-ui text-lg font-semibold text-gold-300 ring-4 ring-white/10">
-              {initials(card.full_name)}
-            </span>
+            <Avatar url={card.avatar_url} name={card.full_name} className="size-16 ring-4 ring-white/10 sm:size-20" fallbackClassName="bg-paper/10 text-lg text-gold-300" />
             <div className="min-w-0">
               <H className="font-display text-[1.7rem] leading-tight sm:text-3xl">{card.full_name}</H>
               {meta && <p className="mt-1 text-sm text-paper/75">{meta}</p>}

@@ -3,11 +3,20 @@ import { PortalNav } from "@/components/portal/portal-nav";
 import { requireUser } from "@/lib/auth";
 import { getSwitches } from "@/lib/switches";
 import { presenterKindOf, rolesLabel, rolesOf } from "@/lib/accounts";
+import { cookies } from "next/headers";
+import { ProfilePrompt } from "@/components/portal/profile-prompt";
+import { PROFILE_PROMPT_COOKIE, profileGaps } from "@/lib/profile-prompt";
+import { VIEW_AS_COOKIE } from "@/lib/view-as-seal";
+import { signAvatar } from "@/lib/avatar";
 
 export const metadata: Metadata = { title: "My conference", robots: { index: false } };
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
-  const { profile } = await requireUser("/portal");
+  const { profile, db } = await requireUser("/portal");
+  // Just signed in with an unfinished profile: ask them to finish it. Never while viewing as someone.
+  const jar = await cookies();
+  const gaps = jar.has(PROFILE_PROMPT_COOKIE) && !jar.has(VIEW_AS_COOKIE) ? profileGaps(profile) : [];
+  const promptPhoto = gaps.length ? await signAvatar(db, profile.avatarPath) : null;
   // The network stays out of the menu entirely until the owner opens it.
   const switches = await getSwitches();
   const showNetwork = profile.access.owner || switches.network_open;
@@ -26,6 +35,7 @@ export default async function PortalLayout({ children }: { children: React.React
           showPeople={showPeople}
         />
         <div className="min-w-0">{children}</div>
+        {gaps.length > 0 && <ProfilePrompt gaps={gaps} name={profile.fullName} photo={promptPhoto} />}
       </div>
     </div>
   );

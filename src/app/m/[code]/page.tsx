@@ -5,6 +5,7 @@ import { ArrowRight, EyeOff, Lock, QrCode, Settings } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { CARD_CODE, cardPath, cleanCode, type CardLookup } from "@/lib/card";
 import { ContactCard } from "@/components/card/contact-card";
+import { signAvatar } from "@/lib/avatar";
 import { CheckInPanel, SaveContact } from "@/components/card/card-actions";
 
 export const metadata: Metadata = { title: "Delegate Card", robots: { index: false, follow: false }, referrer: "no-referrer" };
@@ -77,6 +78,7 @@ export default async function CardPage({ params }: { params: Promise<{ code: str
 
   const { data, error } = await current.db.rpc("card_lookup", { code });
   const res = (data ?? { state: "unknown" }) as CardLookup;
+  if (res.card?.avatar_path) res.card.avatar_url = await signAvatar(current.db, res.card.avatar_path);
   const desk = res.checkin ? <CheckInPanel info={res.checkin} /> : null;
 
   if (error) {

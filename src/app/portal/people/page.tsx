@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { NotebookPen, ScanLine } from "lucide-react";
 import { requireUser } from "@/lib/auth";
+import { signAvatars } from "@/lib/avatar";
 import { getSwitches } from "@/lib/switches";
 import { Notice } from "@/components/ui/notice";
 import { PeopleList, type SavedContact } from "@/components/card/people-list";
@@ -15,6 +16,9 @@ export default async function PeoplePage() {
   // Follows the Delegate Card: hidden until the card is live, except for the owner.
   if (!switches.delegate_card && !profile.access.owner) redirect("/portal");
   const { data, error } = await db.rpc("my_contacts");
+  const contacts = (data ?? []) as SavedContact[];
+  const photos = await signAvatars(db, contacts.map((p) => p.card?.avatar_path));
+  for (const p of contacts) if (p.card?.avatar_path) p.card.avatar_url = photos.get(p.card.avatar_path) ?? null;
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -37,7 +41,7 @@ export default async function PeoplePage() {
       {error ? (
         <Notice tone="warning">Your saved people aren&apos;t available just now. Please try again later.</Notice>
       ) : (
-        <PeopleList initial={(data ?? []) as SavedContact[]} />
+        <PeopleList initial={contacts} />
       )}
     </div>
   );

@@ -11,6 +11,8 @@ import { POLICY_VERSION, presenterKindOf, resolveFileType, rolesOf, SUBMISSION_F
 import { sendEmail } from "@/lib/email/resend";
 import { submissionReceivedEmail } from "@/lib/email/messages";
 import { SITE_URL } from "@/lib/site";
+import { cookies } from "next/headers";
+import { PROFILE_PROMPT_COOKIE } from "@/lib/profile-prompt";
 
 export type ActionResult = { ok: boolean; error?: string; message?: string; fieldErrors?: Record<string, string>; id?: string } | null;
 
@@ -128,7 +130,7 @@ export async function deleteAccount(_: ActionResult, form: FormData): Promise<Ac
   const { user, db } = await requireUser("/portal/profile");
   if (form.get("confirm") !== "DELETE") return { ok: false, fieldErrors: { confirm: "Type DELETE to confirm." } };
   // Remove uploaded files first; the database rows go with the account.
-  for (const bucket of ["submissions", "posters", "abstracts"]) {
+  for (const bucket of ["submissions", "posters", "abstracts", "avatars"]) {
     const folders = bucket === "submissions" ? [`${user.id}/slides`, `${user.id}/poster`] : [user.id];
     for (const folder of folders) {
       const { data } = await db.storage.from(bucket).list(folder, { limit: 1000 });
@@ -329,4 +331,58 @@ export async function saveAttendance(_: ActionResult, form: FormData): Promise<A
     ok: true,
     message: v.response === "confirmed" ? "Thank you. You're confirmed to present." : "Thank you for letting us know.",
   };
+}
+
+/** The finish-your-profile prompt has been seen, so it won't show again until they next sign in. */
+export async function dismissProfilePrompt() {
+  (await cookies()).delete(PROFILE_PROMPT_COOKIE);
+}
+
+/* ---------- Profile photo ---------- */
+const AVATAR_MAX = 1024 * 1024;
+
+/** What the bytes really are (WebP or JPEG), whatever the browser claimed. */
+function photoType(b: Uint8Array): { ext: "webp" | "jpg"; type: string } | null {
+  if (b.length > 12 && String.fromCharCode(...b.slice(0, 4)) === "RIFF" && String.fromCharCode(...b.slice(8, 12)) === "WEBP") return { ext: "webp", type: "image/webp" };
+  if (b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return { ext: "jpg", type: "image/jpeg" };
+  return null;
+}
+
+/**
+ * Saves a profile photo. The browser has already cropped it to a square and
+ * re-saved it (WebP, or JPEG on browsers without WebP), which drops hidden
+ * details such as location. The old
+ * photo is deleted once the new one is in place.
+ */
+export async function saveAvatar(_: ActionResult, form: FormData): Promise<ActionResult> {
+  const { user, db, profile } = await requireUser("/portal/profile");
+  const file = form.get("photo");
+  if (!(file instanceof File) || !file.size) return { ok: false, error: "Choose a photo first." };
+  if (file.size > AVATAR_MAX) return { ok: false, error: "That photo is too large. Please try a smaller one." };
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const kind = photoType(bytes);
+  if (!kind) return { ok: false, error: "We couldn't read that photo. Please try a JPEG or PNG." };
+
+  const path = `${user.id}/${crypto.randomUUID()}.${kind.ext}`;
+  const up = await db.storage.from("avatars").upload(path, bytes, { contentType: kind.type, upsert: false });
+  if (up.error) return { ok: false, error: "We couldn't upload your photo. Please try again." };
+  const { error } = await db.from("profiles").update({ avatar_path: path }).eq("id", user.id);
+  if (error) {
+    await db.storage.from("avatars").remove([path]);
+    return { ok: false, error: "We couldn't save your photo. Please try again." };
+  }
+  if (profile.avatarPath && profile.avatarPath !== path) await db.storage.from("avatars").remove([profile.avatarPath]);
+  revalidatePath("/portal", "layout");
+  return { ok: true, message: "Photo saved." };
+}
+
+/** Removes their profile photo, from their profile and from storage. */
+export async function removeAvatar(_: ActionResult): Promise<ActionResult> {
+  const { user, db, profile } = await requireUser("/portal/profile");
+  if (!profile.avatarPath) return { ok: true, message: "Photo removed." };
+  const { error } = await db.from("profiles").update({ avatar_path: null }).eq("id", user.id);
+  if (error) return { ok: false, error: "We couldn't remove your photo. Please try again." };
+  await db.storage.from("avatars").remove([profile.avatarPath]);
+  revalidatePath("/portal", "layout");
+  return { ok: true, message: "Photo removed." };
 }

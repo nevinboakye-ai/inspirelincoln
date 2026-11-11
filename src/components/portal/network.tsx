@@ -1,5 +1,6 @@
 "use client";
 import { useActionState, useCallback, useDeferredValue, useMemo, useState } from "react";
+import { Avatar } from "@/components/ui/avatar";
 import { ArrowRight, Loader2, Mail, Search } from "lucide-react";
 import { Drawer } from "@/components/ui/drawer";
 import { saveNetworkCard } from "@/app/portal/actions";
@@ -20,6 +21,9 @@ export type Delegate = {
   bio: string | null;
   linkedin_url: string | null;
   email: string | null;
+  avatar_path?: string | null;
+  /** A short-lived link to their photo, added by the server. */
+  avatar_url?: string | null;
   /** False for people on the selected list who haven't set up an account yet. Only the committee sees these. */
   joined: boolean;
 };
@@ -86,14 +90,6 @@ function LinkedInMark() {
     </svg>
   );
 }
-
-const initials = (n: string) =>
-  n
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join("");
 
 const TONE_STYLE: Record<string, { band: string; avatar: string }> = {
   oral_presenter: { band: "bg-cyan", avatar: "bg-cyan/20 text-navy" },
@@ -167,9 +163,7 @@ export function NetworkDirectory({ people, me }: { people: Delegate[]; me: strin
                   <span aria-hidden className={`h-1.5 w-full ${tone.band}`} />
                   <span className="flex flex-1 flex-col p-4 sm:p-5">
                     <span className="flex items-center gap-3.5">
-                      <span aria-hidden className={`grid size-12 shrink-0 place-items-center rounded-full font-ui text-sm font-semibold transition-transform duration-300 group-hover:scale-105 ${tone.avatar}`}>
-                        {initials(p.full_name)}
-                      </span>
+                      <Avatar url={p.avatar_url} name={p.full_name} className="size-12 transition-transform duration-300 group-hover:scale-105" fallbackClassName={`text-sm ${tone.avatar}`} />
                       <span className="min-w-0">
                         <span className="block truncate font-semibold text-ink">
                           {p.full_name}
@@ -211,9 +205,7 @@ function PersonDetail({ p, me }: { p: Delegate; me: string }) {
       <div className="relative overflow-hidden bg-midnight px-6 pb-7 pt-10 text-paper sm:px-8">
         <div aria-hidden className="lanyard-grid pointer-events-none absolute inset-0 opacity-20" />
         <div className="relative flex items-center gap-4">
-          <span aria-hidden className={`grid size-16 shrink-0 place-items-center rounded-full font-ui text-lg font-semibold ring-4 ring-white/10 ${tone.avatar}`}>
-            {initials(p.full_name)}
-          </span>
+          <Avatar url={p.avatar_url} name={p.full_name} className="size-16 ring-4 ring-white/10 sm:size-20" fallbackClassName={`text-lg ${tone.avatar}`} />
           <div className="min-w-0">
             <h3 className="font-display text-2xl leading-tight">
               {p.full_name}

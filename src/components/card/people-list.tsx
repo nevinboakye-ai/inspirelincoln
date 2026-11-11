@@ -2,7 +2,8 @@
 import { useDeferredValue, useId, useMemo, useState, useTransition } from "react";
 import { ChevronDown, Download, EyeOff, FileSpreadsheet, Loader2, Mail, NotebookPen, Search, Trash2 } from "lucide-react";
 import { removeContact, updateContactNote } from "@/app/portal/card-actions";
-import { cardRoles, downloadText, initials, toVCard, type CardData } from "@/lib/card";
+import { cardRoles, downloadText, toVCard, type CardData } from "@/lib/card";
+import { Avatar } from "@/components/ui/avatar";
 import { inputClass } from "@/components/forms/field";
 import { LinkedInMark, roleStripe } from "@/components/card/contact-card";
 import { VCardButton } from "@/components/card/card-actions";
@@ -152,9 +153,13 @@ function Person({ p, onNote, onRemove }: { p: SavedContact; onNote: (note: strin
         <span aria-hidden className={cn("w-1.5 shrink-0", c ? roleStripe(c.roles) : "bg-slate/30")} />
         <div className="min-w-0 flex-1">
           <div className="flex items-start gap-3.5 p-4 sm:p-5">
-            <span aria-hidden className={cn("grid size-12 shrink-0 place-items-center rounded-full font-ui text-sm font-semibold", c ? "bg-navy text-cyan" : "bg-paper-200 text-slate")}>
-              {c ? initials(c.full_name) : <EyeOff className="size-5" />}
-            </span>
+            {c ? (
+              <Avatar url={c.avatar_url} name={c.full_name} className="size-12" fallbackClassName="bg-navy text-sm text-cyan" />
+            ) : (
+              <span aria-hidden className="grid size-12 shrink-0 place-items-center rounded-full bg-paper-200 text-slate">
+                <EyeOff className="size-5" />
+              </span>
+            )}
             <div className="min-w-0 flex-1">
               <h3 className="font-semibold text-ink">{name}</h3>
               {meta && <p className="text-sm text-slate-700">{meta}</p>}
