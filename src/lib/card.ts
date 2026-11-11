@@ -68,21 +68,22 @@ export function parseScan(raw: string): { kind: "card"; code: string } | { kind:
 
 export const sortedRoles = (roles: readonly AccountType[]) => ROLE_RANK.filter((t) => roles.includes(t));
 
+/** Roles that already mean someone is attending, so "Delegate" isn't shown with them. */
+export const PRESENTING = new Set<AccountType>(["oral_presenter", "poster_presenter", "oral_waitlist"]);
+
 /**
- * Roles as people read them on a card. The oral waiting list attends as a
- * delegate, so it shows as both, and a single committee role reads better
- * as their position.
+ * Roles as people read them on a card. Presenters and the oral waiting list
+ * don't also show "Delegate", and a single committee role reads better as
+ * their position.
  */
 export function cardRoles(c: Pick<CardData, "roles" | "committee_position">) {
   const roles = sortedRoles(c.roles);
-  const attending = new Set<AccountType>(["delegate", "oral_presenter", "poster_presenter", "oral_waitlist"]);
+  const attending = new Set<AccountType>(["delegate", ...PRESENTING]);
   const committee = roles.filter((t) => !attending.has(t));
-  const labels = roles.flatMap((t) =>
-    t === "oral_waitlist"
-      ? [ACCOUNT_TYPE_LABEL.delegate, ACCOUNT_TYPE_LABEL.oral_waitlist]
-      : [!attending.has(t) && committee.length === 1 && c.committee_position ? c.committee_position : ACCOUNT_TYPE_LABEL[t]],
-  );
-  return labels.filter((l, i) => labels.indexOf(l) === i);
+  const presenting = roles.some((t) => PRESENTING.has(t));
+  return roles
+    .filter((t) => !(t === "delegate" && presenting))
+    .map((t) => (!attending.has(t) && committee.length === 1 && c.committee_position ? c.committee_position : ACCOUNT_TYPE_LABEL[t]));
 }
 
 export const initials = (n: string | null) =>

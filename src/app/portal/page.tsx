@@ -17,7 +17,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { requireUser } from "@/lib/auth";
-import { cardPath, formatCode } from "@/lib/card";
+import { PRESENTING, cardPath, formatCode, sortedRoles } from "@/lib/card";
 import { SITE_URL } from "@/lib/site";
 import { getSwitches } from "@/lib/switches";
 import { getConferenceBundle } from "@/lib/data/content";
@@ -38,6 +38,7 @@ import {
   presenterKindOf,
   rolesLabel,
   rolesOf,
+  EXEC_TYPES,
 } from "@/lib/accounts";
 import type { AccountType, SubmissionStatus } from "@/lib/types";
 
@@ -69,22 +70,20 @@ function Card({
 const TONE: Partial<Record<AccountType, LanyardTone>> = { delegate: "delegate", poster_presenter: "poster", oral_presenter: "oral", oral_waitlist: "waitlist" };
 
 /**
- * Every role for the lanyard, most senior first. Someone on the oral waiting
- * list attends as a delegate, so their card shows both. With a single committee role, their committee
- * position (for example "Head of Logistics") reads better than the team name.
+ * Every role for the lanyard, most senior first. Presenters and the oral
+ * waiting list don't also show "Delegate". With a single committee role,
+ * their committee position (for example "Head of Logistics") reads better
+ * than the team name.
  */
 function lanyardRoles(p: { accountType: AccountType; extraTypes: AccountType[]; committeePosition: string | null }) {
-  const roles = rolesOf(p.accountType, p.extraTypes);
+  const all = rolesOf(p.accountType, p.extraTypes);
+  const presenting = all.some((t) => PRESENTING.has(t));
+  const roles = sortedRoles(all).filter((t) => !(t === "delegate" && presenting));
   const committee = roles.filter((t) => !TONE[t]);
-  const out = roles.flatMap((t) => {
-    const role = {
-      label: !TONE[t] && committee.length === 1 && p.committeePosition ? p.committeePosition : ACCOUNT_TYPE_LABEL[t],
-      tone: TONE[t] ?? ("committee" as LanyardTone),
-    };
-    return t === "oral_waitlist" ? [{ label: ACCOUNT_TYPE_LABEL.delegate, tone: "delegate" as LanyardTone }, role] : [role];
-  });
-  // A waiting-list "Delegate" next to a real delegate role would say it twice.
-  return out.filter((r, i) => out.findIndex((o) => o.label === r.label) === i);
+  return roles.map((t) => ({
+    label: !TONE[t] && committee.length === 1 && p.committeePosition ? p.committeePosition : ACCOUNT_TYPE_LABEL[t],
+    tone: TONE[t] ?? ((EXEC_TYPES.includes(t) ? "executive" : "committee") as LanyardTone),
+  }));
 }
 
 const linkBtn =

@@ -34,7 +34,7 @@ export const ACCOUNT_TYPE_BLURB: Record<AccountType, string> = {
   delegate: "Attending the conference, talks and workshops.",
   oral_presenter: "Giving a talk. You'll upload your slides here.",
   poster_presenter: "Presenting a poster. You'll upload it for feedback.",
-  oral_waitlist: "Attending as a delegate, on the waiting list for an oral presentation.",
+  oral_waitlist: "Presenting a poster, and on the waiting list for an oral presentation.",
   supporting_committee: "Helping run INSPIRE on the supporting committee.",
   academic_team: "Supporting committee: the Academic Team.",
   publicity_team: "Supporting committee: the Publicity Team.",
@@ -108,10 +108,11 @@ export function rolesLabel(types: readonly AccountType[]) {
 /**
  * Tidy a set of ticked roles into a main role and extra roles, or say what's
  * wrong. Delegate is dropped when someone is already presenting or waiting,
- * since those include attending.
+ * since those include attending. Everyone on the oral waiting list also
+ * presents a poster (the database adds it too).
  */
 export function splitRoles(picked: readonly string[]): { main: AccountType; extra: AccountType[] } | { error: string } {
-  let types = ROLE_RANK.filter((t) => picked.includes(t));
+  let types = ROLE_RANK.filter((t) => picked.includes(t) || (t === "poster_presenter" && picked.includes("oral_waitlist")));
   if (!types.length) return { error: "Choose at least one role." };
   if (types.includes("president") && types.includes("vice_president")) return { error: "Someone can't be both president and vice president." };
   if (types.includes("oral_presenter") && types.includes("oral_waitlist")) return { error: "Someone can't be an oral presenter and on the oral waiting list." };

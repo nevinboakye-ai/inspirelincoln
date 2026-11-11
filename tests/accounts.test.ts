@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accessFor, accessFromCaps, canApprove, effectiveRole, resolveFileType, submissionKindFor } from "@/lib/accounts";
+import { accessFor, accessFromCaps, canApprove, effectiveRole, resolveFileType, splitRoles, submissionKindFor } from "@/lib/accounts";
 import { effectiveFor } from "@/lib/accounts/effective";
 import { escapeHtml, renderEmail } from "@/lib/email/template";
 import { accountDecisionEmail } from "@/lib/email/messages";
@@ -103,5 +103,12 @@ describe("help contact", () => {
     const m = renderEmail({ siteUrl: "https://inspirelincoln.uk", preheader: "p", heading: "H", paragraphs: ["x"] });
     expect(m.html).toContain("mailto:inspiresoc@lincolnsu.com");
     expect(m.text).toContain("inspiresoc@lincolnsu.com");
+  });
+});
+
+describe("oral waiting list", () => {
+  it("always comes with presenting a poster, without Delegate", () => {
+    expect(splitRoles(["oral_waitlist"])).toEqual({ main: "poster_presenter", extra: ["oral_waitlist"] });
+    expect(splitRoles(["delegate", "oral_waitlist"])).toEqual({ main: "poster_presenter", extra: ["oral_waitlist"] });
   });
 });
