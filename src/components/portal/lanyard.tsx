@@ -1,5 +1,5 @@
 "use client";
-import { m, useMotionTemplate, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
+import { animate, m, useMotionTemplate, useMotionValue, useMotionValueEvent, useReducedMotion, useSpring, useTransform, type AnimationPlaybackControls } from "motion/react";
 import Link from "next/link";
 import { Eye, RotateCw } from "lucide-react";
 import { useId, useRef, useState } from "react";
@@ -42,15 +42,26 @@ export interface LanyardProps {
   previewNote?: string | null;
 }
 
+type Side = "front" | "back";
+
+/** Which face is towards you at a given turn, in degrees. */
+const sideAt = (deg: number): Side => (((Math.round(deg / 180) % 2) + 2) % 2 === 0 ? "front" : "back");
+const nearestSide = (deg: number) => Math.round(deg / 180) * 180;
+
+/** How far a drag must move before it turns the card rather than counting as a tap. */
+const DRAG_START = 6;
+
 /**
  * The delegate card as an INSPIRE lanyard. It drops in on its strap, sways
- * gently, tilts with the pointer, and flips over to show the check-in code.
- * With reduced motion it simply appears and flips without movement.
+ * gently and tilts with the pointer. Drag it sideways with a finger or mouse
+ * to turn it round in 3D: on release it settles on whichever side is nearer,
+ * and a quick flick carries it over. A tap, or the button below, flips it.
+ * With reduced motion it turns without the springy settle.
  */
 export function Lanyard(p: LanyardProps) {
   const reduce = useReducedMotion();
-  const [flipped, setFlipped] = useState(false);
   const scene = useRef<HTMLDivElement>(null);
+  const card = useRef<HTMLDivElement>(null);
   const id = useId();
   const strapId = `strap-${id.replace(/:/g, "")}`;
 
@@ -63,8 +74,73 @@ export function Lanyard(p: LanyardProps) {
   const ly = useTransform(py, (v) => `${v * 100}%`);
   const sheen = useMotionTemplate`radial-gradient(420px circle at ${lx} ${ly}, rgba(255,255,255,0.55), rgba(255,255,255,0) 45%)`;
 
+  // The turn, in degrees. Every half turn shows the other side.
+  const spin = useMotionValue(0);
+  const [facing, setFacing] = useState<Side>("front");
+  useMotionValueEvent(spin, "change", (v) => setFacing(sideAt(v)));
+  const settling = useRef<AnimationPlaybackControls | null>(null);
+  const drag = useRef<{ id: number; x: number; y: number; from: number; turning: boolean; lastAt: number; lastSpin: number; speed: number } | null>(null);
+
+  const settle = (to: number, velocity = 0) => {
+    settling.current?.stop();
+    settling.current = animate(spin, to, reduce ? { duration: 0 } : { type: "spring", stiffness: 140, damping: 19, velocity });
+  };
+  /** Turn to the other side: forwards from the front, back again from the back. */
+  const flip = () => {
+    const at = nearestSide(spin.get());
+    settle(at + (sideAt(at) === "front" ? 180 : -180));
+  };
+
+  const onDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    settling.current?.stop();
+    drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, from: spin.get(), turning: false, lastAt: e.timeStamp, lastSpin: spin.get(), speed: 0 };
+  };
+  const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    const dx = e.clientX - d.x;
+    const dy = e.clientY - d.y;
+    if (!d.turning) {
+      if (Math.abs(dx) < DRAG_START || Math.abs(dx) < Math.abs(dy)) {
+        // Mostly up and down: leave it to the page to scroll.
+        if (Math.abs(dy) > DRAG_START * 2) drag.current = null;
+        return;
+      }
+      d.turning = true;
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {}
+      px.set(0.5);
+      py.set(0.5);
+    }
+    // Dragging across the whole card turns it half way round.
+    const width = card.current?.offsetWidth || 300;
+    const next = d.from + (dx / width) * 180;
+    const dt = Math.max(e.timeStamp - d.lastAt, 1);
+    d.speed = 0.7 * d.speed + 0.3 * ((next - d.lastSpin) / dt) * 1000; // degrees a second, smoothed
+    d.lastAt = e.timeStamp;
+    d.lastSpin = next;
+    spin.set(next);
+  };
+  const onUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    drag.current = null;
+    if (!d.turning) return flip(); // A tap
+    const now = spin.get();
+    // A quick flick carries it over; otherwise it goes back to the nearer side.
+    const aimed = nearestSide(now + d.speed * 0.12);
+    const base = nearestSide(now);
+    settle(Math.min(base + 180, Math.max(base - 180, aimed)), d.speed);
+  };
+  const onCancel = () => {
+    if (drag.current?.turning) settle(nearestSide(spin.get()));
+    drag.current = null;
+  };
+
   const move = (e: React.PointerEvent) => {
-    if (reduce || e.pointerType === "touch" || !scene.current) return;
+    if (reduce || e.pointerType === "touch" || drag.current?.turning || !scene.current) return;
     const r = scene.current.getBoundingClientRect();
     px.set((e.clientX - r.left) / r.width);
     py.set((e.clientY - r.top) / r.height);
@@ -126,12 +202,18 @@ export function Lanyard(p: LanyardProps) {
 
             <m.div style={reduce ? undefined : { rotateX: rx, rotateY: ry }} className="relative [transform-style:preserve-3d]">
               <m.div
-                animate={{ rotateY: flipped ? 180 : 0 }}
-                transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 90, damping: 15 }}
-                className="relative aspect-[5/7.6] w-full [transform-style:preserve-3d]"
+                ref={card}
+                style={{ rotateY: spin }}
+                onPointerDown={onDown}
+                onPointerMove={onMove}
+                onPointerUp={onUp}
+                onPointerCancel={onCancel}
+                onLostPointerCapture={onCancel}
+                onDragStart={(e) => e.preventDefault()}
+                className="relative aspect-[5/7.6] w-full cursor-grab touch-pan-y select-none [-webkit-tap-highlight-color:transparent] [transform-style:preserve-3d] active:cursor-grabbing"
               >
-                <Front {...p} long={long} hidden={flipped} sheen={reduce ? null : sheen} />
-                <Back {...p} hidden={!flipped} />
+                <Front {...p} long={long} hidden={facing !== "front"} sheen={reduce ? null : sheen} />
+                <Back {...p} hidden={facing !== "back"} />
               </m.div>
             </m.div>
           </m.div>
@@ -140,13 +222,14 @@ export function Lanyard(p: LanyardProps) {
 
       <button
         type="button"
-        onClick={() => setFlipped((f) => !f)}
-        aria-pressed={flipped}
+        onClick={flip}
+        aria-pressed={facing === "back"}
         className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full border border-navy/15 bg-white px-5 font-ui text-sm font-semibold text-ink shadow-sm transition-colors hover:border-navy/35"
       >
-        <RotateCw aria-hidden className={cn("size-4 transition-transform duration-500", flipped && "rotate-180")} />
-        {flipped ? "Show the front" : p.qr ? "Show my QR code" : "Turn the card over"}
+        <RotateCw aria-hidden className={cn("size-4 transition-transform duration-500", facing === "back" && "rotate-180")} />
+        {facing === "back" ? "Show the front" : p.qr ? "Show my QR code" : "Turn the card over"}
       </button>
+      <p className="mt-2 text-xs text-slate-700">Or drag the card, or tap it, to turn it round.</p>
       {p.previewHref && (
         <Link href={p.previewHref} className="mt-2 inline-flex min-h-11 items-center gap-1.5 font-ui text-sm font-semibold text-electric-600 underline-offset-4 hover:underline">
           <Eye aria-hidden className="size-4" /> See what people see when they scan it
