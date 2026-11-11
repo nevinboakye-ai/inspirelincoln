@@ -45,7 +45,7 @@ export function NetworkCardForm({ profile }: { profile: CardProfile }) {
   return (
     <form onSubmit={submitWithoutReset(action)} noValidate className="space-y-5">
       <ResultBanner state={state} />
-      <Field id="bio" label="Short bio" error={fe("bio")} hint={`What you study, what you're interested in, what you'd like to talk about. ${600 - bio.length} characters left.`}>
+      <Field id="bio" label="Short bio" error={fe("bio")} hint={`What you study, what you're working on (research, projects, societies, sport or anything else outside the course), and what you'd like to talk about on the day. ${600 - bio.length} characters left.`}>
         <textarea
           id="bio"
           name="bio"
