@@ -267,41 +267,73 @@ export function NetworkDirectory({ people, me, logos = {} }: { people: Delegate[
   );
 }
 
-/** The committee's cards: dark, with a gold edge, so they stand out from delegates'. */
+/**
+ * The committee's cards stand out from delegates': the executive committee's
+ * are gold, the rest of the team's are dark with a gold edge.
+ */
 function CommitteeCard({ p, me, logo, onOpen }: { p: Delegate; me: string; logo?: string; onOpen: () => void }) {
   const exec = isExec(p);
   const team = committeeRole(p);
+  const c = exec
+    ? {
+        card: "bg-[linear-gradient(135deg,var(--color-gold-300)_0%,var(--color-gold)_55%,#c9a24c_100%)] text-midnight ring-gold-600/60 shadow-[0_18px_40px_-24px_rgba(122,92,20,0.75)] hover:shadow-[0_26px_50px_-22px_rgba(122,92,20,0.8)]",
+        strip: "bg-midnight",
+        grid: "opacity-[0.07] invert",
+        crest: "opacity-[0.12] invert",
+        ring: "ring-midnight",
+        fallback: "bg-midnight text-sm text-gold-300",
+        you: "text-midnight/70",
+        meta: "text-midnight/80",
+        bio: "text-midnight/85",
+        badge: "bg-midnight text-gold-300",
+        view: "text-midnight",
+      }
+    : {
+        card: "bg-midnight text-paper ring-white/10 shadow-[0_18px_40px_-26px_rgba(12,24,44,0.9)] hover:shadow-[0_26px_50px_-24px_rgba(12,24,44,0.9)]",
+        strip: "bg-gold/70",
+        grid: "opacity-[0.14]",
+        crest: "opacity-[0.06]",
+        ring: "ring-gold/40",
+        fallback: "bg-paper/10 text-sm text-gold-300",
+        you: "text-paper/60",
+        meta: "text-paper/70",
+        bio: "text-paper/75",
+        badge: "bg-gold/15 text-gold-300 ring-1 ring-inset ring-gold/30",
+        view: "text-gold-300",
+      };
   return (
     <button
       type="button"
       onClick={onOpen}
       aria-haspopup="dialog"
-      className={`group relative flex h-full w-full flex-col overflow-hidden rounded-xl bg-midnight text-left text-paper shadow-[0_18px_40px_-26px_rgba(12,24,44,0.9)] ring-1 transition-[transform,box-shadow] duration-300 ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:shadow-[0_26px_50px_-24px_rgba(12,24,44,0.9)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600 ${exec ? "ring-gold/60" : "ring-white/10"}`}
+      className={`group relative flex h-full w-full flex-col overflow-hidden rounded-xl text-left ring-1 transition-[transform,box-shadow] duration-300 ease-[var(--ease-out-expo)] hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600 ${c.card}`}
     >
-      <span aria-hidden className={`h-1.5 w-full ${exec ? "lanyard-foil" : "bg-gold/70"}`} />
-      <span aria-hidden className="lanyard-grid pointer-events-none absolute inset-0 opacity-[0.14]" />
-      <img src="/brand/crest-white.png" alt="" aria-hidden className="pointer-events-none absolute -bottom-6 -right-4 h-28 w-auto opacity-[0.06]" />
+      <span aria-hidden className={`h-1.5 w-full ${c.strip}`} />
+      <span aria-hidden className={`lanyard-grid pointer-events-none absolute inset-0 ${c.grid}`} />
+      {exec && <span aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_30%,rgba(255,255,255,0.35)_45%,transparent_60%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100 motion-reduce:transition-none" />}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/brand/crest-white.png" alt="" aria-hidden className={`pointer-events-none absolute -bottom-6 -right-4 h-28 w-auto ${c.crest}`} />
       <span className="relative flex flex-1 flex-col p-4 sm:p-5">
         <span className="flex items-center gap-3.5">
-          <Avatar url={p.avatar_url} name={p.full_name} className={`size-12 ring-2 transition-transform duration-300 group-hover:scale-105 ${exec ? "ring-gold" : "ring-gold/40"}`} fallbackClassName="bg-paper/10 text-sm text-gold-300" />
+          <Avatar url={p.avatar_url} name={p.full_name} className={`size-12 ring-2 transition-transform duration-300 group-hover:scale-105 ${c.ring}`} fallbackClassName={c.fallback} />
           <span className="min-w-0">
             <span className="block truncate font-semibold">
               {p.full_name}
-              {p.id === me && <span className="ml-1.5 text-xs font-normal text-paper/60">(you)</span>}
+              {p.id === me && <span className={`ml-1.5 text-xs font-normal ${c.you}`}>(you)</span>}
             </span>
-            <span className="flex items-center gap-1.5 text-sm text-paper/70">
+            <span className={`flex items-center gap-1.5 text-sm ${c.meta}`}>
               <UniLogo src={logo} name={p.institution} className="size-5 p-0.5" />
               <span className="truncate">{[p.institution, p.year_of_study].filter(Boolean).join(" · ") || " "}</span>
             </span>
           </span>
         </span>
-        {p.bio && <span className="mt-3 line-clamp-2 text-sm leading-relaxed text-paper/75">{p.bio}</span>}
+        {p.bio && <span className={`mt-3 line-clamp-2 text-sm leading-relaxed ${c.bio}`}>{p.bio}</span>}
         <span className="mt-auto flex items-center justify-between gap-2 pt-4">
-          <span className={`inline-flex min-w-0 items-center gap-1.5 rounded-full px-2.5 py-1 font-ui text-[0.68rem] font-semibold uppercase tracking-[0.12em] ${exec ? "bg-gold text-midnight" : "bg-gold/15 text-gold-300 ring-1 ring-inset ring-gold/30"}`}>
+          <span className={`inline-flex min-w-0 items-center gap-1.5 rounded-full px-2.5 py-1 font-ui text-[0.68rem] font-semibold uppercase tracking-[0.12em] ${c.badge}`}>
             {exec && <Star aria-hidden className="size-3 shrink-0 fill-current" />}
             <span className="truncate">{p.committee_position || team}</span>
           </span>
-          <span className="inline-flex shrink-0 items-center gap-1 font-ui text-xs font-semibold text-gold-300">
+          <span className={`inline-flex shrink-0 items-center gap-1 font-ui text-xs font-semibold ${c.view}`}>
             View <ArrowRight aria-hidden className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
           </span>
         </span>
