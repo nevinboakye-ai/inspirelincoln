@@ -170,12 +170,10 @@ export const seedWorkshops: Workshop[] = [
     id: "w1",
     slug: "from-writing-to-publishing",
     number: 1,
-    title: "From Writing to Publishing",
-    strapline: "Turn research into a publication.",
-    summary:
-      "Explore the process of transforming research into academic publications.",
-    description:
-      "This workshop follows a piece of research from first draft to published paper. It looks at how manuscripts are structured, how to choose a journal that fits your work, what happens during peer review and how to respond to reviewers, and how to plan a realistic publication strategy as a student.",
+    title: "Get Published: From First Draft to Accepted Paper",
+    strapline: "Your research deserves readers.",
+    summary: "A practical guide to turning your research into a published paper, from the first draft to the final acceptance.",
+    description: "Plenty of good student research never makes it into print. This workshop follows a project all the way from first draft to published paper. You'll see how a strong manuscript is put together, how to pick a journal that suits your work, what really happens in peer review and how to answer reviewers with confidence, and how to plan a publication strategy that fits around medical school.",
     topics: ["Manuscript structure", "Journal selection", "Peer review", "Publication strategy"],
     outcomes: [
       "Describe the standard structure of a research manuscript",
@@ -196,19 +194,13 @@ export const seedWorkshops: Workshop[] = [
     id: "w2",
     slug: "digital-health-in-clinical-practice",
     number: 2,
-    title: "Digital Health in Clinical Practice",
-    strapline: "Cases, data and decisions.",
-    summary:
-      "Interactive clinical cases exploring the application of digital tools, data and evidence-based decision-making.",
-    description:
-      "Working through interactive clinical cases, participants will consider where digital tools and data can support clinical decisions, what evidence should be expected before a tool is adopted, and where the limits and risks lie.",
-    topics: ["Clinical cases", "Digital tools", "Data in decision-making", "Evaluating evidence"],
-    outcomes: [
-      "Discuss how digital tools can inform clinical decisions",
-      "Identify the evidence needed before adopting a digital intervention",
-      "Recognise risks, limitations and unintended consequences",
-    ],
-    audience: "All delegates. No prior technical knowledge is needed.",
+    title: "Clinical Cases Live: Team Simulation",
+    strapline: "Your team. Your patient. Your call.",
+    summary: "Work in groups to assess and treat patients through realistic clinical case simulations.",
+    description: "Step into the role of the clinical team. Working in groups, you'll take on simulated patient cases as they unfold, so your team will need to assess the patient, decide what to do next and agree a plan together. Each case is a chance to practise clinical reasoning, communication and teamwork in a safe setting, and to learn from the choices your team makes.",
+    topics: ["Simulated clinical cases", "Assessing an unwell patient", "Clinical decision-making", "Teamwork and communication"],
+    outcomes: ["Use a structured approach to assess and manage a patient", "Make and justify clinical decisions as a team", "Communicate clearly within a clinical team", "Reflect on what went well and what you would do differently"],
+    audience: "All delegates, in any year. No previous simulation experience is needed.",
     facilitator: null,
     facilitatorBio: null,
     capacity: null,
@@ -221,12 +213,10 @@ export const seedWorkshops: Workshop[] = [
     id: "w3",
     slug: "evidence-based-medicine-in-practice",
     number: 3,
-    title: "Evidence-Based Medicine in Practice",
+    title: "Read Between the Lines: Evidence-Based Medicine",
     strapline: "Read critically. Decide well.",
-    summary:
-      "Develop critical appraisal skills and understand how evidence informs clinical decisions.",
-    description:
-      "A practical introduction to critical appraisal. Participants will work through published research, assess its validity and relevance, and discuss how evidence is weighed alongside clinical judgement and patient preferences.",
+    summary: "Learn to judge a research paper for yourself, and see how good evidence shapes real clinical decisions.",
+    description: "Not every published study should change practice. In this hands-on session you'll work through published research, test how valid and relevant it is, and spot the biases that can mislead. Then you'll look at how evidence is weighed alongside clinical judgement and what matters most to the patient.",
     topics: ["Critical appraisal", "Study design", "Bias and validity", "Applying evidence"],
     outcomes: [
       "Apply a structured approach to appraising a research paper",
@@ -246,12 +236,10 @@ export const seedWorkshops: Workshop[] = [
     id: "w4",
     slug: "building-a-competitive-clinical-portfolio",
     number: 4,
-    title: "Building a Competitive Clinical Portfolio",
-    strapline: "Document what you have done. Plan what comes next.",
-    summary:
-      "Explore practical approaches to documenting achievements, identifying opportunities and developing an academic or clinical portfolio.",
-    description:
-      "This workshop looks at how to build a portfolio that reflects your interests and achievements. It covers documenting activity as you go, finding meaningful opportunities in research, teaching and leadership, and presenting your experience clearly.",
+    title: "Stand Out: Building a Competitive Clinical Portfolio",
+    strapline: "Record what you've done. Plan what comes next.",
+    summary: "Practical ways to capture your achievements, find the right opportunities and build a portfolio that tells your story.",
+    description: "A strong portfolio shows what you've done and where you're heading. This workshop shows you how to build one that reflects your interests: recording achievements as you go, finding meaningful opportunities in research, teaching and leadership, and presenting your experience clearly and honestly.",
     topics: ["Recording achievements", "Finding opportunities", "Academic portfolios", "Reflection"],
     outcomes: [
       "Set up a simple system for recording achievements",
@@ -271,12 +259,10 @@ export const seedWorkshops: Workshop[] = [
     id: "w5",
     slug: "digital-surgery-and-simulation",
     number: 5,
-    title: "Digital Surgery and Simulation",
+    title: "Theatre of the Future: Digital Surgery and Simulation",
     strapline: "Where surgical training meets technology.",
-    summary:
-      "Explore how digital technologies, simulation and emerging surgical tools may influence surgical education and practice.",
-    description:
-      "An exploration of how simulation and digital technologies are being used in surgical education and practice, and what evidence exists for their benefits. Any hands-on demonstrations or equipment will be announced once confirmed by the facilitators.",
+    summary: "Discover how simulation and emerging digital tools are changing the way surgeons train and operate.",
+    description: "From simulation-based training to new digital tools in theatre, technology is reshaping surgery. This workshop explores how these tools are used in surgical education and practice, what the evidence says about their benefits, and how new technology should be judged before it reaches patients. Any hands-on demonstrations or equipment will be announced once confirmed by the facilitators.",
     topics: ["Simulation-based education", "Emerging surgical technology", "Skills assessment", "Evidence for new tools"],
     outcomes: [
       "Describe how simulation is used in surgical training",
@@ -296,12 +282,10 @@ export const seedWorkshops: Workshop[] = [
     id: "w6",
     slug: "global-digital-health-inequalities",
     number: 6,
-    title: "Global Digital Health Inequalities",
+    title: "Left Behind? Global Inequalities in Digital Health",
     strapline: "Who benefits from digital health, and who is left behind?",
-    summary:
-      "Explore how access, infrastructure, socioeconomic factors and healthcare systems influence the adoption and impact of digital healthcare technologies.",
-    description:
-      "Digital health can widen or narrow inequalities. This workshop examines how access, connectivity, digital literacy, socioeconomic factors and the design of healthcare systems shape who benefits from new technology, in the UK and globally.",
+    summary: "Explore why the same technology can transform care for some people and shut others out, in the UK and around the world.",
+    description: "Digital health can narrow inequalities or make them worse. This workshop looks at how access, connectivity, digital literacy, income and the design of health systems decide who benefits from new technology, in the UK and globally, and what fairer digital health could look like.",
     topics: ["Digital exclusion", "Infrastructure and access", "Health systems", "Equitable design"],
     outcomes: [
       "Identify factors that influence access to digital healthcare",
