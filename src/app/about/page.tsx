@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { ArrowUpRight, Award, Compass, Eye, Lightbulb, MapPin, Target, Users2, Zap } from "lucide-react";
 import { PageHero } from "@/components/layout/page-hero";
-import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
+import { Reveal } from "@/components/motion/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { CommitteeDirectory } from "@/components/about/committee";
+import { PurposeDeck } from "@/components/about/purpose-deck";
 import { HistoryTimeline } from "@/components/about/timeline";
 import { STORY } from "@/content/story";
 import { schoolDetails } from "@/content/schools";
@@ -16,6 +17,9 @@ export const metadata: Metadata = {
   description: "INSPIRE helps medical students explore research, develop academically and connect with researchers and clinicians. Our story, mission, values and committee.",
   alternates: { canonical: "/about" },
 };
+
+const MISSION = "To encourage student research engagement, academic development and collaboration, giving medical students the confidence to contribute to scientific and medical progress.";
+const VISION = "A medical community in which students can meaningfully engage with research and contribute to future healthcare.";
 
 const VALUES = [
   { icon: Lightbulb, name: "Curiosity", body: "Good research starts with a question. We celebrate asking them." },
@@ -59,36 +63,15 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <section aria-label="Mission and vision" className="surface-dark relative overflow-hidden py-24 sm:py-32">
+      <section aria-labelledby="purpose-title" className="surface-dark relative overflow-hidden py-24 sm:py-32">
         <div aria-hidden className="grid-lines absolute inset-0 opacity-50" />
-        <div className="container-page relative grid gap-6 lg:grid-cols-2">
-          {[
-            { icon: Target, label: "Our mission", text: "To encourage student research engagement, academic development and collaboration, giving medical students the confidence to contribute to scientific and medical progress." },
-            { icon: Eye, label: "Our vision", text: "A medical community in which students can meaningfully engage with research and contribute to future healthcare." },
-          ].map((b, i) => (
-            <Reveal key={b.label} delay={i * 0.1}>
-              <div className="h-full rounded-xl border border-white/10 bg-white/[0.03] p-8 sm:p-12">
-                <b.icon aria-hidden className="size-7 text-cyan" />
-                <h2 className="eyebrow mt-8 text-cyan">{b.label}</h2>
-                <p className="mt-4 font-display text-2xl font-medium leading-snug sm:text-3xl">{b.text}</p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      <section aria-labelledby="values-title" className="bg-white py-24 sm:py-32">
-        <div className="container-page">
-          <SectionHeading eyebrow="Our values" title={<span id="values-title">What guides us</span>} />
-          <Stagger className="mt-14 grid gap-px overflow-hidden rounded-xl border border-navy/10 bg-navy/10 sm:grid-cols-2 lg:grid-cols-5">
-            {VALUES.map((v) => (
-              <StaggerItem key={v.name} className="group bg-white p-7 transition-colors hover:bg-paper">
-                <v.icon aria-hidden className="size-6 text-electric-600 transition-transform duration-500 group-hover:-translate-y-1" />
-                <h3 className="mt-10 font-display text-2xl font-semibold text-ink">{v.name}</h3>
-                <p className="mt-2 text-[0.95rem] leading-relaxed text-slate-700">{v.body}</p>
-              </StaggerItem>
-            ))}
-          </Stagger>
+        <div className="container-page relative grid items-center gap-12 lg:grid-cols-12">
+          <Reveal className="lg:col-span-5">
+            <SectionHeading dark eyebrow="Mission, vision and values" title={<span id="purpose-title">What guides us</span>} />
+          </Reveal>
+          <Reveal delay={0.1} className="lg:col-span-6 lg:col-start-7">
+            <PurposeDeck mission={MISSION} vision={VISION} values={VALUES} icons={{ mission: Target, vision: Eye }} />
+          </Reveal>
         </div>
       </section>
 
