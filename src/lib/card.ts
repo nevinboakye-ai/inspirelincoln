@@ -70,14 +70,17 @@ export const sortedRoles = (roles: readonly AccountType[]) => ROLE_RANK.filter((
 
 /**
  * Roles as people read them on a card. The oral waiting list attends as a
- * delegate, and a single committee role reads better as their position.
+ * delegate, so it shows as both, and a single committee role reads better
+ * as their position.
  */
 export function cardRoles(c: Pick<CardData, "roles" | "committee_position">) {
   const roles = sortedRoles(c.roles);
   const attending = new Set<AccountType>(["delegate", "oral_presenter", "poster_presenter", "oral_waitlist"]);
   const committee = roles.filter((t) => !attending.has(t));
-  const labels = roles.map((t) =>
-    t === "oral_waitlist" ? ACCOUNT_TYPE_LABEL.delegate : !attending.has(t) && committee.length === 1 && c.committee_position ? c.committee_position : ACCOUNT_TYPE_LABEL[t],
+  const labels = roles.flatMap((t) =>
+    t === "oral_waitlist"
+      ? [ACCOUNT_TYPE_LABEL.delegate, ACCOUNT_TYPE_LABEL.oral_waitlist]
+      : [!attending.has(t) && committee.length === 1 && c.committee_position ? c.committee_position : ACCOUNT_TYPE_LABEL[t]],
   );
   return labels.filter((l, i) => labels.indexOf(l) === i);
 }

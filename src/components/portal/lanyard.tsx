@@ -6,12 +6,13 @@ import { useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { CardCountdown } from "./hub-motion";
 
-export type LanyardTone = "delegate" | "poster" | "oral" | "committee";
+export type LanyardTone = "delegate" | "poster" | "oral" | "waitlist" | "committee";
 
 const BAND: Record<LanyardTone, string> = {
   delegate: "bg-navy text-paper",
   poster: "bg-gold text-midnight",
   oral: "bg-cyan text-midnight",
+  waitlist: "bg-violet text-midnight",
   committee: "bg-midnight text-gold-300",
 };
 
