@@ -15,7 +15,7 @@ export function SiteFooter({ edition, siteOpen = true }: { edition: Edition; sit
     ? [...FOOTER_LINKS.explore.filter((l) => l.href !== "/today"), { label: "Venue & FAQs", href: "/conference" }, { label: "About", href: "/about" }, { label: "Contact", href: "/contact" }]
     : [{ label: "Set up your account", href: "/auth/activate" }, { label: "Register", href: "/signup" }, { label: "Contact", href: "/contact" }];
   return (
-    <footer className="surface-midnight relative pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
+    <footer className="site-footer surface-midnight relative pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
       <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
       <div className="container-page py-6 sm:py-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-8">

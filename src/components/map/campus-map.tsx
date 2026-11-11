@@ -416,7 +416,7 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
   );
 
   return (
-    <div className="surface-midnight pt-[var(--header-h)] lg:pt-28">
+    <div data-fullscreen-map className="surface-midnight pt-[var(--header-h)] lg:pt-28">
       <header className="container-page hidden flex-wrap items-end justify-between gap-x-10 gap-y-4 border-b border-white/15 pb-6 pt-12 lg:flex">
         <div>
           <p className="eyebrow text-cyan">Brayford Pool campus · {dateLabel}</p>
@@ -431,7 +431,12 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
       </header>
       <h1 className="sr-only lg:hidden">Campus map</h1>
 
-      <div className="relative h-[calc(100svh-var(--header-h)-4rem-env(safe-area-inset-bottom))] min-h-[480px] overflow-hidden lg:grid lg:h-[calc(100svh-var(--header-h))] lg:min-h-[640px] lg:grid-cols-[400px_1fr] lg:overflow-visible">
+      {/*
+        "isolate" keeps Leaflet's own layers (z-index 400 to 1000) inside this box, so the map can
+        never paint over the site header, the phone menu or the footer. The fixed single grid row
+        keeps the sidebar scrolling on its own, so the map stays exactly one screen tall.
+      */}
+      <div className="relative isolate h-[calc(100svh-var(--header-h)-4rem-env(safe-area-inset-bottom))] min-h-[480px] overflow-hidden lg:grid lg:h-[calc(100svh-var(--header-h))] lg:min-h-[640px] lg:grid-cols-[400px_1fr] lg:grid-rows-[minmax(0,1fr)]">
         {/* Map */}
         <div className="absolute inset-0 bg-paper-200 lg:relative lg:order-2 lg:h-full">
           <div ref={mapEl} className="absolute inset-0" role="region" aria-label="Interactive campus map. The list of places contains the same information." />
@@ -463,7 +468,7 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
           ref={sheetRef}
           aria-label="Places"
           style={{ ["--sheet-h" as string]: sheetHeight }}
-          className="absolute inset-x-0 bottom-0 z-[600] flex h-[var(--sheet-h)] flex-col rounded-t-xl border-t border-white/15 bg-midnight shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.6)] transition-[height] duration-300 ease-[var(--ease-out-expo)] lg:relative lg:z-auto lg:order-1 lg:h-auto lg:rounded-none lg:border-r lg:border-t-0 lg:shadow-none lg:transition-none"
+          className="absolute inset-x-0 bottom-0 z-[600] flex h-[var(--sheet-h)] flex-col rounded-t-xl border-t border-white/15 bg-midnight shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.6)] transition-[height] duration-300 ease-[var(--ease-out-expo)] lg:relative lg:z-auto lg:order-1 lg:h-full lg:min-h-0 lg:rounded-none lg:border-r lg:border-t-0 lg:shadow-none lg:transition-none"
         >
           <button
             type="button"
@@ -590,7 +595,8 @@ function PlaceDetail({
   copied: boolean;
 }) {
   const ref = useRef<HTMLHeadingElement>(null);
-  useEffect(() => ref.current?.focus(), [place.id]);
+  // preventScroll: moving focus must not jump the page or the sheet under your finger.
+  useEffect(() => ref.current?.focus({ preventScroll: true }), [place.id]);
   // Directions go to the building for rooms.
   const target = place.lat == null && parent ? parent : place;
   return (
