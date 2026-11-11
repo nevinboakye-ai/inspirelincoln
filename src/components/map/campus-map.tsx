@@ -47,6 +47,11 @@ function resolve(place: MapPlace, byId: Map<string, MapPlace>): { lat: number; l
   return null;
 }
 
+/** Places in town rather than on campus, such as the stations and the cathedral. */
+function inTown(place: MapPlace) {
+  return place.lat != null && place.lng != null && distanceMetres({ lat: place.lat, lng: place.lng }, { lat: CAMPUS_CENTRE[0], lng: CAMPUS_CENTRE[1] }) > 450;
+}
+
 function formatDistance(m: number) {
   return m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`;
 }
@@ -119,7 +124,7 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
           const safe = (t: string) => t.replace(/[<>&"]/g, "");
           const icon = leaflet.divIcon({
             className: "",
-            html: `<span class="map-marker"><span class="map-pin map-pin--${p.kind}" data-label="${safe(label)}"></span>${p.kind === "venue" ? `<span class="map-label">${safe(p.name)}</span>` : ""}</span>`,
+            html: `<span class="map-marker"><span class="map-pin map-pin--${p.kind}" data-label="${safe(label)}"></span>${p.kind === "venue" || inTown(p) ? `<span class="map-label">${safe(p.name)}</span>` : ""}</span>`,
             iconSize: [28, 34],
             iconAnchor: [14, 32],
           });
@@ -136,8 +141,8 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
         }
         youLayer.current = leaflet.layerGroup().addTo(m);
         map.current = m;
-        // Fit everything that is pinned, but stay on campus.
-        const pts = places.filter((p) => p.lat != null && p.lng != null).map((p) => [p.lat!, p.lng!] as [number, number]);
+        // Fit everything pinned on campus; the stations and cathedral are a pan or zoom away.
+        const pts = places.filter((p) => p.lat != null && p.lng != null && !inTown(p)).map((p) => [p.lat!, p.lng!] as [number, number]);
         if (pts.length > 1) m.fitBounds(pts, { padding: [48, 48], maxZoom: 17 });
         setReady(true);
       };
@@ -280,9 +285,12 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
     [p.name, p.code ?? "", p.description, ...sessionsFor(p).map((s) => s.title)].some((t) => t.toLowerCase().includes(q));
   const top = places.filter((p) => !p.parentId);
   const onDay = top.filter((p) => p.kind === "venue");
-  const around = top.filter((p) => p.kind !== "venue");
+  const around = top.filter((p) => p.kind !== "venue" && !inTown(p));
+  const town = top.filter((p) => p.kind !== "venue" && inTown(p));
   const visibleDay = onDay.filter((p) => matches(p) || (children.get(p.id) ?? []).some(matches));
   const visibleAround = filter === "all" || q ? around.filter(matches) : [];
+  // Always listed: on the day, the stations are where most people arrive.
+  const visibleTown = town.filter(matches);
 
   const current = selected ? byId.get(selected) : undefined;
   const currentPos = current ? resolve(current, byId) : null;
@@ -403,7 +411,10 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
         {visibleAround.length > 0 && (
           <PlaceGroup title="Around campus" places={visibleAround} childrenOf={children} matches={matches} q={q} fix={fix} byId={byId} onSelect={choose} />
         )}
-        {visibleDay.length === 0 && visibleAround.length === 0 && (
+        {visibleTown.length > 0 && (
+          <PlaceGroup title="Around Lincoln" places={visibleTown} childrenOf={children} matches={matches} q={q} fix={fix} byId={byId} onSelect={choose} />
+        )}
+        {visibleDay.length === 0 && visibleAround.length === 0 && visibleTown.length === 0 && (
           <p className="p-5 text-sm text-paper/75">Nothing matches &ldquo;{query}&rdquo;. Try a building code such as INB.</p>
         )}
         {filter === "day" && !q && (
