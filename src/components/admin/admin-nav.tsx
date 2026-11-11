@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarCog, ClipboardCheck, Eye, FileStack, Gauge, HelpCircle, Inbox, Mail, MapPin, Megaphone, Mic, QrCode, ScrollText, Settings2,
-  Ticket, UserCheck, CalendarCheck2, Users, Wrench, DoorOpen, ShieldCheck, UserRound, LayoutDashboard, Activity, BarChart3,
+  Ticket, UserCheck, GraduationCap, CalendarCheck2, Users, Wrench, DoorOpen, ShieldCheck, UserRound, LayoutDashboard, Activity, BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Access, Capability } from "@/lib/accounts";
@@ -47,6 +47,7 @@ const GROUPS: { title: string; links: LinkDef[] }[] = [
       { href: "/admin/content/workshops", label: "Workshops", icon: Wrench, need: "edit_website" },
       { href: "/admin/content/map", label: "Campus map", icon: MapPin, need: "edit_website" },
       { href: "/admin/content/rooms", label: "Rooms", icon: DoorOpen, need: "edit_website" },
+      { href: "/admin/content/universities", label: "University logos", icon: GraduationCap, need: "edit_website" },
       { href: "/admin/content/faqs", label: "FAQs", icon: HelpCircle, need: "edit_website" },
       { href: "/admin/settings", label: "Conference settings", icon: Settings2, need: "edit_website" },
     ],

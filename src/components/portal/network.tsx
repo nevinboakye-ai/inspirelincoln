@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { ResultBanner } from "@/components/portal/profile-forms";
 import { ACCOUNT_TYPE_LABEL, COMMITTEE_TYPES, EXEC_TYPES } from "@/lib/accounts";
 import { InstagramMark } from "@/components/ui/social";
+import { UniLogo } from "@/components/ui/uni-logo";
+import { uniKey, type LogoMap } from "@/lib/university-logos";
 import { instagramUrl } from "@/lib/instagram";
 import { Crown, Star } from "lucide-react";
 import type { AccountType } from "@/lib/types";
@@ -135,7 +137,7 @@ const committeeRole = (p: Delegate) => {
 };
 const roleLabel = (p: Delegate) => p.committee_position || committeeRole(p) || ACCOUNT_TYPE_LABEL[p.account_type];
 
-export function NetworkDirectory({ people, me }: { people: Delegate[]; me: string }) {
+export function NetworkDirectory({ people, me, logos = {} }: { people: Delegate[]; me: string; logos?: LogoMap }) {
   const [q, setQ] = useState("");
   const [uni, setUni] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -197,7 +199,7 @@ export function NetworkDirectory({ people, me }: { people: Delegate[]; me: strin
               <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {committee.map((p) => (
                   <li key={p.id}>
-                    <CommitteeCard p={p} me={me} onOpen={() => setOpenId(p.id)} />
+                    <CommitteeCard p={p} me={me} logo={logos[uniKey(p.institution)]} onOpen={() => setOpenId(p.id)} />
                   </li>
                 ))}
               </ul>
@@ -230,7 +232,10 @@ export function NetworkDirectory({ people, me }: { people: Delegate[]; me: strin
                           {p.full_name}
                           {p.id === me && <span className="ml-1.5 text-xs font-normal text-slate">(you)</span>}
                         </span>
-                        <span className="block truncate text-sm text-slate-700">{[p.institution, p.year_of_study].filter(Boolean).join(" · ") || " "}</span>
+                        <span className="flex items-center gap-1.5 text-sm text-slate-700">
+                          <UniLogo src={logos[uniKey(p.institution)]} name={p.institution} className="size-5 p-0.5" />
+                          <span className="truncate">{[p.institution, p.year_of_study].filter(Boolean).join(" · ") || " "}</span>
+                        </span>
                       </span>
                     </span>
                     {p.bio && <span className="mt-3 line-clamp-2 text-sm leading-relaxed text-slate-700">{p.bio}</span>}
@@ -256,14 +261,14 @@ export function NetworkDirectory({ people, me }: { people: Delegate[]; me: strin
       )}
 
       <Drawer open={Boolean(selected)} onClose={close} label={selected ? `${selected.full_name}'s profile` : "Profile"}>
-        {selected && <PersonDetail p={selected} me={me} />}
+        {selected && <PersonDetail p={selected} me={me} logo={logos[uniKey(selected.institution)]} />}
       </Drawer>
     </section>
   );
 }
 
 /** The committee's cards: dark, with a gold edge, so they stand out from delegates'. */
-function CommitteeCard({ p, me, onOpen }: { p: Delegate; me: string; onOpen: () => void }) {
+function CommitteeCard({ p, me, logo, onOpen }: { p: Delegate; me: string; logo?: string; onOpen: () => void }) {
   const exec = isExec(p);
   const team = committeeRole(p);
   return (
@@ -284,7 +289,10 @@ function CommitteeCard({ p, me, onOpen }: { p: Delegate; me: string; onOpen: () 
               {p.full_name}
               {p.id === me && <span className="ml-1.5 text-xs font-normal text-paper/60">(you)</span>}
             </span>
-            <span className="block truncate text-sm text-paper/70">{[p.institution, p.year_of_study].filter(Boolean).join(" · ") || " "}</span>
+            <span className="flex items-center gap-1.5 text-sm text-paper/70">
+              <UniLogo src={logo} name={p.institution} className="size-5 p-0.5" />
+              <span className="truncate">{[p.institution, p.year_of_study].filter(Boolean).join(" · ") || " "}</span>
+            </span>
           </span>
         </span>
         {p.bio && <span className="mt-3 line-clamp-2 text-sm leading-relaxed text-paper/75">{p.bio}</span>}
@@ -303,7 +311,7 @@ function CommitteeCard({ p, me, onOpen }: { p: Delegate; me: string; onOpen: () 
   );
 }
 
-function PersonDetail({ p, me }: { p: Delegate; me: string }) {
+function PersonDetail({ p, me, logo }: { p: Delegate; me: string; logo?: string }) {
   const tone = toneFor(p.account_type);
   return (
     <div>
@@ -325,7 +333,10 @@ function PersonDetail({ p, me }: { p: Delegate; me: string }) {
         {p.institution && (
           <div>
             <dt className="eyebrow text-slate">Medical school</dt>
-            <dd className="mt-1 text-ink">{p.institution}</dd>
+            <dd className="mt-1.5 flex items-center gap-3 text-ink">
+              <UniLogo src={logo} name={p.institution} fallback className="size-11 text-[0.62rem]" />
+              {p.institution}
+            </dd>
           </div>
         )}
         {p.year_of_study && (
