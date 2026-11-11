@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { Compass, Eye, Sparkles, Target, Users2, Lightbulb, Award, Zap } from "lucide-react";
+import { ArrowUpRight, Award, Compass, Eye, Lightbulb, MapPin, Target, Users2, Zap } from "lucide-react";
 import { PageHero } from "@/components/layout/page-hero";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { CommitteeDirectory } from "@/components/about/committee";
 import { HistoryTimeline } from "@/components/about/timeline";
 import { STORY } from "@/content/story";
+import { schoolDetails } from "@/content/schools";
 import { getCommittee, getPartners, getTimeline } from "@/lib/data/content";
 
 export const revalidate = 300;
@@ -94,20 +95,42 @@ export default async function AboutPage() {
       <section aria-labelledby="community-title" className="bg-paper py-24 sm:py-32">
         <div className="container-page grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-4">
-            <SectionHeading eyebrow="Our community" title={<span id="community-title">The participating medical school community</span>} />
-            <p className="mt-6 text-slate-700">
-              Labels describe how each community takes part. They do not imply sponsorship or formal institutional endorsement.
-            </p>
+            <SectionHeading eyebrow="Our community" title={<span id="community-title">Participating medical schools</span>} />
+            <p className="mt-6 text-slate-700">Students from these medical schools take part in INSPIRE.</p>
           </div>
-          <ul className="grid gap-3 sm:grid-cols-2 lg:col-span-8">
-            {partners.map((p) => (
-              <li key={p.id} className="flex min-h-28 flex-col justify-between rounded-lg border border-navy/10 bg-white p-6">
-                <span className="font-display text-2xl font-semibold text-ink">{p.name}</span>
-                <span className="mt-4 flex items-center gap-2 text-sm text-slate">
-                  <Sparkles aria-hidden className="size-3.5 text-electric-600" /> {p.relationship}
-                </span>
-              </li>
-            ))}
+          <ul className="grid gap-4 sm:grid-cols-2 lg:col-span-8">
+            {partners.map((p) => {
+              const d = schoolDetails(p.name);
+              return (
+                <li key={p.id} className="flex flex-col rounded-xl border border-navy/10 bg-white p-6 sm:p-7">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <h3 className="font-display text-2xl font-semibold leading-tight text-ink">{d?.fullName ?? p.name}</h3>
+                      {d && <p className="mt-1 text-sm text-slate-700">{d.university}</p>}
+                      {/host/i.test(p.relationship) && <p className="mt-2 font-ui text-xs font-semibold uppercase tracking-[0.14em] text-gold-700">{p.relationship}</p>}
+                    </div>
+                    {d && (
+                      <span className="shrink-0 rounded-full bg-paper px-3 py-1 font-ui text-xs font-semibold text-navy">
+                        <span aria-hidden>Since {d.since}</span>
+                        <span className="sr-only">First students in {d.since}</span>
+                      </span>
+                    )}
+                  </div>
+                  {d && <p className="mt-4 text-[0.95rem] leading-relaxed text-slate-700">{d.summary}</p>}
+                  <div className="mt-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-2 pt-5 text-sm">
+                    <span className="flex items-center gap-1.5 text-slate-700">
+                      <MapPin aria-hidden className="size-3.5 text-electric-600" /> {d?.place ?? p.relationship}
+                    </span>
+                    {(d?.url ?? p.url) && (
+                      <a href={d?.url ?? p.url ?? undefined} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1 font-semibold text-electric-600 underline-offset-4 hover:underline">
+                        Visit website <ArrowUpRight aria-hidden className="size-3.5" />
+                        <span className="sr-only"> for {d?.fullName ?? p.name} (opens in a new tab)</span>
+                      </a>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </section>
