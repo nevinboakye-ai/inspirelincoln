@@ -32,13 +32,18 @@ import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/cn";
 import { SITE_URL } from "@/lib/site";
 
-export const CATEGORY_META: Record<SessionCategory, { icon: typeof Mic2; colour: string; soft: string }> = {
-  keynote: { icon: Mic2, colour: "#3A5F94", soft: "bg-electric/10 text-electric-700" },
-  research: { icon: FlaskConical, colour: "#5B7FB0", soft: "bg-cyan/15 text-[#28506E]" },
-  workshop: { icon: Presentation, colour: "#9FB4D4", soft: "bg-violet/12 text-[#2E4A7A]" },
-  networking: { icon: Users, colour: "#12805C", soft: "bg-success/10 text-success" },
-  break: { icon: Coffee, colour: "#66717F", soft: "bg-paper-200 text-slate-700" },
-  closing: { icon: PartyPopper, colour: "#1A3154", soft: "bg-navy/10 text-navy" },
+/**
+ * One colour per kind of session, so the day reads at a glance: gold keynotes, teal research,
+ * violet workshops, green networking, sand breaks and rose for the close. Each text colour
+ * passes WCAG AA on its own tint and on white.
+ */
+export const CATEGORY_META: Record<SessionCategory, { icon: typeof Mic2; colour: string; soft: string; tint: string; text: string }> = {
+  keynote: { icon: Mic2, colour: "#C99A2E", soft: "bg-[#F6E9C6] text-[#6E4F0A]", tint: "bg-[#FDF8EA]", text: "text-[#6E4F0A]" },
+  research: { icon: FlaskConical, colour: "#1F8A8A", soft: "bg-[#D5EFEE] text-[#105858]", tint: "bg-[#F1FAF9]", text: "text-[#105858]" },
+  workshop: { icon: Presentation, colour: "#7B5CC4", soft: "bg-[#E8E0F7] text-[#4A2F8A]", tint: "bg-[#F7F4FC]", text: "text-[#4A2F8A]" },
+  networking: { icon: Users, colour: "#2F8F4E", soft: "bg-[#DCF0E1] text-[#1C5E31]", tint: "bg-[#F2FAF4]", text: "text-[#1C5E31]" },
+  break: { icon: Coffee, colour: "#A8957A", soft: "bg-[#EFE8DC] text-[#5C4D36]", tint: "bg-[#FAF7F1]", text: "text-[#5C4D36]" },
+  closing: { icon: PartyPopper, colour: "#C2456B", soft: "bg-[#F7DCE4] text-[#83203F]", tint: "bg-[#FDF3F6]", text: "text-[#83203F]" },
 };
 
 type View = "timeline" | "cards" | "agenda";
@@ -274,10 +279,11 @@ export function ProgrammeExplorer({ sessions, speakers, workshops, rooms, editio
                 onClick={() => toggleCat(c)}
                 className={cn(
                   "flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[0.8125rem] font-medium transition-colors",
-                  on ? "border-navy bg-navy text-paper" : "border-navy/15 bg-white text-slate-700 hover:border-navy/40",
+                  on ? "border-transparent text-white" : "border-navy/15 bg-white text-slate-700 hover:border-navy/40",
                 )}
+                style={on ? { background: CATEGORY_META[c].colour } : undefined}
               >
-                <Icon aria-hidden className="size-3.5" />
+                <Icon aria-hidden className="size-3.5" style={on ? undefined : { color: CATEGORY_META[c].colour }} />
                 {SESSION_CATEGORY_LABEL[c]}
               </button>
             );
@@ -341,17 +347,19 @@ export function ProgrammeExplorer({ sessions, speakers, workshops, rooms, editio
         </LayoutGroup>
       ) : (
         <ol className="relative">
+          {/* The thread down the left joins the times into one day. */}
+          <span aria-hidden className="absolute bottom-3 left-[2.95rem] top-3 w-px bg-navy/10 sm:left-[4.45rem]" />
           {groups.map((g) => (
-            <li key={g.key} className="relative grid gap-4 pb-8 sm:grid-cols-[6.5rem_1fr]">
-              <div className="sm:sticky sm:top-[calc(var(--header-h)+9rem)] sm:self-start">
+            <li key={g.key} className="relative grid grid-cols-[3.5rem_minmax(0,1fr)] gap-3 pb-2.5 sm:grid-cols-[5rem_minmax(0,1fr)] sm:gap-4">
+              <div className="relative pt-3 text-right sm:pt-3.5">
                 {g.label ? (
-                  <p className="font-ui text-2xl font-semibold tabular-nums text-ink">{g.label}</p>
+                  <p className="font-ui text-[0.95rem] font-semibold tabular-nums text-ink sm:text-lg">{g.label}</p>
                 ) : (
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate">In order</p>
+                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-slate">In order</p>
                 )}
-                {g.items.length > 1 && g.label && <p className="mt-1 text-xs text-slate">{g.items.length} parallel sessions</p>}
+                {g.items.length > 1 && g.label && <p className="text-[0.68rem] leading-tight text-slate">{g.items.length} at once</p>}
               </div>
-              <ul className={cn("grid gap-3", g.label && g.items.length > 1 && "lg:grid-cols-2")}>
+              <ul className={cn("grid min-w-0 grid-cols-1 gap-2", g.label && g.items.length > 1 && "lg:grid-cols-2")}>
                 {g.items.map((s) => (
                   <li key={s.id}>
                     <SessionRow session={s} onOpen={open} speakerById={speakerById} location={sessionLocation(s)} conflict={agendaConflicts.has(s.id)} parallel={parallelCount(s)} />
@@ -457,35 +465,60 @@ function SessionRow({ session, onOpen, speakerById, location, conflict, parallel
   const meta = CATEGORY_META[session.category];
   const Icon = meta.icon;
   const names = session.speakerIds.map((id) => speakerById.get(id)?.fullName).filter(Boolean);
+  const mins = durationMinutes(session);
+  const isBreak = session.category === "break";
   return (
     <div
       className={cn(
-        "group relative flex items-start gap-4 overflow-hidden rounded-lg border bg-white p-5 transition-[border-color,box-shadow] hover:border-navy/25 hover:shadow-[0_16px_40px_-24px_rgba(26,49,84,0.4)]",
-        conflict ? "border-warning/50" : "border-navy/10",
-        session.category === "break" && "bg-paper-200/60",
+        "group relative flex items-center gap-3 overflow-hidden rounded-md border py-2.5 pl-4 pr-2.5 transition-[border-color,box-shadow] hover:shadow-[0_12px_32px_-20px_rgba(26,49,84,0.45)] sm:gap-3.5 sm:py-3 sm:pl-5 sm:pr-3",
+        conflict ? "border-warning/60" : "border-navy/[0.08] hover:border-navy/20",
+        meta.tint,
       )}
     >
-      <span aria-hidden className="absolute inset-y-0 left-0 w-1" style={{ background: meta.colour }} />
-      <span className={cn("mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full", meta.soft)}>
-        <Icon aria-hidden className="size-[1.1rem]" />
+      <span aria-hidden className="absolute inset-y-0 left-0 w-1.5" style={{ background: meta.colour }} />
+      <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-full sm:size-9", meta.soft)}>
+        <Icon aria-hidden className="size-4" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate">{SESSION_CATEGORY_LABEL[session.category]}</p>
-        <button type="button" onClick={() => onOpen(session)} className="mt-1 text-left font-display text-lg font-medium leading-snug text-ink after:absolute after:inset-0 after:content-[''] focus-visible:outline-none group-focus-within:underline">
+        <button
+          type="button"
+          onClick={() => onOpen(session)}
+          className={cn(
+            "block text-left font-display font-medium leading-snug text-ink after:absolute after:inset-0 after:content-[''] focus-visible:outline-none group-focus-within:underline",
+            isBreak ? "text-[0.95rem]" : "text-base sm:text-[1.075rem]",
+          )}
+        >
           {session.title}
         </button>
-        {names.length > 0 && <p className="mt-1 text-sm text-slate-700">{names.join(", ")}</p>}
-        <div className="mt-3">
-          <SessionMetaLine session={session} location={location} />
-        </div>
-        {(conflict || parallel > 0) && (
-          <p className={cn("mt-3 flex items-center gap-1.5 text-xs font-medium", conflict ? "text-warning" : "text-slate")}>
-            <AlertTriangle aria-hidden className="size-3.5" />
-            {conflict ? "Clashes with another session in your agenda" : `Runs alongside ${parallel} other session${parallel === 1 ? "" : "s"}`}
+        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-700 sm:text-[0.8rem]">
+          <span className={cn("font-semibold", meta.text)}>{SESSION_CATEGORY_LABEL[session.category]}</span>
+          {mins ? (
+            <>
+              <span aria-hidden className="text-slate/50">·</span>
+              <span>{formatDuration(mins)}</span>
+            </>
+          ) : null}
+          <span aria-hidden className="text-slate/50">·</span>
+          <span className="flex min-w-0 max-w-full items-center gap-1">
+            <MapPin aria-hidden className="size-3 shrink-0" />
+            <span className="truncate">{location ?? "Room TBC"}</span>
+          </span>
+          {names.length > 0 && (
+            <>
+              <span aria-hidden className="text-slate/50">·</span>
+              <span>{names.join(", ")}</span>
+            </>
+          )}
+        </p>
+        {conflict && (
+          <p className="mt-1 flex items-center gap-1 text-xs font-medium text-warning">
+            <AlertTriangle aria-hidden className="size-3" />
+            Clashes with another session in your agenda
           </p>
         )}
+        {!conflict && parallel > 0 && <span className="sr-only">Runs alongside {parallel} other session{parallel === 1 ? "" : "s"}.</span>}
       </div>
-      {session.category !== "break" && <SaveButton session={session} compact />}
+      {!isBreak && <SaveButton session={session} compact />}
     </div>
   );
 }
