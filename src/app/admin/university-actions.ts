@@ -1,7 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { requireAccess } from "@/lib/auth";
-import { uniKey } from "@/lib/university-logos";
+import { BUILT_IN_LOGOS, uniKey } from "@/lib/university-logos";
 
 type Result = { ok: boolean; error?: string; message?: string } | null;
 const MAX = 512 * 1024;
@@ -49,7 +49,7 @@ export async function saveUniversityLogo(_: Result, form: FormData): Promise<Res
   return { ok: true, message: `Logo saved for ${institution}.` };
 }
 
-/** Removes a university's logo; cards go back to showing its initials. */
+/** Removes an uploaded logo; cards go back to the built-in logo, or the initials. */
 export async function removeUniversityLogo(_: Result, form: FormData): Promise<Result> {
   const { db } = await requireAccess("edit_website", "/admin/content/universities");
   const key = uniKey(String(form.get("institution") ?? ""));
@@ -59,5 +59,5 @@ export async function removeUniversityLogo(_: Result, form: FormData): Promise<R
   if (error) return { ok: false, error: "We couldn't remove that logo. Please try again." };
   await db.storage.from("media").remove([old.path]);
   refresh();
-  return { ok: true, message: "Logo removed." };
+  return { ok: true, message: BUILT_IN_LOGOS[key] ? "Upload removed. The logo from the university's website shows again." : "Logo removed." };
 }

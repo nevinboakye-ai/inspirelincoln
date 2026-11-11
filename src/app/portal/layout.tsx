@@ -16,8 +16,11 @@ export default async function PortalLayout({ children }: { children: React.React
   const { profile, db } = await requireUser("/portal");
   // Just signed in with an unfinished profile: ask them to finish it. Never while viewing as someone.
   const jar = await cookies();
-  const gaps = jar.has(PROFILE_PROMPT_COOKIE) && !jar.has(VIEW_AS_COOKIE) ? profileGaps(profile) : [];
-  const promptPhoto = gaps.length ? await signAvatar(db, profile.avatarPath) : null;
+  const prompting = jar.has(PROFILE_PROMPT_COOKIE) && !jar.has(VIEW_AS_COOKIE);
+  const gaps = prompting ? profileGaps(profile) : [];
+  // Everyone is asked once whether to show their email to other delegates.
+  const askEmail = prompting && !profile.networkEmailAsked;
+  const promptPhoto = gaps.length || askEmail ? await signAvatar(db, profile.avatarPath) : null;
   // Conversations where the committee has replied since they last looked.
   const { data: mine } = await db.from("enquiry_threads").select("last_from, last_message_at, member_read_at").eq("user_id", profile.id).eq("last_from", "committee").limit(100);
   const unreadEnquiries = (mine ?? []).filter(unreadForMember).length;
@@ -40,7 +43,7 @@ export default async function PortalLayout({ children }: { children: React.React
           unreadEnquiries={unreadEnquiries}
         />
         <div className="min-w-0">{children}</div>
-        {gaps.length > 0 && <ProfilePrompt gaps={gaps} name={profile.fullName} photo={promptPhoto} />}
+        {(gaps.length > 0 || askEmail) && <ProfilePrompt gaps={gaps} name={profile.fullName} photo={promptPhoto} email={askEmail ? profile.email : null} />}
       </div>
     </div>
   );
