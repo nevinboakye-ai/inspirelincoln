@@ -38,12 +38,19 @@ export async function startViewAs(form: FormData) {
   // Finish any earlier view first, so its session doesn't linger.
   await endViewAs();
 
+  // Starting the session below counts as a sign-in to the auth service, so
+  // note their own last sign-in first and put it back afterwards.
+  const { data: before } = await admin.auth.admin.getUserById(target.id);
+  const ownSignIn = before?.user?.last_sign_in_at ?? null;
+
   const { data: link, error: linkError } = await admin.auth.admin.generateLink({ type: "magiclink", email: target.email });
   const hashed = link?.properties?.hashed_token;
   if (linkError || !hashed) redirect(`${back}?viewas=failed`);
   const { data: verified, error } = await plainClient(SUPABASE_ANON_KEY).auth.verifyOtp({ type: "magiclink", token_hash: hashed });
   const session = verified?.session;
   if (error || !session || session.user.id !== target.id) redirect(`${back}?viewas=failed`);
+  const { error: keepError } = await admin.rpc("keep_last_sign_in", { p_user: target.id, p_at: ownSignIn });
+  if (keepError) console.error("view as: could not keep last sign-in", keepError.message);
 
   const expires = session.expires_at ?? Math.floor(Date.now() / 1000) + 3600;
   const maxAge = Math.max(60, expires - Math.floor(Date.now() / 1000) - 30);
