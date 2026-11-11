@@ -34,6 +34,7 @@ export default async function AboutPage() {
   return (
     <>
       <PageHero
+        size="sm"
         eyebrow="About INSPIRE"
         title={
           <>
@@ -50,8 +51,8 @@ export default async function AboutPage() {
         }
       />
 
-      <section aria-labelledby="story-title" className="bg-paper py-24 sm:py-32">
-        <div className="container-page grid gap-12 lg:grid-cols-12">
+      <section aria-labelledby="story-title" className="bg-paper py-14 sm:py-20">
+        <div className="container-page grid gap-8 lg:grid-cols-12 lg:gap-12">
           <Reveal className="lg:col-span-4">
             <SectionHeading eyebrow="Our story" title={<span id="story-title">More than a decade of student research</span>} />
           </Reveal>
@@ -63,32 +64,32 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <section aria-labelledby="purpose-title" className="surface-dark relative overflow-hidden py-24 sm:py-32">
+      <section aria-labelledby="purpose-title" className="surface-dark relative overflow-hidden py-14 sm:py-20">
         <div aria-hidden className="grid-lines absolute inset-0 opacity-50" />
-        <div className="container-page relative grid items-center gap-12 lg:grid-cols-12">
+        <div className="container-page relative grid items-center gap-8 lg:grid-cols-12 lg:gap-12">
           <Reveal className="lg:col-span-5">
             <SectionHeading dark eyebrow="Mission, vision and values" title={<span id="purpose-title">What guides us</span>} />
           </Reveal>
-          <Reveal delay={0.1} className="lg:col-span-6 lg:col-start-7">
+          <Reveal delay={0.1} className="w-full max-w-lg lg:col-span-6 lg:col-start-7 lg:justify-self-end">
             <PurposeDeck mission={MISSION} vision={VISION} values={VALUES} icons={{ mission: Target, vision: Eye }} />
           </Reveal>
         </div>
       </section>
 
-      <section aria-labelledby="community-title" className="bg-paper py-24 sm:py-32">
-        <div className="container-page grid gap-12 lg:grid-cols-12">
+      <section aria-labelledby="community-title" className="bg-paper py-14 sm:py-20">
+        <div className="container-page grid gap-8 lg:grid-cols-12 lg:gap-12">
           <div className="lg:col-span-4">
             <SectionHeading eyebrow="Our community" title={<span id="community-title">Participating medical schools</span>} />
-            <p className="mt-6 text-slate-700">Students from these medical schools take part in INSPIRE.</p>
+            <p className="mt-4 text-slate-700">Students from these medical schools take part in INSPIRE.</p>
           </div>
-          <ul className="grid gap-4 sm:grid-cols-2 lg:col-span-8">
+          <ul className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:col-span-8">
             {partners.map((p) => {
               const d = schoolDetails(p.name);
               return (
-                <li key={p.id} className="flex flex-col rounded-xl border border-navy/10 bg-white p-6 sm:p-7">
+                <li key={p.id} className="flex flex-col rounded-xl border border-navy/10 bg-white p-5 sm:p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <h3 className="font-display text-2xl font-semibold leading-tight text-ink">{d?.fullName ?? p.name}</h3>
+                      <h3 className="font-display text-xl font-semibold leading-tight text-ink sm:text-2xl">{d?.fullName ?? p.name}</h3>
                       {d && <p className="mt-1 text-sm text-slate-700">{d.university}</p>}
                       {/host/i.test(p.relationship) && <p className="mt-2 font-ui text-xs font-semibold uppercase tracking-[0.14em] text-gold-700">{p.relationship}</p>}
                     </div>
@@ -99,8 +100,8 @@ export default async function AboutPage() {
                       </span>
                     )}
                   </div>
-                  {d && <p className="mt-4 text-[0.95rem] leading-relaxed text-slate-700">{d.summary}</p>}
-                  <div className="mt-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-2 pt-5 text-sm">
+                  {d && <p className="mt-3 text-[0.95rem] leading-relaxed text-slate-700">{d.summary}</p>}
+                  <div className="mt-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-1 pt-3 text-sm">
                     <span className="flex items-center gap-1.5 text-slate-700">
                       <MapPin aria-hidden className="size-3.5 text-electric-600" /> {d?.place ?? p.relationship}
                     </span>
@@ -118,17 +119,17 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <section aria-labelledby="leadership-title" className="bg-white py-24 sm:py-32">
+      <section aria-labelledby="leadership-title" className="bg-white py-14 sm:py-20">
         <div className="container-page">
           <SectionHeading eyebrow="Leadership" title={<span id="leadership-title">The INSPIRE committee</span>} intro="The team who organise INSPIRE, from programme to prizes." />
-          <div className="mt-12">
+          <div className="mt-8 sm:mt-10">
             <CommitteeDirectory members={committee} />
           </div>
         </div>
       </section>
 
-      <section aria-labelledby="timeline-title" className="surface-midnight relative overflow-hidden py-24 sm:py-32">
-        <div className="container-page grid gap-12 lg:grid-cols-12">
+      <section aria-labelledby="timeline-title" className="surface-midnight relative overflow-hidden py-14 sm:py-20">
+        <div className="container-page grid gap-8 lg:grid-cols-12 lg:gap-12">
           <div className="lg:col-span-4">
             <SectionHeading dark eyebrow="Timeline" title={<span id="timeline-title">Our history</span>} intro="Only verified milestones are shown." />
           </div>

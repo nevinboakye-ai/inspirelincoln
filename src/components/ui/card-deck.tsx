@@ -118,7 +118,7 @@ export function CardDeck({ cards, label, noun = "card", tone = "light", classNam
         <button type="button" onClick={() => go(at - 1)} className={arrow} aria-label={`Previous ${noun}`}>
           <ChevronLeft aria-hidden className="size-5" />
         </button>
-        <div className="flex items-center gap-1">
+        <div className={cn("flex items-center", n > 4 ? "gap-0" : "gap-1")}>
           {cards.map((c, i) => (
             <button
               key={c.key}
@@ -126,13 +126,14 @@ export function CardDeck({ cards, label, noun = "card", tone = "light", classNam
               onClick={() => go(i)}
               aria-label={`${Noun} ${i + 1}: ${c.label}`}
               aria-current={i === at ? "true" : undefined}
-              className={cn("grid size-11 place-items-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2", ring)}
+              // With many cards the dots get smaller targets (still above the 24px minimum) so they fit on a phone.
+              className={cn("grid place-items-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2", n > 4 ? "size-8" : "size-11", ring)}
             >
               <span
                 aria-hidden
                 className={cn(
                   "block h-2.5 rounded-full transition-all duration-300 motion-reduce:transition-none",
-                  i === at ? cn("w-7", c.dot) : cn("w-2.5", dark ? "bg-white/30" : "bg-navy/20"),
+                  i === at ? cn(n > 4 ? "w-5" : "w-7", c.dot) : cn("w-2.5", dark ? "bg-white/30" : "bg-navy/20"),
                 )}
               />
             </button>

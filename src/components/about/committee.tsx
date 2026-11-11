@@ -21,7 +21,7 @@ export function CommitteeDirectory({ members }: { members: CommitteeMember[] }) 
     );
   }
   return (
-    <ul className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 lg:grid-cols-5">
+    <ul className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 sm:gap-x-5 sm:gap-y-8 lg:grid-cols-5">
       {members.map((m, i) => {
         const isOpen = open === m.id;
         const hasMore = Boolean(m.bio) || m.links.length > 0;
@@ -43,7 +43,7 @@ export function CommitteeDirectory({ members }: { members: CommitteeMember[] }) 
                 {NUMERALS[i] ?? i + 1}
               </span>
             </div>
-            <div className="mt-4 border-t border-navy/15 pt-3">
+            <div className="mt-3 border-t border-navy/15 pt-2.5">
               <p className="font-display text-xl leading-tight text-ink">{m.name}</p>
               <p className="mt-1 font-ui text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-electric-600">{m.role}</p>
               {m.institution && <p className="mt-1 text-sm text-slate">{m.institution}</p>}
