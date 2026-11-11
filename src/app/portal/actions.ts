@@ -97,6 +97,8 @@ export async function saveNetworkCard(_: ActionResult, form: FormData): Promise<
     .from("profiles")
     .update({ bio: v.bio || null, linkedin_url: v.linkedin || null, instagram: v.instagram || null, network_show_email: v.showEmail, network_listed: v.listed })
     .eq("id", user.id);
+  // Saving the card counts as answering the email question (ignored before setup SQL 28).
+  if (!error) await db.from("profiles").update({ network_email_asked: true }).eq("id", user.id);
   if (error) return { ok: false, error: "We couldn't save your card. Please try again." };
   revalidatePath("/portal/network");
   revalidatePath("/portal/profile");
@@ -349,6 +351,22 @@ export async function saveAttendance(_: ActionResult, form: FormData): Promise<A
 }
 
 /** The finish-your-profile prompt has been seen, so it won't show again until they next sign in. */
+/** Their answer to "show your email to other delegates?" from the profile prompt. */
+export async function chooseEmailSharing(share: boolean): Promise<ActionResult> {
+  const { user, db } = await requireUser("/portal");
+  if (typeof share !== "boolean") return { ok: false, error: "Something went wrong. Please try again." };
+  const { error } = await db.from("profiles").update({ network_show_email: share, network_email_asked: true }).eq("id", user.id);
+  if (error) {
+    if (/VIEW_AS/.test(error.message)) return { ok: false, error: "You're viewing as someone else, so changes are switched off." };
+    // Before setup SQL 28, save the choice itself.
+    const { error: again } = await db.from("profiles").update({ network_show_email: share }).eq("id", user.id);
+    if (again) return { ok: false, error: "We couldn't save that. Please try again." };
+  }
+  // No revalidatePath: it would refresh the page behind the prompt and close it
+  // before they see the answer was saved. The network and profile pages read fresh each time.
+  return { ok: true };
+}
+
 export async function dismissProfilePrompt() {
   (await cookies()).delete(PROFILE_PROMPT_COOKIE);
 }

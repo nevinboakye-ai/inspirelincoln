@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowRight, Camera, FileText, GraduationCap, X } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
-import { dismissProfilePrompt } from "@/app/portal/actions";
+import { ArrowRight, Camera, Check, EyeOff, FileText, GraduationCap, Loader2, Mail, X } from "lucide-react";
+import { useEffect, useId, useRef, useState, useTransition } from "react";
+import { chooseEmailSharing, dismissProfilePrompt } from "@/app/portal/actions";
 import { Avatar } from "@/components/ui/avatar";
 import type { ProfileGap } from "@/lib/profile-prompt";
 import { PROFILE_ITEMS } from "@/lib/profile-prompt";
@@ -20,15 +20,31 @@ function LinkedIn({ className }: { className?: string }) {
 
 /**
  * Shown once after signing in, while someone's profile is unfinished: what's
- * missing, with a link to each, and a way to carry on without.
+ * missing, with a link to each, and a way to carry on without. Anyone who
+ * hasn't said whether to show their email to other delegates (`email` set)
+ * is asked that here too.
  */
-export function ProfilePrompt({ gaps, name, photo }: { gaps: ProfileGap[]; name: string | null; photo: string | null }) {
+export function ProfilePrompt({ gaps, name, photo, email }: { gaps: ProfileGap[]; name: string | null; photo: string | null; email: string | null }) {
   const path = usePathname();
   const router = useRouter();
   const dialog = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(true);
   const titleId = useId();
   const descId = useId();
+  const emailQ = useId();
+  const [shared, setShared] = useState<boolean | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [saving, startSaving] = useTransition();
+  const [choosing, setChoosing] = useState<boolean | null>(null);
+  const choose = (share: boolean) => {
+    setEmailError(null);
+    setChoosing(share);
+    startSaving(async () => {
+      const r = await chooseEmailSharing(share);
+      if (r?.ok) setShared(share);
+      else setEmailError(r?.error ?? "We couldn't save that. Please try again.");
+    });
+  };
   // They're already on the profile page, so there's nothing to point them to.
   const here = path === "/portal/profile";
 
@@ -55,6 +71,7 @@ export function ProfilePrompt({ gaps, name, photo }: { gaps: ProfileGap[]; name:
 
   const done = PROFILE_ITEMS - gaps.length;
   const first = name?.split(" ")[0];
+  const onlyEmail = gaps.length === 0;
 
   return (
     <dialog
@@ -82,25 +99,28 @@ export function ProfilePrompt({ gaps, name, photo }: { gaps: ProfileGap[]; name:
             )}
           </span>
           <div className="min-w-0">
-            <p className="eyebrow text-gold">
-              {done} of {PROFILE_ITEMS} done
-            </p>
+            <p className="eyebrow text-gold">{onlyEmail ? "Your card" : `${done} of ${PROFILE_ITEMS} done`}</p>
             <h2 id={titleId} className="mt-1 font-display text-2xl leading-tight">
-              {first ? `${first}, finish your profile` : "Finish your profile"}
+              {onlyEmail ? (first ? `${first}, one quick question` : "One quick question") : first ? `${first}, finish your profile` : "Finish your profile"}
             </h2>
           </div>
         </div>
-        <div aria-hidden className="relative mt-5 flex gap-1.5">
-          {Array.from({ length: PROFILE_ITEMS }, (_, i) => (
-            <span key={i} className={`h-1.5 flex-1 rounded-full ${i < done ? "bg-gold" : "bg-white/15"}`} />
-          ))}
-        </div>
+        {!onlyEmail && (
+          <div aria-hidden className="relative mt-5 flex gap-1.5">
+            {Array.from({ length: PROFILE_ITEMS }, (_, i) => (
+              <span key={i} className={`h-1.5 flex-1 rounded-full ${i < done ? "bg-gold" : "bg-white/15"}`} />
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="px-6 py-6 sm:px-7">
-        <p id={descId} className="text-sm text-slate-700">
-          It takes a couple of minutes and helps people recognise you and keep in touch. Here&apos;s what&apos;s left:
-        </p>
+        {!onlyEmail && (
+          <p id={descId} className="text-sm text-slate-700">
+            It takes a couple of minutes and helps people recognise you and keep in touch. Here&apos;s what&apos;s left:
+          </p>
+        )}
+        {!onlyEmail && (
         <ul className="mt-4 space-y-2">
           {gaps.map((g) => {
             const Icon = ICON[g.key];
@@ -127,13 +147,53 @@ export function ProfilePrompt({ gaps, name, photo }: { gaps: ProfileGap[]; name:
             );
           })}
         </ul>
+        )}
+
+        {email && (
+          <section aria-labelledby={emailQ} className={`rounded-xl border border-navy/10 bg-paper/60 p-4 ${onlyEmail ? "" : "mt-4"}`}>
+            <h3 id={emailQ} className="flex items-center gap-2 font-semibold text-ink">
+              <Mail aria-hidden className="size-4 shrink-0 text-navy" /> Show your email to other delegates?
+            </h3>
+            <p id={onlyEmail ? descId : undefined} className="mt-1 text-sm text-slate-700">
+              If you say yes, <span className="break-all font-medium text-ink">{email}</span> shows as a contact button on your card in the delegate network, next to your LinkedIn and Instagram. You can change this any time on your profile.
+            </p>
+            {shared === null && (
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <button type="button" onClick={() => choose(true)} disabled={saving} className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[3px] bg-navy px-4 font-ui text-sm font-semibold text-paper hover:bg-navy-700 disabled:opacity-60">
+                  {saving && choosing === true ? <Loader2 aria-hidden className="size-4 animate-spin" /> : <Mail aria-hidden className="size-4" />} Yes, show my email
+                </button>
+                <button type="button" onClick={() => choose(false)} disabled={saving} className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[3px] border border-navy/15 bg-white px-4 font-ui text-sm font-semibold text-ink hover:border-navy/40 disabled:opacity-60">
+                  {saving && choosing === false ? <Loader2 aria-hidden className="size-4 animate-spin" /> : <EyeOff aria-hidden className="size-4" />} No, keep it hidden
+                </button>
+              </div>
+            )}
+            <p role={emailError ? "alert" : "status"} className={`text-sm font-medium ${emailError ? "mt-2 text-danger" : shared === null ? "" : "mt-3 flex items-center gap-2 text-success"}`}>
+              {emailError ??
+                (shared === null ? null : (
+                  <>
+                    <Check aria-hidden className="size-4 shrink-0" />
+                    {shared ? "Saved. Your email now shows on your card." : "Saved. Your email stays hidden."}
+                  </>
+                ))}
+            </p>
+          </section>
+        )}
+
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button type="button" onClick={close} className="min-h-12 rounded-[3px] px-5 font-ui text-sm font-semibold text-slate-700 hover:text-ink">
-            Not now
-          </button>
-          <button type="button" onClick={() => go(gaps[0]?.href ?? "/portal/profile")} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[3px] bg-navy px-5 font-ui text-sm font-semibold text-paper hover:bg-navy-700">
-            Complete my profile <ArrowRight aria-hidden className="size-4" />
-          </button>
+          {onlyEmail ? (
+            <button type="button" onClick={close} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[3px] bg-navy px-5 font-ui text-sm font-semibold text-paper hover:bg-navy-700">
+              {shared === null ? "Not now" : "Done"}
+            </button>
+          ) : (
+            <>
+              <button type="button" onClick={close} className="min-h-12 rounded-[3px] px-5 font-ui text-sm font-semibold text-slate-700 hover:text-ink">
+                Not now
+              </button>
+              <button type="button" onClick={() => go(gaps[0]?.href ?? "/portal/profile")} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[3px] bg-navy px-5 font-ui text-sm font-semibold text-paper hover:bg-navy-700">
+                Complete my profile <ArrowRight aria-hidden className="size-4" />
+              </button>
+            </>
+          )}
         </div>
       </div>
     </dialog>
