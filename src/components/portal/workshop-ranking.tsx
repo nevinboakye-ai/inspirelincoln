@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState, useTransition } from "react";
-import { ArrowDown, ArrowRight, ArrowUp, Check, Clock, GripVertical, Loader2, Lock, Sparkles } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, Check, Clock, Eye, GripVertical, Loader2, Lock, RotateCcw, Sparkles } from "lucide-react";
 import { saveWorkshopRanking } from "@/app/portal/workshop-actions";
 import { cn } from "@/lib/cn";
 import { viewingAs } from "@/lib/view-as-client";
@@ -25,9 +25,10 @@ export function WorkshopRanking({
   workshops,
   initial,
   rankedAt,
-  open,
+  open: openProp,
   closesAt,
   places,
+  preview = false,
 }: {
   workshops: RankWorkshop[];
   initial: string[] | null;
@@ -35,7 +36,10 @@ export function WorkshopRanking({
   open: boolean;
   closesAt: string | null;
   places: RankPlace[] | null;
+  /** Committee preview while ranking is closed: reorder freely, nothing is saved. */
+  preview?: boolean;
 }) {
+  const open = openProp || preview;
   const byId = useMemo(() => new Map(workshops.map((w) => [w.id, w])), [workshops]);
   const start = initial && initial.every((id) => byId.has(id)) && initial.length === workshops.length ? initial : workshops.map((w) => w.id);
   const [order, setOrder] = useState<string[]>(start);
@@ -163,11 +167,24 @@ export function WorkshopRanking({
   };
 
   return (
-    <section aria-labelledby={headingId} className={cn("relative scroll-mt-28 overflow-hidden rounded-xl border bg-white", open && !saved ? "border-gold/50 shadow-[0_18px_40px_-28px_rgba(14,27,49,0.55)]" : "border-navy/10")} id="workshops">
-      {open && !saved && <span aria-hidden className="absolute inset-y-0 left-0 w-1.5 bg-gold" />}
+    <section aria-labelledby={headingId} className={cn("relative scroll-mt-28 overflow-hidden rounded-xl border bg-white", open && !saved && !preview ? "border-gold/50 shadow-[0_18px_40px_-28px_rgba(14,27,49,0.55)]" : "border-navy/10")} id="workshops">
+      {open && !saved && !preview && <span aria-hidden className="absolute inset-y-0 left-0 w-1.5 bg-gold" />}
       <p role="status" aria-live="polite" className="sr-only">
         {announce}
       </p>
+      {preview && (
+        <div className="flex items-start gap-3 border-b border-gold/40 bg-gold/10 px-5 py-3.5 text-sm text-ink sm:px-7">
+          <Eye aria-hidden className="mt-0.5 size-4 shrink-0" />
+          <p>
+            <strong>Preview for the committee.</strong> Delegates see this card once you open ranking on{" "}
+            <Link href="/admin/workshops" className="font-semibold underline underline-offset-4">
+              Workshop places
+            </Link>
+            . Try moving the workshops around; nothing here is saved.
+            {workshops.some((w) => !w.pair) && " Set the sessions there to show the 1A and 1B labels."}
+          </p>
+        </div>
+      )}
       <div className="p-5 sm:p-7">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
@@ -187,7 +204,7 @@ export function WorkshopRanking({
               )}
             </p>
           </div>
-          {open && closesAt && (
+          {open && !preview && closesAt && (
             <p className="inline-flex items-center gap-1.5 rounded-full bg-paper-200 px-3 py-1.5 text-xs font-semibold text-slate-700">
               <Clock aria-hidden className="size-3.5" /> Closes {when(closesAt)}
             </p>
@@ -290,7 +307,22 @@ export function WorkshopRanking({
           </ol>
         )}
 
-        {open && (
+        {preview && (
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-slate-700">Delegates press &ldquo;Save my ranking&rdquo; here. In this preview the button is switched off.</p>
+            <button
+              type="button"
+              onClick={() => {
+                setOrder(start);
+                setAnnounce("Order reset.");
+              }}
+              className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-[3px] border border-navy/20 bg-white px-6 font-ui text-sm font-semibold text-ink hover:bg-paper-200"
+            >
+              <RotateCcw aria-hidden className="size-4" /> Reset the order
+            </button>
+          </div>
+        )}
+        {open && !preview && (
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p role={error ? "alert" : undefined} className={cn("text-sm", error ? "font-medium text-danger" : "text-slate-700")}>
               {error ??
