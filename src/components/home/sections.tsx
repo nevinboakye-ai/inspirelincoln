@@ -6,14 +6,21 @@ import { LineDraw, SpotlightGroup } from "@/components/motion/effects";
 import { WorkshopMotif, ACCENT_HEX } from "@/components/visual/workshop-motif";
 
 /* ---------------- D: At a glance ---------------- */
+/**
+ * Each door has its own accent: a stripe, a tinted icon tile, a faint
+ * watermark of its icon and a tinted shadow on hover. Text stays in ink, so
+ * the colour is never the only thing that tells the cards apart.
+ * `ink` is the accent dark enough for icons and links on white (3:1 or more).
+ */
+const GLANCE = [
+  { href: "/programme", icon: CalendarDays, title: "Programme", body: "Every session, with times and rooms", bar: "#3a5f94", ink: "#2a4b7c" },
+  { href: "/map", icon: MapPin, title: "Campus map", body: "Find your building and room", bar: "#14916a", ink: "#0e6f4f" },
+  { href: "/portal", icon: LayoutDashboard, title: "My Hub", body: "Your presentation, agenda and profile", bar: "#d4af5a", ink: "#7a5c14" },
+  { href: "/conference", icon: HelpCircle, title: "Venue & FAQs", body: "Travel, access and questions", bar: "#9a5a8a", ink: "#7b3f6e" },
+] as const;
+
 /** Four doors into the site, sized for thumbs. */
 export function AtAGlance({ edition }: { edition: Edition; workshopCount?: number }) {
-  const items = [
-    { href: "/programme", icon: CalendarDays, title: "Programme", body: "Every session, with times and rooms" },
-    { href: "/map", icon: MapPin, title: "Campus map", body: "Find your building and room" },
-    { href: "/portal", icon: LayoutDashboard, title: "My Hub", body: "Your presentation, agenda and profile" },
-    { href: "/conference", icon: HelpCircle, title: "Venue & FAQs", body: "Travel, access and questions" },
-  ];
   return (
     <section aria-labelledby="glance-title" className="bg-paper py-8 sm:py-24">
       <div className="container-page">
@@ -21,16 +28,31 @@ export function AtAGlance({ edition }: { edition: Edition; workshopCount?: numbe
           <LineDraw className="w-8 bg-electric-600/50" /> INSPIRE {edition.year}, sorted
         </h2>
         <SpotlightGroup>
-        <Stagger className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-8 sm:gap-3 lg:grid-cols-4">
-          {items.map((it) => (
+        <Stagger className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-8 sm:gap-4 lg:grid-cols-4">
+          {GLANCE.map((it) => (
             <StaggerItem key={it.href} className="h-full">
-              <Link href={it.href} className="spotlight group flex h-full flex-col items-start gap-3 rounded-[3px] border border-navy/10 bg-white p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-5 transition-[transform,border-color,box-shadow] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-navy/30 hover:shadow-[0_24px_48px_-28px_rgba(26,49,84,0.45)] lg:flex-col lg:items-start lg:p-7">
-                <span className="grid size-11 shrink-0 place-items-center rounded-[3px] bg-navy text-cyan transition-transform duration-500 ease-[var(--ease-out-expo)] group-hover:-rotate-6 group-hover:scale-110"><it.icon aria-hidden className="size-5" /></span>
-                <span className="min-w-0 flex-1">
-                  <span className="block font-display text-lg text-ink sm:text-xl">{it.title}</span>
-                  <span className="mt-0.5 hidden text-sm text-slate-700 sm:block">{it.body}</span>
+              <Link
+                href={it.href}
+                style={{ "--bar": it.bar, "--accent": it.ink } as React.CSSProperties}
+                className="spotlight group relative flex h-full flex-col overflow-hidden rounded-xl border border-navy/10 bg-white p-4 pt-5 shadow-[0_1px_2px_rgba(12,24,44,0.05)] transition-[transform,border-color,box-shadow] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-[color-mix(in_oklab,var(--accent)_45%,transparent)] hover:shadow-[0_26px_50px_-30px_var(--accent)] focus-visible:border-[var(--accent)] sm:p-6 sm:pt-7 lg:p-7 lg:pt-8"
+              >
+                {/* Accent stripe, which thickens on hover */}
+                <span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-[var(--bar)] transition-[height] duration-500 ease-[var(--ease-out-expo)] group-hover:h-1.5" />
+                {/* A large, faint copy of the icon in the corner */}
+                <it.icon
+                  aria-hidden
+                  strokeWidth={1.25}
+                  className="pointer-events-none absolute -bottom-6 -right-6 size-28 text-[var(--accent)] opacity-[0.07] transition-transform duration-700 ease-[var(--ease-out-expo)] group-hover:-rotate-6 group-hover:scale-110 sm:size-36"
+                />
+                <span className="grid size-11 shrink-0 place-items-center rounded-lg bg-[color-mix(in_oklab,var(--bar)_14%,white)] text-[var(--accent)] ring-1 ring-[color-mix(in_oklab,var(--bar)_30%,transparent)] transition-transform duration-500 ease-[var(--ease-out-expo)] group-hover:-rotate-6 group-hover:scale-110 sm:size-12">
+                  <it.icon aria-hidden className="size-5 sm:size-[1.35rem]" />
                 </span>
-                <ArrowRight aria-hidden className="hidden size-4 shrink-0 text-slate transition-transform group-hover:translate-x-0.5 sm:block lg:hidden" />
+                <span className="relative mt-4 block font-display text-lg leading-tight text-ink sm:mt-5 sm:text-2xl">{it.title}</span>
+                <span className="relative mt-1 hidden text-sm leading-relaxed text-slate-700 sm:block">{it.body}</span>
+                <span aria-hidden className="relative mt-auto flex items-center gap-1.5 pt-4 font-ui text-xs font-semibold uppercase tracking-[0.14em] text-[var(--accent)] sm:pt-6">
+                  Open
+                  <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                </span>
               </Link>
             </StaggerItem>
           ))}
