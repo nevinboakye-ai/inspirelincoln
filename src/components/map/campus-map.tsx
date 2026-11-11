@@ -186,11 +186,11 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
         // People can roam the whole drawn area (campus, the stations and up to the cathedral)
         // and zoom out until all of it is on screen, but not drift off into blank space.
         const area = leaflet.latLngBounds(campus.bounds);
-        m.options.maxBoundsViscosity = 0.9;
+        m.options.maxBoundsViscosity = 1;
         const fit = () => {
-          // One zoom level further out than "the drawing fills the screen": far enough to see
-          // the cathedral and the stations together with campus, without shrinking to a postage stamp.
-          m.setMinZoom(Math.max(13, Math.min(16, Math.floor((m.getBoundsZoom(area, true) - 1) * 4) / 4)));
+          // Zoom out until the drawing fills the screen (about the whole city centre on a laptop),
+          // and no further, so the map never shows blank space past its edges.
+          m.setMinZoom(Math.max(13, Math.min(16, Math.ceil(m.getBoundsZoom(area, true) * 4) / 4)));
           if (m.getZoom() < m.getMinZoom()) m.setZoom(m.getMinZoom(), { animate: false });
         };
         m.setMaxBounds(area);
