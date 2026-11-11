@@ -54,7 +54,7 @@ export default async function EmailPage() {
                   {when(b.created_at)} · {b.sender_name || "Committee"} ·{" "}
                   {b.recipient_email
                     ? <>To {b.recipient_email} · {b.delivered_count ? "Sent" : "Not sent"}</>
-                    : <>{b.purpose === "marketing" ? "News" : "Conference update"} · {(b.audience_types as AccountType[]).map((t) => ACCOUNT_TYPE_LABEL[t]).join(", ")}{b.include_selected ? " and selected delegates not yet joined" : ""} · {b.delivered_count} of {b.recipient_count} sent</>}
+                    : <>{b.purpose === "marketing" ? "News" : "Conference update"} · {(b.audience_types as AccountType[]).map((t) => ACCOUNT_TYPE_LABEL[t]).join(", ")}{b.include_selected ? " and people not yet signed up" : ""} · {b.delivered_count} of {b.recipient_count} sent</>}
                 </p>
               </li>
             ))}
