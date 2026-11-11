@@ -3,6 +3,7 @@ import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { Eye, Info, X } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { OPEN_VIEW_AS } from "./view-as-launcher";
 
 const WHO = "inspire_view_as_who";
 
@@ -109,9 +110,19 @@ export function ViewAsBanner() {
               <span className="block truncate font-semibold">Viewing as {who.label}</span>
               <span className="text-paper/70">Read only · ends in about {mins} min</span>
             </p>
-            <form action="/view-as/stop" method="post">
-              <button className="min-h-11 rounded-[3px] bg-cyan px-4 font-ui text-sm font-semibold text-midnight hover:bg-cyan/90">Stop viewing</button>
-            </form>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new Event(OPEN_VIEW_AS))}
+                aria-haspopup="dialog"
+                className="min-h-11 rounded-[3px] border border-cyan/50 px-4 font-ui text-sm font-semibold text-paper hover:border-cyan"
+              >
+                Switch
+              </button>
+              <form action="/view-as/stop" method="post">
+                <button className="min-h-11 rounded-[3px] bg-cyan px-4 font-ui text-sm font-semibold text-midnight hover:bg-cyan/90">Stop viewing</button>
+              </form>
+            </div>
           </m.section>
         )}
       </AnimatePresence>

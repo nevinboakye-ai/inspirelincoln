@@ -5,6 +5,7 @@ import "./globals.css";
 import { Providers } from "@/components/layout/providers";
 import { SiteHeader } from "@/components/layout/site-header";
 import { EditShortcut } from "@/components/layout/edit-shortcut";
+import { ViewAsLauncher } from "@/components/layout/view-as-launcher";
 import { ViewAsBanner } from "@/components/layout/view-as-banner";
 import { ScrollProgress } from "@/components/motion/effects";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -66,6 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </main>
           <SiteFooter edition={edition} siteOpen={siteOpen} />
           <EditShortcut />
+          <ViewAsLauncher />
           <VisitCounter />
           <Suspense fallback={null}>
             <ViewAsBanner />
