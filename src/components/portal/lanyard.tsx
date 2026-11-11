@@ -2,7 +2,7 @@
 import { animate, m, useMotionTemplate, useMotionValue, useMotionValueEvent, useReducedMotion, useSpring, useTransform, type AnimationPlaybackControls } from "motion/react";
 import Link from "next/link";
 import { Eye, RotateCw } from "lucide-react";
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { CardCountdown } from "./hub-motion";
 
@@ -79,7 +79,7 @@ export function Lanyard(p: LanyardProps) {
   const [facing, setFacing] = useState<Side>("front");
   useMotionValueEvent(spin, "change", (v) => setFacing(sideAt(v)));
   const settling = useRef<AnimationPlaybackControls | null>(null);
-  const drag = useRef<{ id: number; x: number; y: number; from: number; turning: boolean; lastAt: number; lastSpin: number; speed: number } | null>(null);
+  const drag = useRef<{ id: number; x: number; y: number; from: number; turning: boolean; trail: { t: number; spin: number }[] } | null>(null);
 
   const settle = (to: number, velocity = 0) => {
     settling.current?.stop();
@@ -94,7 +94,7 @@ export function Lanyard(p: LanyardProps) {
   const onDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
     settling.current?.stop();
-    drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, from: spin.get(), turning: false, lastAt: e.timeStamp, lastSpin: spin.get(), speed: 0 };
+    drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, from: spin.get(), turning: false, trail: [{ t: e.timeStamp, spin: spin.get() }] };
   };
   const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
     const d = drag.current;
@@ -117,10 +117,8 @@ export function Lanyard(p: LanyardProps) {
     // Dragging across the whole card turns it half way round.
     const width = card.current?.offsetWidth || 300;
     const next = d.from + (dx / width) * 180;
-    const dt = Math.max(e.timeStamp - d.lastAt, 1);
-    d.speed = 0.7 * d.speed + 0.3 * ((next - d.lastSpin) / dt) * 1000; // degrees a second, smoothed
-    d.lastAt = e.timeStamp;
-    d.lastSpin = next;
+    d.trail.push({ t: e.timeStamp, spin: next });
+    if (d.trail.length > 12) d.trail.shift();
     spin.set(next);
   };
   const onUp = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -129,15 +127,39 @@ export function Lanyard(p: LanyardProps) {
     drag.current = null;
     if (!d.turning) return flip(); // A tap
     const now = spin.get();
+    // How fast it was turning over the last tenth of a second, in degrees a
+    // second. Phones often send only a few moves for a quick flick, so this
+    // looks back over a short window rather than at the last step alone.
+    const recent = d.trail.filter((p) => e.timeStamp - p.t <= 100);
+    const first = recent[0] ?? d.trail[d.trail.length - 1];
+    const speed = recent.length > 1 ? ((now - first.spin) / Math.max(e.timeStamp - first.t, 16)) * 1000 : 0;
     // A quick flick carries it over; otherwise it goes back to the nearer side.
-    const aimed = nearestSide(now + d.speed * 0.12);
+    const aimed = nearestSide(now + speed * 0.12);
     const base = nearestSide(now);
-    settle(Math.min(base + 180, Math.max(base - 180, aimed)), d.speed);
+    settle(Math.min(base + 180, Math.max(base - 180, aimed)), speed);
   };
   const onCancel = () => {
     if (drag.current?.turning) settle(nearestSide(spin.get()));
     drag.current = null;
   };
+  // Touch input is captured to the element under the finger. Moving that
+  // capture to the card makes the old target lose it, which must not end the
+  // drag: only a lost capture on the card itself does.
+  const onLostCapture = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) onCancel();
+  };
+
+  // Once the card is turning, stop the page from scrolling under the finger
+  // (Safari doesn't always honour touch-action on 3D-transformed elements).
+  useEffect(() => {
+    const el = card.current;
+    if (!el) return;
+    const hold = (e: TouchEvent) => {
+      if (drag.current?.turning && e.cancelable) e.preventDefault();
+    };
+    el.addEventListener("touchmove", hold, { passive: false });
+    return () => el.removeEventListener("touchmove", hold);
+  }, []);
 
   const move = (e: React.PointerEvent) => {
     if (reduce || e.pointerType === "touch" || drag.current?.turning || !scene.current) return;
@@ -208,7 +230,7 @@ export function Lanyard(p: LanyardProps) {
                 onPointerMove={onMove}
                 onPointerUp={onUp}
                 onPointerCancel={onCancel}
-                onLostPointerCapture={onCancel}
+                onLostPointerCapture={onLostCapture}
                 onDragStart={(e) => e.preventDefault()}
                 className="relative aspect-[5/7.6] w-full cursor-grab touch-pan-y select-none [-webkit-tap-highlight-color:transparent] [transform-style:preserve-3d] active:cursor-grabbing"
               >
