@@ -62,7 +62,7 @@ export function EditShortcut() {
   if (!entry || !canEdit) return null;
 
   return (
-    <div ref={panel} className="fixed bottom-[calc(env(safe-area-inset-bottom)+5rem)] left-4 z-40 lg:bottom-6 lg:left-6">
+    <div ref={panel} className="fixed bottom-[calc(env(safe-area-inset-bottom)+5rem)] left-4 z-40 lg:bottom-6 lg:left-6 [:root[data-view-as-launcher]_&]:left-[4.5rem] lg:[:root[data-view-as-launcher]_&]:left-[5rem]">
       <AnimatePresence>
         {open && (
           <m.div
