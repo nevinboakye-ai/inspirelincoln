@@ -19,8 +19,8 @@ export interface LanyardProps {
   theme: string;
   name: string;
   detail: string | null;
-  role: string;
-  tone: LanyardTone;
+  /** Every role they hold, most senior first. Each gets its own coloured band. */
+  roles: { label: string; tone: LanyardTone }[];
   dateLabel: string;
   venue: string;
   /** Check-in QR code as an SVG string, once the place is confirmed. */
@@ -161,7 +161,7 @@ function Face({ hidden, back, children, className }: { hidden: boolean; back?: b
   );
 }
 
-function Front({ year, name, detail, role, tone, dateLabel, venue, countdown, long, hidden, sheen }: LanyardProps & { long: boolean; hidden: boolean; sheen: ReturnType<typeof useMotionTemplate> | null }) {
+function Front({ year, name, detail, roles, dateLabel, venue, countdown, long, hidden, sheen }: LanyardProps & { long: boolean; hidden: boolean; sheen: ReturnType<typeof useMotionTemplate> | null }) {
   return (
     <Face hidden={hidden} className="bg-ivory text-ink ring-1 ring-black/5">
       <div className="relative bg-midnight px-6 pb-5 pt-10 text-paper">
@@ -185,11 +185,12 @@ function Front({ year, name, detail, role, tone, dateLabel, venue, countdown, lo
         {detail && <p className="mt-2 text-sm leading-snug text-slate-700">{detail}</p>}
       </div>
       {countdown && (
-        <div className="absolute inset-x-0 bottom-[6.75rem] px-6">
+        // Sits just above the role bands, however many there are.
+        <div className="absolute inset-x-0 px-6" style={{ bottom: `${3.5 + bandHeight(roles) + 0.25}rem` }}>
           <CardCountdown date={countdown.date} time={countdown.time} />
         </div>
       )}
-      <div className={cn("absolute inset-x-0 bottom-14 flex h-12 items-center justify-center font-ui text-sm font-bold uppercase tracking-[0.28em]", BAND[tone])}>{role}</div>
+      <RoleBands roles={roles} />
       <div className="absolute inset-x-0 bottom-0 flex h-14 items-center justify-between gap-3 px-6 font-ui text-[0.68rem] text-slate-700">
         <span className="font-semibold text-ink">{dateLabel}</span>
         <span className="truncate text-right">{venue}</span>
@@ -232,5 +233,39 @@ function Back({ year, theme, qr, reference, checkedIn, hidden }: LanyardProps & 
         )}
       </div>
     </Face>
+  );
+}
+
+/** Height of the role bands in rem: one role fills 3rem, more roles get a 1.75rem stripe each. */
+function bandHeight(roles: LanyardProps["roles"]) {
+  const n = roles.length > 3 ? 1 : Math.max(roles.length, 1);
+  return n === 1 ? 3 : n * 1.75;
+}
+
+/**
+ * The coloured role bands across the foot of the card, like the stripes on a
+ * printed lanyard. One role fills the band; two or three share it as stacked
+ * stripes, each in that role's colour. More than three share a single band.
+ */
+function RoleBands({ roles }: { roles: LanyardProps["roles"] }) {
+  const list = roles.length ? roles : [{ label: "Delegate", tone: "delegate" as const }];
+  const bands = list.length > 3 ? [{ label: list.map((r) => r.label).join(" · "), tone: list[0].tone }] : list;
+  const many = bands.length > 1 || list.length > 3;
+  return (
+    <ul aria-label={list.length > 1 ? "Your roles" : "Your role"} className="absolute inset-x-0 bottom-14 flex flex-col" style={{ height: `${bandHeight(roles)}rem` }}>
+      {bands.map((r, i) => (
+        <li
+          key={`${r.label}-${i}`}
+          className={cn(
+            "flex min-h-0 flex-1 items-center justify-center px-3 text-center font-ui font-bold uppercase leading-none",
+            many ? "text-[0.7rem] tracking-[0.22em]" : "text-sm tracking-[0.28em]",
+            i > 0 && "border-t border-white/25",
+            BAND[r.tone],
+          )}
+        >
+          <span className="truncate">{r.label}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
