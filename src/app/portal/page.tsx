@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { signAvatar } from "@/lib/avatar";
+import { getLogoMap } from "@/lib/university-logos-server";
+import { uniKey } from "@/lib/university-logos";
 import { PRESENTING, cardPath, formatCode, sortedRoles } from "@/lib/card";
 import { SITE_URL } from "@/lib/site";
 import { getSwitches } from "@/lib/switches";
@@ -168,6 +170,7 @@ export default async function PortalHome({
       })
     : null;
   const photo = showCard ? await signAvatar(db, profile.avatarPath) : null;
+  const uniLogo = showCard && profile.institution ? ((await getLogoMap())[uniKey(profile.institution)] ?? null) : null;
   const s = ACCOUNT_STATUS_LABEL[status];
   const subStatus = latestSub
     ? SUBMISSION_STATUS_LABEL[latestSub.status as SubmissionStatus]
@@ -299,7 +302,7 @@ export default async function PortalHome({
                     </p>
                     {profile.reviewNote && <p className="mt-3 rounded-md bg-paper p-3 text-sm text-ink">Note from the committee: {profile.reviewNote}</p>}
                     {status === "declined" && (
-                      <Link href="/contact" className={`${linkBtn} mt-4 border border-navy/15 text-ink`}>Contact the committee</Link>
+                      <Link href="/portal/enquiries" className={`${linkBtn} mt-4 border border-navy/15 text-ink`}>Contact the committee</Link>
                     )}
                   </div>
                 </div>
@@ -461,6 +464,7 @@ export default async function PortalHome({
               theme={edition.theme}
               name={profile.fullName ?? profile.email}
               photo={photo}
+              uniLogo={uniLogo}
               detail={[profile.institution, profile.yearOfStudy].filter(Boolean).join(" · ") || null}
               roles={lanyardRoles(profile)}
               dateLabel={formatEventDate(edition.date, { weekday: "short", month: "short" })}

@@ -27,6 +27,7 @@ export interface Profile {
   reviewNote: string | null;
   bio: string | null;
   linkedinUrl: string | null;
+  instagram: string | null;
   /** Show the account email on the delegate network. */
   networkShowEmail: boolean;
   /** Appear on the delegate network at all. */
@@ -84,6 +85,7 @@ export const getCurrentUser = cache(async () => {
     reviewNote: p?.review_note ?? null,
     bio: p?.bio ?? null,
     linkedinUrl: p?.linkedin_url ?? null,
+    instagram: p?.instagram ?? null,
     networkShowEmail: Boolean(p?.network_show_email),
     networkListed: p?.network_listed ?? true,
     cardCode: p?.card_code ?? null,

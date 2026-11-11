@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { NotebookPen, ScanLine } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { signAvatars } from "@/lib/avatar";
+import { getLogoMap } from "@/lib/university-logos-server";
+import { uniKey } from "@/lib/university-logos";
 import { getSwitches } from "@/lib/switches";
 import { Notice } from "@/components/ui/notice";
 import { PeopleList, type SavedContact } from "@/components/card/people-list";
@@ -17,8 +19,11 @@ export default async function PeoplePage() {
   if (!switches.delegate_card && !profile.access.owner) redirect("/portal");
   const { data, error } = await db.rpc("my_contacts");
   const contacts = (data ?? []) as SavedContact[];
-  const photos = await signAvatars(db, contacts.map((p) => p.card?.avatar_path));
-  for (const p of contacts) if (p.card?.avatar_path) p.card.avatar_url = photos.get(p.card.avatar_path) ?? null;
+  const [photos, logos] = await Promise.all([signAvatars(db, contacts.map((p) => p.card?.avatar_path)), getLogoMap()]);
+  for (const p of contacts) {
+    if (p.card?.avatar_path) p.card.avatar_url = photos.get(p.card.avatar_path) ?? null;
+    if (p.card?.institution) p.card.uni_logo_url = logos[uniKey(p.card.institution)] ?? null;
+  }
 
   return (
     <div className="space-y-5 sm:space-y-6">

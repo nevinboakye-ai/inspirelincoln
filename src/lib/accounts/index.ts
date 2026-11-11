@@ -137,6 +137,7 @@ export const CAPABILITIES = [
   "review_accounts",
   "approve_committee",
   "manage_people",
+  "answer_enquiries",
   "check_in",
   "send_email",
 ] as const;
@@ -148,6 +149,7 @@ export const CAPABILITY_LABEL: Record<Capability, { label: string; description: 
   review_accounts: { label: "Review accounts", description: "See new registrations and approve, waitlist or decline them." },
   approve_committee: { label: "Approve committee accounts", description: "Approve executive committee, vice president and president accounts." },
   manage_people: { label: "Delegate records", description: "Registrations, abstracts, poster records, enquiries and the audit log. This is personal data." },
+  answer_enquiries: { label: "Member enquiries", description: "Read and reply to the questions and requests delegates send from My Hub." },
   check_in: { label: "Check-in desk", description: "Scan tickets and check people in on the day." },
   send_email: { label: "Group emails", description: "Send emails to groups of delegates, presenters or the committee." },
 };
@@ -163,7 +165,7 @@ export const DEFAULT_RULES: Record<AccountType, Capability[]> = {
   publicity_team: ["edit_website", "review_submissions"],
   finance_team: ["edit_website", "review_submissions"],
   logistics_team: ["edit_website", "review_submissions"],
-  executive_committee: ["edit_website", "review_submissions", "review_accounts", "manage_people", "check_in"],
+  executive_committee: ["edit_website", "review_submissions", "review_accounts", "manage_people", "answer_enquiries", "check_in"],
   vice_president: [...CAPABILITIES],
   president: [...CAPABILITIES],
 };

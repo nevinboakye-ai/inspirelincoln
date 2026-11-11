@@ -13,6 +13,7 @@ import { submissionReceivedEmail } from "@/lib/email/messages";
 import { SITE_URL } from "@/lib/site";
 import { cookies } from "next/headers";
 import { PROFILE_PROMPT_COOKIE } from "@/lib/profile-prompt";
+import { cleanInstagram } from "@/lib/instagram";
 
 export type ActionResult = { ok: boolean; error?: string; message?: string; fieldErrors?: Record<string, string>; id?: string } | null;
 
@@ -64,6 +65,19 @@ const networkSchema = z.object({
     .default("")
     .transform((v) => (v && !/^https?:\/\//i.test(v) ? `https://${v}` : v).replace(/^http:\/\//i, "https://"))
     .refine((v) => !v || /^https:\/\/([a-z]{2,3}\.)?linkedin\.com\/[^\s]+$/i.test(v), "Paste the link to your LinkedIn profile, for example linkedin.com/in/your-name."),
+  instagram: z
+    .string()
+    .max(200)
+    .optional()
+    .default("")
+    .transform((v, ctx) => {
+      const handle = cleanInstagram(v);
+      if (handle === null) {
+        ctx.addIssue({ code: "custom", message: "Enter your Instagram username, for example @your.name, or paste your profile link." });
+        return z.NEVER;
+      }
+      return handle;
+    }),
   showEmail: z.boolean(),
   listed: z.boolean(),
 });
@@ -73,6 +87,7 @@ export async function saveNetworkCard(_: ActionResult, form: FormData): Promise<
   const parsed = networkSchema.safeParse({
     bio: form.get("bio") ?? "",
     linkedin: form.get("linkedin") ?? "",
+    instagram: form.get("instagram") ?? "",
     showEmail: form.get("showEmail") === "on",
     listed: form.get("listed") === "on",
   });
@@ -80,7 +95,7 @@ export async function saveNetworkCard(_: ActionResult, form: FormData): Promise<
   const v = parsed.data;
   const { error } = await db
     .from("profiles")
-    .update({ bio: v.bio || null, linkedin_url: v.linkedin || null, network_show_email: v.showEmail, network_listed: v.listed })
+    .update({ bio: v.bio || null, linkedin_url: v.linkedin || null, instagram: v.instagram || null, network_show_email: v.showEmail, network_listed: v.listed })
     .eq("id", user.id);
   if (error) return { ok: false, error: "We couldn't save your card. Please try again." };
   revalidatePath("/portal/network");

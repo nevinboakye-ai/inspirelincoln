@@ -24,7 +24,7 @@ export default async function SubmissionPage() {
       <div className="rounded-xl border border-navy/10 bg-white p-6 sm:p-8">
         <h1 className="font-display text-2xl text-ink">Submissions are for presenters</h1>
         <p className="mt-3 text-slate-700">Oral and poster presenters upload their slides or poster here. Your account is set up for attending.</p>
-        <p className="mt-3 text-slate-700">If you&apos;ve been accepted to present, <Link href="/contact" className="font-medium text-electric-600 underline underline-offset-4">tell the committee</Link> and they&apos;ll update your account.</p>
+        <p className="mt-3 text-slate-700">If you&apos;ve been accepted to present, <Link href="/portal/enquiries?topic=presenting" className="font-medium text-electric-600 underline underline-offset-4">tell the committee</Link> and they&apos;ll update your account.</p>
       </div>
     );
   }

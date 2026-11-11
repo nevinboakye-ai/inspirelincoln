@@ -1,72 +1,52 @@
 import type { Metadata } from "next";
-import { Accessibility, FlaskConical, Handshake, MessageSquare, Mic2 } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Mail, MessagesSquare } from "lucide-react";
 import { PageHero } from "@/components/layout/page-hero";
-import { ContactForm } from "@/components/forms/contact-form";
-import { Notice } from "@/components/ui/notice";
-import { ENQUIRY_CATEGORIES, type EnquiryCategory } from "@/lib/validation/contact";
-import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { emailConfigured } from "@/lib/email/resend";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: "Contact the INSPIRE team about the conference, speaking, workshops, research and abstracts, partnerships or accessibility.",
+  description: "Email the INSPIRE team about the conference, speaking, workshops, research, partnerships or accessibility.",
   alternates: { canonical: "/contact" },
 };
 
-const TOPICS: { key: EnquiryCategory; icon: typeof Mic2; body: string }[] = [
-  { key: "general", icon: MessageSquare, body: "Questions about INSPIRE or the conference." },
-  { key: "speakers_workshops", icon: Mic2, body: "Speaking, facilitating or workshop content." },
-  { key: "research_abstracts", icon: FlaskConical, body: "Abstracts, posters and presenting." },
-  { key: "partnerships", icon: Handshake, body: "Partnership and sponsorship conversations." },
-  { key: "accessibility", icon: Accessibility, body: "Access requirements and adjustments." },
-];
-
-export default async function ContactPage({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
-  const { category } = await searchParams;
-  const initial = category && category in ENQUIRY_CATEGORIES ? (category as EnquiryCategory) : undefined;
-  const emailOn = emailConfigured() && Boolean(process.env.CONTACT_TO_EMAIL);
-  const active = isSupabaseConfigured || emailOn;
-
+export default function ContactPage() {
   return (
     <>
-      <PageHero eyebrow="Contact" title={<>Let&apos;s <span className="text-cyan">talk.</span></>} intro="Whether you have a question about the conference, want to get involved or need an adjustment, the INSPIRE team is here to help." />
-      <section className="bg-paper py-16 sm:py-24">
-        <div className="container-page grid gap-12 lg:grid-cols-12">
-          <aside className="lg:col-span-4">
-            <h2 className="eyebrow text-electric-600">How we can help</h2>
-            <ul className="mt-6 space-y-3">
-              {TOPICS.map((t) => (
-                <li key={t.key} className="flex gap-4 rounded-lg border border-navy/10 bg-white p-5">
-                  <t.icon aria-hidden className="mt-0.5 size-5 shrink-0 text-electric-600" />
-                  <span>
-                    <span className="block font-semibold text-ink">{ENQUIRY_CATEGORIES[t.key]}</span>
-                    <span className="block text-sm text-slate-700">{t.body}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-            {CONTACT_EMAIL && (
-              <p className="mt-6 text-slate-700">
-                Or email{" "}
-                <a href={`mailto:${CONTACT_EMAIL}`} className="font-medium text-electric-600 underline underline-offset-4">
-                  {CONTACT_EMAIL}
-                </a>
-              </p>
-            )}
-          </aside>
-          <div className="rounded-xl border border-navy/10 bg-white p-6 sm:p-10 lg:col-span-8">
-            {!active ? (
-              <Notice tone="warning" title="The contact form is not active yet" className="mb-8">
-                Message delivery has not been set up, so the form cannot be submitted yet.
-              </Notice>
-            ) : !emailOn ? (
-              <Notice title="Email notifications are not active yet" className="mb-8">
-                Messages are stored securely for the conference team to read in the admin dashboard. Email delivery has not been
-                switched on, so replies may take a little longer.
-              </Notice>
-            ) : null}
-            <ContactForm initialCategory={initial} active={active} />
+      <PageHero size="sm" eyebrow="Contact" title={<>Let&apos;s <span className="text-cyan">talk.</span></>} intro="Whether you have a question about the conference, want to get involved or need an adjustment, the INSPIRE team is here to help." />
+      <section className="bg-paper py-14 sm:py-20">
+        <div className="container-page grid max-w-4xl gap-5 md:grid-cols-[1.4fr_1fr]">
+          <div className="relative overflow-hidden rounded-2xl bg-midnight p-7 text-paper sm:p-10">
+            <img src="/brand/crest-white.png" alt="" aria-hidden className="pointer-events-none absolute -bottom-10 -right-8 h-48 w-auto opacity-[0.07]" />
+            <div className="relative">
+              <span aria-hidden className="grid size-12 place-items-center rounded-full bg-gold/15 text-gold">
+                <Mail className="size-5" />
+              </span>
+              <h2 className="mt-5 font-display text-3xl">Contact our email</h2>
+              {CONTACT_EMAIL ? (
+                <>
+                  <p className="mt-3 text-paper/75">For anything about INSPIRE, email us and the team will get back to you.</p>
+                  <a
+                    href={`mailto:${CONTACT_EMAIL}`}
+                    className="mt-6 inline-flex min-h-12 max-w-full items-center gap-2 rounded-[3px] bg-gold px-5 font-ui font-semibold text-midnight [overflow-wrap:anywhere] hover:bg-gold-300"
+                  >
+                    {CONTACT_EMAIL}
+                  </a>
+                </>
+              ) : (
+                <p className="mt-3 text-paper/75">Our email address will appear here shortly.</p>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-col rounded-2xl border border-navy/10 bg-white p-7 sm:p-8">
+            <span aria-hidden className="grid size-12 place-items-center rounded-full bg-cyan/25 text-navy">
+              <MessagesSquare className="size-5" />
+            </span>
+            <h2 className="mt-5 font-display text-2xl text-ink">Already have an account?</h2>
+            <p className="mt-3 text-slate-700">Message the committee from My Hub and keep the whole conversation in one place. We reply within 48 hours.</p>
+            <Link href="/portal/enquiries" className="mt-auto inline-flex min-h-11 items-center gap-2 pt-5 font-semibold text-electric-600 hover:underline">
+              Go to Enquiries <ArrowRight aria-hidden className="size-4" />
+            </Link>
           </div>
         </div>
       </section>

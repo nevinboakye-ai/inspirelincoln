@@ -1,3 +1,4 @@
+import { instagramUrl } from "@/lib/instagram";
 import { ACCOUNT_TYPE_LABEL, ROLE_RANK } from "@/lib/accounts";
 import type { AccountType } from "@/lib/types";
 
@@ -11,12 +12,15 @@ export type CardData = {
   committee_position: string | null;
   bio: string | null;
   linkedin_url: string | null;
+  instagram?: string | null;
   email: string | null;
   presentation_title: string | null;
   /** Where their photo is kept, if they've added one. */
   avatar_path?: string | null;
   /** A short-lived link to the photo, added by the server before the card is shown. */
   avatar_url?: string | null;
+  /** Their university's logo, if the committee has added one. */
+  uni_logo_url?: string | null;
 };
 
 /** Who a code belongs to and their attendance, for check-in staff only. */
@@ -114,6 +118,7 @@ export function toVCard(c: CardData, note?: string | null) {
     `TITLE:${esc(cardRoles(c).join(", "))}`,
     c.email && `EMAIL;TYPE=INTERNET:${c.email}`,
     c.linkedin_url && `URL:${c.linkedin_url}`,
+    c.instagram && `X-SOCIALPROFILE;TYPE=instagram:${instagramUrl(c.instagram)}`,
     `NOTE:${esc(["Met at INSPIRE", note?.trim()].filter(Boolean).join(". "))}`,
     "END:VCARD",
   ].filter(Boolean);

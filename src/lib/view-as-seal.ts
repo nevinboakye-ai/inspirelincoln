@@ -59,7 +59,7 @@ export function openViewAs(value: string | undefined): ViewAsPayload | null {
 /** Database functions that only read, so they still work while viewing as someone. */
 const READ_ONLY_RPC = new Set([
   "audience_counts", "broadcast_recipients", "checkin_counts", "email_directory", "has_access", "my_access",
-  "my_waitlist_position", "network_directory", "selected_recipients", "selected_waiting_count", "submission_presenter",
+  "enquiry_people", "my_waitlist_position", "network_directory", "selected_recipients", "selected_waiting_count", "submission_presenter",
 ]);
 
 /** A fetch for the viewed account's Supabase client that lets reads through and refuses every write. */

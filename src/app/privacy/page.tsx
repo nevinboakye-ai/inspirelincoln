@@ -94,7 +94,13 @@ const PURPOSES: { what: string; why: string; basis: string; kept: string }[] = [
     kept: "Until you withdraw consent or delete your account",
   },
   {
-    what: "Messages you send through the contact form",
+    what: "Enquiries you send the committee in My Hub, and their replies",
+    why: "To answer your questions and requests, and keep the conversation in one place",
+    basis: "Legitimate interests in running the conference and supporting delegates",
+    kept: "As for your account. Only you and the committee members who answer enquiries can see them",
+  },
+  {
+    what: "Messages sent through our old contact form",
     why: "To reply to you",
     basis: "Legitimate interests in answering enquiries",
     kept: "12 months after the enquiry is closed",
@@ -146,7 +152,7 @@ export default function PrivacyPage() {
   const contact = CONTACT_EMAIL ? (
     <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
   ) : (
-    <Link href="/contact">our contact form</Link>
+    <Link href="/contact">our contact page</Link>
   );
 
   return (

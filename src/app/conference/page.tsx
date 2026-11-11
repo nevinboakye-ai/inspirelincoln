@@ -187,8 +187,8 @@ export default async function ConferencePage() {
                   space, please tell us as early as possible so we can make arrangements with the venue.
                 </p>
                 <p>Specific venue access details will be published here once confirmed with the university.</p>
-                <Link href="/contact?category=accessibility" className="inline-flex items-center gap-2 font-semibold text-electric-600">
-                  Make an accessibility enquiry <ArrowRight aria-hidden className="size-4" />
+                <Link href="/portal/enquiries?topic=access" className="inline-flex items-center gap-2 font-semibold text-electric-600">
+                  Tell the committee about your access needs <ArrowRight aria-hidden className="size-4" />
                 </Link>
               </div>
             </div>

@@ -8,6 +8,7 @@ import { ProfilePrompt } from "@/components/portal/profile-prompt";
 import { PROFILE_PROMPT_COOKIE, profileGaps } from "@/lib/profile-prompt";
 import { VIEW_AS_COOKIE } from "@/lib/view-as-seal";
 import { signAvatar } from "@/lib/avatar";
+import { unreadForMember } from "@/lib/enquiries";
 
 export const metadata: Metadata = { title: "My conference", robots: { index: false } };
 
@@ -17,6 +18,9 @@ export default async function PortalLayout({ children }: { children: React.React
   const jar = await cookies();
   const gaps = jar.has(PROFILE_PROMPT_COOKIE) && !jar.has(VIEW_AS_COOKIE) ? profileGaps(profile) : [];
   const promptPhoto = gaps.length ? await signAvatar(db, profile.avatarPath) : null;
+  // Conversations where the committee has replied since they last looked.
+  const { data: mine } = await db.from("enquiry_threads").select("last_from, last_message_at, member_read_at").eq("user_id", profile.id).eq("last_from", "committee").limit(100);
+  const unreadEnquiries = (mine ?? []).filter(unreadForMember).length;
   // The network stays out of the menu entirely until the owner opens it.
   const switches = await getSwitches();
   const showNetwork = profile.access.owner || switches.network_open;
@@ -33,6 +37,7 @@ export default async function PortalLayout({ children }: { children: React.React
           reviewer={profile.siteRole === "reviewer"}
           showNetwork={showNetwork}
           showPeople={showPeople}
+          unreadEnquiries={unreadEnquiries}
         />
         <div className="min-w-0">{children}</div>
         {gaps.length > 0 && <ProfilePrompt gaps={gaps} name={profile.fullName} photo={promptPhoto} />}

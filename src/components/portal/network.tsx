@@ -8,7 +8,12 @@ import { submitWithoutReset } from "@/lib/use-action-form";
 import { Field, inputClass } from "@/components/forms/field";
 import { Badge } from "@/components/ui/badge";
 import { ResultBanner } from "@/components/portal/profile-forms";
-import { ACCOUNT_TYPE_LABEL } from "@/lib/accounts";
+import { ACCOUNT_TYPE_LABEL, COMMITTEE_TYPES, EXEC_TYPES } from "@/lib/accounts";
+import { InstagramMark } from "@/components/ui/social";
+import { UniLogo } from "@/components/ui/uni-logo";
+import { uniKey, type LogoMap } from "@/lib/university-logos";
+import { instagramUrl } from "@/lib/instagram";
+import { Crown, Star } from "lucide-react";
 import type { AccountType } from "@/lib/types";
 
 export type Delegate = {
@@ -24,11 +29,14 @@ export type Delegate = {
   avatar_path?: string | null;
   /** A short-lived link to their photo, added by the server. */
   avatar_url?: string | null;
+  instagram?: string | null;
+  /** Every role they hold. */
+  roles?: AccountType[];
   /** False for people on the selected list who haven't set up an account yet. Only the committee sees these. */
   joined: boolean;
 };
 
-type CardProfile = { bio: string | null; linkedinUrl: string | null; networkShowEmail: boolean; networkListed: boolean; email: string };
+type CardProfile = { bio: string | null; linkedinUrl: string | null; instagram: string | null; networkShowEmail: boolean; networkListed: boolean; email: string };
 
 export function NetworkCardForm({ profile }: { profile: CardProfile }) {
   const [state, action, pending] = useActionState(saveNetworkCard, null);
@@ -62,6 +70,23 @@ export function NetworkCardForm({ profile }: { profile: CardProfile }) {
           aria-invalid={Boolean(fe("linkedin"))}
           aria-describedby={fe("linkedin") ? "linkedin-error" : undefined}
         />
+      </Field>
+      <Field id="instagram" label="Instagram" error={fe("instagram")} hint="Your username, for example @your.name">
+        <div className="relative">
+          <span aria-hidden className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate">@</span>
+          <input
+            id="instagram"
+            name="instagram"
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            defaultValue={profile.instagram ?? ""}
+            placeholder="your.name"
+            className={`${inputClass} pl-9`}
+            aria-invalid={Boolean(fe("instagram"))}
+            aria-describedby={fe("instagram") ? "instagram-hint instagram-error" : "instagram-hint"}
+          />
+        </div>
       </Field>
       <fieldset className="space-y-3">
         <legend className="sr-only">What to share</legend>
@@ -99,9 +124,20 @@ const TONE_STYLE: Record<string, { band: string; avatar: string }> = {
   other: { band: "bg-midnight", avatar: "bg-midnight text-gold-300" },
 };
 const toneFor = (t: AccountType) => TONE_STYLE[t] ?? TONE_STYLE.other;
-const roleLabel = (p: Delegate) => p.committee_position || ACCOUNT_TYPE_LABEL[p.account_type];
+const rolesOfP = (p: Delegate) => (p.roles?.length ? p.roles : [p.account_type]);
+/** President, vice president and executive committee first, then each team in turn, then everyone else. */
+const RANK: AccountType[] = ["president", "vice_president", "executive_committee", ...COMMITTEE_TYPES.filter((t) => !EXEC_TYPES.includes(t))];
+const rankOf = (p: Delegate) => Math.min(...rolesOfP(p).map((r) => (RANK.includes(r) ? RANK.indexOf(r) : 99)));
+const isExec = (p: Delegate) => rolesOfP(p).some((r) => EXEC_TYPES.includes(r));
+const isCommittee = (p: Delegate) => rankOf(p) < 99;
+/** Their committee role, most senior first. */
+const committeeRole = (p: Delegate) => {
+  const top = RANK[rankOf(p)];
+  return top ? ACCOUNT_TYPE_LABEL[top] : null;
+};
+const roleLabel = (p: Delegate) => p.committee_position || committeeRole(p) || ACCOUNT_TYPE_LABEL[p.account_type];
 
-export function NetworkDirectory({ people, me }: { people: Delegate[]; me: string }) {
+export function NetworkDirectory({ people, me, logos = {} }: { people: Delegate[]; me: string; logos?: LogoMap }) {
   const [q, setQ] = useState("");
   const [uni, setUni] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -116,6 +152,11 @@ export function NetworkDirectory({ people, me }: { people: Delegate[]; me: strin
       ),
     [people, uni, query],
   );
+  const committee = useMemo(
+    () => shown.filter(isCommittee).sort((a, b) => rankOf(a) - rankOf(b) || a.full_name.localeCompare(b.full_name)),
+    [shown],
+  );
+  const delegates = useMemo(() => shown.filter((p) => !isCommittee(p)), [shown]);
   const selected = people.find((p) => p.id === openId) ?? null;
   const close = useCallback(() => setOpenId(null), []);
 
@@ -149,8 +190,30 @@ export function NetworkDirectory({ people, me }: { people: Delegate[]; me: strin
           {people.length === 0 ? "No one is listed yet. Add your card above to be the first." : "No one matches that search."}
         </p>
       ) : (
+        <div className="space-y-8">
+          {committee.length > 0 && (
+            <div>
+              <h3 className="mb-3 flex items-center gap-2 font-ui text-xs font-semibold uppercase tracking-[0.18em] text-gold-700">
+                <Crown aria-hidden className="size-4" /> The committee <span className="font-normal normal-case tracking-normal text-slate">({committee.length})</span>
+              </h3>
+              <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {committee.map((p) => (
+                  <li key={p.id}>
+                    <CommitteeCard p={p} me={me} logo={logos[uniKey(p.institution)]} onOpen={() => setOpenId(p.id)} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {delegates.length > 0 && (
+            <div>
+              {committee.length > 0 && (
+                <h3 className="mb-3 font-ui text-xs font-semibold uppercase tracking-[0.18em] text-slate">
+                  Delegates <span className="font-normal normal-case tracking-normal">({delegates.length})</span>
+                </h3>
+              )}
         <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {shown.map((p) => {
+          {delegates.map((p) => {
             const tone = toneFor(p.account_type);
             return (
               <li key={p.id}>
@@ -169,7 +232,10 @@ export function NetworkDirectory({ people, me }: { people: Delegate[]; me: strin
                           {p.full_name}
                           {p.id === me && <span className="ml-1.5 text-xs font-normal text-slate">(you)</span>}
                         </span>
-                        <span className="block truncate text-sm text-slate-700">{[p.institution, p.year_of_study].filter(Boolean).join(" · ") || " "}</span>
+                        <span className="flex items-center gap-1.5 text-sm text-slate-700">
+                          <UniLogo src={logos[uniKey(p.institution)]} name={p.institution} className="size-5 p-0.5" />
+                          <span className="truncate">{[p.institution, p.year_of_study].filter(Boolean).join(" · ") || " "}</span>
+                        </span>
                       </span>
                     </span>
                     {p.bio && <span className="mt-3 line-clamp-2 text-sm leading-relaxed text-slate-700">{p.bio}</span>}
@@ -189,16 +255,63 @@ export function NetworkDirectory({ people, me }: { people: Delegate[]; me: strin
             );
           })}
         </ul>
+            </div>
+          )}
+        </div>
       )}
 
       <Drawer open={Boolean(selected)} onClose={close} label={selected ? `${selected.full_name}'s profile` : "Profile"}>
-        {selected && <PersonDetail p={selected} me={me} />}
+        {selected && <PersonDetail p={selected} me={me} logo={logos[uniKey(selected.institution)]} />}
       </Drawer>
     </section>
   );
 }
 
-function PersonDetail({ p, me }: { p: Delegate; me: string }) {
+/** The committee's cards: dark, with a gold edge, so they stand out from delegates'. */
+function CommitteeCard({ p, me, logo, onOpen }: { p: Delegate; me: string; logo?: string; onOpen: () => void }) {
+  const exec = isExec(p);
+  const team = committeeRole(p);
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-haspopup="dialog"
+      className={`group relative flex h-full w-full flex-col overflow-hidden rounded-xl bg-midnight text-left text-paper shadow-[0_18px_40px_-26px_rgba(12,24,44,0.9)] ring-1 transition-[transform,box-shadow] duration-300 ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:shadow-[0_26px_50px_-24px_rgba(12,24,44,0.9)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600 ${exec ? "ring-gold/60" : "ring-white/10"}`}
+    >
+      <span aria-hidden className={`h-1.5 w-full ${exec ? "lanyard-foil" : "bg-gold/70"}`} />
+      <span aria-hidden className="lanyard-grid pointer-events-none absolute inset-0 opacity-[0.14]" />
+      <img src="/brand/crest-white.png" alt="" aria-hidden className="pointer-events-none absolute -bottom-6 -right-4 h-28 w-auto opacity-[0.06]" />
+      <span className="relative flex flex-1 flex-col p-4 sm:p-5">
+        <span className="flex items-center gap-3.5">
+          <Avatar url={p.avatar_url} name={p.full_name} className={`size-12 ring-2 transition-transform duration-300 group-hover:scale-105 ${exec ? "ring-gold" : "ring-gold/40"}`} fallbackClassName="bg-paper/10 text-sm text-gold-300" />
+          <span className="min-w-0">
+            <span className="block truncate font-semibold">
+              {p.full_name}
+              {p.id === me && <span className="ml-1.5 text-xs font-normal text-paper/60">(you)</span>}
+            </span>
+            <span className="flex items-center gap-1.5 text-sm text-paper/70">
+              <UniLogo src={logo} name={p.institution} className="size-5 p-0.5" />
+              <span className="truncate">{[p.institution, p.year_of_study].filter(Boolean).join(" · ") || " "}</span>
+            </span>
+          </span>
+        </span>
+        {p.bio && <span className="mt-3 line-clamp-2 text-sm leading-relaxed text-paper/75">{p.bio}</span>}
+        <span className="mt-auto flex items-center justify-between gap-2 pt-4">
+          <span className={`inline-flex min-w-0 items-center gap-1.5 rounded-full px-2.5 py-1 font-ui text-[0.68rem] font-semibold uppercase tracking-[0.12em] ${exec ? "bg-gold text-midnight" : "bg-gold/15 text-gold-300 ring-1 ring-inset ring-gold/30"}`}>
+            {exec && <Star aria-hidden className="size-3 shrink-0 fill-current" />}
+            <span className="truncate">{p.committee_position || team}</span>
+          </span>
+          <span className="inline-flex shrink-0 items-center gap-1 font-ui text-xs font-semibold text-gold-300">
+            View <ArrowRight aria-hidden className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
+          </span>
+        </span>
+        {p.committee_position && team && <span className="sr-only">, {team}</span>}
+      </span>
+    </button>
+  );
+}
+
+function PersonDetail({ p, me, logo }: { p: Delegate; me: string; logo?: string }) {
   const tone = toneFor(p.account_type);
   return (
     <div>
@@ -220,7 +333,10 @@ function PersonDetail({ p, me }: { p: Delegate; me: string }) {
         {p.institution && (
           <div>
             <dt className="eyebrow text-slate">Medical school</dt>
-            <dd className="mt-1 text-ink">{p.institution}</dd>
+            <dd className="mt-1.5 flex items-center gap-3 text-ink">
+              <UniLogo src={logo} name={p.institution} fallback className="size-11 text-[0.62rem]" />
+              {p.institution}
+            </dd>
           </div>
         )}
         {p.year_of_study && (
@@ -234,8 +350,13 @@ function PersonDetail({ p, me }: { p: Delegate; me: string }) {
           <dd className="mt-1 whitespace-pre-line leading-relaxed text-slate-700">{p.bio || "They haven't added a bio yet."}</dd>
         </div>
       </dl>
-      {(p.linkedin_url || p.email) && (
+      {(p.linkedin_url || p.instagram || p.email) && (
         <div className="flex flex-wrap gap-3 border-t border-navy/10 px-6 py-5 sm:px-8">
+          {p.instagram && (
+            <a href={instagramUrl(p.instagram)} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex min-h-11 items-center gap-2 rounded-[3px] border border-navy/15 px-4 text-sm font-semibold text-ink hover:border-navy/35">
+              <InstagramMark /> @{p.instagram}<span className="sr-only"> on Instagram (opens in a new tab)</span>
+            </a>
+          )}
           {p.linkedin_url && (
             <a href={p.linkedin_url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex min-h-11 items-center gap-2 rounded-[3px] bg-navy px-4 text-sm font-semibold text-paper hover:bg-navy-700">
               <LinkedInMark /> LinkedIn<span className="sr-only"> (opens in a new tab)</span>

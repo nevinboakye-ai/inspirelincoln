@@ -76,7 +76,7 @@ export default async function ProfilePage() {
           Your bio
         </h2>
         <p className="mb-5 mt-2 text-sm text-slate-700">
-          A few lines about you and, if you like, your LinkedIn. Once the
+          A few lines about you and, if you like, your LinkedIn and Instagram. Once the
           delegate network opens, other confirmed delegates will see this with
           your name, university and year. Until then, only the committee can see
           it.
@@ -85,6 +85,7 @@ export default async function ProfilePage() {
           profile={{
             bio: profile.bio,
             linkedinUrl: profile.linkedinUrl,
+            instagram: profile.instagram,
             networkShowEmail: profile.networkShowEmail,
             networkListed: profile.networkListed,
             email: profile.email,
