@@ -20,6 +20,9 @@ type CampusData = {
   labels: { n: string; at: [number, number]; w?: 1 }[];
 };
 
+/** The version of public/map/campus.json. 2: widened to the stations and the cathedral. */
+const DATA_VERSION = 2;
+
 export const OSM_ATTRIBUTION = 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 const C = {
@@ -71,7 +74,8 @@ const escape = (t: string) => t.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)}
 export async function drawCampus(L: typeof import("leaflet"), map: LeafletMap): Promise<CampusLayer | null> {
   let data: CampusData;
   try {
-    const res = await fetch("/map/campus.json", { cache: "force-cache" });
+    // Bump DATA_VERSION whenever campus.json is rebuilt, or browsers keep the old drawing.
+    const res = await fetch(`/map/campus.json?v=${DATA_VERSION}`, { cache: "force-cache" });
     if (!res.ok) return null;
     data = await res.json();
   } catch {
@@ -151,6 +155,8 @@ export async function drawCampus(L: typeof import("leaflet"), map: LeafletMap): 
   const restyle = () => {
     const z = map.getZoom();
     map.getContainer().dataset.zoom = String(Math.round(z));
+    // Building names only once you are close enough to read them.
+    map.getContainer().dataset.labels = z >= 16.5 ? "on" : "off";
     const k = scale(z);
     for (const s of scaled) s.path.setStyle({ weight: s.weight * k });
   };

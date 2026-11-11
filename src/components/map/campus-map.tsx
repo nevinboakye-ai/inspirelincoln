@@ -2,7 +2,7 @@
 import "leaflet/dist/leaflet.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { LayerGroup, Map as LeafletMap, Marker } from "leaflet";
-import { Navigation, ArrowUpRight, Clock, Crosshair, Footprints, Link2, LocateFixed, MapPin, Search, X } from "lucide-react";
+import { Navigation, ArrowUpRight, Clock, Crosshair, Footprints, Link2, LocateFixed, MapPin, School, Search, X } from "lucide-react";
 import type { MapPlace } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import {
@@ -100,6 +100,7 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
   const buildingOf = useRef<Map<string, string>>(new Map());
   const [campusReady, setCampusReady] = useState(false);
   const watchId = useRef<number | null>(null);
+  const homeView = useRef<((animate: boolean) => void) | null>(null);
 
   // Read ?place= on first load so links can open a place directly.
   useEffect(() => {
@@ -117,7 +118,7 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
     import("leaflet").then((leaflet) => {
       if (cancelled || !mapEl.current || map.current) return;
       L.current = leaflet;
-      const m = leaflet.map(mapEl.current, { zoomSnap: 0.25, zoomControl: false, scrollWheelZoom: true, minZoom: 15, maxZoom: 20, tapTolerance: 20 });
+      const m = leaflet.map(mapEl.current, { zoomSnap: 0.25, zoomControl: false, scrollWheelZoom: true, minZoom: 13, maxZoom: 20, tapTolerance: 20 });
       made = m;
       m.setView(CAMPUS_CENTRE, CAMPUS_ZOOM);
       if (!isPhone()) leaflet.control.zoom({ position: "bottomright" }).addTo(m);
@@ -148,8 +149,16 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
         }
         youLayer.current = leaflet.layerGroup().addTo(m);
         map.current = m;
-        // Fit everything pinned on campus; the stations and cathedral are a pan or zoom away.
+        // Start on everything pinned on campus; the stations and cathedral are a pan or zoom away.
+        // "Back to campus" returns to this same view.
         const pts = places.filter((p) => p.lat != null && p.lng != null && !inTown(p)).map((p) => [p.lat!, p.lng!] as [number, number]);
+        homeView.current = (animate) => {
+          if (pts.length > 1) {
+            // On phones, leave room for the sheet so the campus sits in the visible part of the map.
+            const sheetPx = isPhone() && sheetRef.current ? sheetRef.current.getBoundingClientRect().height : 0;
+            m.flyToBounds(pts, { paddingTopLeft: [48, 96], paddingBottomRight: [48, 48 + sheetPx], maxZoom: 17, animate, duration: 0.8 });
+          } else m.flyTo(CAMPUS_CENTRE, CAMPUS_ZOOM, { animate, duration: 0.8 });
+        };
         if (pts.length > 1) m.fitBounds(pts, { padding: [48, 48], maxZoom: 17 });
         setReady(true);
       };
@@ -174,11 +183,14 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
           return;
         }
         m.attributionControl.addAttribution(OSM_ATTRIBUTION);
-        // Keep the view on the drawn area, so there is never blank space at the edges.
+        // People can roam the whole drawn area (campus, the stations and up to the cathedral)
+        // and zoom out until all of it is on screen, but not drift off into blank space.
         const area = leaflet.latLngBounds(campus.bounds);
-        m.options.maxBoundsViscosity = 1;
+        m.options.maxBoundsViscosity = 0.9;
         const fit = () => {
-          m.setMinZoom(Math.min(18, Math.ceil(m.getBoundsZoom(area, true) * 4) / 4));
+          // One zoom level further out than "the drawing fills the screen": far enough to see
+          // the cathedral and the stations together with campus, without shrinking to a postage stamp.
+          m.setMinZoom(Math.max(13, Math.min(16, Math.floor((m.getBoundsZoom(area, true) - 1) * 4) / 4)));
           if (m.getZoom() < m.getMinZoom()) m.setZoom(m.getMinZoom(), { animate: false });
         };
         m.setMaxBounds(area);
@@ -466,6 +478,14 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
             >
               {fix ? <LocateFixed aria-hidden className="size-4" /> : <Crosshair aria-hidden className={cn("size-4", locating && "animate-spin")} />}
               {fix ? "Show me" : locating ? "Finding you" : "Where am I?"}
+            </button>
+            <button
+              type="button"
+              onClick={() => homeView.current?.(true)}
+              className="pointer-events-auto inline-flex min-h-11 items-center gap-2 rounded-[3px] bg-white px-4 font-ui text-sm font-semibold text-navy shadow-lg hover:bg-paper"
+            >
+              <School aria-hidden className="size-4" />
+              Back to campus
             </button>
           </div>
           {(geoError || tilesFailed || pinnedCount === 0) && (

@@ -465,9 +465,8 @@ dialog.gate.is-leaving { background: transparent; }
   color: #3f6494;
   letter-spacing: 0.04em;
 }
-.leaflet-container[data-zoom="15"] .map-bldg-label,
-.leaflet-container[data-zoom="16"] .map-bldg-label { display: none; }
-.leaflet-container[data-zoom="15"] .map-water-label { font-size: 12px; }
+.leaflet-container[data-labels="off"] .map-bldg-label { display: none; }
+.leaflet-container[data-labels="off"] .map-water-label { font-size: 12px; }
 .leaflet-popup-content-wrapper { border-radius: 6px; box-shadow: 0 12px 32px -12px rgb(12 24 44 / 0.45); }
 .leaflet-popup-content { margin: 14px 16px; font-family: var(--font-ui); }
 .map-popup-title { margin: 0; font: 400 1.05rem/1.25 var(--font-display); color: var(--color-ink); }
