@@ -34,7 +34,7 @@ export default async function NetworkPage() {
           <p className="eyebrow flex items-center gap-2 text-gold"><Users aria-hidden className="size-4" /> Delegate network</p>
           <h1 className="mt-3 font-display text-3xl sm:text-4xl">Meet who&apos;s coming</h1>
           <p className="mt-3 max-w-xl text-sm text-paper/75 sm:text-base">
-            Everyone with a confirmed place, from every medical school. Add a short bio and your LinkedIn so people can find you before and after the day.
+            Everyone at INSPIRE is a medical student, so this is a rare chance to meet people on the same path as you from other medical schools. Make friends, swap details and stay in touch long after the day. Add a short bio and your LinkedIn so people can find you.
           </p>
         </div>
       </header>
