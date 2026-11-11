@@ -28,6 +28,16 @@ export async function saveChoiceSettings(_: BoardResult, form: FormData): Promis
   const raw = String(form.get("closes_at") ?? "").trim();
   const closesAt = raw ? fromZonedInputValue(raw) : null;
   if (raw && !closesAt) return { ok: false, error: "Enter the closing time as a date and time." };
+  if (form.get("open") === "on") {
+    // Delegates pick between the two workshops in each session, so the pairs must be set first.
+    const { data: ed } = await db.from("editions").select("id").eq("is_current", true).maybeSingle();
+    const { data: ws } = await db.from("workshops").select("slot, stream").eq("published", true).eq("edition_id", ed?.id ?? "");
+    const pairs = new Map<number, number>();
+    for (const w of ws ?? []) if (w.slot && w.stream) pairs.set(w.slot as number, (pairs.get(w.slot as number) ?? 0) + 1);
+    const unset = (ws ?? []).some((w) => !w.slot || !w.stream);
+    if (unset || pairs.size !== 3 || [...pairs.values()].some((n) => n !== 2))
+      return { ok: false, error: "Put every workshop into a session as A or B (two per session) before opening choices." };
+  }
   const { error } = await db.rpc("workshop_settings_save", {
     p_open: form.get("open") === "on",
     p_closes_at: closesAt,
@@ -88,7 +98,7 @@ export async function runAllocation(_: BoardResult, form: FormData): Promise<Boa
   const s = result.summary;
   return {
     ok: true,
-    message: `Placed ${s.people} ${s.people === 1 ? "person" : "people"}. ${s.allPreferred} of ${s.ranked} who ranked got their preferred workshop in every session.${s.unplaced ? ` ${s.unplaced} places couldn't be filled because both rooms were full.` : ""}`,
+    message: `Placed ${s.people} ${s.people === 1 ? "person" : "people"}. ${s.allPreferred} of ${s.ranked} who chose got their pick in every session.${s.unplaced ? ` ${s.unplaced} places couldn't be filled because both rooms were full.` : ""}`,
   };
 }
 

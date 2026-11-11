@@ -32,7 +32,7 @@ import { Lanyard, type LanyardTone } from "@/components/portal/lanyard";
 import { Countdown, HubItem, HubStagger, ReadinessRing } from "@/components/portal/hub-motion";
 import { MaskRise } from "@/components/motion/effects";
 import { AttendanceCard, type AttendanceAnswer } from "@/components/portal/attendance-card";
-import { WorkshopRanking, type RankPlace, type RankWorkshop } from "@/components/portal/workshop-ranking";
+import { WorkshopPicks, type PickPlace, type PickWorkshop } from "@/components/portal/workshop-picks";
 import { closingTimePassed, loadWorkshopChoices, pairLabel, rankingIsOpen } from "@/lib/workshops/choices";
 import {
   ACCOUNT_STATUS_LABEL,
@@ -202,7 +202,14 @@ export default async function PortalHome({
   // Workshop choices: shown to anyone with a confirmed place once ranking has opened.
   const choices = status === "approved" || profile.access.owner || profile.access.can.allocate_workshops ? await loadWorkshopChoices(db, user.id) : null;
   const rankOpen = choices ? rankingIsOpen(choices.settings) : false;
-  const rankWorkshops: RankWorkshop[] = (choices?.workshops ?? []).map((w) => ({
+  const rankWorkshops: PickWorkshop[] = (choices?.workshops ?? []).map((w) => ({
+    number: w.number,
+    summary: w.summary ?? null,
+    description: w.description ?? null,
+    topics: w.topics ?? [],
+    outcomes: w.outcomes ?? [],
+    audience: w.audience ?? null,
+    facilitator: w.facilitator ?? null,
     id: w.id,
     slug: w.slug,
     title: w.title,
@@ -211,7 +218,7 @@ export default async function PortalHome({
     slot: w.slot,
     time: choices?.sessions.find((x) => x.slot === w.slot)?.time ?? null,
   }));
-  const myPlaces: RankPlace[] | null =
+  const myPlaces: PickPlace[] | null =
     choices?.settings.resultsPublished && choices.places.length
       ? choices.places.flatMap((p) => {
           const w = rankWorkshops.find((x) => x.id === p.workshopId);
@@ -223,8 +230,8 @@ export default async function PortalHome({
   const showRanking = Boolean(choices?.settings.ready && rankWorkshops.length && (rankOpen || choices.ranking || myPlaces || closedAfterOpening));
   // Before ranking opens, the people who run workshop places see a private preview.
   const rankPreview = Boolean(!showRanking && choices?.settings.ready && rankWorkshops.length && profile.access.can.allocate_workshops);
-  if (showRanking && rankOpen && !choices!.ranking) steps.push({ label: "Rank the workshops", done: false, href: "#workshops" });
-  else if (showRanking && choices!.ranking) steps.push({ label: "Rank the workshops", done: true, href: "#workshops" });
+  if (showRanking && rankOpen && !choices!.ranking) steps.push({ label: "Choose your workshops", done: false, href: "#workshops" });
+  else if (showRanking && choices!.ranking) steps.push({ label: "Choose your workshops", done: true, href: "#workshops" });
   const doneCount = steps.filter((x) => x.done).length;
   const needsGiven = Boolean(profile.accessibilityNeeds || profile.dietaryRequirements);
   const lanyard = status === "approved" && showCard;
@@ -283,7 +290,7 @@ export default async function PortalHome({
         <div className="min-w-0 space-y-5 sm:space-y-6">
           {(showRanking || rankPreview) && (
             <HubItem>
-              <WorkshopRanking
+              <WorkshopPicks
                 workshops={rankWorkshops}
                 initial={choices!.ranking}
                 rankedAt={choices!.rankedAt}
@@ -291,6 +298,7 @@ export default async function PortalHome({
                 closesAt={choices!.settings.closesAt}
                 places={myPlaces}
                 preview={rankPreview}
+                canEdit={profile.access.can.edit_website}
               />
             </HubItem>
           )}

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Clock, MapPin, Target, UserRound, Users } from "lucide-react";
 import { WorkshopMotif, ACCENT_HEX } from "@/components/visual/workshop-motif";
 import { SaveWorkshopButton } from "@/components/conference/save-workshop";
+import { WorkshopEditButton } from "@/components/conference/workshop-edit-button";
 import { PlaceholderTag } from "@/components/ui/badge";
 import { Reveal } from "@/components/motion/reveal";
 import { getConferenceBundle, getWorkshops } from "@/lib/data/content";
@@ -52,6 +53,7 @@ export default async function WorkshopPage({ params }: { params: Promise<{ slug:
             <p className="mt-4 font-display text-xl text-paper/70">{w.strapline}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <SaveWorkshopButton id={w.id} title={w.title} />
+              <WorkshopEditButton workshop={{ id: w.id, title: w.title, strapline: w.strapline, summary: w.summary, description: w.description }} />
               {session && (
                 <Link href={`/programme?session=${session.slug}`} className="inline-flex min-h-12 items-center gap-2 rounded-[3px] border border-white/20 px-6 font-ui font-medium hover:border-white/40">
                   View in programme

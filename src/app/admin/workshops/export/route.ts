@@ -14,6 +14,7 @@ export async function GET() {
     const w = b.workshops.find((x) => x.id === id);
     return w ? `${pairLabel(w) ? `${pairLabel(w)}: ` : ""}${w.title}` : "";
   };
+  const pick = (c: number | null | undefined) => (c == null ? "" : c <= 3 ? "Yes" : "No");
   const ids = [...new Set(b.allPlaces.map((p) => p.userId))];
   const rows = ids
     .map((id) => {
@@ -24,16 +25,16 @@ export async function GET() {
         email: person?.email ?? "",
         university: person?.institution ?? "",
         session_1: title(at(1)?.workshopId),
-        session_1_choice: at(1)?.choice ?? "",
+        session_1_pick: pick(at(1)?.choice),
         session_2: title(at(2)?.workshopId),
-        session_2_choice: at(2)?.choice ?? "",
+        session_2_pick: pick(at(2)?.choice),
         session_3: title(at(3)?.workshopId),
-        session_3_choice: at(3)?.choice ?? "",
-        ranking: person?.ranking ? person.ranking.map((w) => title(w)).join(" > ") : "Didn't rank",
+        session_3_pick: pick(at(3)?.choice),
+        picks: person?.ranking ? person.ranking.slice(0, 3).map((w) => title(w)).join("; ") : "Didn't choose",
       };
     })
     .sort((a, c) => a.name.localeCompare(c.name));
-  const cols = ["name", "email", "university", "session_1", "session_1_choice", "session_2", "session_2_choice", "session_3", "session_3_choice", "ranking"];
+  const cols = ["name", "email", "university", "session_1", "session_1_pick", "session_2", "session_2_pick", "session_3", "session_3_pick", "picks"];
   return new NextResponse("﻿" + toCsv(rows, cols), {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",

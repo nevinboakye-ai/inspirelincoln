@@ -18,7 +18,6 @@ export const dynamic = "force-dynamic";
 const when = (d: string) =>
   new Date(d).toLocaleString("en-GB", { timeZone: "Europe/London", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 const pct = (n: number, d: number) => (d ? Math.round((n / d) * 100) : 0);
-const ordinal = (n: number) => `${n}${n === 1 ? "st" : n === 2 ? "nd" : n === 3 ? "rd" : "th"}`;
 
 function Stat({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
@@ -67,15 +66,12 @@ export default async function WorkshopPlacesPage() {
   const hasPlaces = b.allPlaces.length > 0;
   const time = (slot: number | null) => b.sessions.find((s) => s.slot === slot)?.time ?? null;
 
-  // What people want: first choices, average position, and who prefers each workshop over the other in its session.
+  // What people want: how many picked each workshop over the other one in its session.
   const demand = b.workshops.map((w) => {
-    const positions = ranked.map((p) => p.ranking!.indexOf(w.id) + 1);
     const partner = b.workshops.find((x) => x.slot && x.slot === w.slot && x.id !== w.id);
     const prefer = partner ? ranked.filter((p) => p.ranking!.indexOf(w.id) < p.ranking!.indexOf(partner.id)).length : ranked.length;
     return {
       w,
-      first: positions.filter((n) => n === 1).length,
-      avg: positions.length ? positions.reduce((a, c) => a + c, 0) / positions.length : null,
       prefer,
       placed: b.allPlaces.filter((p) => p.workshopId === w.id).length,
     };
@@ -99,20 +95,21 @@ export default async function WorkshopPlacesPage() {
     .sort((a, b2) => a.name.localeCompare(b2.name));
 
   const s = b.lastRun?.summary;
-  const choices = [1, 2, 3, 4, 5, 6].map((n) => b.allPlaces.filter((p) => p.choice === n).length);
-  const totalChoices = choices.reduce((a, c) => a + c, 0);
-  const rankedPlaced = new Set(b.allPlaces.filter((p) => p.choice).map((p) => p.userId));
-  const preferredEverywhere = [...rankedPlaced].filter((id) => {
-    const person = b.people.find((p) => p.id === id);
-    if (!person?.ranking) return false;
-    return [1, 2, 3].every((slot) => {
-      const mine = b.allPlaces.find((p) => p.userId === id && p.slot === slot);
-      const pair = b.workshops.filter((w) => w.slot === slot);
-      const best = [...pair].sort((x, y) => person.ranking!.indexOf(x.id) - person.ranking!.indexOf(y.id))[0];
-      return mine && best && mine.workshopId === best.id;
-    });
-  }).length;
-  const gotFirst = [...rankedPlaced].filter((id) => b.allPlaces.some((p) => p.userId === id && p.choice === 1)).length;
+  // Whether a place is the workshop that person picked in that session.
+  const pickFor = (userId: string, slot: number) => {
+    const person = b.people.find((p) => p.id === userId);
+    if (!person?.ranking) return null;
+    const pair = b.workshops.filter((w) => w.slot === slot);
+    return [...pair].sort((x, y) => person.ranking!.indexOf(x.id) - person.ranking!.indexOf(y.id))[0]?.id ?? null;
+  };
+  const chosenPlaces = b.allPlaces.filter((p) => pickFor(p.userId, p.slot));
+  const honoured = chosenPlaces.filter((p) => pickFor(p.userId, p.slot) === p.workshopId).length;
+  const rankedPlaced = new Set(chosenPlaces.map((p) => p.userId));
+  const preferredEverywhere = [...rankedPlaced].filter((id) => [1, 2, 3].every((slot) => b.allPlaces.some((p) => p.userId === id && p.slot === slot && p.workshopId === pickFor(id, slot)))).length;
+  const bySession = [1, 2, 3].map((slot) => {
+    const here = chosenPlaces.filter((p) => p.slot === slot);
+    return { slot, total: here.length, honoured: here.filter((p) => pickFor(p.userId, p.slot) === p.workshopId).length };
+  });
   const unplaced = ((s as unknown as { unplacedPeople?: { personId: string; slot: number }[] })?.unplacedPeople ?? []).filter(
     (u) => !b.allPlaces.some((p) => p.userId === u.personId && p.slot === u.slot),
   );
@@ -121,7 +118,7 @@ export default async function WorkshopPlacesPage() {
     <div className="space-y-6">
       <AdminHeader
         title="Workshop places"
-        description="Delegates rank all six workshops in My Hub. The allocation then gives everyone one workshop in each session, as close to their ranking as the room sizes allow."
+        description="In My Hub, delegates pick A or B in each of the three workshop sessions. The allocation then gives everyone one workshop per session, honouring as many picks as the room sizes allow."
         actions={
           <>
             <Link href="/portal#workshops" className={btn.secondary}>
@@ -137,14 +134,14 @@ export default async function WorkshopPlacesPage() {
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label="Ranking" value={open ? "Open" : "Closed"} note={open && b.settings.closesAt ? `Closes ${when(b.settings.closesAt)}` : undefined} />
-        <Stat label="Delegates who've ranked" value={`${rankedDelegates} of ${confirmed.length}`} note={`${pct(rankedDelegates, confirmed.length)}%`} />
+        <Stat label="Choices" value={open ? "Open" : "Closed"} note={open && b.settings.closesAt ? `Closes ${when(b.settings.closesAt)}` : undefined} />
+        <Stat label="Delegates who've chosen" value={`${rankedDelegates} of ${confirmed.length}`} note={`${pct(rankedDelegates, confirmed.length)}%`} />
         <Stat label="Places" value={hasPlaces ? `${new Set(b.allPlaces.map((p) => p.userId)).size}` : "Not run yet"} note={b.lastRun ? `Last run ${when(b.lastRun.at)}${b.lastRun.by ? ` by ${b.lastRun.by}` : ""}` : undefined} />
         <Stat label="Shown to delegates" value={b.settings.resultsPublished ? "Yes" : "No"} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <Panel title="Ranking">
+        <Panel title="Workshop choices">
           <ChoiceSettingsForm open={b.settings.rankingOpen} closesAt={toZonedInputValue(b.settings.closesAt)} published={b.settings.resultsPublished} hasPlaces={hasPlaces} />
         </Panel>
         <Panel title="Sessions and room sizes">
@@ -164,7 +161,7 @@ export default async function WorkshopPlacesPage() {
 
       <Panel title="What delegates want">
         {ranked.length === 0 ? (
-          <p className="text-sm text-slate-700">Nobody has ranked yet. Results appear here as people save their rankings.</p>
+          <p className="text-sm text-slate-700">Nobody has chosen yet. Results appear here as people save their choices.</p>
         ) : (
           <div className="grid gap-4 md:grid-cols-3">
             {[1, 2, 3].map((slot) => {
@@ -189,15 +186,12 @@ export default async function WorkshopPlacesPage() {
                                 {pairLabel(d.w)}: {d.w.title}
                               </span>
                             </p>
-                            <p className="mt-0.5 text-xs text-slate-700">
-                              {d.first} ranked it 1st · average position {d.avg ? d.avg.toFixed(1) : "none"}
-                            </p>
                             <div className="mt-2">
                               <Meter
                                 value={d.prefer}
                                 max={cap ?? Math.max(1, ranked.length)}
                                 over={over}
-                                label={`${d.prefer} prefer it to the other workshop in this session${cap ? `, room holds ${cap}` : ", no room size set"}${over ? ". Some will need to move." : ""}`}
+                                label={`${d.prefer} picked it${cap ? `, room holds ${cap}` : ", no room size set"}${over ? ". Some will need to move." : ""}`}
                               />
                             </div>
                           </li>
@@ -221,30 +215,32 @@ export default async function WorkshopPlacesPage() {
           </div>
         )}
         <p className="mb-4 max-w-3xl text-sm text-slate-700">
-          In each session, everyone goes to the workshop they ranked higher. If a room is full, the people who mind least move to the other workshop: those who ranked the two closest together. Nobody is moved twice while others aren&apos;t moved at all, and any remaining ties are settled by a fair shuffle. This gives as many people as possible the workshops they ranked highest.
+          In each session, everyone goes to the workshop they picked. If a room is full, some people move to the other workshop in that session. People already moved in another session are protected, so nobody is moved twice while others aren&apos;t moved at all, and any remaining ties are settled by a fair shuffle. This honours as many picks as the room sizes allow.
         </p>
         <RunAllocationForm unranked={notRanked.length} hasPlaces={hasPlaces} ready={ready} />
 
         {hasPlaces && (
           <div className="mt-6 space-y-5 border-t border-navy/10 pt-6">
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <Stat label="Got their preferred workshop in every session" value={`${pct(preferredEverywhere, rankedPlaced.size)}%`} note={`${preferredEverywhere} of ${rankedPlaced.size} who ranked`} />
-              <Stat label="Got their 1st choice" value={`${pct(gotFirst, rankedPlaced.size)}%`} note={`${gotFirst} of ${rankedPlaced.size}`} />
-              <Stat label="Places in someone's top three" value={`${pct(choices[0]! + choices[1]! + choices[2]!, totalChoices)}%`} note={`${choices[0]! + choices[1]! + choices[2]!} of ${totalChoices} places`} />
+              <Stat label="Got their pick in every session" value={`${pct(preferredEverywhere, rankedPlaced.size)}%`} note={`${preferredEverywhere} of ${rankedPlaced.size} who chose`} />
+              <Stat label="Picks honoured" value={`${pct(honoured, chosenPlaces.length)}%`} note={`${honoured} of ${chosenPlaces.length} places`} />
+              <Stat label="Moved to the other workshop" value={`${chosenPlaces.length - honoured}`} note="Because their pick was full, or moved by hand" />
               <Stat label="Couldn't be placed" value={`${unplaced.length}`} note={unplaced.length ? "Both rooms were full. Raise a room size and run again." : "Everyone has a place"} />
             </div>
 
             <div className="grid gap-5 lg:grid-cols-2">
-              <section aria-labelledby="by-choice" className="rounded-xl border border-navy/10 p-4">
-                <h3 id="by-choice" className="text-sm font-semibold text-ink">Places by how people ranked them</h3>
+              <section aria-labelledby="by-session" className="rounded-xl border border-navy/10 p-4">
+                <h3 id="by-session" className="text-sm font-semibold text-ink">Picks honoured in each session</h3>
                 <ul className="mt-3 space-y-2.5">
-                  {choices.map((n, i) => (
-                    <li key={i} className="grid grid-cols-[5.5rem_1fr_3.5rem] items-center gap-3 text-sm">
-                      <span className="text-slate-700">{ordinal(i + 1)} choice</span>
+                  {bySession.map((x) => (
+                    <li key={x.slot} className="grid grid-cols-[5.5rem_1fr_5rem] items-center gap-3 text-sm">
+                      <span className="text-slate-700">Session {x.slot}</span>
                       <span aria-hidden className="h-2 overflow-hidden rounded-full bg-paper-200">
-                        <span className="block h-full rounded-full bg-navy" style={{ width: `${totalChoices ? (n / totalChoices) * 100 : 0}%` }} />
+                        <span className="block h-full rounded-full bg-navy" style={{ width: `${x.total ? (x.honoured / x.total) * 100 : 0}%` }} />
                       </span>
-                      <span className="text-right font-semibold tabular-nums text-ink">{n}</span>
+                      <span className="text-right font-semibold tabular-nums text-ink">
+                        {x.honoured} of {x.total}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -286,7 +282,7 @@ export default async function WorkshopPlacesPage() {
       )}
 
       {notRanked.length > 0 && (
-        <Panel title={`Delegates who haven't ranked (${notRanked.length})`}>
+        <Panel title={`Delegates who haven't chosen (${notRanked.length})`}>
           <ul className="grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2 lg:grid-cols-3">
             {notRanked.map((p) => (
               <li key={p.id} className="min-w-0 truncate">
@@ -300,7 +296,7 @@ export default async function WorkshopPlacesPage() {
       )}
       {b.people.some((p) => p.committee && p.ranking) && (
         <p className="text-sm text-slate-700">
-          <Badge tone="neutral">Note</Badge> Committee members who ranked are included in the allocation.
+          <Badge tone="neutral">Note</Badge> Committee members who chose are included in the allocation.
         </p>
       )}
     </div>
