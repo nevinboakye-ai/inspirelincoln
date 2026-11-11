@@ -6,7 +6,7 @@ import { VIEW_AS_COOKIE, openViewAs } from "@/lib/view-as-seal";
 const PROTECTED = ["/portal", "/admin", "/review"];
 
 /** Pages that stay reachable while the public website is closed. */
-const ALWAYS_OPEN = /^\/(login|signup|auth|portal|admin|review|view-as|privacy|cookies|terms|accessibility|contact|api|search-index|opengraph-image|robots\.txt|sitemap\.xml|icon|apple-icon)(\/|$|\.)/;
+const ALWAYS_OPEN = /^\/(m|login|signup|auth|portal|admin|review|view-as|privacy|cookies|terms|accessibility|contact|api|search-index|opengraph-image|robots\.txt|sitemap\.xml|icon|apple-icon)(\/|$|\.)/;
 
 // The "website open" switch, remembered for a short while so most requests
 // don't wait on the database.
@@ -46,7 +46,7 @@ export async function proxy(request: NextRequest) {
   const isProtected = PROTECTED.some((p) => path === p || path.startsWith(`${p}/`));
   const gated = !ALWAYS_OPEN.test(path) && !(await isSiteOpen(url, key));
   // Public pages while the site is open need nothing from here.
-  if (!isProtected && !gated && !/^\/(login|auth)(\/|$)/.test(path)) return response;
+  if (!isProtected && !gated && !/^\/(login|auth|m)(\/|$)/.test(path)) return response;
 
   const supabase = createServerClient(url, key, {
     cookies: {

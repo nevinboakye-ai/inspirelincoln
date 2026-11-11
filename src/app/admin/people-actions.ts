@@ -34,22 +34,6 @@ export async function setRegistrationStatus(_: ActionResult, form: FormData): Pr
   return { ok: true, message: "Updated." };
 }
 
-export type CheckInResult = { ok: boolean; error?: string; name?: string | null; status?: string; already?: boolean; at?: string | null } | null;
-
-export async function checkIn(_: CheckInResult, form: FormData): Promise<CheckInResult> {
-  const { db } = await requireAccess(["check_in", "manage_people"], "/admin/checkin");
-  const raw = String(form.get("token") ?? "").trim();
-  const token = raw.replace(/^INSPIRE-CHECKIN:/i, "");
-  if (!/^[0-9a-f-]{36}$/i.test(token)) return { ok: false, error: "That isn't a valid INSPIRE check-in code." };
-  const { data, error } = await db.rpc("check_in", { token });
-  if (error) return { ok: false, error: "Check-in failed. Please try again." };
-  const r = Array.isArray(data) ? data[0] : data;
-  if (!r) return { ok: false, error: "No registration found for this code." };
-  revalidatePath("/admin/checkin");
-  if (r.status !== "confirmed") return { ok: false, name: r.full_name, status: r.status, error: `Registration is ${r.status}, not confirmed.` };
-  return { ok: true, name: r.full_name, status: r.status, already: r.already_checked_in, at: r.checked_in_at };
-}
-
 export async function setRole(_: ActionResult, form: FormData): Promise<ActionResult> {
   const { db, user, profile } = await requireAccess("owner", "/admin/users");
   const id = String(form.get("id"));

@@ -10,7 +10,9 @@ import {
 } from "@/components/portal/profile-forms";
 import { Badge } from "@/components/ui/badge";
 import { NetworkCardForm } from "@/components/portal/network";
-import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL } from "@/lib/accounts";
+import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, hasRole } from "@/lib/accounts";
+import { cardPath } from "@/lib/card";
+import { CardSettings } from "@/components/card/card-settings";
 
 export const metadata: Metadata = { title: "Profile and privacy" };
 export const dynamic = "force-dynamic";
@@ -76,6 +78,23 @@ export default async function ProfilePage() {
           }}
         />
       </section>
+
+      {profile.cardCode && profile.accountStatus === "approved" && (
+        <section id="card" className={`${box} scroll-mt-28`} aria-labelledby="card-title">
+          <h2 id="card-title" className="font-display text-xl text-ink">
+            Your Delegate Card QR code
+          </h2>
+          <p className="mb-5 mt-2 text-sm text-slate-700">
+            The QR code on the back of your Delegate Card lets other delegates see your card and save you, and lets the committee check you in on the day. It holds a private link, not your details.
+          </p>
+          <CardSettings
+            shared={profile.cardShared}
+            previewHref={cardPath(profile.cardCode)}
+            presenting={hasRole(profile, "oral_presenter", "poster_presenter")}
+            showsEmail={profile.networkShowEmail}
+          />
+        </section>
+      )}
 
       <section
         id="needs"

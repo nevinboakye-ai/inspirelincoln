@@ -17,6 +17,8 @@ import {
   XCircle,
 } from "lucide-react";
 import { requireUser } from "@/lib/auth";
+import { cardPath, formatCode } from "@/lib/card";
+import { SITE_URL } from "@/lib/site";
 import { getSwitches } from "@/lib/switches";
 import { getConferenceBundle } from "@/lib/data/content";
 import { formatEventDate } from "@/lib/time";
@@ -152,9 +154,11 @@ export default async function PortalHome({
     ? { response: attendance.response as "confirmed" | "unavailable", note: attendance.note, respondedAt: attendance.responded_at }
     : null;
 
-  const ticket = status === "approved" && registration?.status === "confirmed";
-  const qr = ticket
-    ? await QRCode.toString(`INSPIRE-CHECKIN:${registration!.checkin_token}`, {
+  // One code for everything: delegates scan it to see the card, the check-in desk scans it on the day.
+  const cardCode = status === "approved" ? profile.cardCode : null;
+  const qr = cardCode
+    ? await QRCode.toString(`${SITE_URL}${cardPath(cardCode)}`, {
+        errorCorrectionLevel: "M",
         type: "svg",
         margin: 1,
         color: { dark: "#0c182c", light: "#ffffff" },
@@ -456,8 +460,10 @@ export default async function PortalHome({
               dateLabel={formatEventDate(edition.date, { weekday: "short", month: "short" })}
               venue={edition.venueName}
               qr={qr}
-              reference={ticket ? registration!.checkin_token.slice(0, 8).toUpperCase() : null}
-              checkedIn={Boolean(ticket && registration!.checked_in_at)}
+              reference={cardCode ? formatCode(cardCode) : null}
+              checkedIn={Boolean(registration?.checked_in_at)}
+              shared={profile.cardShared}
+              previewHref={cardCode ? cardPath(cardCode) : null}
               countdown={{ date: edition.date, time: edition.startTime }}
               previewNote={!switches.delegate_card ? "Only you can see this card for now. Turn on the Delegate card switch in the Platform dashboard to show it to everyone." : null}
             />

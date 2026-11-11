@@ -1,6 +1,7 @@
 "use client";
 import { m, useMotionTemplate, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
-import { RotateCw } from "lucide-react";
+import Link from "next/link";
+import { Eye, RotateCw } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { CardCountdown } from "./hub-motion";
@@ -23,10 +24,18 @@ export interface LanyardProps {
   roles: { label: string; tone: LanyardTone }[];
   dateLabel: string;
   venue: string;
-  /** Check-in QR code as an SVG string, once the place is confirmed. */
+  /**
+   * Their card QR code as an SVG string. Delegates scan it to see their card
+   * and save them; check-in staff scan the same code on the day.
+   */
   qr: string | null;
+  /** The card code, spaced out for reading aloud or typing. */
   reference: string | null;
   checkedIn: boolean;
+  /** Whether people who scan the code see their details. */
+  shared?: boolean;
+  /** Their own card page, to preview what people see. */
+  previewHref?: string | null;
   /** The conference start, for the countdown printed on the card. */
   countdown?: { date: string; time: string | null };
   /** Shown to the site owner while the card is still switched off for everyone else. */
@@ -136,8 +145,13 @@ export function Lanyard(p: LanyardProps) {
         className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full border border-navy/15 bg-white px-5 font-ui text-sm font-semibold text-ink shadow-sm transition-colors hover:border-navy/35"
       >
         <RotateCw aria-hidden className={cn("size-4 transition-transform duration-500", flipped && "rotate-180")} />
-        {flipped ? "Show the front" : p.qr ? "Show my check-in code" : "Turn the card over"}
+        {flipped ? "Show the front" : p.qr ? "Show my QR code" : "Turn the card over"}
       </button>
+      {p.previewHref && (
+        <Link href={p.previewHref} className="mt-2 inline-flex min-h-11 items-center gap-1.5 font-ui text-sm font-semibold text-electric-600 underline-offset-4 hover:underline">
+          <Eye aria-hidden className="size-4" /> See what people see when they scan it
+        </Link>
+      )}
       {p.previewNote && <p className="mt-3 max-w-xs text-center text-xs text-slate">{p.previewNote}</p>}
     </div>
   );
@@ -200,35 +214,39 @@ function Front({ year, name, detail, roles, dateLabel, venue, countdown, long, h
   );
 }
 
-function Back({ year, theme, qr, reference, checkedIn, hidden }: LanyardProps & { hidden: boolean }) {
+function Back({ year, qr, reference, checkedIn, shared = true, hidden }: LanyardProps & { hidden: boolean }) {
   return (
     <Face back hidden={hidden} className="bg-midnight text-paper ring-1 ring-gold/40">
       <div aria-hidden className="lanyard-grid pointer-events-none absolute inset-0 opacity-[0.12]" />
       <div className="relative flex h-full flex-col items-center px-6 pb-6 pt-11 text-center">
-        <p className="font-ui text-[0.62rem] font-semibold uppercase tracking-[0.24em] text-gold">Check-in · INSPIRE {year}</p>
-        <p className="mt-1.5 text-[0.7rem] leading-snug text-paper/60">{theme}</p>
+        <p className="font-ui text-[0.62rem] font-semibold uppercase tracking-[0.24em] text-gold">Scan me · INSPIRE {year}</p>
+        <p className="mt-1.5 text-[0.7rem] leading-snug text-paper/65">To connect, and to check in on the day</p>
         {qr ? (
           <>
-            <div className="relative mt-5 w-[78%]">
-              <div className="rounded-xl bg-white p-2.5 ring-2 ring-gold/60" role="img" aria-label="Your check-in QR code" dangerouslySetInnerHTML={{ __html: qr }} />
+            <div className="relative mt-4 w-[80%]">
+              <div className="rounded-xl bg-white p-2.5 ring-2 ring-gold/60" role="img" aria-label={`Your Delegate Card QR code${reference ? `, code ${reference}` : ""}`} dangerouslySetInnerHTML={{ __html: qr }} />
               {checkedIn && (
                 <span className="absolute -right-3 -top-3 rotate-12 rounded-md border-2 border-success bg-white px-2 py-1 font-ui text-[0.65rem] font-bold uppercase tracking-[0.16em] text-success shadow">
                   Checked in
                 </span>
               )}
             </div>
-            {reference && <p className="mt-3 font-mono text-xs tracking-[0.2em] text-paper/70">{reference}</p>}
-            <p className="mt-auto text-sm leading-snug text-paper/80">
-              {checkedIn ? "You're checked in. Enjoy the conference." : "Show this at registration. Turn your screen brightness up to make it quicker to scan."}
+            {reference && <p className="mt-3 font-mono text-xs tracking-[0.16em] text-paper/75">{reference}</p>}
+            <p className="mt-auto text-[0.8rem] leading-snug text-paper/85">
+              {checkedIn
+                ? "You're checked in. Enjoy the conference."
+                : shared
+                  ? "Delegates scan this to see your card and save you. Show it at registration to check in."
+                  : "Sharing is off, so people who scan see nothing about you. Show it at registration to check in."}
             </p>
-            <p className="mt-2 text-[0.68rem] text-paper/55">The code holds a reference number only, no personal details.</p>
+            <p className="mt-2 text-[0.66rem] text-paper/60">The code is a private link. It holds no personal details.</p>
           </>
         ) : (
           <>
             <div aria-hidden className="mt-6 grid aspect-square w-[70%] place-items-center rounded-xl border border-dashed border-paper/25">
               <img src="/brand/crest-white.png" alt="" className="h-16 w-auto opacity-40" />
             </div>
-            <p className="mt-auto text-sm leading-snug text-paper/80">Your check-in code will appear here closer to the event.</p>
+            <p className="mt-auto text-sm leading-snug text-paper/80">Your QR code will appear here once your place is confirmed.</p>
           </>
         )}
       </div>
