@@ -30,6 +30,8 @@ export interface Profile {
   instagram: string | null;
   /** Show the account email on the delegate network. */
   networkShowEmail: boolean;
+  /** They've answered whether to show their email to other delegates. */
+  networkEmailAsked: boolean;
   /** Appear on the delegate network at all. */
   networkListed: boolean;
   /** Private code in their Delegate Card QR (null until the card code migration is run). */
@@ -87,6 +89,8 @@ export const getCurrentUser = cache(async () => {
     linkedinUrl: p?.linkedin_url ?? null,
     instagram: p?.instagram ?? null,
     networkShowEmail: Boolean(p?.network_show_email),
+    // Before setup SQL 28 the column is missing: treat sharers as asked, so nobody is asked twice once it runs.
+    networkEmailAsked: Boolean(p?.network_email_asked ?? p?.network_show_email),
     networkListed: p?.network_listed ?? true,
     cardCode: p?.card_code ?? null,
     cardShared: p?.card_shared ?? true,
