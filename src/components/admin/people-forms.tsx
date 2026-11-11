@@ -1,8 +1,8 @@
 "use client";
 import { submitWithoutReset } from "@/lib/use-action-form";
-import { useActionState, useEffect, useRef, useState } from "react";
-import { Camera, CheckCircle2, Loader2, XCircle } from "lucide-react";
-import { addRegistration, checkIn, reviewPoster, setRegistrationStatus, setRole, updateEnquiry, type CheckInResult } from "@/app/admin/people-actions";
+import { useActionState, useRef } from "react";
+import { Loader2 } from "lucide-react";
+import { addRegistration, reviewPoster, setRegistrationStatus, setRole, updateEnquiry } from "@/app/admin/people-actions";
 import type { ActionResult } from "@/app/portal/actions";
 import { Field, inputClass } from "@/components/forms/field";
 import { ResultBanner } from "@/components/portal/profile-forms";
@@ -85,95 +85,5 @@ export function PosterReviewForm({ id, status, note }: { id: string; status: str
       {state?.error && <span role="alert" className="text-xs text-danger">{state.error}</span>}
       {state?.ok && <span role="status" className="text-xs text-success">Saved</span>}
     </form>
-  );
-}
-
-type Detector = { detect: (src: CanvasImageSource) => Promise<{ rawValue: string }[]> };
-
-/** Check-in desk: camera QR scanning where the browser supports BarcodeDetector, with manual entry everywhere. */
-export function CheckInDesk() {
-  const [state, act, pending] = useActionState<CheckInResult, FormData>(checkIn, null);
-  const [scanning, setScanning] = useState(false);
-  const [supported, setSupported] = useState<boolean | null>(null);
-  const video = useRef<HTMLVideoElement>(null);
-  const form = useRef<HTMLFormElement>(null);
-  const input = useRef<HTMLInputElement>(null);
-  const last = useRef<{ v: string; t: number }>({ v: "", t: 0 });
-
-  useEffect(() => setSupported(typeof window !== "undefined" && "BarcodeDetector" in window), []);
-
-  useEffect(() => {
-    if (!scanning) return;
-    let stream: MediaStream | null = null;
-    let raf = 0;
-    let stopped = false;
-    const BD = (window as unknown as { BarcodeDetector: new (o: { formats: string[] }) => Detector }).BarcodeDetector;
-    const detector = new BD({ formats: ["qr_code"] });
-    (async () => {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        if (!video.current || stopped) return;
-        video.current.srcObject = stream;
-        await video.current.play();
-        const tick = async () => {
-          if (stopped || !video.current) return;
-          try {
-            const codes = await detector.detect(video.current);
-            const v = codes[0]?.rawValue;
-            const now = Date.now();
-            if (v && (v !== last.current.v || now - last.current.t > 4000)) {
-              last.current = { v, t: now };
-              if (input.current) input.current.value = v;
-              form.current?.requestSubmit();
-            }
-          } catch {}
-          raf = window.setTimeout(tick, 350) as unknown as number;
-        };
-        tick();
-      } catch {
-        setScanning(false);
-        alert("Camera access was blocked. Use manual entry instead.");
-      }
-    })();
-    return () => {
-      stopped = true;
-      clearTimeout(raf);
-      stream?.getTracks().forEach((t) => t.stop());
-    };
-  }, [scanning]);
-
-  return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <div className="space-y-4 rounded-xl border border-navy/10 bg-white p-6">
-        {supported && (
-          <button type="button" onClick={() => setScanning((s) => !s)} className={scanning ? btn.secondary : btn.primary}>
-            <Camera aria-hidden className="size-4" /> {scanning ? "Stop camera" : "Scan QR codes"}
-          </button>
-        )}
-        {supported === false && <p className="text-sm text-slate-700">This browser can&apos;t scan QR codes directly. Use a recent Chrome or Edge on Android, or enter the code manually.</p>}
-        {scanning && <video ref={video} muted playsInline className="aspect-video w-full rounded-md bg-midnight object-cover" aria-label="Camera preview" />}
-        <form ref={form} action={act} className="flex flex-wrap items-end gap-2">
-          <Field id="token" label="Check-in code" className="min-w-56 flex-1" hint="Scan, or type the code shown under the delegate's QR.">
-            <input ref={input} id="token" name="token" autoComplete="off" className={inputClass} />
-          </Field>
-          <button disabled={pending} className={btn.primary}>{pending && <Loader2 aria-hidden className="size-4 animate-spin" />} Check in</button>
-        </form>
-      </div>
-      <div aria-live="assertive" className="min-h-40">
-        {state && (
-          <div className={`rounded-xl border p-6 ${state.ok ? (state.already ? "border-warning/30 bg-warning/[0.06]" : "border-success/30 bg-success/[0.06]") : "border-danger/30 bg-danger/[0.06]"}`}>
-            {state.ok ? <CheckCircle2 aria-hidden className={`size-10 ${state.already ? "text-warning" : "text-success"}`} /> : <XCircle aria-hidden className="size-10 text-danger" />}
-            <p className="mt-3 font-display text-2xl font-semibold text-ink">{state.name ?? (state.ok ? "Checked in" : "Not checked in")}</p>
-            <p className="mt-1 text-slate-700">
-              {state.ok
-                ? state.already
-                  ? `Already checked in at ${state.at ? new Date(state.at).toLocaleTimeString("en-GB", { timeZone: "Europe/London", hour: "2-digit", minute: "2-digit" }) : "an earlier time"}.`
-                  : "Checked in. Welcome!"
-                : state.error}
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
   );
 }

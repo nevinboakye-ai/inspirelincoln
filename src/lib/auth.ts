@@ -31,6 +31,10 @@ export interface Profile {
   networkShowEmail: boolean;
   /** Appear on the delegate network at all. */
   networkListed: boolean;
+  /** Private code in their Delegate Card QR (null until the card code migration is run). */
+  cardCode: string | null;
+  /** Whether people who scan their card see their details. */
+  cardShared: boolean;
   /** The permission tier used by role gates, derived from the account type and status. */
   role: UserRole;
   /** The role stored on the profile, used only as a site admin override. */
@@ -80,6 +84,8 @@ export const getCurrentUser = cache(async () => {
     linkedinUrl: p?.linkedin_url ?? null,
     networkShowEmail: Boolean(p?.network_show_email),
     networkListed: p?.network_listed ?? true,
+    cardCode: p?.card_code ?? null,
+    cardShared: p?.card_shared ?? true,
     role: effectiveRole(access, base.role),
     siteRole: base.role,
     access,

@@ -9,7 +9,10 @@ export const metadata: Metadata = { title: "My conference", robots: { index: fal
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const { profile } = await requireUser("/portal");
   // The network stays out of the menu entirely until the owner opens it.
-  const showNetwork = profile.access.owner || (await getSwitches()).network_open;
+  const switches = await getSwitches();
+  const showNetwork = profile.access.owner || switches.network_open;
+  // People I've met follows the Delegate Card, which carries the QR code.
+  const showPeople = profile.access.owner || (switches.delegate_card && profile.accountStatus === "approved");
   return (
     <div className="min-h-screen bg-paper pb-28 pt-24 sm:pt-28 lg:pb-24">
       <div className="container-page grid gap-5 lg:grid-cols-[15rem_1fr] lg:gap-12">
@@ -20,6 +23,7 @@ export default async function PortalLayout({ children }: { children: React.React
           access={profile.access}
           reviewer={profile.siteRole === "reviewer"}
           showNetwork={showNetwork}
+          showPeople={showPeople}
         />
         <div className="min-w-0">{children}</div>
       </div>

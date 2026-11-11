@@ -52,6 +52,18 @@ const PURPOSES: { what: string; why: string; basis: string; kept: string }[] = [
     kept: "Until 31 March 2027",
   },
   {
+    what: "The QR code on your Delegate Card: a private, random link with no personal details in it",
+    why: "So other confirmed delegates can see your card when they scan it, and the committee can check you in",
+    basis: "Legitimate interests in running the conference and helping delegates connect. You can stop sharing your details, or get a new code, at any time in My Hub",
+    kept: "As for your account",
+  },
+  {
+    what: "People you've met: the cards you save by scanning them, and your private notes",
+    why: "So you can keep in touch with people after the conference",
+    basis: "Your choice. Only you can see your list and notes",
+    kept: "Until you remove them, or either account is deleted. If someone stops sharing, only your note is kept",
+  },
+  {
     what: "Slides, posters and the feedback on them",
     why: "So the committee can review your work, give feedback and run your session",
     basis: "Contract",
@@ -228,6 +240,7 @@ export default function PrivacyPage() {
               <li><strong>Supporting committee members</strong> see slides and posters with the presenter&apos;s name, so they can review them. They can&apos;t see anyone&apos;s email or profile.</li>
               <li><strong>The executive committee</strong>, vice president and president see account details to review accounts, manage the waitlist and run check-in.</li>
               <li><strong>Other confirmed delegates</strong> see your name, university, year and account type on the delegate network, plus a bio, LinkedIn link or email only if you add them. You can hide yourself from the network in My Hub. People whose account isn&apos;t confirmed see nothing.</li>
+              <li><strong>Confirmed delegates who scan your Delegate Card</strong> see the same card, plus your presentation title if you&apos;re presenting, and can save it to their own list with a private note. You can turn this off in My Hub, and the committee can still scan your code to check you in.</li>
             </ul>
             <p>We won&apos;t share your data with anyone else unless the law requires it, for example if the police make a valid request.</p>
 

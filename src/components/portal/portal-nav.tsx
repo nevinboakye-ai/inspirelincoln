@@ -1,17 +1,18 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Gauge, LayoutDashboard, LogOut, ShieldCheck, Ticket, UploadCloud, UserRound, ClipboardCheck, Users } from "lucide-react";
+import { Gauge, LayoutDashboard, LogOut, ShieldCheck, Ticket, UploadCloud, UserRound, ClipboardCheck, NotebookPen, Users } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 import { cn } from "@/lib/cn";
 import type { Access } from "@/lib/accounts";
 
-export function PortalNav({ name, typeLabel, presenter, access, reviewer, showNetwork }: { name: string; typeLabel: string; presenter: boolean; access: Access; reviewer: boolean; showNetwork: boolean }) {
+export function PortalNav({ name, typeLabel, presenter, access, reviewer, showNetwork, showPeople }: { name: string; typeLabel: string; presenter: boolean; access: Access; reviewer: boolean; showNetwork: boolean; showPeople: boolean }) {
   const path = usePathname();
   const links = [
     { href: "/portal", label: "My conference", icon: Ticket },
     ...(presenter ? [{ href: "/portal/submission", label: "My submission", icon: UploadCloud }] : []),
     ...(showNetwork ? [{ href: "/portal/network", label: "Network", icon: Users }] : []),
+    ...(showPeople ? [{ href: "/portal/people", label: "People I've met", icon: NotebookPen }] : []),
     { href: "/portal/profile", label: "Profile and privacy", icon: UserRound },
     ...(reviewer && !access.committee ? [{ href: "/review", label: "Abstract reviews", icon: ClipboardCheck }] : []),
     ...(access.owner ? [{ href: "/admin/platform", label: "Platform dashboard", icon: Gauge }] : []),
