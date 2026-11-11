@@ -1,5 +1,6 @@
 "use client";
 import { useActionState, useEffect, useState } from "react";
+import Link from "next/link";
 import { Loader2, Send } from "lucide-react";
 import { giveFeedback, previewRecipients, reviewAccount, sendBroadcast, sendDirectEmail, type BroadcastResult, type RecipientRow } from "@/app/admin/committee-actions";
 import { Badge } from "@/components/ui/badge";
@@ -207,7 +208,17 @@ export function BroadcastForm({ counts, selected }: { counts: Partial<Record<Acc
         <p className="mt-2 flex flex-wrap gap-x-4 text-sm">
           <button type="button" onClick={() => setTypes([...ACCOUNT_TYPES])} className="min-h-10 font-semibold text-electric-600">Select every group</button>
           <button type="button" onClick={() => setTypes([...ROSTER_TYPES])} className="min-h-10 font-semibold text-electric-600">All delegates and presenters</button>
-          <button type="button" onClick={() => setTypes([...COMMITTEE_TYPES])} className="min-h-10 font-semibold text-electric-600">The whole committee</button>
+          <button
+            type="button"
+            onClick={() => {
+              setTypes([...COMMITTEE_TYPES]);
+              // The whole committee includes members who haven't signed up yet.
+              setIncludeSelected(true);
+            }}
+            className="min-h-10 font-semibold text-electric-600"
+          >
+            The whole committee
+          </button>
         </p>
         {fe("types") && <p className="mt-2 text-sm font-medium text-danger">{fe("types")}</p>}
       </fieldset>
@@ -231,10 +242,10 @@ export function BroadcastForm({ counts, selected }: { counts: Partial<Record<Acc
             className="mt-0.5 size-4 accent-navy"
           />
           <span>
-            <span className="block font-semibold text-ink">Also send to selected delegates who haven&apos;t set up an account yet ({selected})</span>
+            <span className="block font-semibold text-ink">Also send to people who haven&apos;t signed up yet ({selected} on the selected list)</span>
             <span className="text-slate-700">
               {purpose === "service"
-                ? "Uses the email on the selected list. Their copy includes a button to set up their account. Only people in the groups ticked above are included."
+                ? "Delegates, presenters and committee members on the selected list who haven't set up an account. Uses the email on the list, and their copy includes a button to set up their account. Only people in the groups ticked above are included."
                 : "Only for conference updates. News and promotion only go to people who opted in."}
             </span>
           </span>
@@ -255,6 +266,18 @@ export function BroadcastForm({ counts, selected }: { counts: Partial<Record<Acc
       </fieldset>
 
       <RecipientList people={people} loading={loading} error={loadError} excluded={excluded} setExcluded={setExcluded} />
+      {includeSelected && purpose === "service" && types.some((t) => COMMITTEE_TYPES.includes(t)) && people !== null && !loading && (
+        <p className="rounded-[3px] border border-navy/10 bg-white p-3 text-sm text-slate-700">
+          {people.some((p) => !p.joined && COMMITTEE_TYPES.includes(p.account_type))
+            ? "Committee members who haven't signed up are included. "
+            : "No committee members who haven't signed up are on the selected list yet. "}
+          To reach someone who isn&apos;t signed up, add them to the{" "}
+          <Link href="/admin/accounts/roster" className="font-semibold text-electric-600 underline underline-offset-4">
+            selected list
+          </Link>{" "}
+          with their committee roles first. They&apos;ll then get group emails and can set up their account with that email.
+        </p>
+      )}
       {[...excluded].map((e) => <input key={e} type="hidden" name="exclude" value={e} />)}
 
       <Field id="subject" label="Subject" required error={fe("subject")}>
@@ -323,7 +346,7 @@ function RecipientList({
           </h3>
           {people !== null && (
             <p className="text-sm text-slate-700">
-              {notJoined ? `Including ${notJoined} selected ${notJoined === 1 ? "delegate who hasn't" : "delegates who haven't"} set up an account. ` : ""}
+              {notJoined ? `Including ${notJoined} ${notJoined === 1 ? "person who hasn't" : "people who haven't"} signed up yet. ` : ""}
               {unticked ? `${unticked} unticked. ` : ""}
               Untick anyone you want to leave out.
             </p>

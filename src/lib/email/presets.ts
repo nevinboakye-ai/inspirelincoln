@@ -222,7 +222,7 @@ ${SIGN_OFF}`,
     name: "Committee: log in before the conference",
     use: "For the executive and supporting committee. Thanks everyone, includes login details and asks them to check their access before the day.",
     subject: "INSPIRE 2026 is nearly here: please log in to your committee account",
-    audience: { types: [...COMMITTEE_TYPES], statuses: ["approved"], includeSelected: false },
+    audience: { types: [...COMMITTEE_TYPES], statuses: ["approved"], includeSelected: true },
     login: true,
     body: `Dear {first_name},
 
