@@ -70,6 +70,12 @@ const PURPOSES: { what: string; why: string; basis: string; kept: string }[] = [
     kept: "Until you remove them, or either account is deleted. If someone stops sharing, only your note is kept",
   },
   {
+    what: "Your workshop ranking and the workshop places you are given",
+    why: "So the committee can give as many people as possible the workshops they want most, and tell you where to go on the day",
+    basis: "Contract. Only you and the committee members who arrange workshop places can see them",
+    kept: "As for your account",
+  },
+  {
     what: "Slides, posters and the feedback on them",
     why: "So the committee can review your work, give feedback and run your session",
     basis: "Contract",
