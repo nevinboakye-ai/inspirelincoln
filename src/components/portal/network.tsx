@@ -196,7 +196,7 @@ export function NetworkDirectory({ people, me, logos = {} }: { people: Delegate[
               <h3 className="mb-3 flex items-center gap-2 font-ui text-xs font-semibold uppercase tracking-[0.18em] text-gold-700">
                 <Crown aria-hidden className="size-4" /> The committee <span className="font-normal normal-case tracking-normal text-slate">({committee.length})</span>
               </h3>
-              <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <ul className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-3">
                 {committee.map((p) => (
                   <li key={p.id}>
                     <CommitteeCard p={p} me={me} logo={logos[uniKey(p.institution)]} onOpen={() => setOpenId(p.id)} />
@@ -212,7 +212,7 @@ export function NetworkDirectory({ people, me, logos = {} }: { people: Delegate[
                   Delegates <span className="font-normal normal-case tracking-normal">({delegates.length})</span>
                 </h3>
               )}
-        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <ul className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-3">
           {delegates.map((p) => {
             const tone = toneFor(p.account_type);
             return (
@@ -224,28 +224,31 @@ export function NetworkDirectory({ people, me, logos = {} }: { people: Delegate[
                   className="group relative flex h-full w-full flex-col overflow-hidden rounded-xl border border-navy/10 bg-white text-left shadow-[0_1px_2px_rgba(12,24,44,0.06)] transition-[transform,box-shadow,border-color] duration-300 ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-navy/25 hover:shadow-[0_22px_44px_-26px_rgba(26,49,84,0.55)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600"
                 >
                   <span aria-hidden className={`h-1.5 w-full ${tone.band}`} />
-                  <span className="flex flex-1 flex-col p-4 sm:p-5">
-                    <span className="flex items-center gap-3.5">
-                      <Avatar url={p.avatar_url} name={p.full_name} className="size-12 transition-transform duration-300 group-hover:scale-105" fallbackClassName={`text-sm ${tone.avatar}`} />
-                      <span className="min-w-0">
-                        <span className="block truncate font-semibold text-ink">
+                  <span className="flex flex-1 flex-col p-3 sm:p-5">
+                    <span className={PERSON_ROW}>
+                      <Avatar url={p.avatar_url} name={p.full_name} className="size-14 transition-transform duration-300 group-hover:scale-105 sm:size-12" fallbackClassName={`text-sm ${tone.avatar}`} />
+                      <span className="w-full min-w-0 sm:w-auto">
+                        <span className={`${NAME} text-ink`}>
                           {p.full_name}
                           {p.id === me && <span className="ml-1.5 text-xs font-normal text-slate">(you)</span>}
                         </span>
-                        <span className="flex items-center gap-1.5 text-sm text-slate-700">
+                        <span className={`${META} text-slate-700`}>
                           <UniLogo src={logos[uniKey(p.institution)]} name={p.institution} className="size-5 p-0.5" />
-                          <span className="truncate">{[p.institution, p.year_of_study].filter(Boolean).join(" · ") || " "}</span>
+                          <span className="min-w-0 line-clamp-2 sm:line-clamp-1">
+                            {p.institution || (p.year_of_study ? null : " ")}
+                            {p.year_of_study && <span className={p.institution ? "hidden sm:inline" : undefined}>{p.institution ? ` · ${p.year_of_study}` : p.year_of_study}</span>}
+                          </span>
                         </span>
                       </span>
                     </span>
-                    {p.bio && <span className="mt-3 line-clamp-2 text-sm leading-relaxed text-slate-700">{p.bio}</span>}
-                    <span className="mt-auto flex items-center justify-between gap-2 pt-4">
+                    {p.bio && <span className="mt-3 hidden text-sm leading-relaxed text-slate-700 sm:line-clamp-2">{p.bio}</span>}
+                    <span className={FOOT}>
                       {p.account_type !== "delegate" ? (
                         <Badge tone={p.account_type.endsWith("presenter") ? "violet" : "neutral"}>{roleLabel(p)}</Badge>
                       ) : (
-                        <span />
+                        <span className="hidden sm:block" />
                       )}
-                      <span className="inline-flex items-center gap-1 font-ui text-xs font-semibold text-electric-600">
+                      <span className="hidden items-center gap-1 font-ui text-xs font-semibold text-electric-600 sm:inline-flex">
                         View profile <ArrowRight aria-hidden className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
                       </span>
                     </span>
@@ -266,6 +269,13 @@ export function NetworkDirectory({ people, me, logos = {} }: { people: Delegate[
     </section>
   );
 }
+
+// Cards sit two to a row on phones, so there they stack: photo on top,
+// name and university centred underneath, and the bio left for the profile.
+const PERSON_ROW = "flex flex-col items-center gap-2 text-center sm:flex-row sm:gap-3.5 sm:text-left";
+const NAME = "line-clamp-2 break-words text-sm font-semibold sm:line-clamp-1 sm:text-base";
+const META = "mt-0.5 flex items-center justify-center gap-1.5 text-xs sm:justify-start sm:text-sm";
+const FOOT = "mt-auto flex flex-col items-center gap-2 pt-3 sm:flex-row sm:justify-between sm:pt-4";
 
 /**
  * The committee's cards stand out from delegates': the executive committee's
@@ -313,27 +323,30 @@ function CommitteeCard({ p, me, logo, onOpen }: { p: Delegate; me: string; logo?
       {exec && <span aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_30%,rgba(255,255,255,0.35)_45%,transparent_60%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100 motion-reduce:transition-none" />}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/brand/crest-white.png" alt="" aria-hidden className={`pointer-events-none absolute -bottom-6 -right-4 h-28 w-auto ${c.crest}`} />
-      <span className="relative flex flex-1 flex-col p-4 sm:p-5">
-        <span className="flex items-center gap-3.5">
-          <Avatar url={p.avatar_url} name={p.full_name} className={`size-12 ring-2 transition-transform duration-300 group-hover:scale-105 ${c.ring}`} fallbackClassName={c.fallback} />
-          <span className="min-w-0">
-            <span className="block truncate font-semibold">
+      <span className="relative flex flex-1 flex-col p-3 sm:p-5">
+        <span className={PERSON_ROW}>
+          <Avatar url={p.avatar_url} name={p.full_name} className={`size-14 ring-2 transition-transform duration-300 group-hover:scale-105 sm:size-12 ${c.ring}`} fallbackClassName={c.fallback} />
+          <span className="w-full min-w-0 sm:w-auto">
+            <span className={NAME}>
               {p.full_name}
               {p.id === me && <span className={`ml-1.5 text-xs font-normal ${c.you}`}>(you)</span>}
             </span>
-            <span className={`flex items-center gap-1.5 text-sm ${c.meta}`}>
+            <span className={`${META} ${c.meta}`}>
               <UniLogo src={logo} name={p.institution} className="size-5 p-0.5" />
-              <span className="truncate">{[p.institution, p.year_of_study].filter(Boolean).join(" · ") || " "}</span>
+              <span className="min-w-0 line-clamp-2 sm:line-clamp-1">
+                            {p.institution || (p.year_of_study ? null : " ")}
+                            {p.year_of_study && <span className={p.institution ? "hidden sm:inline" : undefined}>{p.institution ? ` · ${p.year_of_study}` : p.year_of_study}</span>}
+                          </span>
             </span>
           </span>
         </span>
-        {p.bio && <span className={`mt-3 line-clamp-2 text-sm leading-relaxed ${c.bio}`}>{p.bio}</span>}
-        <span className="mt-auto flex items-center justify-between gap-2 pt-4">
-          <span className={`inline-flex min-w-0 items-center gap-1.5 rounded-full px-2.5 py-1 font-ui text-[0.68rem] font-semibold uppercase tracking-[0.12em] ${c.badge}`}>
+        {p.bio && <span className={`mt-3 hidden text-sm leading-relaxed sm:line-clamp-2 ${c.bio}`}>{p.bio}</span>}
+        <span className={FOOT}>
+          <span className={`inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full px-2.5 py-1 font-ui text-[0.62rem] font-semibold uppercase tracking-[0.1em] sm:text-[0.68rem] sm:tracking-[0.12em] ${c.badge}`}>
             {exec && <Star aria-hidden className="size-3 shrink-0 fill-current" />}
             <span className="truncate">{p.committee_position || team}</span>
           </span>
-          <span className={`inline-flex shrink-0 items-center gap-1 font-ui text-xs font-semibold ${c.view}`}>
+          <span className={`hidden shrink-0 items-center gap-1 font-ui text-xs font-semibold sm:inline-flex ${c.view}`}>
             View <ArrowRight aria-hidden className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
           </span>
         </span>
