@@ -4,24 +4,26 @@ import { cn } from "@/lib/cn";
 
 type Value = { icon: LucideIcon; name: string; body: string };
 
-const shell = "relative flex h-full flex-col overflow-hidden rounded-2xl p-7 shadow-[0_1px_2px_rgba(12,24,44,0.12),0_30px_60px_-30px_rgba(0,0,0,0.6)] ring-1 ring-black/5 sm:p-10";
+const shell = "relative flex h-full flex-col overflow-hidden rounded-2xl p-5 shadow-[0_1px_2px_rgba(12,24,44,0.12),0_30px_60px_-30px_rgba(0,0,0,0.6)] ring-1 ring-black/5 sm:p-6";
 
-function Statement({ icon: Icon, label, text, num, tone }: { icon: LucideIcon; label: string; text: string; num: string; tone: "cyan" | "gold" }) {
-  const s =
-    tone === "cyan"
-      ? { card: "bg-cyan text-ink", chip: "bg-navy/10 text-navy", eyebrow: "text-electric-600", num: "text-navy/[0.07]" }
-      : { card: "bg-gold text-midnight", chip: "bg-midnight/10 text-midnight", eyebrow: "text-midnight/75", num: "text-midnight/[0.08]" };
+type Tone = "cyan" | "gold" | "paper";
+const TONES: Record<Tone, { card: string; chip: string; eyebrow: string; num: string; dot: string }> = {
+  cyan: { card: "bg-cyan text-ink", chip: "bg-navy/10 text-navy", eyebrow: "text-electric-600", num: "text-navy/[0.07]", dot: "bg-cyan" },
+  gold: { card: "bg-gold text-midnight", chip: "bg-midnight/10 text-midnight", eyebrow: "text-midnight/75", num: "text-midnight/[0.08]", dot: "bg-gold" },
+  paper: { card: "bg-paper text-ink", chip: "bg-navy/[0.07] text-electric-600", eyebrow: "text-electric-600", num: "text-navy/[0.06]", dot: "bg-paper" },
+};
+
+function Card({ icon: Icon, eyebrow, title, text, num, tone }: { icon: LucideIcon; eyebrow: string; title?: string; text: string; num: string; tone: Tone }) {
+  const s = TONES[tone];
   return (
     <article className={cn(shell, s.card)}>
-      <span aria-hidden data-num={num} className={cn("pointer-events-none absolute right-6 top-4 font-display text-[5.5rem] leading-none before:content-[attr(data-num)] sm:text-[7rem]", s.num)} />
-      <span aria-hidden className={cn("relative grid size-12 place-items-center rounded-full", s.chip)}>
-        <Icon className="size-6" />
+      <span aria-hidden data-num={num} className={cn("pointer-events-none absolute right-5 top-3 font-display text-[3.5rem] leading-none before:content-[attr(data-num)]", s.num)} />
+      <span aria-hidden className={cn("relative grid size-10 place-items-center rounded-full", s.chip)}>
+        <Icon className="size-5" />
       </span>
-      {/* The values card sets the deck's height, so the statement sits at the foot of the card. */}
-      <div className="relative mt-auto pt-10">
-        <h3 className={cn("eyebrow", s.eyebrow)}>{label}</h3>
-        <p className="mt-4 font-display text-2xl font-medium leading-snug sm:text-[2rem]">{text}</p>
-      </div>
+      <h3 className={cn("eyebrow relative mt-5", s.eyebrow)}>{eyebrow}</h3>
+      {title && <p className="relative mt-2 font-display text-2xl font-semibold leading-tight">{title}</p>}
+      <p className={cn("relative mt-2.5 font-display font-medium leading-snug", title ? "text-lg" : "text-xl sm:text-[1.4rem]")}>{text}</p>
     </article>
   );
 }
@@ -31,37 +33,20 @@ function Statement({ icon: Icon, label, text, num, tone }: { icon: LucideIcon; l
  * step through, like the story on the home page.
  */
 export function PurposeDeck({ mission, vision, values, icons }: { mission: string; vision: string; values: Value[]; icons: { mission: LucideIcon; vision: LucideIcon } }) {
+  const num = (i: number) => `${String(i + 1).padStart(2, "0")}`;
   return (
     <CardDeck
       label="Our mission, vision and values"
       tone="dark"
       cards={[
-        { key: "mission", label: "Our mission", dot: "bg-cyan", card: <Statement icon={icons.mission} label="Our mission" text={mission} num="01" tone="cyan" /> },
-        { key: "vision", label: "Our vision", dot: "bg-gold", card: <Statement icon={icons.vision} label="Our vision" text={vision} num="02" tone="gold" /> },
-        {
-          key: "values",
-          label: "Our values",
-          dot: "bg-paper",
-          card: (
-            <article className={cn(shell, "bg-paper text-ink")}>
-              <span aria-hidden data-num="03" className="pointer-events-none absolute right-6 top-4 font-display text-[5.5rem] leading-none text-navy/[0.06] before:content-[attr(data-num)] sm:text-[7rem]" />
-              <h3 className="eyebrow relative text-electric-600">Our values</h3>
-              <ul className="relative mt-6 space-y-5">
-                {values.map((v) => (
-                  <li key={v.name} className="flex gap-4">
-                    <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-full bg-navy/[0.07] text-electric-600">
-                      <v.icon className="size-5" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="font-display text-xl font-semibold leading-tight">{v.name}</p>
-                      <p className="mt-1 text-[0.95rem] leading-relaxed text-slate-700">{v.body}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </article>
-          ),
-        },
+        { key: "mission", label: "Our mission", dot: TONES.cyan.dot, card: <Card icon={icons.mission} eyebrow="Our mission" text={mission} num={num(0)} tone="cyan" /> },
+        { key: "vision", label: "Our vision", dot: TONES.gold.dot, card: <Card icon={icons.vision} eyebrow="Our vision" text={vision} num={num(1)} tone="gold" /> },
+        ...values.map((v, i) => ({
+          key: v.name,
+          label: `Our values: ${v.name}`,
+          dot: TONES.paper.dot,
+          card: <Card icon={v.icon} eyebrow={`Our values · ${i + 1} of ${values.length}`} title={v.name} text={v.body} num={num(i + 2)} tone="paper" />,
+        })),
       ]}
     />
   );

@@ -21,10 +21,10 @@ export function PageHero({
   children?: ReactNode;
   visual?: ReactNode;
   className?: string;
-  size?: "md" | "lg";
+  size?: "sm" | "md" | "lg";
 }) {
   return (
-    <section className={cn("surface-midnight noise relative isolate overflow-hidden", size === "lg" ? "pt-40 pb-24 sm:pb-32" : "pt-36 pb-16 sm:pt-44 sm:pb-24", className)}>
+    <section className={cn("surface-midnight noise relative isolate overflow-hidden", size === "lg" ? "pt-40 pb-24 sm:pb-32" : size === "sm" ? "pt-32 pb-12 sm:pt-36 sm:pb-16" : "pt-36 pb-16 sm:pt-44 sm:pb-24", className)}>
       <div aria-hidden className="absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_80%_at_85%_0%,rgba(58,95,148,0.32),transparent_60%)]" />
         <div className="quarter-lattice absolute inset-0 [mask-image:linear-gradient(to_bottom,black,transparent)]" />
