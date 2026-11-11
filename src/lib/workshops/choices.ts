@@ -8,6 +8,12 @@ export type ChoiceWorkshop = {
   slug: string;
   title: string;
   strapline: string;
+  summary?: string | null;
+  description?: string | null;
+  topics?: string[] | null;
+  outcomes?: string[] | null;
+  audience?: string | null;
+  facilitator?: string | null;
   slot: number | null;
   stream: "a" | "b" | null;
   capacity: number | null;
@@ -45,7 +51,7 @@ export async function loadWorkshopChoices(db: SupabaseClient, userId: string) {
   if (!editionId) return empty;
 
   const [ws, sessions, settings, mine, places] = await Promise.all([
-    db.from("workshops").select("id, number, slug, title, strapline, slot, stream, capacity").eq("edition_id", editionId).eq("published", true).order("number"),
+    db.from("workshops").select("id, number, slug, title, strapline, summary, description, topics, outcomes, audience, facilitator, slot, stream, capacity").eq("edition_id", editionId).eq("published", true).order("number"),
     db.from("sessions").select("title, starts_at, ends_at, rooms(name)").eq("edition_id", editionId).eq("category", "workshop").order("starts_at"),
     db.from("workshop_choice_settings").select("ranking_open, closes_at, results_published").eq("edition_id", editionId).maybeSingle(),
     db.from("workshop_rankings").select("ranking, updated_at").eq("user_id", userId).eq("edition_id", editionId).maybeSingle(),
@@ -54,7 +60,7 @@ export async function loadWorkshopChoices(db: SupabaseClient, userId: string) {
 
   // Before the set-up runs, the new columns and tables are missing.
   if (ws.error) {
-    const { data } = await db.from("workshops").select("id, number, slug, title, strapline, capacity").eq("edition_id", editionId).eq("published", true).order("number");
+    const { data } = await db.from("workshops").select("id, number, slug, title, strapline, summary, description, topics, outcomes, audience, facilitator, capacity").eq("edition_id", editionId).eq("published", true).order("number");
     return { ...empty, workshops: (data ?? []).map((w) => ({ ...w, slot: null, stream: null }) as ChoiceWorkshop) };
   }
   return {

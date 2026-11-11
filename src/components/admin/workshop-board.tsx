@@ -16,9 +16,8 @@ function Result({ r }: { r: BoardResult }) {
   );
 }
 
-const ordinal = (n: number) => `${n}${n === 1 ? "st" : n === 2 ? "nd" : n === 3 ? "rd" : "th"}`;
 
-/** Open or close ranking, set when it closes, and publish places. */
+/** Open or close workshop choices, set when they close, and publish places. */
 export function ChoiceSettingsForm({ open, closesAt, published, hasPlaces }: { open: boolean; closesAt: string; published: boolean; hasPlaces: boolean }) {
   const [r, action, pending] = useActionState(saveChoiceSettings, null);
   return (
@@ -26,15 +25,15 @@ export function ChoiceSettingsForm({ open, closesAt, published, hasPlaces }: { o
       <label className="flex items-start gap-3">
         <input type="checkbox" name="open" defaultChecked={open} className="mt-1 size-5 accent-navy" />
         <span>
-          <span className="block font-semibold text-ink">Open ranking to delegates</span>
-          <span className="block text-sm text-slate-700">Everyone with a confirmed place sees &ldquo;Choose your workshops&rdquo; at the top of My Hub and can change their order until it closes.</span>
+          <span className="block font-semibold text-ink">Open workshop choices to delegates</span>
+          <span className="block text-sm text-slate-700">Everyone with a confirmed place sees &ldquo;Choose your workshops&rdquo; at the top of My Hub and can change their picks until choices close.</span>
         </span>
       </label>
       <div>
         <label htmlFor="closes_at" className="block font-semibold text-ink">
           Closes <span className="font-normal text-slate-700">(optional, UK time)</span>
         </label>
-        <p id="closes_at-hint" className="text-sm text-slate-700">Ranking closes by itself at this time. Leave empty to close it yourself.</p>
+        <p id="closes_at-hint" className="text-sm text-slate-700">Choices close by themselves at this time. Leave empty to close them yourself.</p>
         <input id="closes_at" name="closes_at" type="datetime-local" defaultValue={closesAt} aria-describedby="closes_at-hint" className={cn(inputClass, "mt-2 max-w-xs")} />
       </div>
       <label className="flex items-start gap-3">
@@ -156,8 +155,8 @@ export function RunAllocationForm({ unranked, hasPlaces, ready }: { unranked: nu
       <label className="flex items-start gap-3">
         <input type="checkbox" name="unranked" defaultChecked className="mt-1 size-5 accent-navy" />
         <span>
-          <span className="block font-semibold text-ink">Also place delegates who haven&apos;t ranked ({unranked})</span>
-          <span className="block text-sm text-slate-700">They go wherever there&apos;s most room, after everyone who ranked. Committee members are only placed if they ranked.</span>
+          <span className="block font-semibold text-ink">Also place delegates who haven&apos;t chosen ({unranked})</span>
+          <span className="block text-sm text-slate-700">They go wherever there&apos;s most room, after everyone who chose. Committee members are only placed if they chose.</span>
         </span>
       </label>
       <div className="flex flex-wrap items-center gap-3">
@@ -206,8 +205,8 @@ export function PlacesTable({ rows, workshops }: { rows: PlaceRow[]; workshops: 
           <span className="font-semibold text-ink">Show</span>
           <select value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)} className={cn(inputClass.replace("w-full", "w-auto"), "px-3")}>
             <option value="all">Everyone</option>
-            <option value="moved">Below their top three, or moved by hand</option>
-            <option value="unranked">Didn&apos;t rank</option>
+            <option value="moved">Not their pick, or moved by hand</option>
+            <option value="unranked">Didn&apos;t choose</option>
           </select>
         </label>
         <p className="text-sm text-slate-700" aria-live="polite">
@@ -233,7 +232,7 @@ export function PlacesTable({ rows, workshops }: { rows: PlaceRow[]; workshops: 
                 <th scope="row" className="px-4 py-3 font-normal">
                   <span className="block font-semibold text-ink">{r.name}</span>
                   <span className="block text-xs text-slate-700">
-                    {[r.institution, r.committee ? "Committee" : null, r.ranked ? null : "Didn't rank"].filter(Boolean).join(" · ")}
+                    {[r.institution, r.committee ? "Committee" : null, r.ranked ? null : "Didn't choose"].filter(Boolean).join(" · ")}
                   </span>
                 </th>
                 {r.slots.map((s) => {
@@ -266,7 +265,7 @@ export function PlacesTable({ rows, workshops }: { rows: PlaceRow[]; workshops: 
                       </div>
                       <span className="mt-1.5 block text-sm leading-snug text-ink">{here.find((w) => w.id === s.workshopId)?.title ?? "Not placed"}</span>
                       <span className="mt-1 block text-xs text-slate-700">
-                        {s.choice ? `Their ${ordinal(s.choice)} choice` : r.ranked ? "" : "No ranking"}
+                        {s.choice ? (s.choice <= 3 ? "Their pick" : "Not their pick") : r.ranked ? "" : "Didn't choose"}
                         {s.manual ? `${s.choice || !r.ranked ? " · " : ""}Moved by hand` : ""}
                       </span>
                     </td>

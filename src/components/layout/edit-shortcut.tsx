@@ -13,13 +13,15 @@ const EDITORS: { match: (p: string) => boolean; targets: Target[] }[] = [
   { match: (p) => p === "/", targets: [{ label: "Announcements", href: "/admin/content/announcements" }, { label: "Programme", href: "/admin/content/sessions" }, { label: "Speakers", href: "/admin/content/speakers" }, { label: "Conference settings", href: "/admin/settings" }] },
   { match: (p) => p.startsWith("/about"), targets: [{ label: "Committee names, roles and biographies", href: "/admin/content/committee" }, { label: "Partners", href: "/admin/content/partners" }, { label: "History timeline", href: "/admin/content/timeline" }] },
   { match: (p) => p.startsWith("/programme") || p.startsWith("/today"), targets: [{ label: "Programme sessions", href: "/admin/content/sessions" }, { label: "Rooms", href: "/admin/content/rooms" }, { label: "Workshops", href: "/admin/content/workshops" }] },
+  { match: (p) => p.startsWith("/workshops"), targets: [{ label: "Workshops", href: "/admin/content/workshops" }] },
   { match: (p) => p.startsWith("/speakers"), targets: [{ label: "Speakers", href: "/admin/content/speakers" }] },
   { match: (p) => p.startsWith("/map"), targets: [{ label: "Campus map places", href: "/admin/content/map" }] },
   { match: (p) => p.startsWith("/conference"), targets: [{ label: "FAQs", href: "/admin/content/faqs" }, { label: "Conference settings", href: "/admin/settings" }] },
 ];
 
 let cached: Promise<{ edit: boolean }> | null = null;
-const loadAccess = () =>
+/** What the signed-in person can edit, fetched once per page load. */
+export const loadAccess = () =>
   (cached ??= fetch("/api/me/access", { credentials: "same-origin" })
     .then((r) => (r.ok ? r.json() : { edit: false }))
     .catch(() => ({ edit: false })));
