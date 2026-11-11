@@ -5,6 +5,7 @@ import { removeContact, updateContactNote } from "@/app/portal/card-actions";
 import { cardRoles, downloadText, toVCard, type CardData } from "@/lib/card";
 import { Avatar } from "@/components/ui/avatar";
 import { InstagramMark } from "@/components/ui/social";
+import { UniLogo } from "@/components/ui/uni-logo";
 import { instagramUrl } from "@/lib/instagram";
 import { inputClass } from "@/components/forms/field";
 import { LinkedInMark, roleStripe } from "@/components/card/contact-card";
@@ -165,7 +166,12 @@ function Person({ p, onNote, onRemove }: { p: SavedContact; onNote: (note: strin
             )}
             <div className="min-w-0 flex-1">
               <h3 className="font-semibold text-ink">{name}</h3>
-              {meta && <p className="text-sm text-slate-700">{meta}</p>}
+              {meta && (
+                <p className="flex items-center gap-1.5 text-sm text-slate-700">
+                  <UniLogo src={c?.uni_logo_url} name={c?.institution ?? null} className="size-5 p-0.5" />
+                  <span>{meta}</span>
+                </p>
+              )}
               {c && <p className="mt-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-gold-700">{cardRoles(c).join(" · ")}</p>}
               <p className="mt-1 text-xs text-slate-700">Saved {savedOn(p.saved_at)}</p>
             </div>

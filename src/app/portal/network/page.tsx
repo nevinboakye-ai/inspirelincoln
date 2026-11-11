@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { setNetworkOpen } from "@/app/portal/actions";
 import { requireUser } from "@/lib/auth";
 import { signAvatars } from "@/lib/avatar";
+import { getLogoMap } from "@/lib/university-logos-server";
 import { Notice } from "@/components/ui/notice";
 import { NetworkCardForm, NetworkDirectory, type Delegate } from "@/components/portal/network";
 
@@ -22,7 +23,7 @@ export default async function NetworkPage() {
   const open = profile.accountStatus === "approved" || profile.siteRole === "admin" || staff;
   const { data, error } = open ? await db.rpc("network_directory") : { data: null, error: null };
   const people = (data ?? []) as Delegate[];
-  const photos = await signAvatars(db, people.map((p) => p.avatar_path));
+  const [photos, logos] = await Promise.all([signAvatars(db, people.map((p) => p.avatar_path)), getLogoMap()]);
   for (const p of people) p.avatar_url = p.avatar_path ? (photos.get(p.avatar_path) ?? null) : null;
 
   return (
@@ -73,7 +74,7 @@ export default async function NetworkPage() {
           {error ? (
             <Notice tone="warning">The network isn&apos;t available just now. Please try again later.</Notice>
           ) : (
-            <NetworkDirectory people={people} me={profile.id} />
+            <NetworkDirectory people={people} me={profile.id} logos={logos} />
           )}
         </>
       )}

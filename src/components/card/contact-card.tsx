@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { cardRoles, type CardData } from "@/lib/card";
 import { Avatar } from "@/components/ui/avatar";
 import { InstagramMark } from "@/components/ui/social";
+import { UniLogo } from "@/components/ui/uni-logo";
 import { instagramUrl } from "@/lib/instagram";
 import { cn } from "@/lib/cn";
 
@@ -42,7 +43,12 @@ export function ContactCard({ card, eyebrow, headingLevel = 1, children, classNa
             <Avatar url={card.avatar_url} name={card.full_name} className="size-16 ring-4 ring-white/10 sm:size-20" fallbackClassName="bg-paper/10 text-lg text-gold-300" />
             <div className="min-w-0">
               <H className="font-display text-[1.7rem] leading-tight sm:text-3xl">{card.full_name}</H>
-              {meta && <p className="mt-1 text-sm text-paper/75">{meta}</p>}
+              {meta && (
+                <p className="mt-1.5 flex items-center gap-2 text-sm text-paper/75">
+                  <UniLogo src={card.uni_logo_url} name={card.institution} fallback className="size-7 p-0.5 text-[0.5rem]" />
+                  <span>{meta}</span>
+                </p>
+              )}
             </div>
           </div>
           {roles.length > 0 && (

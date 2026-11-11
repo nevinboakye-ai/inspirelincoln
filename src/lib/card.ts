@@ -19,6 +19,8 @@ export type CardData = {
   avatar_path?: string | null;
   /** A short-lived link to the photo, added by the server before the card is shown. */
   avatar_url?: string | null;
+  /** Their university's logo, if the committee has added one. */
+  uni_logo_url?: string | null;
 };
 
 /** Who a code belongs to and their attendance, for check-in staff only. */
