@@ -6,9 +6,6 @@ name: Refresh campus map data
 
 on:
   workflow_dispatch:
-  push:
-    branches: [claude/project-thread-rtxono]
-    paths: [.github/workflows/campus-map-data.yml]
 
 permissions:
   contents: write

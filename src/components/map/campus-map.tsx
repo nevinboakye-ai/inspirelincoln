@@ -52,6 +52,13 @@ function inTown(place: MapPlace) {
   return place.lat != null && place.lng != null && distanceMetres({ lat: place.lat, lng: place.lng }, { lat: CAMPUS_CENTRE[0], lng: CAMPUS_CENTRE[1] }) > 450;
 }
 
+/** The name shown beside a pin: town places drop "Lincoln (Central)" so neighbouring labels don't overlap. */
+function pinLabel(place: MapPlace) {
+  if (!inTown(place)) return place.name;
+  const short = place.name.replace(/^Lincoln (Central )?/, "");
+  return short.charAt(0).toUpperCase() + short.slice(1);
+}
+
 function formatDistance(m: number) {
   return m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`;
 }
@@ -124,7 +131,7 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
           const safe = (t: string) => t.replace(/[<>&"]/g, "");
           const icon = leaflet.divIcon({
             className: "",
-            html: `<span class="map-marker"><span class="map-pin map-pin--${p.kind}" data-label="${safe(label)}"></span>${p.kind === "venue" || inTown(p) ? `<span class="map-label">${safe(p.name)}</span>` : ""}</span>`,
+            html: `<span class="map-marker"><span class="map-pin map-pin--${p.kind}" data-label="${safe(label)}"></span>${p.kind === "venue" || inTown(p) ? `<span class="map-label">${safe(pinLabel(p))}</span>` : ""}</span>`,
             iconSize: [28, 34],
             iconAnchor: [14, 32],
           });
