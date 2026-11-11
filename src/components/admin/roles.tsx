@@ -7,6 +7,9 @@ import type { AccountType } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { btn } from "./ui";
 
+/** Roles that come with another: everyone on the oral waiting list also presents a poster. */
+const INCLUDES: Partial<Record<AccountType, AccountType[]>> = { oral_waitlist: ["poster_presenter"] };
+
 /** Roles that can't be held together: ticking one unticks the others. */
 const CONFLICTS: Partial<Record<AccountType, AccountType[]>> = {
   delegate: ["oral_presenter", "poster_presenter", "oral_waitlist"],
@@ -47,7 +50,9 @@ export function RoleCheckboxes({
   const locked = (t: AccountType) => disabled || lockedAll || (!canLead && EXEC_TYPES.includes(t));
 
   const toggle = (t: AccountType, on: boolean) => {
-    const next = on ? [...picked.filter((p) => !(CONFLICTS[t] ?? []).includes(p) || locked(p)), t] : picked.filter((p) => p !== t);
+    const next = on
+      ? [...picked.filter((p) => !(CONFLICTS[t] ?? []).includes(p) || locked(p)), t, ...(INCLUDES[t] ?? []).filter((i) => !picked.includes(i))]
+      : picked.filter((p) => p !== t);
     const sorted = sortRoles(next);
     setPicked(sorted);
     onChange?.(sorted);
@@ -71,7 +76,9 @@ export function RoleCheckboxes({
           <div className={cn("grid gap-2", compact ? "grid-cols-2" : "sm:grid-cols-2")}>
             {g.types.map((t) => {
               const on = picked.includes(t);
-              const off = locked(t);
+              // A role that comes with another they hold stays ticked until that one is unticked.
+              const with_ = picked.find((p) => (INCLUDES[p] ?? []).includes(t));
+              const off = locked(t) || Boolean(with_);
               return (
                 <label
                   key={t}
@@ -79,7 +86,8 @@ export function RoleCheckboxes({
                     "relative flex cursor-pointer items-start gap-3 rounded-lg border text-sm transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-electric-600 has-[:focus-visible]:ring-offset-2",
                     compact ? "min-h-11 p-2.5" : "min-h-14 p-3",
                     on ? "border-navy bg-navy text-paper" : "border-navy/15 bg-white text-ink hover:border-navy/40",
-                    off && "cursor-not-allowed opacity-50 hover:border-navy/15",
+                    off && !with_ && "cursor-not-allowed opacity-50 hover:border-navy/15",
+                    with_ && "cursor-not-allowed",
                   )}
                 >
                   <input type="checkbox" name={name} value={t} checked={on} disabled={off} onChange={(e) => toggle(t, e.target.checked)} className="sr-only" />
@@ -90,7 +98,11 @@ export function RoleCheckboxes({
                   </span>
                   <span className="min-w-0">
                     <span className="block font-semibold">{ACCOUNT_TYPE_LABEL[t]}</span>
-                    {!compact && <span className={cn("block text-xs", on ? "text-paper/75" : "text-slate-700")}>{ACCOUNT_TYPE_BLURB[t]}</span>}
+                    {with_ ? (
+                      <span className={cn("block text-xs", on ? "text-paper/80" : "text-slate-700")}>Included with {ACCOUNT_TYPE_LABEL[with_].toLowerCase()}</span>
+                    ) : (
+                      !compact && <span className={cn("block text-xs", on ? "text-paper/75" : "text-slate-700")}>{ACCOUNT_TYPE_BLURB[t]}</span>
+                    )}
                   </span>
                 </label>
               );

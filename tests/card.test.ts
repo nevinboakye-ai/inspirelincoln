@@ -41,9 +41,10 @@ describe("card helpers", () => {
   it("labels roles most senior first, using the committee position", () => {
     expect(cardRoles(card)).toEqual(["Academic Lead", "Poster presenter"]);
   });
-  it("shows the oral waiting list alongside Delegate, once", () => {
-    expect(cardRoles({ roles: ["oral_waitlist"], committee_position: null })).toEqual(["Delegate", "Oral waiting list"]);
-    expect(cardRoles({ roles: ["delegate", "oral_waitlist", "academic_team"], committee_position: "Academic Lead" })).toEqual(["Academic Lead", "Delegate", "Oral waiting list"]);
+  it("doesn't show Delegate next to a presenting role", () => {
+    expect(cardRoles({ roles: ["poster_presenter", "oral_waitlist"], committee_position: null })).toEqual(["Poster presenter", "Oral waiting list"]);
+    expect(cardRoles({ roles: ["delegate", "oral_presenter"], committee_position: null })).toEqual(["Oral presenter"]);
+    expect(cardRoles({ roles: ["delegate", "academic_team"], committee_position: "Academic Lead" })).toEqual(["Academic Lead", "Delegate"]);
   });
   it("makes a vCard with only what is shared, escaping text", () => {
     const v = toVCard({ ...card, institution: "Lincoln, UK" }, "Met; at posters");

@@ -1,12 +1,12 @@
 "use client";
 import { animate, m, useMotionTemplate, useMotionValue, useMotionValueEvent, useReducedMotion, useSpring, useTransform, type AnimationPlaybackControls } from "motion/react";
 import Link from "next/link";
-import { Eye, RotateCw } from "lucide-react";
+import { Eye, RotateCw, Star } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { CardCountdown } from "./hub-motion";
 
-export type LanyardTone = "delegate" | "poster" | "oral" | "waitlist" | "committee";
+export type LanyardTone = "delegate" | "poster" | "oral" | "waitlist" | "committee" | "executive";
 
 const BAND: Record<LanyardTone, string> = {
   delegate: "bg-navy text-paper",
@@ -14,6 +14,8 @@ const BAND: Record<LanyardTone, string> = {
   oral: "bg-cyan text-midnight",
   waitlist: "bg-violet text-midnight",
   committee: "bg-midnight text-gold-300",
+  // Gold foil edges and stars, so an executive role reads first from across a room.
+  executive: "bg-midnight text-gold-300 border-y-[3px] border-gold shadow-[inset_0_1px_0_rgb(255_255_255/0.08)]",
 };
 
 export interface LanyardProps {
@@ -360,34 +362,51 @@ function Back({ year, qr, reference, checkedIn, shared = true, hidden }: Lanyard
   );
 }
 
-/** Height of the role bands in rem: one role fills 3rem, more roles get a 1.75rem stripe each. */
+/**
+ * The stripes to draw. Up to three roles get a stripe each; beyond that the
+ * rest share one. An executive role always keeps a stripe of its own.
+ */
+function bandsOf(roles: LanyardProps["roles"]) {
+  const list = roles.length ? roles : [{ label: "Delegate", tone: "delegate" as const }];
+  const exec = list.filter((r) => r.tone === "executive");
+  const rest = list.filter((r) => r.tone !== "executive");
+  return rest.length <= 3 ? list : [...exec, { label: rest.map((r) => r.label).join(" · "), tone: rest[0].tone }];
+}
+
+/**
+ * Height of the role bands in rem: one role fills 3rem (3.5rem if it's
+ * executive), more roles get a 1.75rem stripe each and executive 2.5rem.
+ */
 function bandHeight(roles: LanyardProps["roles"]) {
-  const n = roles.length > 3 ? 1 : Math.max(roles.length, 1);
-  return n === 1 ? 3 : n * 1.75;
+  const bands = bandsOf(roles);
+  if (bands.length === 1) return bands[0].tone === "executive" ? 3.5 : 3;
+  return bands.reduce((h, r) => h + (r.tone === "executive" ? 2.5 : 1.75), 0);
 }
 
 /**
  * The coloured role bands across the foot of the card, like the stripes on a
- * printed lanyard. One role fills the band; two or three share it as stacked
- * stripes, each in that role's colour. More than three share a single band.
+ * printed lanyard, each in that role's colour. Executive roles get a taller
+ * stripe with gold edges and stars.
  */
 function RoleBands({ roles }: { roles: LanyardProps["roles"] }) {
   const list = roles.length ? roles : [{ label: "Delegate", tone: "delegate" as const }];
-  const bands = list.length > 3 ? [{ label: list.map((r) => r.label).join(" · "), tone: list[0].tone }] : list;
-  const many = bands.length > 1 || list.length > 3;
+  const bands = bandsOf(roles);
+  const many = bands.length > 1;
   return (
     <ul aria-label={list.length > 1 ? "Your roles" : "Your role"} className="absolute inset-x-0 bottom-14 flex flex-col" style={{ height: `${bandHeight(roles)}rem` }}>
       {bands.map((r, i) => (
         <li
           key={`${r.label}-${i}`}
           className={cn(
-            "flex min-h-0 flex-1 items-center justify-center px-3 text-center font-ui font-bold uppercase leading-none",
-            many ? "text-[0.7rem] tracking-[0.22em]" : "text-sm tracking-[0.28em]",
-            i > 0 && "border-t border-white/25",
+            "flex min-h-0 items-center justify-center gap-2 px-3 text-center font-ui font-bold uppercase leading-none",
+            r.tone === "executive" ? cn("flex-[1.43] tracking-[0.16em]", r.label.length > 16 ? "text-[0.8rem]" : "text-[0.95rem]") : cn("flex-1", many ? "text-[0.7rem] tracking-[0.22em]" : "text-sm tracking-[0.28em]"),
+            i > 0 && r.tone !== "executive" && bands[i - 1].tone !== "executive" && "border-t border-white/25",
             BAND[r.tone],
           )}
         >
+          {r.tone === "executive" && <Star aria-hidden className="size-3.5 shrink-0 fill-gold text-gold" />}
           <span className="truncate">{r.label}</span>
+          {r.tone === "executive" && <Star aria-hidden className="size-3.5 shrink-0 fill-gold text-gold" />}
         </li>
       ))}
     </ul>
