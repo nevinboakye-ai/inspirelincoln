@@ -6,6 +6,9 @@ name: Refresh campus map data
 
 on:
   workflow_dispatch:
+  push:
+    branches: [claude/project-thread-rtxono]
+    paths: [scripts/build-campus-map.mjs]
 
 permissions:
   contents: write

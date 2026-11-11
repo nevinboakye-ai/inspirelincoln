@@ -287,3 +287,4 @@ console.log(
   `Wrote ${OUT}: ${out.buildings.length} buildings (${out.buildings.filter((b) => b.u).length} university), ${out.water.length} water, ${out.green.length} green, ` +
     `${Object.values(out.roads).reduce((n, r) => n + r.length, 0)} roads and paths, ${out.rail.length} rail, ${out.labels.length} labels, ${(size / 1024).toFixed(0)} KB`,
 );
+// Area last rebuilt for INSPIRE 2026: central Lincoln.
