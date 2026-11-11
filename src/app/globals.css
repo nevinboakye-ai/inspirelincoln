@@ -255,6 +255,21 @@
   box-shadow: 0 0 0 6px rgb(47 124 246 / 0.25);
 }
 .leaflet-container { font-family: var(--font-ui); background: var(--color-paper-200); }
+/* Leaflet's stylesheet flashes links blue when tapped (the zoom buttons, credits and
+   popups), and the browser adds its own grey/blue tap flash to pins and buildings. */
+.leaflet-container,
+.leaflet-container * { -webkit-tap-highlight-color: transparent !important; }
+/* The map takes focus when clicked, so keep its keyboard focus ring inside the map
+   instead of a light-blue frame spilling over the page around it. */
+.leaflet-container:focus { outline: none; }
+.leaflet-container:focus-visible { outline: 2px solid var(--color-electric-600); outline-offset: -2px; border-radius: 0; }
+.leaflet-container .leaflet-marker-icon:focus-visible { outline: 2px solid var(--color-electric-600); outline-offset: 2px; }
+/* On phones the map fills the screen like an app, so the page itself never scrolls
+   (the footer's links are in the menu). Scrolling past it used to slide the footer
+   up under the map's pull-up sheet. */
+@media (max-width: 1023.98px) {
+  body:has([data-fullscreen-map]) .site-footer { display: none; }
+}
 .leaflet-container a { color: var(--color-electric-600); }
 .leaflet-bar a { color: var(--color-ink) !important; }
 .leaflet-control-attribution { background: rgb(255 255 255 / 0.92) !important; color: var(--color-ink); }

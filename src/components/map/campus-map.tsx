@@ -47,6 +47,18 @@ function resolve(place: MapPlace, byId: Map<string, MapPlace>): { lat: number; l
   return null;
 }
 
+/** Places in town rather than on campus, such as the stations and the cathedral. */
+function inTown(place: MapPlace) {
+  return place.lat != null && place.lng != null && distanceMetres({ lat: place.lat, lng: place.lng }, { lat: CAMPUS_CENTRE[0], lng: CAMPUS_CENTRE[1] }) > 450;
+}
+
+/** The name shown beside a pin: town places drop "Lincoln (Central)" so neighbouring labels don't overlap. */
+function pinLabel(place: MapPlace) {
+  if (!inTown(place)) return place.name;
+  const short = place.name.replace(/^Lincoln (Central )?/, "");
+  return short.charAt(0).toUpperCase() + short.slice(1);
+}
+
 function formatDistance(m: number) {
   return m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`;
 }
@@ -119,7 +131,7 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
           const safe = (t: string) => t.replace(/[<>&"]/g, "");
           const icon = leaflet.divIcon({
             className: "",
-            html: `<span class="map-marker"><span class="map-pin map-pin--${p.kind}" data-label="${safe(label)}"></span>${p.kind === "venue" ? `<span class="map-label">${safe(p.name)}</span>` : ""}</span>`,
+            html: `<span class="map-marker"><span class="map-pin map-pin--${p.kind}" data-label="${safe(label)}"></span>${p.kind === "venue" || inTown(p) ? `<span class="map-label">${safe(pinLabel(p))}</span>` : ""}</span>`,
             iconSize: [28, 34],
             iconAnchor: [14, 32],
           });
@@ -136,8 +148,8 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
         }
         youLayer.current = leaflet.layerGroup().addTo(m);
         map.current = m;
-        // Fit everything that is pinned, but stay on campus.
-        const pts = places.filter((p) => p.lat != null && p.lng != null).map((p) => [p.lat!, p.lng!] as [number, number]);
+        // Fit everything pinned on campus; the stations and cathedral are a pan or zoom away.
+        const pts = places.filter((p) => p.lat != null && p.lng != null && !inTown(p)).map((p) => [p.lat!, p.lng!] as [number, number]);
         if (pts.length > 1) m.fitBounds(pts, { padding: [48, 48], maxZoom: 17 });
         setReady(true);
       };
@@ -280,9 +292,12 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
     [p.name, p.code ?? "", p.description, ...sessionsFor(p).map((s) => s.title)].some((t) => t.toLowerCase().includes(q));
   const top = places.filter((p) => !p.parentId);
   const onDay = top.filter((p) => p.kind === "venue");
-  const around = top.filter((p) => p.kind !== "venue");
+  const around = top.filter((p) => p.kind !== "venue" && !inTown(p));
+  const town = top.filter((p) => p.kind !== "venue" && inTown(p));
   const visibleDay = onDay.filter((p) => matches(p) || (children.get(p.id) ?? []).some(matches));
   const visibleAround = filter === "all" || q ? around.filter(matches) : [];
+  // Always listed: on the day, the stations are where most people arrive.
+  const visibleTown = town.filter(matches);
 
   const current = selected ? byId.get(selected) : undefined;
   const currentPos = current ? resolve(current, byId) : null;
@@ -403,7 +418,10 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
         {visibleAround.length > 0 && (
           <PlaceGroup title="Around campus" places={visibleAround} childrenOf={children} matches={matches} q={q} fix={fix} byId={byId} onSelect={choose} />
         )}
-        {visibleDay.length === 0 && visibleAround.length === 0 && (
+        {visibleTown.length > 0 && (
+          <PlaceGroup title="Around Lincoln" places={visibleTown} childrenOf={children} matches={matches} q={q} fix={fix} byId={byId} onSelect={choose} />
+        )}
+        {visibleDay.length === 0 && visibleAround.length === 0 && visibleTown.length === 0 && (
           <p className="p-5 text-sm text-paper/75">Nothing matches &ldquo;{query}&rdquo;. Try a building code such as INB.</p>
         )}
         {filter === "day" && !q && (
@@ -416,7 +434,7 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
   );
 
   return (
-    <div className="surface-midnight pt-[var(--header-h)] lg:pt-28">
+    <div data-fullscreen-map className="surface-midnight pt-[var(--header-h)] lg:pt-28">
       <header className="container-page hidden flex-wrap items-end justify-between gap-x-10 gap-y-4 border-b border-white/15 pb-6 pt-12 lg:flex">
         <div>
           <p className="eyebrow text-cyan">Brayford Pool campus · {dateLabel}</p>
@@ -431,7 +449,12 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
       </header>
       <h1 className="sr-only lg:hidden">Campus map</h1>
 
-      <div className="relative h-[calc(100svh-var(--header-h)-4rem-env(safe-area-inset-bottom))] min-h-[480px] overflow-hidden lg:grid lg:h-[calc(100svh-var(--header-h))] lg:min-h-[640px] lg:grid-cols-[400px_1fr] lg:overflow-visible">
+      {/*
+        "isolate" keeps Leaflet's own layers (z-index 400 to 1000) inside this box, so the map can
+        never paint over the site header, the phone menu or the footer. The fixed single grid row
+        keeps the sidebar scrolling on its own, so the map stays exactly one screen tall.
+      */}
+      <div className="relative isolate h-[calc(100svh-var(--header-h)-4rem-env(safe-area-inset-bottom))] min-h-[480px] overflow-hidden lg:grid lg:h-[calc(100svh-var(--header-h))] lg:min-h-[640px] lg:grid-cols-[400px_1fr] lg:grid-rows-[minmax(0,1fr)]">
         {/* Map */}
         <div className="absolute inset-0 bg-paper-200 lg:relative lg:order-2 lg:h-full">
           <div ref={mapEl} className="absolute inset-0" role="region" aria-label="Interactive campus map. The list of places contains the same information." />
@@ -463,7 +486,7 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
           ref={sheetRef}
           aria-label="Places"
           style={{ ["--sheet-h" as string]: sheetHeight }}
-          className="absolute inset-x-0 bottom-0 z-[600] flex h-[var(--sheet-h)] flex-col rounded-t-xl border-t border-white/15 bg-midnight shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.6)] transition-[height] duration-300 ease-[var(--ease-out-expo)] lg:relative lg:z-auto lg:order-1 lg:h-auto lg:rounded-none lg:border-r lg:border-t-0 lg:shadow-none lg:transition-none"
+          className="absolute inset-x-0 bottom-0 z-[600] flex h-[var(--sheet-h)] flex-col rounded-t-xl border-t border-white/15 bg-midnight shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.6)] transition-[height] duration-300 ease-[var(--ease-out-expo)] lg:relative lg:z-auto lg:order-1 lg:h-full lg:min-h-0 lg:rounded-none lg:border-r lg:border-t-0 lg:shadow-none lg:transition-none"
         >
           <button
             type="button"
@@ -590,7 +613,8 @@ function PlaceDetail({
   copied: boolean;
 }) {
   const ref = useRef<HTMLHeadingElement>(null);
-  useEffect(() => ref.current?.focus(), [place.id]);
+  // preventScroll: moving focus must not jump the page or the sheet under your finger.
+  useEffect(() => ref.current?.focus({ preventScroll: true }), [place.id]);
   // Directions go to the building for rooms.
   const target = place.lat == null && parent ? parent : place;
   return (
