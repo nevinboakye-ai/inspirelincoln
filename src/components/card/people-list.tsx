@@ -4,6 +4,8 @@ import { ChevronDown, Download, EyeOff, FileSpreadsheet, Loader2, Mail, Notebook
 import { removeContact, updateContactNote } from "@/app/portal/card-actions";
 import { cardRoles, downloadText, toVCard, type CardData } from "@/lib/card";
 import { Avatar } from "@/components/ui/avatar";
+import { InstagramMark } from "@/components/ui/social";
+import { instagramUrl } from "@/lib/instagram";
 import { inputClass } from "@/components/forms/field";
 import { LinkedInMark, roleStripe } from "@/components/card/contact-card";
 import { VCardButton } from "@/components/card/card-actions";
@@ -36,7 +38,7 @@ export function PeopleList({ initial }: { initial: SavedContact[] }) {
   const exportVcf = () =>
     downloadText(`inspire-people-ive-met.vcf`, sharing.map((p) => toVCard(p.card!, p.note)).join("\r\n"), "text/vcard;charset=utf-8");
   const exportCsv = () => {
-    const head = ["Name", "Roles", "Medical school", "Year", "Email", "LinkedIn", "Presenting", "My note", "Saved on"];
+    const head = ["Name", "Roles", "Medical school", "Year", "Email", "LinkedIn", "Instagram", "Presenting", "My note", "Saved on"];
     const rows = people.map((p) => [
       p.card?.full_name ?? "(no longer sharing)",
       p.card ? cardRoles(p.card).join("; ") : "",
@@ -44,6 +46,7 @@ export function PeopleList({ initial }: { initial: SavedContact[] }) {
       p.card?.year_of_study,
       p.card?.email,
       p.card?.linkedin_url,
+      p.card?.instagram ? `@${p.card.instagram}` : "",
       p.card?.presentation_title,
       p.note,
       savedOn(p.saved_at),
@@ -190,8 +193,13 @@ function Person({ p, onNote, onRemove }: { p: SavedContact; onNote: (note: strin
                 </p>
               )}
               <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">{c.bio || "They haven't added a bio."}</p>
-              {(c.linkedin_url || c.email) && (
+              {(c.linkedin_url || c.instagram || c.email) && (
                 <div className="flex flex-wrap gap-2">
+                  {c.instagram && (
+                    <a href={instagramUrl(c.instagram)} target="_blank" rel="noopener noreferrer nofollow" className={small}>
+                      <InstagramMark /> @{c.instagram}<span className="sr-only"> on Instagram (opens in a new tab)</span>
+                    </a>
+                  )}
                   {c.linkedin_url && (
                     <a href={c.linkedin_url} target="_blank" rel="noopener noreferrer nofollow" className={small}>
                       <LinkedInMark /> LinkedIn<span className="sr-only"> profile of {name} (opens in a new tab)</span>

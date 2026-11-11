@@ -9,7 +9,7 @@ export async function GET() {
   const current = await getCurrentUser();
   if (!current) return NextResponse.redirect(new URL("/login?next=/portal/profile", process.env.NEXT_PUBLIC_SITE_URL || "https://inspirelincoln.uk"));
   const { db, user } = current;
-  const [profile, registrations, consents, submissions, agenda, workshops, abstracts, enquiries, contacts] = await Promise.all([
+  const [profile, registrations, consents, submissions, agenda, workshops, abstracts, enquiries, contacts, conversations] = await Promise.all([
     db.from("profiles").select("*").eq("id", user.id).maybeSingle(),
     db.from("registrations").select("status, source, checked_in_at, created_at, updated_at").eq("user_id", user.id),
     db.from("consent_records").select("purpose, granted, policy_version, source, created_at").eq("user_id", user.id).order("created_at"),
@@ -19,6 +19,7 @@ export async function GET() {
     db.from("abstracts").select("reference, title, status, presenting_author, email, university, created_at, submitted_at").eq("submitter_id", user.id),
     db.from("contact_enquiries").select("subject, category, created_at").eq("email", user.email ?? ""),
     db.rpc("my_contacts"),
+    db.from("enquiry_threads").select("subject, topic, status, created_at, enquiry_messages(author_name, from_committee, body, created_at)").eq("user_id", user.id).order("created_at"),
   ]);
   const p = profile.data ?? {};
   const photoPath = (p as { avatar_path?: string | null }).avatar_path ?? null;
@@ -41,6 +42,8 @@ export async function GET() {
     contact_enquiries: enquiries.data ?? [],
     // People you saved by scanning their card, with what they share and your notes.
     people_ive_met: contacts.data ?? [],
+    // Your enquiries in My Hub, with the committee's replies.
+    enquiries_in_my_hub: conversations.data ?? [],
   };
   return new NextResponse(JSON.stringify(body, null, 2), {
     headers: {

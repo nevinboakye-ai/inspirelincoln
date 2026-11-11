@@ -66,7 +66,7 @@ export default async function NetworkPage() {
               Your name, university and year are shown to other confirmed delegates. Everything else is up to you.
             </p>
             <div className="mt-5">
-              <NetworkCardForm profile={{ bio: profile.bio, linkedinUrl: profile.linkedinUrl, networkShowEmail: profile.networkShowEmail, networkListed: profile.networkListed, email: profile.email }} />
+              <NetworkCardForm profile={{ bio: profile.bio, linkedinUrl: profile.linkedinUrl, instagram: profile.instagram, networkShowEmail: profile.networkShowEmail, networkListed: profile.networkListed, email: profile.email }} />
             </div>
           </section>
 

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { instagramUrl } from "@/lib/instagram";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Crown, Mail, ShieldCheck } from "lucide-react";
@@ -206,12 +207,17 @@ export default async function PersonPage({ params, searchParams }: { params: Pro
             </dl>
           </Panel>
 
-          {(p.bio || p.linkedin_url) && (
+          {(p.bio || p.linkedin_url || p.instagram) && (
             <Panel title="Their bio">
               {p.bio && <p className="whitespace-pre-line text-sm text-ink">{p.bio}</p>}
               {p.linkedin_url && (
                 <a href={p.linkedin_url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-electric-600 underline underline-offset-4">
                   LinkedIn<span className="sr-only"> (opens in a new tab)</span>
+                </a>
+              )}
+              {p.instagram && (
+                <a href={instagramUrl(p.instagram)} target="_blank" rel="noopener noreferrer" className="ml-4 mt-3 inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-electric-600 underline underline-offset-4">
+                  Instagram @{p.instagram}<span className="sr-only"> (opens in a new tab)</span>
                 </a>
               )}
             </Panel>

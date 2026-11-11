@@ -33,6 +33,7 @@ const GROUPS: { title: string; links: LinkDef[] }[] = [
       { href: "/admin/accounts", label: "Accounts", icon: UserCheck, need: "review_accounts" },
       { href: "/admin/attendance", label: "Presenter attendance", icon: CalendarCheck2, need: "review_accounts" },
       { href: "/admin/submissions", label: "Slides and posters", icon: FileStack, need: "review_submissions" },
+      { href: "/admin/enquiries", label: "Enquiries", icon: Inbox, need: ["answer_enquiries", "manage_people"] },
       { href: "/admin/email", label: "Group email", icon: Mail, need: "send_email" },
     ],
   },
@@ -54,7 +55,6 @@ const GROUPS: { title: string; links: LinkDef[] }[] = [
     title: "Records",
     links: [
       { href: "/admin/registrations", label: "Registrations", icon: Ticket, need: "manage_people" },
-      { href: "/admin/enquiries", label: "Enquiries", icon: Inbox, need: "manage_people" },
       { href: "/admin/abstracts", label: "Abstracts", icon: ClipboardCheck, need: "manage_people" },
       { href: "/admin/users", label: "Site roles", icon: ShieldCheck, need: "owner" },
       { href: "/admin/audit", label: "Audit log", icon: ScrollText, need: "manage_people" },
@@ -62,7 +62,7 @@ const GROUPS: { title: string; links: LinkDef[] }[] = [
   },
 ];
 
-export function AdminNav({ access, name, position }: { access: Access; name: string; position: string }) {
+export function AdminNav({ access, name, position, waiting = 0 }: { access: Access; name: string; position: string; waiting?: number }) {
   const path = usePathname();
   const allowed = (l: LinkDef) =>
     !l.need || access.owner || (l.need !== "owner" && (Array.isArray(l.need) ? l.need : [l.need]).some((c) => access.can[c]));
@@ -99,6 +99,12 @@ export function AdminNav({ access, name, position }: { access: Access; name: str
                         className={cn("flex min-h-11 items-center gap-2.5 whitespace-nowrap rounded-[3px] px-3 text-sm font-medium", active ? "bg-navy text-paper" : "text-slate-700 hover:bg-paper-200")}
                       >
                         <l.icon aria-hidden className="size-4" /> {l.label}
+                        {l.href === "/admin/enquiries" && waiting > 0 && (
+                          <span className={cn("ml-auto grid min-w-5 place-items-center rounded-full px-1.5 text-[0.7rem] font-bold leading-5", active ? "bg-gold text-midnight" : "bg-warning text-white")}>
+                            {waiting}
+                            <span className="sr-only"> waiting for a reply</span>
+                          </span>
+                        )}
                       </Link>
                     </li>
                   );

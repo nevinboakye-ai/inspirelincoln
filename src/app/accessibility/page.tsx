@@ -22,7 +22,7 @@ export default function AccessibilityPage() {
       <p>Some content, such as uploaded posters supplied as PDFs, may not be fully accessible. Please contact us if you need any content in another format.</p>
       <h2>Feedback</h2>
       <p>
-        If you find a problem or need help, please <Link href="/contact?category=accessibility">send an accessibility enquiry</Link>. We aim to reply
+        If you find a problem or need help, please <Link href="/contact">email us</Link>, or if you have an account, send the committee an <Link href="/portal/enquiries?topic=access">enquiry in My Hub</Link>. We aim to reply
         within five working days.
       </p>
       <h2>At the conference</h2>

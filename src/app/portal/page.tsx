@@ -299,7 +299,7 @@ export default async function PortalHome({
                     </p>
                     {profile.reviewNote && <p className="mt-3 rounded-md bg-paper p-3 text-sm text-ink">Note from the committee: {profile.reviewNote}</p>}
                     {status === "declined" && (
-                      <Link href="/contact" className={`${linkBtn} mt-4 border border-navy/15 text-ink`}>Contact the committee</Link>
+                      <Link href="/portal/enquiries" className={`${linkBtn} mt-4 border border-navy/15 text-ink`}>Contact the committee</Link>
                     )}
                   </div>
                 </div>

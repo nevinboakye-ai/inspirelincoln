@@ -2,6 +2,8 @@ import { Mail, Presentation } from "lucide-react";
 import type { ReactNode } from "react";
 import { cardRoles, type CardData } from "@/lib/card";
 import { Avatar } from "@/components/ui/avatar";
+import { InstagramMark } from "@/components/ui/social";
+import { instagramUrl } from "@/lib/instagram";
 import { cn } from "@/lib/cn";
 
 export function LinkedInMark({ className = "size-4" }: { className?: string }) {
@@ -69,8 +71,13 @@ export function ContactCard({ card, eyebrow, headingLevel = 1, children, classNa
           <dd className="mt-1 whitespace-pre-line leading-relaxed text-slate-700">{card.bio || "They haven't added a bio yet."}</dd>
         </div>
       </dl>
-      {(card.linkedin_url || card.email) && (
+      {(card.linkedin_url || card.instagram || card.email) && (
         <div className="flex flex-wrap gap-3 border-t border-navy/10 px-6 py-5 sm:px-8">
+          {card.instagram && (
+            <a href={instagramUrl(card.instagram)} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex min-h-11 items-center gap-2 rounded-[3px] border border-navy/15 px-4 text-sm font-semibold text-ink hover:border-navy/35">
+              <InstagramMark /> @{card.instagram}<span className="sr-only"> on Instagram (opens in a new tab)</span>
+            </a>
+          )}
           {card.linkedin_url && (
             <a href={card.linkedin_url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex min-h-11 items-center gap-2 rounded-[3px] bg-navy px-4 text-sm font-semibold text-paper hover:bg-navy-700">
               <LinkedInMark /> LinkedIn<span className="sr-only"> profile of {card.full_name} (opens in a new tab)</span>
