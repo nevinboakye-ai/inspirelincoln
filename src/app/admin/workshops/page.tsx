@@ -148,7 +148,13 @@ export default async function WorkshopPlacesPage() {
           <ChoiceSettingsForm open={b.settings.rankingOpen} closesAt={toZonedInputValue(b.settings.closesAt)} published={b.settings.resultsPublished} hasPlaces={hasPlaces} />
         </Panel>
         <Panel title="Sessions and room sizes">
-          <p className="mb-4 text-sm text-slate-700">Two workshops run at the same time in each session. Set which pair up, and how many people each room holds.</p>
+          <p className="mb-4 text-sm text-slate-700">
+            Two workshops run at the same time in each session. Set which pair up, and how many people each room holds. To rename a workshop or change its description, go to{" "}
+            <Link href="/admin/content/workshops" className="font-semibold text-electric-600 underline underline-offset-4">
+              Website, Workshops
+            </Link>
+            .
+          </p>
           <WorkshopSessionsForm
             workshops={b.workshops.map((w) => ({ id: w.id, title: w.title, slot: w.slot, stream: w.stream, capacity: w.capacity }))}
             sessions={b.sessions.map((x) => ({ slot: x.slot, time: x.time }))}
