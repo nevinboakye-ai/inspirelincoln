@@ -9,13 +9,13 @@
  *
  *   [out:json][timeout:90];
  *   (
- *     nwr["building"](53.2238,-0.5610,53.2325,-0.5395);
- *     way["highway"](53.2238,-0.5610,53.2325,-0.5395);
- *     nwr["natural"="water"](53.2200,-0.5700,53.2360,-0.5300);
- *     way["waterway"](53.2200,-0.5700,53.2360,-0.5300);
- *     way["railway"](53.2238,-0.5610,53.2325,-0.5395);
- *     way["landuse"](53.2238,-0.5610,53.2325,-0.5395);
- *     way["leisure"](53.2238,-0.5610,53.2325,-0.5395);
+ *     nwr["building"](53.2228,-0.5630,53.2366,-0.5320);
+ *     way["highway"](53.2228,-0.5630,53.2366,-0.5320);
+ *     nwr["natural"="water"](53.2200,-0.5700,53.2380,-0.5300);
+ *     way["waterway"](53.2200,-0.5700,53.2380,-0.5300);
+ *     way["railway"](53.2228,-0.5630,53.2366,-0.5320);
+ *     way["landuse"](53.2228,-0.5630,53.2366,-0.5320);
+ *     way["leisure"](53.2228,-0.5630,53.2366,-0.5320);
  *   );
  *   out geom;
  *
@@ -37,8 +37,11 @@ if (!input) {
 }
 const OUT = "public/map/campus.json";
 
-/** The area drawn: Brayford Pool campus with the station and the bottom of the High Street. */
-const BOX = { s: 53.2232, w: -0.5625, n: 53.2318, e: -0.5405 };
+/**
+ * The area drawn: Brayford Pool campus, the train and bus stations, the High Street
+ * and up the hill to Lincoln Cathedral, so delegates can find their way in from town.
+ */
+const BOX = { s: 53.2232, w: -0.5625, n: 53.2362, e: -0.5325 };
 /** About 0.4 m: small enough to keep corners crisp, large enough to drop survey noise. */
 const TOLERANCE = 0.000004;
 const ROUND = 1e6;
