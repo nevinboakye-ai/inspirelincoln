@@ -40,6 +40,12 @@ const PURPOSES: { what: string; why: string; basis: string; kept: string }[] = [
     kept: "Until 31 March 2027, then deleted",
   },
   {
+    what: "Your profile photo, if you add one",
+    why: "So people can recognise you on your Delegate Card, on the delegate network and on the day",
+    basis: "Your choice. You can change or remove it at any time in My Hub, and it is deleted straight away when you do",
+    kept: "As for your account",
+  },
+  {
     what: "Your delegate network card: the bio and LinkedIn link you add, and whether to show your email",
     why: "So confirmed delegates can find each other before and after the conference",
     basis: "Legitimate interests for your name, university and year; your choice for everything else. You can hide your card at any time",
@@ -239,7 +245,7 @@ export default function PrivacyPage() {
               <li><strong>You</strong> see everything about yourself.</li>
               <li><strong>Supporting committee members</strong> see slides and posters with the presenter&apos;s name, so they can review them. They can&apos;t see anyone&apos;s email or profile.</li>
               <li><strong>The executive committee</strong>, vice president and president see account details to review accounts, manage the waitlist and run check-in.</li>
-              <li><strong>Other confirmed delegates</strong> see your name, university, year and account type on the delegate network, plus a bio, LinkedIn link or email only if you add them. You can hide yourself from the network in My Hub. People whose account isn&apos;t confirmed see nothing.</li>
+              <li><strong>Other confirmed delegates</strong> see your name, university, year and account type on the delegate network, plus a photo, bio, LinkedIn link or email only if you add them. You can hide yourself from the network in My Hub. People whose account isn&apos;t confirmed see nothing.</li>
               <li><strong>Confirmed delegates who scan your Delegate Card</strong> see the same card, plus your presentation title if you&apos;re presenting, and can save it to their own list with a private note. You can turn this off in My Hub, and the committee can still scan your code to check you in.</li>
             </ul>
             <p>We won&apos;t share your data with anyone else unless the law requires it, for example if the police make a valid request.</p>
@@ -280,6 +286,7 @@ export default function PrivacyPage() {
               <li>Everything is encrypted when it travels over the internet, and stored data is encrypted at rest.</li>
               <li>Passwords are stored only as secure hashes. Nobody at INSPIRE can see your password.</li>
               <li>Slides and posters are kept in private storage. Download links expire after 30 minutes.</li>
+              <li>Profile photos are kept in private storage and shown through links that expire after an hour. Your photo is cropped and re-saved in your browser before upload, which removes hidden details such as where it was taken.</li>
               <li>Your Delegate Card&apos;s QR code holds a random reference number only, never your name or email.</li>
               <li>Changes made in the committee dashboard are logged, and the log records which fields changed, not their contents.</li>
             </ul>

@@ -3,6 +3,7 @@ import { Users } from "lucide-react";
 import { redirect } from "next/navigation";
 import { setNetworkOpen } from "@/app/portal/actions";
 import { requireUser } from "@/lib/auth";
+import { signAvatars } from "@/lib/avatar";
 import { Notice } from "@/components/ui/notice";
 import { NetworkCardForm, NetworkDirectory, type Delegate } from "@/components/portal/network";
 
@@ -21,6 +22,8 @@ export default async function NetworkPage() {
   const open = profile.accountStatus === "approved" || profile.siteRole === "admin" || staff;
   const { data, error } = open ? await db.rpc("network_directory") : { data: null, error: null };
   const people = (data ?? []) as Delegate[];
+  const photos = await signAvatars(db, people.map((p) => p.avatar_path));
+  for (const p of people) p.avatar_url = p.avatar_path ? (photos.get(p.avatar_path) ?? null) : null;
 
   return (
     <div className="space-y-5 sm:space-y-6">

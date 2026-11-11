@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { PROFILE_PROMPT_COOKIE, PROFILE_PROMPT_OPTIONS } from "@/lib/profile-prompt";
 
 const TYPES: EmailOtpType[] = ["signup", "invite", "magiclink", "recovery", "email_change", "email"];
 
@@ -18,7 +19,11 @@ export async function GET(request: NextRequest) {
   if (tokenHash && type && TYPES.includes(type)) {
     const db = await createClient();
     const result = await db?.auth.verifyOtp({ type, token_hash: tokenHash });
-    if (result && !result.error) return NextResponse.redirect(`${origin}${next}`);
+    if (result && !result.error) {
+      const res = NextResponse.redirect(`${origin}${next}`);
+      res.cookies.set(PROFILE_PROMPT_COOKIE, "1", PROFILE_PROMPT_OPTIONS);
+      return res;
+    }
   }
   return NextResponse.redirect(`${origin}/login?error=link`);
 }

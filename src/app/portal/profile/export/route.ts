@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { signAvatar } from "@/lib/avatar";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,8 @@ export async function GET() {
     db.rpc("my_contacts"),
   ]);
   const p = profile.data ?? {};
+  const photoPath = (p as { avatar_path?: string | null }).avatar_path ?? null;
+  const photoLink = await signAvatar(db, photoPath);
   // Internal review fields are left out, but the decision and note are included.
   delete (p as Record<string, unknown>).reviewed_by;
   const body = {
@@ -27,6 +30,8 @@ export async function GET() {
     controller: "INSPIRE National Medical Research Conference",
     account: { email: user.email, created_at: user.created_at, last_sign_in_at: user.last_sign_in_at },
     profile: p,
+    // Your photo itself, through a private link that works for an hour.
+    profile_photo: photoPath ? { download_link: photoLink, link_expires_in_minutes: 60 } : null,
     registrations: registrations.data ?? [],
     consent_history: consents.data ?? [],
     submissions: submissions.data ?? [],

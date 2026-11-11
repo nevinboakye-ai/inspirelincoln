@@ -17,6 +17,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { requireUser } from "@/lib/auth";
+import { signAvatar } from "@/lib/avatar";
 import { PRESENTING, cardPath, formatCode, sortedRoles } from "@/lib/card";
 import { SITE_URL } from "@/lib/site";
 import { getSwitches } from "@/lib/switches";
@@ -166,6 +167,7 @@ export default async function PortalHome({
         color: { dark: "#0c182c", light: "#ffffff" },
       })
     : null;
+  const photo = showCard ? await signAvatar(db, profile.avatarPath) : null;
   const s = ACCOUNT_STATUS_LABEL[status];
   const subStatus = latestSub
     ? SUBMISSION_STATUS_LABEL[latestSub.status as SubmissionStatus]
@@ -175,6 +177,7 @@ export default async function PortalHome({
   const steps = [
     { label: "Account approved", done: status === "approved", href: null as string | null },
     { label: "Your details", done: Boolean(profile.fullName && profile.institution), href: "/portal/profile" },
+    { label: "A photo of you for your Delegate Card", done: Boolean(profile.avatarPath), href: "/portal/profile#photo" },
     { label: "A short bio for your profile", done: Boolean(profile.bio), href: "/portal/profile#bio" },
     ...(presenting
       ? [{
@@ -457,6 +460,7 @@ export default async function PortalHome({
               year={edition.year}
               theme={edition.theme}
               name={profile.fullName ?? profile.email}
+              photo={photo}
               detail={[profile.institution, profile.yearOfStudy].filter(Boolean).join(" · ") || null}
               roles={lanyardRoles(profile)}
               dateLabel={formatEventDate(edition.date, { weekday: "short", month: "short" })}

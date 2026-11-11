@@ -6,12 +6,13 @@ export const metadata: Metadata = { title: "Cookie policy", alternates: { canoni
 
 export default function CookiesPage() {
   return (
-    <LegalPage title="Cookie policy" updated="10 November 2026">
+    <LegalPage title="Cookie policy" updated="11 November 2026">
       <p>This website uses only what it needs to work. We do not use advertising or analytics cookies. We count visits without cookies or any other storage on your device; the <Link href="/privacy#what">privacy notice</Link> explains how.</p>
       <h2>Essential cookies</h2>
       <p>
         When you sign in, our authentication provider (Supabase) sets cookies that keep you signed in securely. These are strictly necessary
-        and do not require consent.
+        and do not require consent. Signing in also sets a small cookie, for up to 12 hours, that lets My Hub remind you once to finish your
+        profile. It holds no personal details and is removed as soon as you see the reminder.
       </p>
       <h2>Local storage</h2>
       <p>

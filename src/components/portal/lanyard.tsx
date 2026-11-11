@@ -41,6 +41,8 @@ export interface LanyardProps {
   previewHref?: string | null;
   /** The conference start, for the countdown printed on the card. */
   countdown?: { date: string; time: string | null };
+  /** A short-lived link to their profile photo, if they've added one. */
+  photo?: string | null;
   /** Shown to the site owner while the card is still switched off for everyone else. */
   previewNote?: string | null;
 }
@@ -283,7 +285,7 @@ function Face({ hidden, back, children, className }: { hidden: boolean; back?: b
   );
 }
 
-function Front({ year, name, detail, roles, dateLabel, venue, countdown, long, hidden, sheen }: LanyardProps & { long: boolean; hidden: boolean; sheen: ReturnType<typeof useMotionTemplate> | null }) {
+function Front({ year, name, detail, photo, roles, dateLabel, venue, countdown, long, hidden, sheen }: LanyardProps & { long: boolean; hidden: boolean; sheen: ReturnType<typeof useMotionTemplate> | null }) {
   return (
     <Face hidden={hidden} className="bg-ivory text-ink ring-1 ring-black/5">
       <div className="relative bg-midnight px-6 pb-5 pt-10 text-paper">
@@ -303,8 +305,17 @@ function Front({ year, name, detail, roles, dateLabel, venue, countdown, long, h
         <p className="font-ui text-[0.62rem] font-semibold uppercase leading-relaxed tracking-[0.18em] text-gold-700">
           Congratulations! You&apos;re attending INSPIRE Lincoln {year}
         </p>
-        <p className={cn("mt-3 font-display leading-[1.05] text-ink", long ? "text-[1.6rem]" : "text-[2.05rem]")}>{name}</p>
-        {detail && <p className="mt-2 text-sm leading-snug text-slate-700">{detail}</p>}
+        <div className="mt-3 flex items-center gap-4">
+          <div className="min-w-0 flex-1">
+            <p className={cn("font-display leading-[1.05] text-ink [overflow-wrap:anywhere]", long || (photo && name.length > 16) ? "text-[1.6rem]" : "text-[2.05rem]")}>{name}</p>
+            {detail && <p className="mt-2 text-sm leading-snug text-slate-700">{detail}</p>}
+          </div>
+          {photo && (
+            // The name is right beside it, so the photo itself needs no description.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={photo} alt="" aria-hidden draggable={false} className="size-[4.75rem] shrink-0 rounded-full object-cover ring-[3px] ring-gold/70 ring-offset-2 ring-offset-ivory" />
+          )}
+        </div>
       </div>
       {countdown && (
         // Sits just above the role bands, however many there are.

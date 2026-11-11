@@ -35,6 +35,8 @@ export interface Profile {
   cardCode: string | null;
   /** Whether people who scan their card see their details. */
   cardShared: boolean;
+  /** Their profile photo in the private avatars folder, if they've added one. */
+  avatarPath: string | null;
   /** The permission tier used by role gates, derived from the account type and status. */
   role: UserRole;
   /** The role stored on the profile, used only as a site admin override. */
@@ -86,6 +88,7 @@ export const getCurrentUser = cache(async () => {
     networkListed: p?.network_listed ?? true,
     cardCode: p?.card_code ?? null,
     cardShared: p?.card_shared ?? true,
+    avatarPath: p?.avatar_path ?? null,
     role: effectiveRole(access, base.role),
     siteRole: base.role,
     access,

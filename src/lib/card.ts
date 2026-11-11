@@ -13,6 +13,10 @@ export type CardData = {
   linkedin_url: string | null;
   email: string | null;
   presentation_title: string | null;
+  /** Where their photo is kept, if they've added one. */
+  avatar_path?: string | null;
+  /** A short-lived link to the photo, added by the server before the card is shown. */
+  avatar_url?: string | null;
 };
 
 /** Who a code belongs to and their attendance, for check-in staff only. */

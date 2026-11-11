@@ -13,6 +13,8 @@ import { NetworkCardForm } from "@/components/portal/network";
 import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, hasRole } from "@/lib/accounts";
 import { cardPath } from "@/lib/card";
 import { CardSettings } from "@/components/card/card-settings";
+import { AvatarEditor } from "@/components/portal/avatar-editor";
+import { signAvatar } from "@/lib/avatar";
 
 export const metadata: Metadata = { title: "Profile and privacy" };
 export const dynamic = "force-dynamic";
@@ -35,6 +37,7 @@ export default async function ProfilePage() {
     .order("created_at", { ascending: false })
     .limit(30);
   const s = ACCOUNT_STATUS_LABEL[profile.accountStatus];
+  const photo = await signAvatar(db, profile.avatarPath);
   return (
     <div className="space-y-5 sm:space-y-6">
       <header>
@@ -47,8 +50,18 @@ export default async function ProfilePage() {
         </p>
       </header>
 
-      <section className={box} aria-labelledby="details">
-        <h2 id="details" className="mb-5 font-display text-xl text-ink">
+      <section id="photo" className={`${box} scroll-mt-28`} aria-labelledby="photo-title">
+        <h2 id="photo-title" className="font-display text-xl text-ink">
+          Your photo
+        </h2>
+        <p className="mb-5 mt-2 text-sm text-slate-700">
+          Optional. A clear photo of your face helps people find you on the day. It goes on your Delegate Card, so the committee and anyone you share your card with can see it, and on the delegate network once it opens. You can change or remove it at any time.
+        </p>
+        <AvatarEditor url={photo} name={profile.fullName} />
+      </section>
+
+      <section id="details" className={`${box} scroll-mt-28`} aria-labelledby="details-title">
+        <h2 id="details-title" className="mb-5 font-display text-xl text-ink">
           Your details
         </h2>
         <ProfileForm profile={profile} />

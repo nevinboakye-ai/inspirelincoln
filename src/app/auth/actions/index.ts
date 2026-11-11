@@ -1,5 +1,6 @@
 "use server";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { PROFILE_PROMPT_COOKIE, PROFILE_PROMPT_OPTIONS } from "@/lib/profile-prompt";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
@@ -40,6 +41,8 @@ export async function signIn(_: AuthState, form: FormData): Promise<AuthState> {
     if (error.message.toLowerCase().includes("confirm")) return { error: "Please verify your email address first. Check your inbox for the link." };
     return { error: "Email or password is incorrect." };
   }
+  // Ask them to finish their profile, if it isn't, once they're in.
+  (await cookies()).set(PROFILE_PROMPT_COOKIE, "1", PROFILE_PROMPT_OPTIONS);
   // A temporary password from the committee: choose their own first.
   if (data.user?.app_metadata?.must_change_password === true) redirect("/auth/update-password?first=1");
   redirect(safeNext(form.get("next")));
