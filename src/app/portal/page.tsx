@@ -200,7 +200,7 @@ export default async function PortalHome({
       : []),
   ];
   // Workshop choices: shown to anyone with a confirmed place once ranking has opened.
-  const choices = status === "approved" || profile.access.owner ? await loadWorkshopChoices(db, user.id) : null;
+  const choices = status === "approved" || profile.access.owner || profile.access.can.allocate_workshops ? await loadWorkshopChoices(db, user.id) : null;
   const rankOpen = choices ? rankingIsOpen(choices.settings) : false;
   const rankWorkshops: RankWorkshop[] = (choices?.workshops ?? []).map((w) => ({
     id: w.id,
@@ -221,6 +221,8 @@ export default async function PortalHome({
       : null;
   const closedAfterOpening = Boolean(choices && closingTimePassed(choices.settings));
   const showRanking = Boolean(choices?.settings.ready && rankWorkshops.length && (rankOpen || choices.ranking || myPlaces || closedAfterOpening));
+  // Before ranking opens, the people who run workshop places see a private preview.
+  const rankPreview = Boolean(!showRanking && choices?.settings.ready && rankWorkshops.length && profile.access.can.allocate_workshops);
   if (showRanking && rankOpen && !choices!.ranking) steps.push({ label: "Rank the workshops", done: false, href: "#workshops" });
   else if (showRanking && choices!.ranking) steps.push({ label: "Rank the workshops", done: true, href: "#workshops" });
   const doneCount = steps.filter((x) => x.done).length;
@@ -279,7 +281,7 @@ export default async function PortalHome({
 
       <HubStagger className="grid gap-5 sm:gap-6 xl:grid-cols-[minmax(0,1fr)_20.5rem] xl:items-start">
         <div className="min-w-0 space-y-5 sm:space-y-6">
-          {showRanking && (
+          {(showRanking || rankPreview) && (
             <HubItem>
               <WorkshopRanking
                 workshops={rankWorkshops}
@@ -288,6 +290,7 @@ export default async function PortalHome({
                 open={rankOpen}
                 closesAt={choices!.settings.closesAt}
                 places={myPlaces}
+                preview={rankPreview}
               />
             </HubItem>
           )}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Download } from "lucide-react";
+import Link from "next/link";
+import { Download, Eye } from "lucide-react";
 import { requireAccess } from "@/lib/auth";
 import { AdminHeader, Panel, btn } from "@/components/admin/ui";
 import { ChoiceSettingsForm, PlacesTable, RunAllocationForm, WorkshopSessionsForm, type PlaceRow } from "@/components/admin/workshop-board";
@@ -122,11 +123,16 @@ export default async function WorkshopPlacesPage() {
         title="Workshop places"
         description="Delegates rank all six workshops in My Hub. The allocation then gives everyone one workshop in each session, as close to their ranking as the room sizes allow."
         actions={
-          hasPlaces ? (
-            <a href="/admin/workshops/export" className={btn.secondary}>
-              <Download aria-hidden className="size-4" /> Download places (CSV)
-            </a>
-          ) : undefined
+          <>
+            <Link href="/portal#workshops" className={btn.secondary}>
+              <Eye aria-hidden className="size-4" /> {open ? "See it on My Hub" : "Preview what delegates see"}
+            </Link>
+            {hasPlaces && (
+              <a href="/admin/workshops/export" className={btn.secondary}>
+                <Download aria-hidden className="size-4" /> Download places (CSV)
+              </a>
+            )}
+          </>
         }
       />
 
