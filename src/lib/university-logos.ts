@@ -21,7 +21,7 @@ export type LogoMap = Record<string, string>;
  * the emblem so they read at small sizes. A logo the committee uploads on
  * the University logos page replaces the one here.
  *
- *   University of Lincoln       www.lincoln.ac.uk (site icon)
+ *   University of Lincoln       www.lincoln.ac.uk (site icon, shown white on its navy)
  *   University of East Anglia   www.uea.ac.uk (header logo)
  *   University of Nottingham    www.nottingham.ac.uk (UoN-Logo-Light.svg)
  *   University of Leeds         www.leeds.ac.uk (footer logo)
