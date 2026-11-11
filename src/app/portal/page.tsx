@@ -66,20 +66,23 @@ function Card({
   );
 }
 
-const TONE: Partial<Record<AccountType, LanyardTone>> = { delegate: "delegate", poster_presenter: "poster", oral_presenter: "oral", oral_waitlist: "delegate" };
+const TONE: Partial<Record<AccountType, LanyardTone>> = { delegate: "delegate", poster_presenter: "poster", oral_presenter: "oral", oral_waitlist: "waitlist" };
 
 /**
  * Every role for the lanyard, most senior first. Someone on the oral waiting
- * list attends as a delegate. With a single committee role, their committee
+ * list attends as a delegate, so their card shows both. With a single committee role, their committee
  * position (for example "Head of Logistics") reads better than the team name.
  */
 function lanyardRoles(p: { accountType: AccountType; extraTypes: AccountType[]; committeePosition: string | null }) {
   const roles = rolesOf(p.accountType, p.extraTypes);
   const committee = roles.filter((t) => !TONE[t]);
-  const out = roles.map((t) => ({
-    label: t === "oral_waitlist" ? ACCOUNT_TYPE_LABEL.delegate : !TONE[t] && committee.length === 1 && p.committeePosition ? p.committeePosition : ACCOUNT_TYPE_LABEL[t],
-    tone: TONE[t] ?? ("committee" as LanyardTone),
-  }));
+  const out = roles.flatMap((t) => {
+    const role = {
+      label: !TONE[t] && committee.length === 1 && p.committeePosition ? p.committeePosition : ACCOUNT_TYPE_LABEL[t],
+      tone: TONE[t] ?? ("committee" as LanyardTone),
+    };
+    return t === "oral_waitlist" ? [{ label: ACCOUNT_TYPE_LABEL.delegate, tone: "delegate" as LanyardTone }, role] : [role];
+  });
   // A waiting-list "Delegate" next to a real delegate role would say it twice.
   return out.filter((r, i) => out.findIndex((o) => o.label === r.label) === i);
 }
