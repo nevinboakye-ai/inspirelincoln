@@ -14,7 +14,7 @@ const when = (d: string) =>
   new Date(d).toLocaleString("en-GB", { timeZone: "Europe/London", day: "numeric", month: "long", hour: "numeric", minute: "2-digit" });
 
 const btnBase =
-  "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[3px] px-5 font-ui text-sm font-semibold transition-colors disabled:opacity-60 sm:w-auto";
+  "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[3px] px-3 font-ui sm:px-5 text-sm font-semibold transition-colors disabled:opacity-60 sm:w-auto";
 
 /**
  * Oral and poster presenters tell the committee whether they'll be there to
@@ -72,7 +72,7 @@ export function AttendanceCard({
         : "border-gold/50 bg-white shadow-[0_18px_40px_-28px_rgba(14,27,49,0.55)]";
 
   return (
-    <section aria-labelledby="attend-h" className={cn("relative scroll-mt-28 overflow-hidden rounded-xl border p-5 sm:p-7", tone)}>
+    <section aria-labelledby="attend-h" className={cn("relative scroll-mt-28 overflow-hidden rounded-xl border", shown ? "p-3 pr-2 sm:p-4" : "p-4 sm:p-5", tone)}>
       {!shown && <span aria-hidden className="absolute inset-y-0 left-0 w-1.5 bg-gold" />}
 
       <p role="status" aria-live="polite" className="sr-only">
@@ -85,53 +85,52 @@ export function AttendanceCard({
       )}
 
       {shown ? (
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3">
           <span
             className={cn(
-              "grid size-11 shrink-0 place-items-center rounded-full",
+              "grid size-10 shrink-0 place-items-center rounded-full",
               shown === "confirmed" ? "bg-success text-white" : "bg-warning/20 text-[#7a4a00]",
             )}
           >
             {shown === "confirmed" ? <CalendarCheck2 aria-hidden className="size-5" /> : <CalendarX2 aria-hidden className="size-5" />}
           </span>
           <div className="min-w-0 flex-1">
-            <h2 id="attend-h" ref={heading} tabIndex={-1} className="scroll-mt-32 font-display text-xl text-ink outline-none">
+            <p className="font-ui text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-slate">Presenting</p>
+            <h2 id="attend-h" ref={heading} tabIndex={-1} className="scroll-mt-32 font-ui text-base font-semibold leading-snug text-ink outline-none">
               {shown === "confirmed" ? "You're confirmed to present" : "You've told us you can't make it"}
             </h2>
-            <p className="mt-1.5 text-slate-700">
-              {shown === "confirmed"
-                ? `Thank you. The committee knows you'll be there ${doing} on ${dateLabel}.`
-                : `Thank you for letting us know. The committee may offer your ${what} slot to someone else. If your plans change, update your answer as soon as you can.`}
-            </p>
+            {shown === "unavailable" && (
+              <p className="mt-1 text-sm text-slate-700">
+                The committee may offer your {what} slot to someone else. If your plans change, update your answer as soon as you can.
+              </p>
+            )}
             {shown === "unavailable" && answer?.note && (
-              <p className="mt-3 rounded-md bg-white/70 p-3 text-sm text-ink">
+              <p className="mt-2 rounded-md bg-white/70 p-2.5 text-sm text-ink">
                 <span className="font-semibold">Your note: </span>
                 {answer.note}
               </p>
             )}
-            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-              <button
-                type="button"
-                onClick={() => go("ask")}
-                className="inline-flex min-h-11 items-center gap-2 font-ui text-sm font-semibold text-electric-600 underline-offset-4 hover:underline"
-              >
-                <Pencil aria-hidden className="size-4" /> Change my answer
-              </button>
-              <span className="text-xs text-slate">Answered {when(answer!.respondedAt)}</span>
-            </div>
+            <p className="sr-only">Answered {when(answer!.respondedAt)}</p>
           </div>
+          <button
+            type="button"
+            onClick={() => go("ask")}
+            title={`Answered ${when(answer!.respondedAt)}`}
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-3 font-ui text-sm font-semibold text-electric-600 hover:bg-white/70"
+          >
+            <Pencil aria-hidden className="size-4" /> <span className="lg:sr-only">Change</span><span className="sr-only"> whether you&apos;ll be there to present</span>
+          </button>
         </div>
       ) : (
         <>
           <p className="eyebrow text-[#7a4a00]">{answer ? "Change your answer" : "Please reply"}</p>
-          <h2 id="attend-h" ref={heading} tabIndex={-1} className="mt-2 font-display text-2xl leading-tight text-ink outline-none">
+          <h2 id="attend-h" ref={heading} tabIndex={-1} className="mt-1 font-display text-xl leading-tight text-ink outline-none">
             Will you be there to present?
           </h2>
-          <p className="mt-2 max-w-2xl text-slate-700">
-            Let the committee know you&apos;ll be {doing} at INSPIRE. If you can&apos;t make it, telling us early means
-            we can offer the slot to someone on the waiting list.
+          <p className="mt-1.5 max-w-2xl text-sm text-slate-700">
+            Let us know you&apos;ll be {doing}. If you can&apos;t, telling us early means we can offer the slot to someone on the waiting list.
           </p>
-          <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-700">
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-700">
             <span className="flex items-center gap-2">
               <CalendarCheck2 aria-hidden className="size-4 text-electric-600" /> {dateLabel}
             </span>
@@ -141,7 +140,7 @@ export function AttendanceCard({
           </p>
 
           {mode === "decline" ? (
-            <form onSubmit={submitWithoutReset(action)} noValidate className="mt-5 space-y-4 rounded-lg border border-navy/10 bg-paper p-4 sm:p-5">
+            <form onSubmit={submitWithoutReset(action)} noValidate className="mt-4 space-y-3 rounded-lg border border-navy/10 bg-paper p-3 sm:p-4">
               <input type="hidden" name="response" value="unavailable" />
               <div>
                 <label htmlFor="attend-note" className="mb-2 block text-sm font-semibold text-ink">
@@ -183,7 +182,7 @@ export function AttendanceCard({
               </div>
             </form>
           ) : (
-            <form onSubmit={submitWithoutReset(action)} className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <form onSubmit={submitWithoutReset(action)} className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
               <input type="hidden" name="response" value="confirmed" />
               <button type="submit" disabled={pending} className={cn(btnBase, "bg-navy text-paper hover:bg-navy-700")}>
                 {pending ? <Loader2 aria-hidden className="size-4 animate-spin" /> : <Check aria-hidden className="size-4" />}
@@ -202,7 +201,7 @@ export function AttendanceCard({
                   type="button"
                   onClick={() => go("view")}
                   disabled={pending}
-                  className={cn(btnBase, "text-slate-700 hover:text-ink sm:ml-auto")}
+                  className={cn(btnBase, "col-span-2 text-slate-700 hover:text-ink sm:ml-auto")}
                 >
                   Keep my answer
                 </button>

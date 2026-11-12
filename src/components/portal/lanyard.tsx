@@ -257,14 +257,14 @@ export function Lanyard(p: LanyardProps) {
         type="button"
         onClick={flip}
         aria-pressed={facing === "back"}
-        className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full border border-navy/15 bg-white px-5 font-ui text-sm font-semibold text-ink shadow-sm transition-colors hover:border-navy/35"
+        className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border border-navy/15 bg-white px-5 font-ui text-sm font-semibold text-ink shadow-sm transition-colors hover:border-navy/35"
       >
         <RotateCw aria-hidden className={cn("size-4 transition-transform duration-500", facing === "back" && "rotate-180")} />
         {facing === "back" ? "Show the front" : p.qr ? "Show my QR code" : "Turn the card over"}
       </button>
-      <p className="mt-2 text-xs text-slate-700">Or drag the card, or tap it, to turn it round.</p>
+      <p className="mt-1.5 text-xs text-slate-700">Or drag the card, or tap it, to turn it round.</p>
       {p.previewHref && (
-        <Link href={p.previewHref} className="mt-2 inline-flex min-h-11 items-center gap-1.5 font-ui text-sm font-semibold text-electric-600 underline-offset-4 hover:underline">
+        <Link href={p.previewHref} className="mt-1 inline-flex min-h-11 items-center gap-1.5 font-ui text-sm font-semibold text-electric-600 underline-offset-4 hover:underline">
           <Eye aria-hidden className="size-4" /> See what people see when they scan it
         </Link>
       )}

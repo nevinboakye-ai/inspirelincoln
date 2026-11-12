@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState, useTransition } from "react";
-import { ArrowDown, ArrowUp, CalendarClock, Check, Clock, Eye, GripVertical, Info, Layers, Loader2, Lock, RotateCcw, Sparkles, Trophy } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Clock, Eye, GripVertical, Info, Loader2, Lock, RotateCcw, Sparkles } from "lucide-react";
 import { saveWorkshopRanking } from "@/app/portal/workshop-actions";
 import { WorkshopInfo, type InfoWorkshop } from "@/components/portal/workshop-info";
 import { Overlay } from "@/components/ui/overlay";
@@ -160,17 +160,19 @@ export function WorkshopRanking({
       )}
     </Overlay>
   );
-  const infoButton = (w: RankWorkshop, className?: string) => (
+  /** The workshop's title opens its full details, so no separate "More info" button takes up room. */
+  const titleButton = (w: RankWorkshop, strap = false) => (
     <button
       type="button"
       onClick={() => setInfo(w.id)}
-      className={cn(
-        "min-h-11 shrink-0 items-center gap-1.5 rounded-full px-3 font-ui text-sm font-semibold text-electric-600 hover:bg-paper-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-electric/30",
-        className,
-      )}
+      className="group block min-h-10 w-full rounded-md py-0.5 text-left focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-electric/30"
     >
-      <Info aria-hidden className="size-4" />
-      More info<span className="sr-only"> about {w.title}</span>
+      <span className="block text-sm font-semibold leading-snug text-ink group-hover:underline group-hover:underline-offset-4 sm:text-[0.95rem]">
+        {w.title}
+        <Info aria-hidden className="ml-1.5 inline size-3.5 -translate-y-px text-electric-600" />
+        <span className="sr-only">, more info</span>
+      </span>
+      {strap && w.strapline && <span className="mt-0.5 hidden truncate text-xs leading-snug text-slate-700 lg:block">{w.strapline}</span>}
     </button>
   );
 
@@ -178,37 +180,38 @@ export function WorkshopRanking({
   if (places && places.length) {
     return (
       <section aria-labelledby={headingId} id="workshops" className="scroll-mt-28 overflow-hidden rounded-xl border border-navy/10 bg-white">
-        <div className="relative overflow-hidden bg-midnight px-5 py-5 text-paper sm:px-7">
+        <div className="relative overflow-hidden bg-midnight px-4 py-3.5 text-paper sm:px-5">
           <div aria-hidden className="lanyard-grid pointer-events-none absolute inset-0 opacity-20" />
           <p className="eyebrow relative text-gold">Workshops</p>
-          <h2 id={headingId} className="relative mt-1 font-display text-2xl">
+          <h2 id={headingId} className="relative mt-0.5 font-display text-xl">
             Your workshops
           </h2>
-          <p className="relative mt-1 text-sm text-paper/75">Three workshops, one in each session. Head to each room a few minutes early.</p>
+          <p className="relative mt-0.5 text-sm text-paper/75">One in each session. Head to each room a few minutes early.</p>
         </div>
         <ol className="divide-y divide-navy/10">
           {[...places].sort((a, b) => a.slot - b.slot).map((p) => {
             const c = workshopColour(p.workshop.number);
             return (
-              <li key={p.slot} className="relative flex flex-wrap items-center gap-x-4 gap-y-2 py-4 pl-6 pr-5 sm:pl-8 sm:pr-7">
+              <li key={p.slot} className="relative flex items-center gap-3 py-2.5 pl-5 pr-2 sm:pl-6 sm:pr-3">
                 <span aria-hidden className="absolute inset-y-0 left-0 w-1.5" style={{ background: c.solid }} />
-                <span className="grid size-11 shrink-0 place-items-center rounded-full font-ui text-sm font-bold text-white" style={{ background: c.solid }} aria-hidden>
+                <span className="grid size-9 shrink-0 place-items-center rounded-full font-ui text-sm font-bold text-white" style={{ background: c.solid }} aria-hidden>
                   {p.slot}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
-                    Session {p.slot}
-                    {p.time ? ` · ${p.time}` : ""}
-                    {p.room ? ` · ${p.room}` : ""}
-                  </span>
-                  <span className="mt-0.5 block font-semibold text-ink">{p.workshop.title}</span>
-                  {p.choice && (
-                    <span className={cn("mt-1.5 inline-block rounded-full px-2.5 py-1 font-ui text-xs font-semibold", p.choice <= top ? "bg-success/10 text-success" : "bg-paper-200 text-slate-700")}>
-                      Your {ordinal(p.choice)} choice
+                  <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
+                    <span>
+                      Session {p.slot}
+                      {p.time ? ` · ${p.time}` : ""}
+                      {p.room ? ` · ${p.room}` : ""}
                     </span>
-                  )}
+                    {p.choice && (
+                      <span className={cn("rounded-full px-2 py-0.5 font-ui text-[0.68rem] normal-case tracking-normal", p.choice <= top ? "bg-success/10 text-success" : "bg-paper-200 text-slate-700")}>
+                        Your {ordinal(p.choice)} choice
+                      </span>
+                    )}
+                  </span>
+                  {titleButton(p.workshop)}
                 </span>
-                {infoButton(p.workshop, "inline-flex")}
               </li>
             );
           })}
@@ -230,7 +233,7 @@ export function WorkshopRanking({
           else rows.current.delete(id);
         }}
         className={cn(
-          "relative flex items-center gap-3 overflow-hidden rounded-xl border bg-white py-3 pl-5 pr-2 transition-[box-shadow,border-color] sm:gap-4 sm:pl-6 sm:pr-3",
+          "relative flex items-center gap-2.5 overflow-hidden rounded-lg border bg-white py-1.5 pl-4 pr-1.5 transition-[box-shadow,border-color] sm:gap-3 sm:pl-5 sm:pr-2",
           dragging === id ? "z-10 border-electric-600 shadow-[0_18px_36px_-18px_rgba(14,27,49,0.55)]" : "border-navy/15",
         )}
         style={inTop && dragging !== id ? { background: c.tint } : undefined}
@@ -238,26 +241,23 @@ export function WorkshopRanking({
         <span aria-hidden className="absolute inset-y-0 left-0 w-1.5" style={{ background: c.solid }} />
         {open && (
           <span aria-hidden onPointerDown={onPointerDown(id)} className="hidden cursor-grab touch-none text-slate hover:text-ink sm:grid sm:place-items-center" title="Drag to reorder">
-            <GripVertical className="size-5" />
+            <GripVertical className="size-4" />
           </span>
         )}
         <span
           aria-hidden
           onPointerDown={open ? onPointerDown(id) : undefined}
-          className={cn("grid size-10 shrink-0 touch-none place-items-center rounded-full font-ui text-base font-bold", open && "cursor-grab", inTop ? "text-white" : "border-2 bg-white text-ink")}
+          className={cn("grid size-8 shrink-0 touch-none place-items-center rounded-full font-ui text-sm font-bold", open && "cursor-grab", inTop ? "text-white" : "border-2 bg-white text-ink")}
           style={inTop ? { background: c.solid } : { borderColor: c.solid }}
         >
           {i + 1}
         </span>
         <span className="min-w-0 flex-1">
           <span className="sr-only">{ordinal(i + 1)}: </span>
-          <span className="block font-semibold leading-snug text-ink">{w.title}</span>
-          {w.strapline && <span className="mt-0.5 hidden text-sm leading-snug text-slate-700 sm:block">{w.strapline}</span>}
-          {infoButton(w, "-ml-3 mt-0.5 inline-flex min-h-10 sm:hidden")}
+          {titleButton(w, true)}
         </span>
-        {infoButton(w, "hidden sm:inline-flex")}
         {open && (
-          <span className="flex shrink-0 flex-col gap-1 sm:flex-row">
+          <span className="flex shrink-0 gap-1">
             {(["up", "down"] as const).map((dir) => {
               const disabled = dir === "up" ? i === 0 : i === order.length - 1;
               const Icon = dir === "up" ? ArrowUp : ArrowDown;
@@ -275,7 +275,7 @@ export function WorkshopRanking({
                     move(id, dir === "up" ? i - 1 : i + 1);
                   }}
                   aria-label={`Move ${w.title} ${dir}`}
-                  className="grid size-11 place-items-center rounded-full border border-navy/15 bg-white text-ink transition-colors hover:border-navy/40 disabled:cursor-not-allowed disabled:opacity-35 sm:size-10"
+                  className="grid size-10 place-items-center rounded-full border border-navy/15 bg-white text-ink transition-colors hover:border-navy/40 disabled:cursor-not-allowed disabled:opacity-35"
                 >
                   <Icon aria-hidden className="size-4" />
                 </button>
@@ -298,7 +298,7 @@ export function WorkshopRanking({
         {announce}
       </p>
       {preview && (
-        <div className="flex items-start gap-3 border-b border-gold/40 bg-gold/10 px-5 py-3.5 text-sm text-ink sm:px-7">
+        <div className="flex items-start gap-3 border-b border-gold/40 bg-gold/10 px-4 py-2.5 text-sm text-ink sm:px-5">
           <Eye aria-hidden className="mt-0.5 size-4 shrink-0" />
           <p>
             <strong>Preview for the committee.</strong> Delegates see this card once you open ranking on{" "}
@@ -309,42 +309,27 @@ export function WorkshopRanking({
           </p>
         </div>
       )}
-      <div className="p-5 sm:p-7">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="p-4 sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
           <h2 id={headingId} className="flex items-center gap-2 font-display text-xl text-ink">
             <Sparkles aria-hidden className="size-5 text-electric-600" /> {open ? "Rank your workshops" : "Your workshop ranking"}
           </h2>
           {!open && (
-            <p className="inline-flex items-center gap-1.5 rounded-full bg-paper-200 px-3 py-1.5 text-xs font-semibold text-slate-700">
+            <p className="inline-flex items-center gap-1.5 rounded-full bg-paper-200 px-3 py-1 text-xs font-semibold text-slate-700">
               <Lock aria-hidden className="size-3.5" /> Closed
             </p>
           )}
-        </div>
 
-        {open && !preview && closesAt && (
-          <p className={cn("mt-4 flex items-start gap-3 rounded-lg border p-4 text-sm text-ink", saved ? "border-navy/10 bg-paper/70" : "border-gold/60 bg-gold/15")}>
-            <Clock aria-hidden className="mt-0.5 size-5 shrink-0" />
-            <span>
-              <strong className="block text-base">Rank by {when(closesAt)}</strong>
-              {saved
-                ? "You can change your order until then."
-                : "Ranking closes then. If you haven't ranked by then, we'll place you in workshops that still have space."}
-            </span>
-          </p>
-        )}
+          {open && !preview && closesAt && (
+            <p className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold text-ink", saved ? "bg-paper-200" : "bg-gold/25")}>
+              <Clock aria-hidden className="size-3.5" /> Rank by {when(closesAt)}
+            </p>
+          )}
+        </div>
         {open ? (
-          <ul className="mt-4 grid gap-3 sm:grid-cols-3">
-            {[
-              { Icon: Layers, text: `All ${workshops.length} workshops run at the same time, in each of the three sessions.` },
-              { Icon: CalendarClock, text: `You'll go to ${GO_TO} of the ${workshops.length}: a different one in each session.` },
-              { Icon: Trophy, text: `Rank all ${workshops.length}. We'll aim to give you your top ${GO_TO}, and use the rest if a room fills up.` },
-            ].map(({ Icon, text }) => (
-              <li key={text} className="flex gap-3 rounded-lg bg-paper/70 p-3.5 text-sm leading-snug text-ink">
-                <Icon aria-hidden className="mt-0.5 size-4 shrink-0 text-electric-600" />
-                <span>{text}</span>
-              </li>
-            ))}
-          </ul>
+          <p className="mt-2 text-sm leading-snug text-slate-700">
+            All {workshops.length} run in each session and you go to {GO_TO}, one per session. We aim for your top {GO_TO} and use the rest if a room fills. Select a title for details.
+          </p>
         ) : (
           <p className="mt-2 max-w-2xl text-sm text-slate-700">
             {saved
@@ -354,21 +339,19 @@ export function WorkshopRanking({
         )}
 
         {(open || saved) && (
-          <div className={cn("mt-6", dragging && "cursor-grabbing select-none")} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}>
-            <h3 id={`${headingId}-top`} className="font-display text-lg text-ink">
-              Your top {top}
+          <div className={cn("mt-3", dragging && "cursor-grabbing select-none")} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}>
+            <h3 id={`${headingId}-top`} className="flex flex-wrap items-baseline gap-x-2 font-ui text-xs font-semibold uppercase tracking-[0.14em] text-ink">
+              Your top {top} <span className="font-normal normal-case tracking-normal text-slate-700">the workshops we&apos;ll aim to give you</span>
             </h3>
-            <p className="text-sm text-slate-700">The workshops we&apos;ll aim to give you.</p>
-            <ol aria-labelledby={`${headingId}-top`} className="mt-3 space-y-2">
+            <ol aria-labelledby={`${headingId}-top`} className="mt-1.5 space-y-1.5">
               {order.slice(0, top).map((id, i) => row(id, i))}
             </ol>
             {order.length > top && (
               <>
-                <h3 id={`${headingId}-rest`} className="mt-6 font-display text-lg text-ink">
-                  Back-ups
+                <h3 id={`${headingId}-rest`} className="mt-3 flex flex-wrap items-baseline gap-x-2 font-ui text-xs font-semibold uppercase tracking-[0.14em] text-ink">
+                  Back-ups <span className="font-normal normal-case tracking-normal text-slate-700">used if one of your top {top} is full</span>
                 </h3>
-                <p className="text-sm text-slate-700">If one of your top {top} is full, you&apos;ll get the highest of these instead.</p>
-                <ol start={top + 1} aria-labelledby={`${headingId}-rest`} className="mt-3 space-y-2">
+                <ol start={top + 1} aria-labelledby={`${headingId}-rest`} className="mt-1.5 space-y-1.5">
                   {order.slice(top).map((id, k) => row(id, top + k))}
                 </ol>
               </>
@@ -377,7 +360,7 @@ export function WorkshopRanking({
         )}
 
         {preview && (
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-slate-700">Delegates press &ldquo;Save my ranking&rdquo; here. In this preview the button is switched off.</p>
             <button
               type="button"
@@ -392,13 +375,13 @@ export function WorkshopRanking({
           </div>
         )}
         {open && !preview && (
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p role={error ? "alert" : undefined} className={cn("text-sm", error ? "font-medium text-danger" : "text-slate-700")}>
               {error ??
                 (pending ? (
                   "Saving…"
                 ) : !saved ? (
-                  "Not saved yet. Your ranking only counts once you save it."
+                  closesAt ? "Not saved yet. If you don't save a ranking before the deadline, we'll place you in workshops that still have space." : "Not saved yet. Your ranking only counts once you save it."
                 ) : dirty ? (
                   "You have changes that aren't saved yet."
                 ) : savedAt ? (

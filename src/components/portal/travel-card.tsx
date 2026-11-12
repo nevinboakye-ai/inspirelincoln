@@ -51,7 +51,8 @@ export function TravelCard({ answer }: { answer: TravelAnswer }) {
       id="travel"
       aria-labelledby="travel-h"
       className={cn(
-        "relative scroll-mt-28 overflow-hidden rounded-xl border p-5 sm:p-7",
+        "relative scroll-mt-28 overflow-hidden rounded-xl border",
+        shown ? "p-3 pr-2 sm:p-4" : "p-4 sm:p-5",
         shown ? "border-navy/10 bg-white" : "border-gold/50 bg-white shadow-[0_18px_40px_-28px_rgba(14,27,49,0.55)]",
       )}
     >
@@ -66,68 +67,64 @@ export function TravelCard({ answer }: { answer: TravelAnswer }) {
       )}
 
       {shown ? (
-        <div className="flex items-start gap-4">
-          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-navy text-paper">
+        <div className="flex items-center gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-navy text-paper">
             <Icon aria-hidden className="size-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <h2 id="travel-h" ref={heading} tabIndex={-1} className="scroll-mt-32 font-display text-xl text-ink outline-none">
-              Getting here: {TRAVEL_LABEL[answer.mode].label}
+            <p className="font-ui text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-slate">Getting here</p>
+            <h2 id="travel-h" ref={heading} tabIndex={-1} className="scroll-mt-32 font-ui text-base font-semibold leading-snug text-ink outline-none">
+              <span className="sr-only">Getting here: </span>
+              {TRAVEL_LABEL[answer.mode].label}
             </h2>
             {answer.carRegistration && (
-              <p className="mt-2 inline-flex items-center rounded-[3px] border-2 border-ink bg-[#ffd307] px-3 py-1 font-ui text-lg font-bold tracking-[0.12em] text-ink">
+              <p className="mt-1 inline-flex items-center rounded-[3px] border-2 border-ink bg-[#ffd307] px-2 py-0.5 font-ui text-sm font-bold tracking-[0.12em] text-ink">
                 <span className="sr-only">Car registration: </span>
                 {answer.carRegistration}
               </p>
             )}
-            <p className="mt-1.5 text-slate-700">
-              {answer.mode === "car"
-                ? "Thank you. The committee will use your registration to sort out parking on campus."
-                : "Thank you. This helps the committee plan arrivals and directions on the day."}
-            </p>
-            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setMoved(true);
-                  setEditing(true);
-                }}
-                className="inline-flex min-h-11 items-center gap-2 font-ui text-sm font-semibold text-electric-600 underline-offset-4 hover:underline"
-              >
-                <Pencil aria-hidden className="size-4" /> Change my answer
-              </button>
-              <span className="text-xs text-slate">Answered {when(answer.updatedAt)}</span>
-            </div>
+            <p className="sr-only">Answered {when(answer.updatedAt)}</p>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setMoved(true);
+              setEditing(true);
+            }}
+            title={`Answered ${when(answer.updatedAt)}`}
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-3 font-ui text-sm font-semibold text-electric-600 hover:bg-paper-200"
+          >
+            <Pencil aria-hidden className="size-4" /> <span className="lg:sr-only">Change</span><span className="sr-only"> how you&apos;re getting here</span>
+          </button>
         </div>
       ) : (
         <form onSubmit={submitWithoutReset(action)} noValidate>
           <p className="eyebrow text-[#7a4a00]">{answer ? "Change your answer" : "Please reply"}</p>
-          <h2 id="travel-h" ref={heading} tabIndex={-1} className="mt-2 font-display text-2xl leading-tight text-ink outline-none">
+          <h2 id="travel-h" ref={heading} tabIndex={-1} className="mt-1 font-display text-xl leading-tight text-ink outline-none">
             How are you getting to INSPIRE?
           </h2>
-          <fieldset className="mt-4" aria-describedby={err.mode ? "travel-mode-error" : undefined}>
+          <fieldset className="mt-3" aria-describedby={err.mode ? "travel-mode-error" : undefined}>
             <legend className="sr-only">How you&apos;re travelling</legend>
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid grid-cols-2 gap-2">
               {TRAVEL_MODES.map((m) => {
                 const I = ICON[m];
                 return (
                   <label
                     key={m}
                     className={cn(
-                      "flex min-h-14 cursor-pointer items-center gap-3 rounded-[3px] border px-4 py-3 transition-colors has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-electric/20",
+                      "flex min-h-12 cursor-pointer items-center gap-2.5 rounded-[3px] border px-3 py-2 transition-colors last:col-span-2 has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-electric/20",
                       mode === m ? "border-navy bg-navy/[0.04] ring-1 ring-navy" : "border-navy/15 hover:border-navy/40",
                     )}
                   >
                     <input type="radio" name="mode" value={m} checked={mode === m} onChange={() => setMode(m)} className="sr-only" />
-                    <I aria-hidden className={cn("size-5 shrink-0", mode === m ? "text-navy" : "text-slate")} />
+                    <I aria-hidden className={cn("hidden size-5 shrink-0 sm:block", mode === m ? "text-navy" : "text-slate")} />
                     <span className="min-w-0 flex-1">
-                      <span className="block font-semibold text-ink">{TRAVEL_LABEL[m].label}</span>
-                      <span className="block text-xs text-slate-700">{TRAVEL_LABEL[m].hint}</span>
+                      <span className="block text-sm font-semibold leading-snug text-ink">{TRAVEL_LABEL[m].label}</span>
+                      <span className={cn("text-xs leading-snug text-slate-700", m.endsWith("coach") ? "block" : "hidden sm:block")}>{TRAVEL_LABEL[m].hint}</span>
                     </span>
                     <span
                       aria-hidden
-                      className={cn("grid size-5 shrink-0 place-items-center rounded-full border-2", mode === m ? "border-navy bg-navy text-paper" : "border-navy/25")}
+                      className={cn("hidden size-5 shrink-0 place-items-center rounded-full border-2 sm:grid", mode === m ? "border-navy bg-navy text-paper" : "border-navy/25")}
                     >
                       {mode === m && <Check className="size-3" />}
                     </span>
@@ -143,7 +140,7 @@ export function TravelCard({ answer }: { answer: TravelAnswer }) {
           )}
 
           {mode === "car" && (
-            <div className="mt-4 rounded-lg border border-navy/10 bg-paper p-4 sm:p-5">
+            <div className="mt-3 rounded-lg border border-navy/10 bg-paper p-3 sm:p-4">
               <label htmlFor="travel-reg" className="block text-sm font-semibold text-ink">
                 Car registration <span className="text-danger">*</span>
               </label>
@@ -172,7 +169,7 @@ export function TravelCard({ answer }: { answer: TravelAnswer }) {
             </div>
           )}
 
-          <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
             <button
               type="submit"
               disabled={pending}
