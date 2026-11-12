@@ -3,8 +3,9 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { requireAccess } from "@/lib/auth";
 import { fromZonedInputValue } from "@/lib/time";
-import { allocate, pairingProblems, type AllocWorkshop } from "@/lib/workshops/allocate";
+import { allocate, SESSIONS, type AllocWorkshop } from "@/lib/workshops/allocate";
 import { loadAllocationBoard } from "@/lib/workshops/admin";
+import { WORKSHOP_ROOMS } from "@/lib/workshops/rooms";
 
 export type BoardResult = { ok: boolean; message?: string; error?: string } | null;
 
@@ -29,14 +30,10 @@ export async function saveChoiceSettings(_: BoardResult, form: FormData): Promis
   const closesAt = raw ? fromZonedInputValue(raw) : null;
   if (raw && !closesAt) return { ok: false, error: "Enter the closing time as a date and time." };
   if (form.get("open") === "on") {
-    // Delegates pick between the two workshops in each session, so the pairs must be set first.
+    // Delegates rank every workshop, and go to one per session, so there must be at least one per session.
     const { data: ed } = await db.from("editions").select("id").eq("is_current", true).maybeSingle();
-    const { data: ws } = await db.from("workshops").select("slot, stream").eq("published", true).eq("edition_id", ed?.id ?? "");
-    const pairs = new Map<number, number>();
-    for (const w of ws ?? []) if (w.slot && w.stream) pairs.set(w.slot as number, (pairs.get(w.slot as number) ?? 0) + 1);
-    const unset = (ws ?? []).some((w) => !w.slot || !w.stream);
-    if (unset || pairs.size !== 3 || [...pairs.values()].some((n) => n !== 2))
-      return { ok: false, error: "Put every workshop into a session as A or B (two per session) before opening choices." };
+    const { count } = await db.from("workshops").select("id", { count: "exact", head: true }).eq("published", true).eq("edition_id", ed?.id ?? "");
+    if ((count ?? 0) < SESSIONS) return { ok: false, error: `Publish at least ${SESSIONS} workshops before opening ranking.` };
   }
   const { error } = await db.rpc("workshop_settings_save", {
     p_open: form.get("open") === "on",
@@ -48,40 +45,35 @@ export async function saveChoiceSettings(_: BoardResult, form: FormData): Promis
   return { ok: true, message: "Saved." };
 }
 
-/** Which session each workshop runs in, A or B, and how many people each room holds. */
-export async function saveWorkshopSessions(_: BoardResult, form: FormData): Promise<BoardResult> {
+/** The room each workshop runs in, and how many people it holds in one session. */
+export async function saveWorkshopRooms(_: BoardResult, form: FormData): Promise<BoardResult> {
   const { db } = await requireAccess("allocate_workshops", PATH);
   const ids = form.getAll("id").map(String);
   const rows = ids.map((id) => {
-    const slot = Number(form.get(`slot_${id}`)) || null;
-    const stream = String(form.get(`stream_${id}`) ?? "");
+    const room = String(form.get(`room_${id}`) ?? "").trim();
     const capRaw = String(form.get(`capacity_${id}`) ?? "").trim();
-    const capacity = capRaw ? Number(capRaw) : null;
-    return { id, slot, stream: slot && (stream === "a" || stream === "b") ? stream : null, capacity };
+    return { id, room, capacity: capRaw ? Number(capRaw) : null };
   });
+  if (rows.some((r) => !/^[0-9a-f-]{36}$/.test(r.id))) return { ok: false, error: "Something went wrong. Please refresh and try again." };
+  if (rows.some((r) => r.room && !(WORKSHOP_ROOMS as readonly string[]).includes(r.room))) return { ok: false, error: "Choose a room from the list." };
   if (rows.some((r) => r.capacity !== null && (!Number.isInteger(r.capacity) || r.capacity < 1 || r.capacity > 2000)))
     return { ok: false, error: "Room sizes must be whole numbers between 1 and 2000, or left empty." };
-  if (rows.some((r) => r.slot && !r.stream)) return { ok: false, error: "Choose A or B for every workshop that has a session." };
-  const seen = new Set<string>();
-  for (const r of rows.filter((x) => x.slot)) {
-    const k = `${r.slot}${r.stream}`;
-    if (seen.has(k)) return { ok: false, error: `Two workshops are set to ${r.slot}${r.stream!.toUpperCase()}. Each place can only have one workshop.` };
-    seen.add(k);
-  }
-  const { error } = await db.rpc("workshop_sessions_save", { p: rows.map((r) => ({ ...r, slot: r.slot ?? "", stream: r.stream ?? "", capacity: r.capacity ?? "" })) });
-  if (error) return { ok: false, error: friendly(error.message, "We couldn't save the sessions. Please try again.") };
+  const taken = rows.filter((r) => r.room).map((r) => r.room);
+  const twice = taken.find((r, i) => taken.indexOf(r) !== i);
+  if (twice) return { ok: false, error: `${twice} is set for two workshops. All six run at the same time, so each needs its own room.` };
+  const { error } = await db.rpc("workshop_rooms_save", { p: rows.map((r) => ({ id: r.id, room: r.room, capacity: r.capacity ?? "" })) });
+  if (error) return { ok: false, error: friendly(error.message, "We couldn't save the rooms. Please try again.") };
   refresh();
   revalidatePath("/workshops");
-  return { ok: true, message: "Sessions and room sizes saved." };
+  return { ok: true, message: "Rooms and room sizes saved." };
 }
 
 /** Runs the allocation and saves it, replacing any earlier one (including moves made by hand). */
 export async function runAllocation(_: BoardResult, form: FormData): Promise<BoardResult> {
   const { db, user } = await requireAccess("allocate_workshops", PATH);
   const board = await loadAllocationBoard(db, user.id);
-  const ws: AllocWorkshop[] = board.workshops.filter((w) => w.slot && w.stream).map((w) => ({ id: w.id, slot: w.slot!, stream: w.stream!, capacity: w.capacity }));
-  const problems = pairingProblems(ws);
-  if (problems.length || ws.length !== board.workshops.length) return { ok: false, error: problems[0] ?? "Put every workshop in a session first." };
+  const ws: AllocWorkshop[] = board.workshops.map((w) => ({ id: w.id, capacity: w.capacity }));
+  if (ws.length < SESSIONS) return { ok: false, error: `There need to be at least ${SESSIONS} published workshops.` };
   const includeUnranked = form.get("unranked") === "on";
   // People who haven't ranked are only placed if they're delegates: committee members choose to take part by ranking.
   const people = board.people.filter((p) => p.ranking || (includeUnranked && !p.committee)).map((p) => ({ id: p.id, ranking: p.ranking }));
@@ -98,21 +90,34 @@ export async function runAllocation(_: BoardResult, form: FormData): Promise<Boa
   const s = result.summary;
   return {
     ok: true,
-    message: `Placed ${s.people} ${s.people === 1 ? "person" : "people"}. ${s.allPreferred} of ${s.ranked} who chose got their pick in every session.${s.unplaced ? ` ${s.unplaced} places couldn't be filled because both rooms were full.` : ""}`,
+    message: `Placed ${s.people} ${s.people === 1 ? "person" : "people"}. ${s.allTop} of ${s.ranked} who ranked got all of their top three.${s.unplaced ? ` ${s.unplaced} ${s.unplaced === 1 ? "place" : "places"} couldn't be filled because every room was full.` : ""}`,
   };
 }
 
-/** Moves one person to a different workshop in the same session. */
-export async function moveAllocation(userId: string, workshopId: string): Promise<BoardResult> {
+/**
+ * Puts one person in a workshop for one session. If they're already doing
+ * that workshop in another session, the two sessions swap. An empty
+ * workshop takes them out of that session.
+ */
+export async function setPlace(userId: string, slot: number, workshopId: string | null): Promise<BoardResult> {
   const { db } = await requireAccess("allocate_workshops", PATH);
-  if (!/^[0-9a-f-]{36}$/.test(userId) || !/^[0-9a-f-]{36}$/.test(workshopId)) return { ok: false, error: "Something went wrong. Please refresh and try again." };
-  const { error } = await db.rpc("workshop_allocation_move", { p_user: userId, p_workshop: workshopId });
+  const uuid = /^[0-9a-f-]{36}$/;
+  if (!uuid.test(userId) || (workshopId && !uuid.test(workshopId)) || !Number.isInteger(slot) || slot < 1 || slot > SESSIONS)
+    return { ok: false, error: "Something went wrong. Please refresh and try again." };
+  const { error } = await db.rpc("workshop_allocation_set", { p_user: userId, p_slot: slot, p_workshop: workshopId });
   if (error) return { ok: false, error: friendly(error.message, "We couldn't move them. Please try again.") };
-  const [{ data: w }, { count }] = await Promise.all([
-    db.from("workshops").select("title, capacity").eq("id", workshopId).maybeSingle(),
-    db.from("workshop_allocations").select("user_id", { count: "exact", head: true }).eq("workshop_id", workshopId),
-  ]);
   refresh();
-  const over = w?.capacity != null && count != null ? count - w.capacity : 0;
-  return { ok: true, message: over > 0 ? `Moved. ${w!.title} now has ${over} more ${over === 1 ? "person" : "people"} than the room holds.` : "Moved." };
+  // Warn if a room is now over its size in any session.
+  const { data: ed } = await db.from("editions").select("id").eq("is_current", true).maybeSingle();
+  const [{ data: ws }, { data: places }] = await Promise.all([
+    db.from("workshops").select("id, title, capacity").eq("edition_id", ed?.id ?? "").eq("published", true),
+    db.from("workshop_allocations").select("slot, workshop_id").eq("edition_id", ed?.id ?? ""),
+  ]);
+  const over = (ws ?? []).flatMap((w) =>
+    [1, 2, 3].flatMap((s) => {
+      const n = (places ?? []).filter((p) => p.workshop_id === w.id && p.slot === s).length;
+      return w.capacity != null && n > w.capacity ? [`${w.title} in session ${s} (${n} for ${w.capacity} places)`] : [];
+    }),
+  );
+  return { ok: true, message: over.length ? `Saved. Over the room size: ${over.join("; ")}.` : "Saved." };
 }
