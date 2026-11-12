@@ -240,7 +240,10 @@ export default async function PortalHome({
   const showRanking = Boolean(choices?.settings.ready && rankWorkshops.length && (rankOpen || choices.ranking || myPlaces || closedAfterOpening));
   // Before ranking opens, the people who run workshop places see a private preview.
   const rankPreview = Boolean(!showRanking && choices?.settings.ready && rankWorkshops.length && profile.access.can.allocate_workshops);
-  if (showRanking && rankOpen && !choices!.ranking) steps.push({ label: "Rank your workshops", done: false, href: "#workshops" });
+  const rankBy = choices?.settings.closesAt
+    ? new Date(choices.settings.closesAt).toLocaleString("en-GB", { timeZone: "Europe/London", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true }).replace(":00", "")
+    : null;
+  if (showRanking && rankOpen && !choices!.ranking) steps.push({ label: rankBy ? `Rank your workshops by ${rankBy}` : "Rank your workshops", done: false, href: "#workshops" });
   else if (showRanking && choices!.ranking) steps.push({ label: "Rank your workshops", done: true, href: "#workshops" });
   const doneCount = steps.filter((x) => x.done).length;
   const needsGiven = Boolean(profile.accessibilityNeeds || profile.dietaryRequirements);
