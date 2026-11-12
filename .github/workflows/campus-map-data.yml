@@ -24,17 +24,17 @@ jobs:
           sed -n '/\[out:json\]/,/out geom;/p' scripts/build-campus-map.mjs | sed 's/^ \*   //' > query.overpassql
           cat query.overpassql
           for url in https://overpass-api.de/api/interpreter https://overpass.kumi.systems/api/interpreter; do
-            if curl -fsS --retry 3 --retry-delay 10 -m 300 -A "inspire-campus-map-build" --data-urlencode "data@query.overpassql" "$url" -o export.osm.json; then break; fi
+            if curl -fsS --retry 3 --retry-delay 10 -m 400 -A "inspire-campus-map-build" --data-urlencode "data@query.overpassql" "$url" -o export.osm.json; then break; fi
           done
           test -s export.osm.json
           npx --yes osmtogeojson@3.0.0-beta.5 export.osm.json > export.geojson
       - name: Build the drawing
-        run: node scripts/build-campus-map.mjs export.geojson
+        run: node scripts/build-campus-map.mjs export.geojson osm-named-places.json && mkdir -p scripts/out && mv osm-named-places.json scripts/out/
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/map/campus.json
+          git add public/map/campus.json scripts/out/osm-named-places.json
           git diff --cached --quiet && exit 0
           git commit -m "Refresh campus map data from OpenStreetMap"
           git push

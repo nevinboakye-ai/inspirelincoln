@@ -7,15 +7,19 @@
  * Get the export from overpass-turbo.eu: paste the query below, Run, then
  * Export as GeoJSON.
  *
- *   [out:json][timeout:90];
+ *   [out:json][timeout:180];
  *   (
- *     nwr["building"](53.2228,-0.5630,53.2366,-0.5320);
- *     way["highway"](53.2228,-0.5630,53.2366,-0.5320);
- *     nwr["natural"="water"](53.2200,-0.5700,53.2380,-0.5300);
- *     way["waterway"](53.2200,-0.5700,53.2380,-0.5300);
- *     way["railway"](53.2228,-0.5630,53.2366,-0.5320);
- *     way["landuse"](53.2228,-0.5630,53.2366,-0.5320);
- *     way["leisure"](53.2228,-0.5630,53.2366,-0.5320);
+ *     nwr["building"](53.2190,-0.5670,53.2430,-0.5190);
+ *     way["highway"](53.2190,-0.5670,53.2430,-0.5190);
+ *     nwr["natural"="water"](53.2170,-0.5720,53.2450,-0.5150);
+ *     way["waterway"](53.2170,-0.5720,53.2450,-0.5150);
+ *     way["railway"](53.2190,-0.5670,53.2430,-0.5190);
+ *     way["landuse"](53.2190,-0.5670,53.2430,-0.5190);
+ *     way["leisure"](53.2190,-0.5670,53.2430,-0.5190);
+ *     nwr["tourism"](53.2190,-0.5670,53.2430,-0.5190);
+ *     nwr["historic"](53.2190,-0.5670,53.2430,-0.5190);
+ *     nwr["amenity"="parking"](53.2190,-0.5670,53.2430,-0.5190);
+ *     nwr["amenity"="university"](53.2190,-0.5670,53.2430,-0.5190);
  *   );
  *   out geom;
  *
@@ -38,13 +42,31 @@ if (!input) {
 const OUT = "public/map/campus.json";
 
 /**
- * The area drawn: Brayford Pool campus, the train and bus stations, the High Street
- * and up the hill to Lincoln Cathedral, so delegates can find their way in from town.
+ * The area drawn: central Lincoln, from the West Common and Ellis Mill across to the
+ * Arboretum, and from South Park up past the Castle, Cathedral and Newport Arch, so
+ * delegates can explore the city's sights around their day on campus.
  */
-const BOX = { s: 53.2232, w: -0.5625, n: 53.2362, e: -0.5325 };
+const BOX = { s: 53.2195, w: -0.5665, n: 53.2425, e: -0.5195 };
+/** Campus and the stations, drawn in full detail. Beyond it, small sheds go and outlines are simpler. */
+const CORE = { s: 53.2232, w: -0.5625, n: 53.2318, e: -0.5380 };
 /** About 0.4 m: small enough to keep corners crisp, large enough to drop survey noise. */
 const TOLERANCE = 0.000004;
 const ROUND = 1e6;
+/** Outside the core: about 1.2 m simplification and 1 m rounding, which is invisible at street zooms. */
+const TOLERANCE_OUTER = 0.000011;
+const ROUND_OUTER = 1e5;
+let tol = TOLERANCE;
+let round = ROUND;
+const inCore = ([x, y]) => x >= CORE.w && x <= CORE.e && y >= CORE.s && y <= CORE.n;
+/** Picks the level of detail for one feature, from where its first point lies. */
+function detailFor(geom) {
+  let c = geom.coordinates;
+  while (Array.isArray(c[0])) c = c[0];
+  const core = inCore(c);
+  tol = core ? TOLERANCE : TOLERANCE_OUTER;
+  round = core ? ROUND : ROUND_OUTER;
+  return core;
+}
 
 /** University of Lincoln buildings that OpenStreetMap doesn't tag as university-run. */
 const UNIVERSITY_NAMES = new Set([
@@ -152,14 +174,14 @@ function simplify(pts, closed) {
       const d = Math.abs(dy * pts[i][0] - dx * pts[i][1] + x2 * y1 - y2 * x1) / len;
       if (d > max) { max = d; idx = i; }
     }
-    if (max > TOLERANCE) { keep[idx] = 1; stack.push([a, idx], [idx, b]); }
+    if (max > tol) { keep[idx] = 1; stack.push([a, idx], [idx, b]); }
   }
   const out = pts.filter((_, i) => keep[i]);
   return closed && out.length < 4 ? pts : out;
 }
 
 /** [lng, lat] in, rounded [lat, lng] out, ready for the map. */
-const toLatLng = (pts) => pts.map(([x, y]) => [Math.round(y * ROUND) / ROUND, Math.round(x * ROUND) / ROUND]);
+const toLatLng = (pts) => pts.map(([x, y]) => [Math.round(y * round) / round, Math.round(x * round) / round]);
 
 function polygons(geom) {
   const polys = geom.type === "Polygon" ? [geom.coordinates] : geom.type === "MultiPolygon" ? geom.coordinates : [];
@@ -191,15 +213,48 @@ function centroid(ring) {
   return [Math.round((y / (3 * a)) * ROUND) / ROUND, Math.round((x / (3 * a)) * ROUND) / ROUND];
 }
 
+/** Rough area of a [lat, lng] ring in square metres, fine at this latitude. */
+function sqMetres(ring) {
+  let a = 0;
+  for (let i = 0; i < ring.length - 1; i++) a += ring[i][1] * ring[i + 1][0] - ring[i + 1][1] * ring[i][0];
+  return (Math.abs(a) / 2) * 111320 * 66900;
+}
+
+/** A representative [lat, lng] for any geometry (the middle of its first ring or line, or the point). */
+function pointOf(g) {
+  let c = g.coordinates;
+  if (g.type === "Point") return [c[1], c[0]];
+  while (Array.isArray(c[0][0])) c = c[0];
+  const n = c.length;
+  const [x, y] = c.reduce(([sx, sy], [px, py]) => [sx + px / n, sy + py / n], [0, 0]);
+  return [Math.round(y * 1e6) / 1e6, Math.round(x * 1e6) / 1e6];
+}
+
+/** Named sights, written to a second file when one is given, to help choose the map's landmarks. */
+const named = [];
+/** The University's campus outline, used to tell campus car parks from the city's. */
+const campus = [];
+/** Car parks, sorted out once the campus outline is known. */
+const parking = [];
 const raw = JSON.parse(readFileSync(input, "utf8"));
-const out = { bounds: [[BOX.s, BOX.w], [BOX.n, BOX.e]], water: [], green: [], plazas: [], buildings: [], roads: { major: [], minor: [], path: [], steps: [] }, rail: [], waterways: [], labels: [] };
+const out = { bounds: [[BOX.s, BOX.w], [BOX.n, BOX.e]], water: [], green: [], plazas: [], parking: [], buildings: [], roads: { major: [], minor: [], path: [], steps: [] }, rail: [], waterways: [], labels: [] };
 
 for (const f of raw.features ?? []) {
   const t = f.properties ?? {};
   const g = f.geometry;
   if (!g) continue;
+  if (t.name && (t.tourism || t.historic || t.leisure === "park" || t.building === "cathedral" || t.amenity === "marketplace")) named.push({ name: t.name, tags: Object.fromEntries(Object.entries(t).filter(([k]) => /^(tourism|historic|leisure|building|amenity|website|wikipedia)$/.test(k))), at: pointOf(g) });
+  const core = detailFor(g);
+  if (t.amenity === "university" && /Lincoln/i.test(t.name ?? "") && (g.type === "Polygon" || g.type === "MultiPolygon")) campus.push(...polygons(g).map((r) => r[0]));
+  // Surface and multi-storey car parks (a multi-storey is also drawn as a building).
+  if (t.amenity === "parking" && !["underground", "street_side", "lane", "on_street"].includes(t.parking) && (g.type === "Polygon" || g.type === "MultiPolygon")) {
+    for (const rings of polygons(g)) parking.push({ rings, t });
+  }
+  if (t.amenity === "parking" || t.amenity === "university") continue;
   if (t.building && t.building !== "no") {
     for (const rings of polygons(g)) {
+      // Outside the core, drop sheds and garages under about 25 m².
+      if (!core && !t.name && sqMetres(rings[0]) < 25) continue;
       const uni = t.building === "university" || /University of Lincoln/i.test(t.operator ?? "") || UNIVERSITY_NAMES.has(t.name);
       const b = { r: rings };
       if (t.name) b.n = t.name;
@@ -225,6 +280,29 @@ for (const f of raw.features ?? []) {
   }
 }
 
+// Car parks: campus ones (inside the University's outline, or run by it) are flagged so the map can highlight them.
+const insideRing = (ring, [y, x]) => {
+  let hit = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [yi, xi] = ring[i];
+    const [yj, xj] = ring[j];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) hit = !hit;
+  }
+  return hit;
+};
+for (const { rings, t } of parking) {
+  const at = centroid(rings[0]);
+  const p = { r: rings, at };
+  if (t.name) p.n = t.name;
+  // Inside the outline counts unless someone else runs it (shops, offices) or it is for customers only.
+  const uni = /University of Lincoln/i.test(t.operator ?? "");
+  if (uni || (campus.some((c) => insideRing(c, at)) && !t.operator && t.access !== "customers")) p.u = 1;
+  if (t.access && t.access !== "yes") p.a = t.access;
+  out.parking.push(p);
+  named.push({ name: t.name ?? "(car park)", tags: { amenity: "parking", ...Object.fromEntries(Object.entries(t).filter(([k]) => /^(access|fee|operator|parking|capacity|name)$/.test(k))) }, at, campus: p.u === 1 });
+}
+console.log(`Campus outline: ${campus.length} ring(s). Car parks: ${out.parking.length} (${out.parking.filter((p) => p.u).length} on campus).`);
+
 // One label per building: buildings in several parts are labelled on their largest part.
 const area = (ring) => Math.abs(ring.reduce((n, [y0, x0], i) => { const [y1, x1] = ring[(i + 1) % ring.length]; return n + x0 * y1 - x1 * y0; }, 0));
 const best = new Map();
@@ -238,8 +316,10 @@ out.labels = [...out.labels.filter((l) => l.w), ...[...best].map(([n, { at }]) =
 out.buildings.sort((a, b) => (a.u ?? 0) - (b.u ?? 0));
 mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(OUT, JSON.stringify(out));
+if (process.argv[3]) writeFileSync(process.argv[3], JSON.stringify(named, null, 1));
 const size = Buffer.byteLength(JSON.stringify(out));
 console.log(
   `Wrote ${OUT}: ${out.buildings.length} buildings (${out.buildings.filter((b) => b.u).length} university), ${out.water.length} water, ${out.green.length} green, ` +
     `${Object.values(out.roads).reduce((n, r) => n + r.length, 0)} roads and paths, ${out.rail.length} rail, ${out.labels.length} labels, ${(size / 1024).toFixed(0)} KB`,
 );
+// Last rebuilt for INSPIRE 2026: central Lincoln, with car parks.
