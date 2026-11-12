@@ -1,7 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, FileUp, Loader2, UploadCloud } from "lucide-react";
+import { CheckCircle2, FileUp, Loader2, QrCode, UploadCloud } from "lucide-react";
 import { recordSubmission } from "@/app/portal/actions";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { viewingAs } from "@/lib/view-as-client";
@@ -26,6 +26,9 @@ export function SubmissionUpload({ kind, userId, defaultTitle, isUpdate }: { kin
   const [fileError, setFileError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [qr, setQr] = useState(false);
+  const [qrError, setQrError] = useState<string | null>(null);
+  const qrBox = useRef<HTMLInputElement>(null);
   const input = useRef<HTMLInputElement>(null);
 
   const choose = (f: File | null) => {
@@ -52,6 +55,11 @@ export function SubmissionUpload({ kind, userId, defaultTitle, isUpdate }: { kin
     const note = String(form.get("note") ?? "").trim();
     if (title.length < 3) return setError("Enter the title.");
     if (!file) return setFileError(`Choose your ${SUBMISSION_LABEL[kind].noun} file.`);
+    if (!qr) {
+      setQrError(`Add your QR code to your ${SUBMISSION_LABEL[kind].noun}, then tick this box.`);
+      qrBox.current?.focus();
+      return;
+    }
     const type = resolveFileType(kind, file.name, file.type)!;
     const db = getBrowserClient();
     const { data } = (await db?.auth.getSession()) ?? { data: { session: null } };
@@ -77,11 +85,12 @@ export function SubmissionUpload({ kind, userId, defaultTitle, isUpdate }: { kin
       setProgress(null);
       return setError("The upload didn't finish. Check your connection and try again. On campus Wi-Fi, large files can take a minute.");
     }
-    const res = await recordSubmission({ kind, title, note, path, name: file.name.slice(0, 200), type: type.mime, size: file.size });
+    const res = await recordSubmission({ kind, title, note, path, name: file.name.slice(0, 200), type: type.mime, size: file.size, qrConfirmed: true });
     setProgress(null);
     if (!res?.ok) return setError(res?.error ?? "Something went wrong.");
     setDone(res.message ?? "Submitted.");
     setFile(null);
+    setQr(false);
     if (input.current) input.current.value = "";
     router.refresh();
   };
@@ -141,6 +150,44 @@ export function SubmissionUpload({ kind, userId, defaultTitle, isUpdate }: { kin
       <Field id="sub-note" label="Note for the committee" hint={isUpdate ? "For example, what you changed since the last version." : "Anything they should know."}>
         <textarea id="sub-note" name="note" rows={3} maxLength={2000} className={inputClass} />
       </Field>
+
+      <div>
+        <label
+          htmlFor="sub-qr"
+          className={cn(
+            "flex cursor-pointer items-start gap-3 rounded-[3px] border p-4 transition-colors has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-electric/20",
+            qr ? "border-success/40 bg-success/[0.05]" : qrError ? "border-danger/50 bg-danger/[0.03]" : "border-gold/60 bg-gold/[0.06]",
+          )}
+        >
+          <input
+            ref={qrBox}
+            id="sub-qr"
+            type="checkbox"
+            checked={qr}
+            onChange={(e) => {
+              setQr(e.target.checked);
+              if (e.target.checked) setQrError(null);
+            }}
+            aria-invalid={Boolean(qrError)}
+            aria-describedby={qrError ? "sub-qr-hint sub-qr-error" : "sub-qr-hint"}
+            className="mt-0.5 size-5 shrink-0 accent-navy"
+          />
+          <span className="min-w-0">
+            <span className="flex items-start gap-2 font-semibold text-ink">
+              <QrCode aria-hidden className="mt-1 size-4 shrink-0 text-navy" />
+              <span>
+                I&apos;ve added my QR code to my {kind === "slides" ? "presentation slides" : "poster"} <span className="text-danger">*</span>
+              </span>
+            </span>
+            <span id="sub-qr-hint" className="mt-1 block text-sm text-slate-700">
+              {kind === "slides"
+                ? "Put it on your title or final slide so the audience can scan it during your talk."
+                : "Put it somewhere easy to scan, so people can find out more when you're not at your poster."}
+            </span>
+          </span>
+        </label>
+        {qrError && <p id="sub-qr-error" className="mt-2 text-sm font-medium text-danger">{qrError}</p>}
+      </div>
 
       {busy && (
         <div>

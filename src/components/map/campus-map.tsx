@@ -2,7 +2,7 @@
 import "leaflet/dist/leaflet.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { LayerGroup, Map as LeafletMap, Marker } from "leaflet";
-import { Navigation, ArrowUpRight, Clock, Crosshair, Footprints, Link2, LocateFixed, MapPin, School, Search, X } from "lucide-react";
+import { Navigation, ArrowUpRight, Car, Clock, Crosshair, Footprints, Link2, LocateFixed, MapPin, School, Search, X } from "lucide-react";
 import type { MapPlace } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import {
@@ -46,6 +46,9 @@ function resolve(place: MapPlace, byId: Map<string, MapPlace>): { lat: number; l
   if (parent?.lat != null && parent.lng != null) return { lat: parent.lat, lng: parent.lng };
   return null;
 }
+
+/** Where people arrive in Lincoln; every other place in town is listed as a sight. */
+const TRAVEL = new Set(["lincoln-station", "lincoln-bus-station"]);
 
 /** Places in town rather than on campus, such as the stations and the cathedral. */
 function inTown(place: MapPlace) {
@@ -101,6 +104,7 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
   const [campusReady, setCampusReady] = useState(false);
   const watchId = useRef<number | null>(null);
   const homeView = useRef<((animate: boolean) => void) | null>(null);
+  const [parkingPts, setParkingPts] = useState<[number, number][]>([]);
 
   // Read ?place= on first load so links can open a place directly.
   useEffect(() => {
@@ -132,7 +136,7 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
           const safe = (t: string) => t.replace(/[<>&"]/g, "");
           const icon = leaflet.divIcon({
             className: "",
-            html: `<span class="map-marker"><span class="map-pin map-pin--${p.kind}" data-label="${safe(label)}"></span>${p.kind === "venue" || inTown(p) ? `<span class="map-label">${safe(pinLabel(p))}</span>` : ""}</span>`,
+            html: `<span class="map-marker"><span class="map-pin map-pin--${p.kind}" data-label="${safe(label)}"></span>${p.kind === "venue" || inTown(p) ? `<span class="map-label${p.kind === "venue" ? "" : " map-label--town"}">${safe(pinLabel(p))}</span>` : ""}</span>`,
             iconSize: [28, 34],
             iconAnchor: [14, 32],
           });
@@ -165,6 +169,7 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
       // Our own drawing of the campus. If it can't load, fall back to a standard street map.
       drawCampus(leaflet, m).then((campus) => {
         if (cancelled) return;
+        if (campus) setParkingPts(campus.campusParking);
         if (!campus) {
           let loaded = 0;
           let failed = 0;
@@ -186,6 +191,8 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
         // People can roam the whole drawn area (campus, the stations and up to the cathedral)
         // and zoom out until all of it is on screen, but not drift off into blank space.
         const area = leaflet.latLngBounds(campus.bounds);
+        // Never fence a pin off: if a place lies past the drawing, the map can still reach it.
+        for (const p of places) if (p.lat != null && p.lng != null) area.extend([p.lat, p.lng]);
         m.options.maxBoundsViscosity = 1;
         const fit = () => {
           // Zoom out until the drawing fills the screen (about the whole city centre on a laptop),
@@ -306,10 +313,14 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
   const onDay = top.filter((p) => p.kind === "venue");
   const around = top.filter((p) => p.kind !== "venue" && !inTown(p));
   const town = top.filter((p) => p.kind !== "venue" && inTown(p));
+  const arrive = town.filter((p) => TRAVEL.has(p.slug));
+  const sights = town.filter((p) => !TRAVEL.has(p.slug));
   const visibleDay = onDay.filter((p) => matches(p) || (children.get(p.id) ?? []).some(matches));
   const visibleAround = filter === "all" || q ? around.filter(matches) : [];
   // Always listed: on the day, the stations are where most people arrive.
-  const visibleTown = town.filter(matches);
+  const visibleArrive = arrive.filter(matches);
+  const visibleSights = sights.filter(matches);
+  const visibleTown = [...visibleArrive, ...visibleSights];
 
   const current = selected ? byId.get(selected) : undefined;
   const currentPos = current ? resolve(current, byId) : null;
@@ -371,7 +382,7 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setSheet("full")}
-            placeholder="Search, e.g. INB, LMS005, keynote"
+            placeholder="Search, e.g. INB, LMS2003, lunch"
             className="min-h-12 w-full rounded-[3px] border border-white/20 bg-white/5 pl-10 pr-3 text-[1rem] text-paper placeholder:text-paper/50 focus:border-cyan"
           />
         </label>
@@ -430,8 +441,42 @@ export function CampusMap({ places, sessions, dateLabel }: { places: MapPlace[];
         {visibleAround.length > 0 && (
           <PlaceGroup title="Around campus" places={visibleAround} childrenOf={children} matches={matches} q={q} fix={fix} byId={byId} onSelect={choose} />
         )}
+        {parkingPts.length > 0 && (!q || "parking car park drive".includes(q)) && (
+          <section aria-labelledby="parking-title" className="px-5 pt-6">
+            <h2 id="parking-title" className="font-ui text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-paper/65">Parking</h2>
+            <div className="mt-3 flex items-start gap-4 border-y border-white/10 py-4">
+              <span aria-hidden className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-[5px] bg-[#167366] font-ui text-sm font-bold text-white">P</span>
+              <div className="min-w-0 text-sm leading-relaxed text-paper/80">
+                <p>
+                  Campus car parks are shaded teal on the map. Many are for permit holders only, so tap a P to check before you park. Other car parks,
+                  such as the Lucy Tower Street multi-storey, show as a grey P when you zoom in.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const m = map.current;
+                    if (!m) return;
+                    // On phones, drop the sheet to its peek so the car parks are in view.
+                    if (isPhone()) setSheet("peek");
+                    m.flyToBounds(parkingPts, { paddingTopLeft: [32, 96], paddingBottomRight: [32, isPhone() ? 160 : 32], maxZoom: 17, duration: 0.8 });
+                  }}
+                  className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-[3px] border border-white/25 px-4 font-ui text-sm font-semibold text-paper hover:border-white/50"
+                >
+                  <Car aria-hidden className="size-4" /> Show campus parking
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
         {visibleTown.length > 0 && (
-          <PlaceGroup title="Around Lincoln" places={visibleTown} childrenOf={children} matches={matches} q={q} fix={fix} byId={byId} onSelect={choose} />
+          <>
+            {visibleArrive.length > 0 && (
+              <PlaceGroup title="Getting here" places={visibleArrive} childrenOf={children} matches={matches} q={q} fix={fix} byId={byId} onSelect={choose} />
+            )}
+            {visibleSights.length > 0 && (
+              <PlaceGroup title="Things to see in Lincoln" places={visibleSights} childrenOf={children} matches={matches} q={q} fix={fix} byId={byId} onSelect={choose} />
+            )}
+          </>
         )}
         {visibleDay.length === 0 && visibleAround.length === 0 && visibleTown.length === 0 && (
           <p className="p-5 text-sm text-paper/75">Nothing matches &ldquo;{query}&rdquo;. Try a building code such as INB.</p>
@@ -588,12 +633,16 @@ function PlaceGroup({
                 </span>
               </button>
               {rooms.length > 0 && (
-                <ul className="mb-4 ml-[3.25rem] space-y-1">
+                <ul className="-mt-1 mb-4 ml-[3.25rem] flex flex-wrap gap-1.5" aria-label={`Rooms in ${p.name}`}>
                   {rooms.map((r) => (
                     <li key={r.id}>
-                      <button type="button" onClick={() => onSelect(r.id)} className="flex w-full items-center justify-between gap-3 rounded-[3px] px-3 py-2 text-left text-sm text-paper/85 hover:bg-white/5">
-                        <span>{r.name}</span>
-                        {!r.locationConfirmed && <span className="shrink-0 text-xs text-cyan">To be confirmed</span>}
+                      <button
+                        type="button"
+                        onClick={() => onSelect(r.id)}
+                        className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-white/15 px-3 text-left font-ui text-xs font-medium text-paper/85 hover:border-white/40 hover:bg-white/5"
+                      >
+                        {r.name}
+                        {!r.locationConfirmed && <span className="text-cyan">· TBC</span>}
                       </button>
                     </li>
                   ))}
@@ -729,10 +778,10 @@ function PlaceDetail({
       {rooms.length > 0 && (
         <section className="mt-8">
           <h3 className="font-ui text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-paper/65">Rooms in this building</h3>
-          <ul className="mt-3 space-y-1">
+          <ul className="mt-3 grid grid-cols-2 gap-1.5">
             {rooms.map((r) => (
-              <li key={r.id}>
-                <button type="button" onClick={() => onSelect(r.id)} className="flex w-full items-center justify-between gap-3 rounded-[3px] border border-white/10 px-4 py-3 text-left text-sm text-paper hover:border-white/30">
+              <li key={r.id} className={cn(!r.code && "col-span-2")}>
+                <button type="button" onClick={() => onSelect(r.id)} className="flex min-h-11 w-full items-center justify-between gap-3 rounded-[3px] border border-white/10 px-3 py-2 text-left text-sm text-paper hover:border-white/30">
                   <span>{r.name}</span>
                   {!r.locationConfirmed && <span className="shrink-0 text-xs text-cyan">To be confirmed</span>}
                 </button>

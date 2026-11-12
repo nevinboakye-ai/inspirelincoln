@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Accessibility, ArrowRight, Bus, CalendarDays, Car, Clock, ExternalLink, MapPin, Train } from "lucide-react";
+import { Accessibility, ArrowRight, Bus, CalendarDays, Car, ClipboardCheck, Clock, Coffee, ExternalLink, MapPin, Moon, Signpost, Train } from "lucide-react";
 import { PageHero } from "@/components/layout/page-hero";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Accordion } from "@/components/ui/accordion";
@@ -159,13 +159,15 @@ export default async function ConferencePage() {
                 Lincoln&apos;s central bus station is next to the railway station, within walking distance of the campus.
               </TravelCard>
               <TravelCard icon={Car} title="By car">
-                Parking near the campus is limited and may be chargeable. Detailed parking guidance will be shared by the conference
-                team.
+                Parking on campus is limited and many car parks are for permit holders only. The{" "}
+                <Link href="/map" className="font-medium text-electric-600 underline underline-offset-4">
+                  campus map
+                </Link>{" "}
+                highlights the campus car parks and shows public ones nearby, such as the Lucy Tower Street multi-storey.
               </TravelCard>
               <TravelCard icon={MapPin} title="On the day">
-                Registration and the main lecture theatre are in the Isaac Newton Building. One group of oral presentations is in
-                LMS005, in the Ross Lucas Medical Sciences Building. The campus map shows both, with rooms added as they are
-                confirmed.
+                Registration, food and the INB0114 Lecture Theatre are in the Isaac Newton Building (INB). Oral presentations and
+                workshops also run in the Ross Lucas Medical Sciences Building (LMS) next door, and A1 signs outside point the way.
               </TravelCard>
             </div>
           </div>
@@ -173,13 +175,15 @@ export default async function ConferencePage() {
         </div>
       </section>
 
-      <section id="accessibility" aria-labelledby="access-title" className="bg-paper py-24">
+      <OnTheDay />
+
+      <section id="accessibility" aria-labelledby="access-title" className="bg-white py-24">
         <div className="container-page grid gap-10 lg:grid-cols-12">
           <div className="lg:col-span-5">
             <SectionHeading eyebrow="Accessibility" title={<span id="access-title">Everyone should be able to take part</span>} />
           </div>
           <div className="lg:col-span-7">
-            <div className="flex gap-4 rounded-lg border border-navy/10 bg-white p-6">
+            <div className="flex gap-4 rounded-lg border border-navy/10 bg-paper p-6">
               <Accessibility aria-hidden className="size-6 shrink-0 text-electric-600" />
               <div className="space-y-4 text-slate-700">
                 <p>
@@ -196,7 +200,7 @@ export default async function ConferencePage() {
         </div>
       </section>
 
-      <section id="faqs" aria-labelledby="faq-title" className="bg-white py-24">
+      <section id="faqs" aria-labelledby="faq-title" className="bg-paper py-24">
         <div className="container-page grid gap-10 lg:grid-cols-12">
           <div className="lg:col-span-4">
             <SectionHeading eyebrow="FAQs" title={<span id="faq-title">Questions, answered</span>} />
@@ -221,6 +225,102 @@ export default async function ConferencePage() {
       </section>
 
     </>
+  );
+}
+
+/** Catering, from the University's hospitality brief. Everything is served in INB, in front of the café. */
+const CATERING = [
+  { time: "8:00 to 9:00", title: "Breakfast", menu: "Tea, coffee, water and breakfast pastries" },
+  { time: "9:45 to 10:00", title: "Mid-morning break", menu: "Tea, coffee and water" },
+  { time: "11:30 to 12:45", title: "Lunch", menu: "A sandwich or wrap, crisps and fruit, with tea, coffee and juices" },
+  { time: "14:15 to 14:40", title: "Afternoon refreshments", menu: "Tea, coffee, water, biscuits and a selection of bite-sized cakes" },
+];
+
+const BOOKED_ROOMS = {
+  "Isaac Newton Building (INB)": ["INB0113 Atrium", "INB0114 Lecture Theatre"],
+  "Ross Lucas Medical Sciences Building (LMS)": ["LMS0005", "LMS0008", "LMS0011", "LMS2002", "LMS2003", "LMS2004", "LMS2005", "LMS2006", "LMS2007", "LMS2008", "LMS2009", "LMS2011"],
+};
+
+function OnTheDay() {
+  return (
+    <section id="on-the-day" aria-labelledby="day-title" className="scroll-mt-24 bg-paper py-24">
+      <div className="container-page">
+        <SectionHeading eyebrow="On the day" title={<span id="day-title">Food, registration and finding your way</span>} />
+        <div className="mt-12 grid gap-6 lg:grid-cols-12">
+          <div className="rounded-xl border border-navy/10 bg-white p-6 sm:p-8 lg:col-span-7">
+            <div className="flex items-center gap-3">
+              <Coffee aria-hidden className="size-5 text-electric-600" />
+              <h3 className="font-display text-xl font-semibold text-ink">Food and drink</h3>
+            </div>
+            <p className="mt-2 text-[0.95rem] text-slate-700">
+              Everything is served in the Isaac Newton Building (INB), in front of the café. Let us know about any dietary needs when you register.
+            </p>
+            <ol className="mt-6 divide-y divide-navy/10 border-y border-navy/10">
+              {CATERING.map((c) => (
+                <li key={c.time} className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-4 py-4 sm:grid-cols-[9rem_minmax(0,1fr)]">
+                  <span className="font-ui text-sm font-semibold tabular-nums text-electric-600">{c.time}</span>
+                  <span>
+                    <span className="block font-semibold text-ink">{c.title}</span>
+                    <span className="mt-0.5 block text-sm text-slate-700">{c.menu}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
+          <div className="grid gap-4 lg:col-span-5">
+            <DayCard icon={ClipboardCheck} title="Registration">
+              The registration desk is in the Isaac Newton Building. Collect your badge there when you arrive, from 8:00.
+            </DayCard>
+            <DayCard icon={Signpost} title="Finding your way">
+              Sessions run in INB and the Ross Lucas Medical Sciences Building (LMS) next door. A1 signs outside point the way between the two,
+              and every room is on the{" "}
+              <Link href="/map" className="font-medium text-electric-600 underline underline-offset-4">
+                campus map
+              </Link>
+              .
+            </DayCard>
+            <DayCard icon={Moon} title="Prayer room">
+              A quiet room in LMS is set aside for prayer and reflection, with signs on the day. Ask at the registration desk if you can&apos;t
+              find it.
+            </DayCard>
+          </div>
+        </div>
+        <div className="mt-6 rounded-xl border border-navy/10 bg-white p-6 sm:p-8">
+          <h3 className="font-display text-lg font-semibold text-ink">Rooms we&apos;re using</h3>
+          <div className="mt-4 grid gap-6 md:grid-cols-[auto_minmax(0,1fr)] md:gap-10">
+            {Object.entries(BOOKED_ROOMS).map(([building, rooms]) => (
+              <div key={building} className="min-w-0">
+                <p className="text-sm font-semibold text-slate-700">{building}</p>
+                <ul className="mt-2 flex flex-wrap gap-1.5">
+                  {rooms.map((r) => (
+                    <li key={r}>
+                      <Link
+                        href={`/map?place=${r.split(" ")[0] === "INB0114" ? "main-theatre" : r.split(" ")[0].toLowerCase()}`}
+                        className="inline-flex min-h-9 items-center rounded-full border border-navy/15 px-3 font-ui text-xs font-medium text-navy hover:border-navy/40 hover:bg-paper"
+                      >
+                        {r}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function DayCard({ icon: Icon, title, children }: { icon: typeof Train; title: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-4 rounded-lg border border-navy/10 bg-white p-6">
+      <Icon aria-hidden className="mt-0.5 size-5 shrink-0 text-electric-600" />
+      <div>
+        <h3 className="font-display text-lg font-semibold text-ink">{title}</h3>
+        <p className="mt-1.5 text-[0.95rem] leading-relaxed text-slate-700">{children}</p>
+      </div>
+    </div>
   );
 }
 
