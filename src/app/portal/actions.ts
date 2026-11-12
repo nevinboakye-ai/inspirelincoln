@@ -14,6 +14,7 @@ import { SITE_URL } from "@/lib/site";
 import { cookies } from "next/headers";
 import { PROFILE_PROMPT_COOKIE } from "@/lib/profile-prompt";
 import { cleanInstagram } from "@/lib/instagram";
+import { TRAVEL_LABEL, cleanRegistration, isTravelMode } from "@/lib/travel";
 
 export type ActionResult = { ok: boolean; error?: string; message?: string; fieldErrors?: Record<string, string>; id?: string } | null;
 
@@ -278,6 +279,7 @@ const recordSchema = z.object({
   name: z.string().min(1).max(200),
   type: z.string().min(1).max(120),
   size: z.coerce.number().int().positive().max(50 * 1024 * 1024),
+  qrConfirmed: z.literal(true, { message: "Tick the box to confirm you've added your QR code." }),
 });
 
 /**
@@ -288,7 +290,8 @@ const recordSchema = z.object({
 export async function recordSubmission(input: z.input<typeof recordSchema>): Promise<ActionResult> {
   const { user, db, profile } = await requireUser("/portal/submission");
   const parsed = recordSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Please check the title and file." };
+  if (!parsed.success)
+    return { ok: false, error: parsed.error.issues.some((i) => i.path[0] === "qrConfirmed") ? "Tick the box to confirm you've added your QR code." : "Please check the title and file." };
   const v = parsed.data;
   if (!submissionKindsFor(rolesOf(profile.accountType, profile.extraTypes)).includes(v.kind) || profile.accountStatus !== "approved")
     return { ok: false, error: "Your account can't submit this yet." };
@@ -296,11 +299,16 @@ export async function recordSubmission(input: z.input<typeof recordSchema>): Pro
   if (!resolveFileType(v.kind, v.name, v.type)) return { ok: false, error: `Upload a ${SUBMISSION_FILES[v.kind].label} file.` };
 
   const edition = await getEdition();
-  const { data, error } = await db
+  const row = { edition_id: edition.id, user_id: user.id, kind: v.kind, title: v.title, presenter_note: v.note, file_path: v.path, file_name: v.name, file_type: v.type, file_size: v.size };
+  let { data, error } = await db
     .from("presentation_submissions")
-    .insert({ edition_id: edition.id, user_id: user.id, kind: v.kind, title: v.title, presenter_note: v.note, file_path: v.path, file_name: v.name, file_type: v.type, file_size: v.size })
+    .insert({ ...row, qr_code_confirmed: true })
     .select("id, version")
     .single();
+  // Before setup SQL 36 there's nowhere to record the QR code check, so record the upload without it.
+  if (error && /qr_code_confirmed/.test(error.message)) {
+    ({ data, error } = await db.from("presentation_submissions").insert(row).select("id, version").single());
+  }
   if (error || !data) return { ok: false, error: "Your file uploaded but we couldn't record it. Please try again." };
   if (user.email) {
     await sendEmail({ to: user.email, ...submissionReceivedEmail({ siteUrl: SITE_URL, name: profile.fullName, kind: v.kind, title: v.title, version: data.version }) });
@@ -348,6 +356,30 @@ export async function saveAttendance(_: ActionResult, form: FormData): Promise<A
     ok: true,
     message: v.response === "confirmed" ? "Thank you. You're confirmed to present." : "Thank you for letting us know.",
   };
+}
+
+/* ---------- Travel ---------- */
+/** How they're getting to INSPIRE, from My Hub. Drivers also give their car registration. They can change it later. */
+export async function saveTravel(_: ActionResult, form: FormData): Promise<ActionResult> {
+  const { user, db, profile } = await requireUser("/portal");
+  if (profile.accountStatus !== "approved") return { ok: false, error: "You can tell us how you're travelling once your place is confirmed." };
+  const mode = form.get("mode");
+  if (!isTravelMode(mode)) return { ok: false, fieldErrors: { mode: "Choose how you're getting here." } };
+  let reg: string | null = null;
+  if (mode === "car") {
+    reg = cleanRegistration(String(form.get("carRegistration") ?? ""));
+    if (!reg) return { ok: false, fieldErrors: { carRegistration: "Enter your car registration, for example AB12 CDE." } };
+  }
+  const { error } = await db
+    .from("delegate_travel")
+    .upsert({ user_id: user.id, mode, car_registration: reg, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+  if (error) {
+    if (/VIEW_AS/.test(error.message)) return { ok: false, error: "You're viewing as someone else, so changes are switched off." };
+    return { ok: false, error: "We couldn't save your answer. Please try again." };
+  }
+  revalidatePath("/portal");
+  revalidatePath("/admin/travel");
+  return { ok: true, message: `Thank you. We've saved your answer: ${TRAVEL_LABEL[mode].label}${reg ? `, ${reg}` : ""}.` };
 }
 
 /** The finish-your-profile prompt has been seen, so it won't show again until they next sign in. */

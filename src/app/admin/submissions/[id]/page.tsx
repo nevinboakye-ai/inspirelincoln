@@ -45,6 +45,15 @@ export default async function SubmissionDetail({ params }: { params: Promise<{ i
         <div className="space-y-6">
           <Panel title="File">
             <p className="text-sm text-slate-700">{s.file_name} · {size(s.file_size)}</p>
+            {"qr_code_confirmed" in s && (
+              <p className="mt-2 text-sm">
+                {s.qr_code_confirmed ? (
+                  <Badge tone="success">QR code added, confirmed by presenter</Badge>
+                ) : (
+                  <Badge tone="neutral">Uploaded before the QR code check</Badge>
+                )}
+              </p>
+            )}
             {s.presenter_note && <p className="mt-3 rounded-md bg-paper p-4 text-sm text-ink"><span className="font-semibold">From the presenter:</span> {s.presenter_note}</p>}
             {preview && (
               <div className="mt-4">
