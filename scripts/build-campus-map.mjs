@@ -18,6 +18,8 @@
  *     way["leisure"](53.2190,-0.5670,53.2430,-0.5190);
  *     nwr["tourism"](53.2190,-0.5670,53.2430,-0.5190);
  *     nwr["historic"](53.2190,-0.5670,53.2430,-0.5190);
+ *     nwr["amenity"="parking"](53.2190,-0.5670,53.2430,-0.5190);
+ *     nwr["amenity"="university"](53.2190,-0.5670,53.2430,-0.5190);
  *   );
  *   out geom;
  *
@@ -230,8 +232,12 @@ function pointOf(g) {
 
 /** Named sights, written to a second file when one is given, to help choose the map's landmarks. */
 const named = [];
+/** The University's campus outline, used to tell campus car parks from the city's. */
+const campus = [];
+/** Car parks, sorted out once the campus outline is known. */
+const parking = [];
 const raw = JSON.parse(readFileSync(input, "utf8"));
-const out = { bounds: [[BOX.s, BOX.w], [BOX.n, BOX.e]], water: [], green: [], plazas: [], buildings: [], roads: { major: [], minor: [], path: [], steps: [] }, rail: [], waterways: [], labels: [] };
+const out = { bounds: [[BOX.s, BOX.w], [BOX.n, BOX.e]], water: [], green: [], plazas: [], parking: [], buildings: [], roads: { major: [], minor: [], path: [], steps: [] }, rail: [], waterways: [], labels: [] };
 
 for (const f of raw.features ?? []) {
   const t = f.properties ?? {};
@@ -239,6 +245,12 @@ for (const f of raw.features ?? []) {
   if (!g) continue;
   if (t.name && (t.tourism || t.historic || t.leisure === "park" || t.building === "cathedral" || t.amenity === "marketplace")) named.push({ name: t.name, tags: Object.fromEntries(Object.entries(t).filter(([k]) => /^(tourism|historic|leisure|building|amenity|website|wikipedia)$/.test(k))), at: pointOf(g) });
   const core = detailFor(g);
+  if (t.amenity === "university" && /Lincoln/i.test(t.name ?? "") && (g.type === "Polygon" || g.type === "MultiPolygon")) campus.push(...polygons(g).map((r) => r[0]));
+  // Surface and multi-storey car parks (a multi-storey is also drawn as a building).
+  if (t.amenity === "parking" && t.parking !== "underground" && (g.type === "Polygon" || g.type === "MultiPolygon")) {
+    for (const rings of polygons(g)) parking.push({ rings, t });
+  }
+  if (t.amenity === "parking" || t.amenity === "university") continue;
   if (t.building && t.building !== "no") {
     for (const rings of polygons(g)) {
       // Outside the core, drop sheds and garages under about 25 m².
@@ -268,6 +280,27 @@ for (const f of raw.features ?? []) {
   }
 }
 
+// Car parks: campus ones (inside the University's outline, or run by it) are flagged so the map can highlight them.
+const insideRing = (ring, [y, x]) => {
+  let hit = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [yi, xi] = ring[i];
+    const [yj, xj] = ring[j];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) hit = !hit;
+  }
+  return hit;
+};
+for (const { rings, t } of parking) {
+  const at = centroid(rings[0]);
+  const p = { r: rings, at };
+  if (t.name) p.n = t.name;
+  if (campus.some((c) => insideRing(c, at)) || /University of Lincoln/i.test(t.operator ?? "")) p.u = 1;
+  if (t.access && t.access !== "yes") p.a = t.access;
+  out.parking.push(p);
+  named.push({ name: t.name ?? "(car park)", tags: { amenity: "parking", ...Object.fromEntries(Object.entries(t).filter(([k]) => /^(access|fee|operator|parking|capacity|name)$/.test(k))) }, at, campus: p.u === 1 });
+}
+console.log(`Campus outline: ${campus.length} ring(s). Car parks: ${out.parking.length} (${out.parking.filter((p) => p.u).length} on campus).`);
+
 // One label per building: buildings in several parts are labelled on their largest part.
 const area = (ring) => Math.abs(ring.reduce((n, [y0, x0], i) => { const [y1, x1] = ring[(i + 1) % ring.length]; return n + x0 * y1 - x1 * y0; }, 0));
 const best = new Map();
@@ -287,4 +320,4 @@ console.log(
   `Wrote ${OUT}: ${out.buildings.length} buildings (${out.buildings.filter((b) => b.u).length} university), ${out.water.length} water, ${out.green.length} green, ` +
     `${Object.values(out.roads).reduce((n, r) => n + r.length, 0)} roads and paths, ${out.rail.length} rail, ${out.labels.length} labels, ${(size / 1024).toFixed(0)} KB`,
 );
-// Area last rebuilt for INSPIRE 2026: central Lincoln.
+// Last rebuilt for INSPIRE 2026: central Lincoln, with car parks.
