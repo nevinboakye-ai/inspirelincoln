@@ -3,8 +3,8 @@ export const TRAVEL_MODES = ["inspire_coach", "external_coach", "train", "car", 
 export type TravelMode = (typeof TRAVEL_MODES)[number];
 
 export const TRAVEL_LABEL: Record<TravelMode, { label: string; hint: string }> = {
-  inspire_coach: { label: "INSPIRE-organised coach", hint: "The coach we've arranged" },
-  external_coach: { label: "Another coach", hint: "One your university or society has booked" },
+  inspire_coach: { label: "INSPIRE-organised coach", hint: "Including coaches arranged by your university's society" },
+  external_coach: { label: "Booked coach", hint: "A coach you've booked yourself, such as National Express" },
   train: { label: "Train", hint: "To Lincoln station" },
   car: { label: "Car", hint: "We'll ask for your registration" },
   local: { label: "I live in Lincoln", hint: "Walking, cycling, bus or a lift" },
