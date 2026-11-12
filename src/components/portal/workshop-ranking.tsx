@@ -17,7 +17,10 @@ const GO_TO = 3;
 
 const ordinal = (n: number) => `${n}${n % 10 === 1 && n !== 11 ? "st" : n % 10 === 2 && n !== 12 ? "nd" : n % 10 === 3 && n !== 13 ? "rd" : "th"}`;
 const when = (d: string) =>
-  new Date(d).toLocaleString("en-GB", { timeZone: "Europe/London", weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit" });
+  new Date(d)
+    .toLocaleString("en-GB", { timeZone: "Europe/London", weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit", hour12: true })
+    .replace(":00", "")
+    .replace(" at ", ", ");
 const savedWhen = (d: string) =>
   new Date(d).toLocaleString("en-GB", { timeZone: "Europe/London", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
@@ -311,11 +314,6 @@ export function WorkshopRanking({
           <h2 id={headingId} className="flex items-center gap-2 font-display text-xl text-ink">
             <Sparkles aria-hidden className="size-5 text-electric-600" /> {open ? "Rank your workshops" : "Your workshop ranking"}
           </h2>
-          {open && !preview && closesAt && (
-            <p className="inline-flex items-center gap-1.5 rounded-full bg-paper-200 px-3 py-1.5 text-xs font-semibold text-slate-700">
-              <Clock aria-hidden className="size-3.5" /> Closes {when(closesAt)}
-            </p>
-          )}
           {!open && (
             <p className="inline-flex items-center gap-1.5 rounded-full bg-paper-200 px-3 py-1.5 text-xs font-semibold text-slate-700">
               <Lock aria-hidden className="size-3.5" /> Closed
@@ -323,6 +321,17 @@ export function WorkshopRanking({
           )}
         </div>
 
+        {open && !preview && closesAt && (
+          <p className={cn("mt-4 flex items-start gap-3 rounded-lg border p-4 text-sm text-ink", saved ? "border-navy/10 bg-paper/70" : "border-gold/60 bg-gold/15")}>
+            <Clock aria-hidden className="mt-0.5 size-5 shrink-0" />
+            <span>
+              <strong className="block text-base">Rank by {when(closesAt)}</strong>
+              {saved
+                ? "You can change your order until then."
+                : "Ranking closes then. If you haven't ranked by then, we'll place you in workshops that still have space."}
+            </span>
+          </p>
+        )}
         {open ? (
           <ul className="mt-4 grid gap-3 sm:grid-cols-3">
             {[
