@@ -247,7 +247,7 @@ for (const f of raw.features ?? []) {
   const core = detailFor(g);
   if (t.amenity === "university" && /Lincoln/i.test(t.name ?? "") && (g.type === "Polygon" || g.type === "MultiPolygon")) campus.push(...polygons(g).map((r) => r[0]));
   // Surface and multi-storey car parks (a multi-storey is also drawn as a building).
-  if (t.amenity === "parking" && t.parking !== "underground" && (g.type === "Polygon" || g.type === "MultiPolygon")) {
+  if (t.amenity === "parking" && !["underground", "street_side", "lane", "on_street"].includes(t.parking) && (g.type === "Polygon" || g.type === "MultiPolygon")) {
     for (const rings of polygons(g)) parking.push({ rings, t });
   }
   if (t.amenity === "parking" || t.amenity === "university") continue;
@@ -294,7 +294,9 @@ for (const { rings, t } of parking) {
   const at = centroid(rings[0]);
   const p = { r: rings, at };
   if (t.name) p.n = t.name;
-  if (campus.some((c) => insideRing(c, at)) || /University of Lincoln/i.test(t.operator ?? "")) p.u = 1;
+  // Inside the outline counts unless someone else runs it (shops, offices) or it is for customers only.
+  const uni = /University of Lincoln/i.test(t.operator ?? "");
+  if (uni || (campus.some((c) => insideRing(c, at)) && !t.operator && t.access !== "customers")) p.u = 1;
   if (t.access && t.access !== "yes") p.a = t.access;
   out.parking.push(p);
   named.push({ name: t.name ?? "(car park)", tags: { amenity: "parking", ...Object.fromEntries(Object.entries(t).filter(([k]) => /^(access|fee|operator|parking|capacity|name)$/.test(k))) }, at, campus: p.u === 1 });
