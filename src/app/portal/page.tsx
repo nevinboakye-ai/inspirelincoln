@@ -32,6 +32,8 @@ import { Lanyard, type LanyardTone } from "@/components/portal/lanyard";
 import { Countdown, HubItem, HubStagger, ReadinessRing } from "@/components/portal/hub-motion";
 import { MaskRise } from "@/components/motion/effects";
 import { AttendanceCard, type AttendanceAnswer } from "@/components/portal/attendance-card";
+import { TravelCard } from "@/components/portal/travel-card";
+import { isTravelMode, type TravelAnswer } from "@/lib/travel";
 import { WorkshopPicks, type PickPlace, type PickWorkshop } from "@/components/portal/workshop-picks";
 import { closingTimePassed, loadWorkshopChoices, pairLabel, rankingIsOpen } from "@/lib/workshops/choices";
 import {
@@ -122,6 +124,7 @@ export default async function PortalHome({
     { data: announcements },
     { data: waitPos },
     { data: attendance },
+    { data: travel },
   ] = await Promise.all([
     db
       .from("registrations")
@@ -156,7 +159,13 @@ export default async function PortalHome({
     presenting
       ? db.from("presenter_attendance").select("response, note, responded_at").eq("user_id", user.id).maybeSingle()
       : Promise.resolve({ data: null }),
+    // Before setup SQL 36 the table isn't there; the query just returns nothing and the card asks.
+    status === "approved"
+      ? db.from("delegate_travel").select("mode, car_registration, updated_at").eq("user_id", user.id).maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
+  const travelAnswer: TravelAnswer =
+    travel && isTravelMode(travel.mode) ? { mode: travel.mode, carRegistration: travel.car_registration, updatedAt: travel.updated_at } : null;
   const answer: AttendanceAnswer = attendance
     ? { response: attendance.response as "confirmed" | "unavailable", note: attendance.note, respondedAt: attendance.responded_at }
     : null;
@@ -190,6 +199,9 @@ export default async function PortalHome({
           done: Boolean(answer),
           href: "#attend-h",
         }]
+      : []),
+    ...(status === "approved"
+      ? [{ label: "Tell us how you're getting here", done: Boolean(travelAnswer), href: "#travel" }]
       : []),
     ...(kind
       ? [{
@@ -310,6 +322,11 @@ export default async function PortalHome({
                 dateLabel={formatEventDate(edition.date)}
                 venue={edition.venueName}
               />
+            </HubItem>
+          )}
+          {status === "approved" && (
+            <HubItem>
+              <TravelCard answer={travelAnswer} />
             </HubItem>
           )}
           {status === "approved" && !showCard ? (
