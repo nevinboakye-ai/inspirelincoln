@@ -79,16 +79,16 @@ export function IntroGate({ edition }: { edition: Edition }) {
           </div>
 
           <div className="container-page flex flex-1 flex-col items-center justify-center py-6 text-center sm:py-10">
-            {/* The crest, assembled one quarter at a time inside turning rings */}
+            {/* The conference mark, assembled one quarter at a time inside turning rings */}
             <div className="relative mx-auto grid aspect-square w-[min(22vw,84px)] place-items-center sm:w-[124px] gate-crest">
               <div aria-hidden className="gate-ring absolute -inset-[18%] rounded-full border border-white/10" />
               <div aria-hidden className="gate-ring-slow absolute -inset-[40%] rounded-full border border-dashed border-white/[0.09]" />
               {/* A soft, steady glow behind the crest */}
               <div aria-hidden className="gate-glow absolute inset-[-6%] rounded-full bg-cyan/15 blur-2xl" />
-              <div className="gate-crest-img relative aspect-[338/397] w-[82%]">
+              <div className="gate-crest-img relative aspect-[127/154] w-[78%]">
                 {quarters.map((clip, n) => (
                   <div key={clip} aria-hidden className="enter-pop absolute inset-0" style={{ clipPath: clip, animationDelay: `${120 + n * 120}ms` }}>
-                    <Image src="/brand/crest-white.png" alt="" fill priority sizes="170px" className="object-contain" />
+                    <Image src="/brand/conference-mark-white.png" alt="" fill priority sizes="170px" className="object-contain" />
                   </div>
                 ))}
               </div>

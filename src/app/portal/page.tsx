@@ -23,7 +23,7 @@ import { uniKey } from "@/lib/university-logos";
 import { PRESENTING, cardPath, formatCode, sortedRoles } from "@/lib/card";
 import { SITE_URL } from "@/lib/site";
 import { getSwitches } from "@/lib/switches";
-import { getConferenceBundle } from "@/lib/data/content";
+import { getConferenceBundle, getSponsors } from "@/lib/data/content";
 import { formatEventDate } from "@/lib/time";
 import { Badge } from "@/components/ui/badge";
 import { Notice } from "@/components/ui/notice";
@@ -112,7 +112,7 @@ export default async function PortalHome({
   // While the website is closed, delegates only use My Hub for their profile and their slides or poster.
   const focus =
     !switches.site_open && !profile.access.committee && !profile.access.owner;
-  const { edition, sessions, workshops } = await getConferenceBundle();
+  const [{ edition, sessions, workshops }, sponsors] = await Promise.all([getConferenceBundle(), getSponsors()]);
   const kind = presenterKindOf(profile);
   const status = profile.accountStatus;
   // Approved oral and poster presenters confirm whether they'll be there to present.
@@ -541,6 +541,7 @@ export default async function PortalHome({
               shared={profile.cardShared}
               previewHref={cardCode ? cardPath(cardCode) : null}
               countdown={{ date: edition.date, time: edition.startTime }}
+              sponsors={sponsors.filter((s) => s.onCard)}
               previewNote={!switches.delegate_card ? "Only you can see this card for now. Turn on the Delegate card switch in the Platform dashboard to show it to everyone." : null}
             />
           </aside>

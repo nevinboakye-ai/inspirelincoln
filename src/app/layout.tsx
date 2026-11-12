@@ -11,7 +11,7 @@ import { ScrollProgress } from "@/components/motion/effects";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { VisitCounter } from "@/components/layout/visit-counter";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
-import { getAnnouncements, getEdition, getSiteOpen } from "@/lib/data/content";
+import { getAnnouncements, getEdition, getSiteOpen, getSponsors } from "@/lib/data/content";
 
 const display = Fraunces({
   subsets: ["latin"],
@@ -48,7 +48,7 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [edition, announcements, siteOpen] = await Promise.all([getEdition(), getAnnouncements(), getSiteOpen()]);
+  const [edition, announcements, siteOpen, sponsors] = await Promise.all([getEdition(), getAnnouncements(), getSiteOpen(), getSponsors()]);
   const ribbon = announcements.find((a) => a.pinned && a.level !== "info") ?? null;
   return (
     <html lang="en-GB" className={`${display.variable} ${body.variable}`}>
@@ -65,7 +65,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <main id="main" tabIndex={-1} className="outline-none">
             {children}
           </main>
-          <SiteFooter edition={edition} siteOpen={siteOpen} />
+          <SiteFooter edition={edition} siteOpen={siteOpen} sponsors={sponsors} />
           <EditShortcut />
           <ViewAsLauncher />
           <VisitCounter />

@@ -147,7 +147,7 @@ export function SiteHeader({
                         href={item.href}
                         aria-current={active ? "page" : undefined}
                         className={cn(
-                          "relative flex min-h-11 items-center whitespace-nowrap px-3.5 text-[0.9rem] font-medium transition-colors",
+                          "relative flex min-h-11 items-center whitespace-nowrap px-[0.45rem] text-[0.85rem] font-medium transition-colors xl:px-3.5 xl:text-[0.9rem]",
                           active
                             ? "text-paper"
                             : "text-paper/70 hover:text-paper",
@@ -157,7 +157,7 @@ export function SiteHeader({
                         {active && (
                           <m.span
                             layoutId="nav-indicator"
-                            className="absolute inset-x-3.5 -bottom-0.5 h-px bg-cyan"
+                            className="absolute inset-x-[0.45rem] -bottom-0.5 h-px bg-cyan xl:inset-x-3.5"
                           />
                         )}
                       </Link>
@@ -181,14 +181,14 @@ export function SiteHeader({
               {!member && (
                 <Link
                   href="/signup"
-                  className="hidden min-h-11 items-center whitespace-nowrap px-3 text-sm font-medium text-paper/75 underline-offset-4 transition-colors hover:text-paper hover:underline lg:flex"
+                  className="hidden min-h-11 items-center whitespace-nowrap px-2 text-sm font-medium text-paper/75 underline-offset-4 transition-colors hover:text-paper hover:underline xl:flex xl:px-3"
                 >
                   Register
                 </Link>
               )}
               <Link
                 href={member ? "/portal" : "/login"}
-                className="hidden min-h-11 items-center gap-1.5 rounded-[3px] bg-gold px-5 font-ui text-sm font-semibold text-midnight transition-colors hover:bg-gold-300 sm:flex"
+                className="hidden min-h-11 items-center gap-1.5 whitespace-nowrap rounded-[3px] bg-gold px-4 font-ui xl:px-5 text-sm font-semibold text-midnight transition-colors hover:bg-gold-300 sm:flex"
               >
                 {member ? (
                   <>

@@ -5,6 +5,8 @@ import { Eye, RotateCw, Star } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { CardCountdown } from "./hub-motion";
+import { SponsorLogo } from "@/components/sponsors/sponsor-logo";
+import type { Sponsor } from "@/lib/types";
 
 export type LanyardTone = "delegate" | "poster" | "oral" | "waitlist" | "committee" | "executive";
 
@@ -47,6 +49,8 @@ export interface LanyardProps {
   uniLogo?: string | null;
   /** Shown to the site owner while the card is still switched off for everyone else. */
   previewNote?: string | null;
+  /** Sponsors printed small on the back of the card. */
+  sponsors?: Pick<Sponsor, "id" | "name" | "logoUrl">[];
 }
 
 type Side = "front" | "back";
@@ -293,12 +297,12 @@ function Front({ year, name, detail, photo, uniLogo, roles, dateLabel, venue, co
       <div className="relative bg-midnight px-6 pb-5 pt-10 text-paper">
         <div aria-hidden className="lanyard-grid pointer-events-none absolute inset-0 opacity-[0.18]" />
         <div className="relative flex items-center gap-3">
-          <img src="/brand/crest-white.png" alt="" aria-hidden className="h-11 w-auto" />
+          <img src="/brand/conference-mark-white.png" alt="" aria-hidden className="h-11 w-auto" />
           <div className="leading-none">
             <p className="font-display text-[1.55rem] tracking-tight">
               INSPIRE <span className="text-gold">{year}</span>
             </p>
-            <p className="mt-1.5 font-ui text-[0.55rem] font-semibold uppercase tracking-[0.22em] text-paper/70">Medical Research Conference</p>
+            <p className="mt-1.5 font-ui text-[0.5rem] font-semibold uppercase tracking-[0.16em] text-paper/70">National Medical Research Conference</p>
           </div>
         </div>
       </div>
@@ -344,7 +348,7 @@ function Front({ year, name, detail, photo, uniLogo, roles, dateLabel, venue, co
   );
 }
 
-function Back({ year, qr, reference, checkedIn, shared = true, hidden }: LanyardProps & { hidden: boolean }) {
+function Back({ year, qr, reference, checkedIn, shared = true, sponsors = [], hidden }: LanyardProps & { hidden: boolean }) {
   return (
     <Face back hidden={hidden} className="bg-midnight text-paper ring-1 ring-gold/40">
       <div aria-hidden className="lanyard-grid pointer-events-none absolute inset-0 opacity-[0.12]" />
@@ -353,7 +357,7 @@ function Back({ year, qr, reference, checkedIn, shared = true, hidden }: Lanyard
         <p className="mt-1.5 text-[0.7rem] leading-snug text-paper/65">To connect, and to check in on the day</p>
         {qr ? (
           <>
-            <div className="relative mt-4 w-[80%]">
+            <div className={cn("relative mt-4", sponsors.length ? "mt-3 w-[66%]" : "w-[80%]")}>
               <div className="rounded-xl bg-white p-2.5 ring-2 ring-gold/60" role="img" aria-label={`Your Delegate Card QR code${reference ? `, code ${reference}` : ""}`} dangerouslySetInnerHTML={{ __html: qr }} />
               {checkedIn && (
                 <span className="absolute -right-3 -top-3 rotate-12 rounded-md border-2 border-success bg-white px-2 py-1 font-ui text-[0.65rem] font-bold uppercase tracking-[0.16em] text-success shadow">
@@ -374,10 +378,22 @@ function Back({ year, qr, reference, checkedIn, shared = true, hidden }: Lanyard
         ) : (
           <>
             <div aria-hidden className="mt-6 grid aspect-square w-[70%] place-items-center rounded-xl border border-dashed border-paper/25">
-              <img src="/brand/crest-white.png" alt="" className="h-16 w-auto opacity-40" />
+              <img src="/brand/conference-mark-white.png" alt="" className="h-16 w-auto opacity-40" />
             </div>
             <p className="mt-auto text-sm leading-snug text-paper/80">Your QR code will appear here once your place is confirmed.</p>
           </>
+        )}
+        {sponsors.length > 0 && (
+          <div className="-mb-2 mt-2.5 flex w-full items-center justify-center gap-2 border-t border-white/10 pt-2">
+            <p className="shrink-0 font-ui text-[0.45rem] font-semibold uppercase leading-tight tracking-[0.18em] text-paper/50">Supported<br />by</p>
+            <ul className="flex flex-wrap items-center justify-center gap-1.5">
+              {sponsors.map((s) => (
+                <li key={s.id}>
+                  <SponsorLogo sponsor={s} size="xs" />
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
     </Face>

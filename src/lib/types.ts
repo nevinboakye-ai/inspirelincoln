@@ -198,6 +198,19 @@ export interface Partner {
   relationship: string;
 }
 
+/** A sponsor of the conference, shown on /sponsors, the home page, the footer and Delegate Cards. */
+export interface Sponsor {
+  id: string;
+  name: string;
+  /** What they've given, in a line, e.g. "2 × 12-month Clinical Skills Plan subscriptions". */
+  contribution: string;
+  description: string | null;
+  url: string | null;
+  logoUrl: string | null;
+  /** Shown small on the back of every Delegate Card. */
+  onCard: boolean;
+}
+
 export interface CommitteeMember {
   id: string;
   name: string;

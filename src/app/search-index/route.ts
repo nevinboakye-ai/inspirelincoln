@@ -13,6 +13,7 @@ const PAGES: SearchItem[] = [
   { id: "p-today", kind: "Page", title: "Conference day", href: "/today", keywords: "event day live now next today" },
   { id: "p-speakers", kind: "Page", title: "Speakers", href: "/speakers", keywords: "keynote faculty" },
   { id: "p-workshops", kind: "Page", title: "Workshops", href: "/workshops" },
+  { id: "p-sponsors", kind: "Page", title: "Sponsors", href: "/sponsors", keywords: "sponsor sponsors prizes partners supporters royal college glasgow rcpsg geeky medics" },
   { id: "p-contact", kind: "Page", title: "Contact", href: "/contact", keywords: "email enquiry help" },
   { id: "p-map", kind: "Page", title: "Campus map", href: "/map", keywords: "map directions building room find where lms inb" },
   { id: "p-register", kind: "Page", title: "Register", href: "/signup", keywords: "register sign up ticket account join" },

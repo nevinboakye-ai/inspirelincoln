@@ -56,7 +56,7 @@ function stripTags(s: string) {
 export const HELP_EMAIL = "inspiresoc@lincolnsu.com";
 
 export function renderEmail(c: EmailContent): { html: string; text: string } {
-  const crest = `${c.siteUrl}/brand/crest-white.png`;
+  const crest = `${c.siteUrl}/brand/conference-mark-white.png`;
   const p = (html: string) =>
     `<p style="margin:0 0 16px;font-family:${SANS};font-size:16px;line-height:1.6;color:${C.ink};">${html}</p>`;
   const details = c.details?.length
@@ -96,10 +96,10 @@ export function renderEmail(c: EmailContent): { html: string; text: string } {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;">
       <tr><td style="background:${C.midnight};padding:32px 32px 28px;border-radius:3px 3px 0 0;">
         <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-          <td style="vertical-align:middle;padding-right:14px;"><img src="${crest}" width="40" height="47" alt="INSPIRE crest" style="display:block;border:0;"></td>
+          <td style="vertical-align:middle;padding-right:14px;"><img src="${crest}" width="40" height="49" alt="INSPIRE conference logo" style="display:block;border:0;"></td>
           <td style="vertical-align:middle;">
             <p style="margin:0;font-family:${SERIF};font-size:24px;line-height:1;color:${C.paper};">Inspire</p>
-            <p style="margin:6px 0 0;font-family:${SANS};font-size:10px;letter-spacing:3px;text-transform:uppercase;color:${C.cyan};">Medical Research Conference</p>
+            <p style="margin:6px 0 0;font-family:${SANS};font-size:10px;letter-spacing:2px;text-transform:uppercase;color:${C.cyan};">National Medical Research Conference</p>
           </td>
         </tr></table>
       </td></tr>
@@ -134,7 +134,7 @@ export function renderEmail(c: EmailContent): { html: string; text: string } {
 </html>`;
 
   const text = [
-    "INSPIRE Medical Research Conference",
+    "INSPIRE National Medical Research Conference",
     "",
     c.heading,
     "",

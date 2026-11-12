@@ -122,8 +122,8 @@ export function Hero({
             </GuestOnly>
           </m.div>
 
-          <m.div style={{ y: crestY }} className="relative mx-auto hidden lg:block w-[min(62vw,300px)] lg:col-span-5 lg:w-[min(30vw,360px)]">
-            <CrestReveal />
+          <m.div style={{ y: crestY }} className="relative mx-auto hidden lg:block w-[min(62vw,300px)] lg:col-span-5 lg:w-[min(36vw,460px)]">
+            <ConferenceLogo />
           </m.div>
         </div>
 
@@ -151,24 +151,16 @@ export function Hero({
   );
 }
 
-/** The crest, revealed one quarter at a time, with a slow outline drawn around it. */
-function CrestReveal() {
-  const quarters = [
-    "inset(0 50% 50% 0)",
-    "inset(0 0 50% 50%)",
-    "inset(50% 50% 0 0)",
-    "inset(50% 0 0 50%)",
-  ];
+/** The INSPIRE 2026 conference logo, drawn in from the left inside slow turning rings. */
+function ConferenceLogo() {
   return (
-    <div className="relative aspect-[338/397]">
-      <div aria-hidden className="absolute -inset-[10%] rounded-full border border-white/10" />
-      <div aria-hidden className="absolute -inset-[22%] rounded-full border border-dashed border-white/[0.07]" />
-      {quarters.map((clip, i) => (
-        <div key={clip} aria-hidden className="enter-pop absolute inset-0" style={{ clipPath: clip, animationDelay: `${200 + i * 110}ms` }}>
-          <Image src="/brand/crest-white.png" alt="" fill priority sizes="360px" className="object-contain" />
-        </div>
-      ))}
-      <span className="sr-only">The INSPIRE crest: a shield quartered with an open book, the rod of Asclepius twice, and an atom.</span>
+    <div className="relative grid aspect-square place-items-center">
+      <div aria-hidden className="absolute inset-[4%] rounded-full border border-white/10" />
+      <div aria-hidden className="absolute -inset-[6%] rounded-full border border-dashed border-white/[0.07]" />
+      <div aria-hidden className="absolute inset-[18%] rounded-full bg-cyan/10 blur-3xl" />
+      <div className="enter-wipe relative w-[88%]">
+        <Image src="/brand/conference-logo-white.png" alt="INSPIRE, Lincoln Medical School, National Medical Research Conference 2026" width={710} height={272} priority sizes="420px" className="h-auto w-full" />
+      </div>
     </div>
   );
 }

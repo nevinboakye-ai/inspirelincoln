@@ -203,6 +203,21 @@ export const ENTITIES: EntityDef[] = [
     ],
   },
   {
+    key: "sponsors", table: "sponsors", label: "Sponsors", singular: "sponsor",
+    description: "Sponsors are listed on the Sponsors page, along the foot of every page and on the home page. Lower sort numbers come first. A PNG logo with a transparent background looks best.",
+    titleField: "name", listColumns: ["contribution", "show_on_card", "published"], orderBy: [{ column: "sort" }, { column: "name" }],
+    revalidate: ["/", "/sponsors", "/portal"],
+    fields: [
+      { name: "name", label: "Name", type: "text", required: true, wide: true },
+      { name: "contribution", label: "What they've given", type: "text", wide: true, hint: "One line, e.g. 2 × 12-month Clinical Skills Plan subscriptions." },
+      { name: "description", label: "About them", type: "textarea", wide: true, hint: "A sentence or two for the Sponsors page." },
+      { name: "url", label: "Website", type: "url" },
+      { name: "logo_url", label: "Logo", type: "image", hint: "Until a logo is added, the sponsor's name is shown instead." },
+      { name: "show_on_card", label: "Show on the back of Delegate Cards", type: "boolean" },
+      published, sort,
+    ],
+  },
+  {
     key: "committee", table: "committee_members", label: "Committee", singular: "committee member",
     description: "The organising committee directory on the About page.",
     titleField: "name", listColumns: ["role", "institution", "published"], orderBy: [{ column: "sort" }],

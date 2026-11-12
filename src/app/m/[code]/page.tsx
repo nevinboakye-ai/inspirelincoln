@@ -30,7 +30,7 @@ function Message({ icon: Icon, title, children, actions }: { icon: typeof Lock; 
       <div className="relative overflow-hidden bg-midnight px-6 py-7 text-paper sm:px-8">
         <div aria-hidden className="lanyard-grid pointer-events-none absolute inset-0 opacity-20" />
         <div className="relative flex items-center gap-3">
-          <img src="/brand/crest-white.png" alt="" aria-hidden className="h-10 w-auto" />
+          <img src="/brand/conference-mark-white.png" alt="" aria-hidden className="h-10 w-auto" />
           <p className="eyebrow text-gold">INSPIRE Delegate Card</p>
         </div>
       </div>

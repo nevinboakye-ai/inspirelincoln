@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import type { Edition } from "@/lib/types";
+import type { Edition, Sponsor } from "@/lib/types";
 import { CONTACT_EMAIL, FOOTER_LINKS, SOCIAL_LINKS } from "@/lib/site";
 import { formatEventDate } from "@/lib/time";
-import { Logo } from "./logo";
+import { Logo, SocietyCrest } from "./logo";
+import { SponsorLogo } from "@/components/sponsors/sponsor-logo";
 import { AuthLink } from "@/components/auth/auth-link";
 
 const linkClass = "inline-flex min-h-10 items-center gap-1 text-paper/75 transition-colors hover:text-paper";
 
 /** A compact footer: who we are, the key links, and the legal small print. */
-export function SiteFooter({ edition, siteOpen = true }: { edition: Edition; siteOpen?: boolean }) {
+export function SiteFooter({ edition, siteOpen = true, sponsors = [] }: { edition: Edition; siteOpen?: boolean; sponsors?: Sponsor[] }) {
   const year = new Date().getFullYear();
   const links = siteOpen
     ? [...FOOTER_LINKS.explore.filter((l) => l.href !== "/today"), { label: "Venue & FAQs", href: "/conference" }, { label: "About", href: "/about" }, { label: "Contact", href: "/contact" }]
@@ -56,8 +57,28 @@ export function SiteFooter({ edition, siteOpen = true }: { edition: Edition; sit
           </nav>
         </div>
 
+        {sponsors.length > 0 && (
+          <div className="mt-5 flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:gap-5">
+            <Link href="/sponsors" className="font-ui text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-paper/60 hover:text-paper">
+              Supported by
+            </Link>
+            <ul className="flex flex-wrap items-center gap-2.5">
+              {sponsors.map((s) => (
+                <li key={s.id}>
+                  <Link href="/sponsors" aria-label={s.name} className="block opacity-90 transition-opacity hover:opacity-100">
+                    <SponsorLogo sponsor={s} size="sm" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="mt-4 flex flex-col gap-2 border-t border-white/10 pt-4 text-xs text-paper/60 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {year} INSPIRE National Medical Research Conference. <span className="whitespace-nowrap">Built by Nevin Boakye.</span></p>
+          <p className="flex items-center gap-2.5">
+            <SocietyCrest className="h-6 opacity-80" />
+            <span>© {year} INSPIRE National Medical Research Conference, organised by the INSPIRE society. <span className="whitespace-nowrap">Built by Nevin Boakye.</span></span>
+          </p>
           <ul className="flex flex-wrap gap-x-5">
             {FOOTER_LINKS.legal.map((l) => (
               <li key={l.href}>

@@ -72,7 +72,7 @@ export async function saveEntity(_: ActionResult, form: FormData): Promise<Actio
         case "image": {
           const file = form.get(`${f.name}__file`);
           if (file instanceof File && file.size > 0) row[f.name] = await uploadImage(db, file, entity.key);
-          else if (s && !/^https?:\/\//i.test(s)) fieldErrors[f.name] = "Enter a full image URL or upload a file.";
+          else if (s && !/^(https?:\/\/|\/[\w./-]+$)/i.test(s)) fieldErrors[f.name] = "Enter a full image URL or upload a file.";
           else row[f.name] = s || null;
           break;
         }

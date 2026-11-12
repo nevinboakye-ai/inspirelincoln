@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ArrowUpRight, Award, Compass, Eye, Lightbulb, MapPin, Target, Users2, Zap } from "lucide-react";
 import { PageHero } from "@/components/layout/page-hero";
+import { SocietyCrest } from "@/components/layout/logo";
 import { Reveal } from "@/components/motion/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { CommitteeDirectory } from "@/components/about/committee";
@@ -55,6 +56,10 @@ export default async function AboutPage() {
         <div className="container-page grid gap-8 lg:grid-cols-12 lg:gap-12">
           <Reveal className="lg:col-span-4">
             <SectionHeading eyebrow="Our story" title={<span id="story-title">More than a decade of student research</span>} />
+            <div className="mt-6 flex items-center gap-4">
+              <SocietyCrest tone="dark" className="h-16" />
+              <p className="max-w-[16rem] text-sm leading-snug text-slate-700">The INSPIRE society crest. Each year&apos;s conference has a logo of its own.</p>
+            </div>
           </Reveal>
           <Reveal delay={0.1} className="prose-inspire lg:col-span-7 lg:col-start-6">
             {STORY.map((ch) => (

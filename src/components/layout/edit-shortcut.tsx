@@ -16,6 +16,7 @@ const EDITORS: { match: (p: string) => boolean; targets: Target[] }[] = [
   { match: (p) => p.startsWith("/workshops"), targets: [{ label: "Workshops", href: "/admin/content/workshops" }] },
   { match: (p) => p.startsWith("/speakers"), targets: [{ label: "Speakers", href: "/admin/content/speakers" }] },
   { match: (p) => p.startsWith("/map"), targets: [{ label: "Campus map places", href: "/admin/content/map" }] },
+  { match: (p) => p.startsWith("/sponsors"), targets: [{ label: "Sponsors", href: "/admin/content/sponsors" }] },
   { match: (p) => p.startsWith("/conference"), targets: [{ label: "FAQs", href: "/admin/content/faqs" }, { label: "Conference settings", href: "/admin/settings" }] },
 ];
 
