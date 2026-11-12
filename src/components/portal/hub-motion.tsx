@@ -14,7 +14,7 @@ export function Countdown({ date, time }: { date: string; time: string | null })
     const t = window.setInterval(() => setNow(Date.now()), 30_000);
     return () => window.clearInterval(t);
   }, []);
-  if (now === null) return <div className="h-[4.25rem]" aria-hidden />;
+  if (now === null) return <div className="h-14" aria-hidden />;
   const left = target - now;
   const endOfDay = zonedTimeToUtc(date, "23:59").getTime();
   if (left <= 0) {
@@ -25,17 +25,17 @@ export function Countdown({ date, time }: { date: string; time: string | null })
   const min = Math.floor((left % 3_600_000) / 60_000);
   const parts = time ? [[d, d === 1 ? "day" : "days"], [h, h === 1 ? "hour" : "hours"], [min, "min"]] : [[Math.ceil(left / 86_400_000), Math.ceil(left / 86_400_000) === 1 ? "day" : "days"]];
   return (
-    <p className="flex items-end gap-4 sm:gap-6">
+    <p className="flex items-end gap-4 sm:gap-5">
       <span className="sr-only">{`${parts.map(([v, l]) => `${v} ${l}`).join(", ")} to go`}</span>
       {parts.map(([v, l]) => (
         <span key={String(l)} aria-hidden className="flex flex-col">
-          <span className="font-display text-4xl tabular-nums leading-none text-paper sm:text-5xl">
+          <span className="font-display text-3xl tabular-nums leading-none text-paper sm:text-4xl">
             <Ticker value={Number(v)} />
           </span>
           <span className="mt-1.5 font-ui text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-paper/60">{l}</span>
         </span>
       ))}
-      <span aria-hidden className="mb-6 font-ui text-xs font-semibold uppercase tracking-[0.2em] text-gold">to go</span>
+      <span aria-hidden className="mb-5 font-ui text-xs font-semibold uppercase tracking-[0.2em] text-gold">to go</span>
     </p>
   );
 }
@@ -60,7 +60,7 @@ function Ticker({ value }: { value: number }) {
 }
 
 /** A ring that fills to show how ready someone is for the day. */
-export function ReadinessRing({ done, total }: { done: number; total: number }) {
+export function ReadinessRing({ done, total, small = false }: { done: number; total: number; small?: boolean }) {
   const ref = useRef<SVGSVGElement>(null);
   const inView = useInView(ref, { once: true });
   const reduce = useReducedMotion();
@@ -68,7 +68,7 @@ export function ReadinessRing({ done, total }: { done: number; total: number }) 
   const r = 34;
   const c = 2 * Math.PI * r;
   return (
-    <div className="relative grid size-24 shrink-0 place-items-center">
+    <div className={`relative grid shrink-0 place-items-center ${small ? "size-14" : "size-24"}`}>
       <svg ref={ref} viewBox="0 0 80 80" className="absolute inset-0 -rotate-90" aria-hidden>
         <circle cx="40" cy="40" r={r} fill="none" stroke="currentColor" strokeOpacity="0.12" strokeWidth="7" />
         <m.circle
@@ -92,8 +92,8 @@ export function ReadinessRing({ done, total }: { done: number; total: number }) 
         </defs>
       </svg>
       <p className="text-center leading-none">
-        <span className="font-display text-2xl text-ink">{done}</span>
-        <span className="text-sm text-slate">/{total}</span>
+        <span className={`font-display text-ink ${small ? "text-lg" : "text-2xl"}`}>{done}</span>
+        <span className={small ? "text-xs text-slate" : "text-sm text-slate"}>/{total}</span>
       </p>
     </div>
   );

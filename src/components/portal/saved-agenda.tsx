@@ -13,16 +13,16 @@ export function SavedAgenda({ sessions, workshops }: { sessions: Session[]; work
   const conflicts = findConflicts(saved);
   if (!agenda.ready) return <p className="text-sm text-slate">Loading your agenda…</p>;
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {saved.length === 0 ? (
-        <p className="text-slate-700">
+        <p className="text-sm text-slate-700">
           No sessions saved yet.{" "}
           <Link href="/programme" className="font-medium text-electric-600 underline underline-offset-4">Browse the programme</Link>
         </p>
       ) : (
         <ul className="divide-y divide-navy/10">
           {saved.map((s) => (
-            <li key={s.id} className="flex items-center justify-between gap-4 py-3">
+            <li key={s.id} className="flex items-center justify-between gap-4 py-2">
               <Link href={`/programme?session=${s.slug}`} className="min-w-0">
                 <span className="block text-xs font-semibold uppercase tracking-[0.12em] text-slate">
                   {s.startsAt ? formatTime(s.startsAt) : "Time TBC"} · {SESSION_CATEGORY_LABEL[s.category]}
@@ -52,7 +52,7 @@ export function SavedAgenda({ sessions, workshops }: { sessions: Session[]; work
           </ul>
         </div>
       )}
-      <Link href="/programme?view=agenda" className="inline-flex min-h-11 items-center rounded-[3px] border border-navy/15 px-4 text-sm font-medium text-ink hover:border-navy/40">
+      <Link href="/programme?view=agenda" className="inline-flex min-h-10 items-center rounded-[3px] border border-navy/15 px-3 text-sm font-medium text-ink hover:border-navy/40">
         Manage agenda &amp; export
       </Link>
     </div>
