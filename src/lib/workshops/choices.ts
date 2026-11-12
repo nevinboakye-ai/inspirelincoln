@@ -14,16 +14,12 @@ export type ChoiceWorkshop = {
   outcomes?: string[] | null;
   audience?: string | null;
   facilitator?: string | null;
-  slot: number | null;
-  stream: "a" | "b" | null;
+  room: string | null;
   capacity: number | null;
 };
 export type SessionTime = { slot: number; title: string; time: string | null; room: string | null };
 export type ChoiceSettings = { rankingOpen: boolean; closesAt: string | null; resultsPublished: boolean; ready: boolean };
 export type MyPlace = { slot: number; workshopId: string; choice: number | null };
-
-/** "1A", or null until the committee has put the workshop in a session. */
-export const pairLabel = (w: Pick<ChoiceWorkshop, "slot" | "stream">) => (w.slot && w.stream ? `${w.slot}${w.stream.toUpperCase()}` : null);
 
 /** Whether delegates can still change their ranking right now. */
 export const rankingIsOpen = (s: ChoiceSettings, now = Date.now()) => s.rankingOpen && (!s.closesAt || new Date(s.closesAt).getTime() > now);
@@ -32,7 +28,8 @@ export const closingTimePassed = (s: ChoiceSettings, now = Date.now()) => Boolea
 
 /**
  * Everything the workshop choice screens need: the workshops, the three
- * workshop sessions in time order (session 1 is the earliest), the
+ * workshop sessions in time order (session 1 is the earliest; all six
+ * workshops run in each), the
  * settings, and this person's ranking and places. `ready` is false until
  * the database set-up has been run.
  */
@@ -51,17 +48,17 @@ export async function loadWorkshopChoices(db: SupabaseClient, userId: string) {
   if (!editionId) return empty;
 
   const [ws, sessions, settings, mine, places] = await Promise.all([
-    db.from("workshops").select("id, number, slug, title, strapline, summary, description, topics, outcomes, audience, facilitator, slot, stream, capacity").eq("edition_id", editionId).eq("published", true).order("number"),
+    db.from("workshops").select("id, number, slug, title, strapline, summary, description, topics, outcomes, audience, facilitator, room, capacity").eq("edition_id", editionId).eq("published", true).order("number"),
     db.from("sessions").select("title, starts_at, ends_at, rooms(name)").eq("edition_id", editionId).eq("category", "workshop").order("starts_at"),
     db.from("workshop_choice_settings").select("ranking_open, closes_at, results_published").eq("edition_id", editionId).maybeSingle(),
     db.from("workshop_rankings").select("ranking, updated_at").eq("user_id", userId).eq("edition_id", editionId).maybeSingle(),
     db.from("workshop_allocations").select("slot, workshop_id, choice").eq("user_id", userId).eq("edition_id", editionId).order("slot"),
   ]);
 
-  // Before the set-up runs, the new columns and tables are missing.
+  // Before the set-up runs (SQL 29 and 35), the new columns and tables are missing.
   if (ws.error) {
     const { data } = await db.from("workshops").select("id, number, slug, title, strapline, summary, description, topics, outcomes, audience, facilitator, capacity").eq("edition_id", editionId).eq("published", true).order("number");
-    return { ...empty, workshops: (data ?? []).map((w) => ({ ...w, slot: null, stream: null }) as ChoiceWorkshop) };
+    return { ...empty, workshops: (data ?? []).map((w) => ({ ...w, room: null }) as ChoiceWorkshop) };
   }
   return {
     editionId,
