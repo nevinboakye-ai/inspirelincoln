@@ -45,10 +45,10 @@ const MOTES: [number, number, number, number][] = [
 
 /** White versions of the partner logos, for the dark intro screen. */
 const PARTNERS = [
-  { name: "University of Lincoln", src: "/partners/lincoln.png", w: 182, className: "h-7 w-auto sm:h-8", text: true },
-  { name: "University of Nottingham", src: "/partners/nottingham.png", w: 529, className: "h-[1.1rem] w-auto sm:h-5", text: false },
-  { name: "University of East Anglia", src: "/partners/uea.png", w: 268, className: "h-5 w-auto sm:h-6", text: false },
-  { name: "University of Leicester", src: "/partners/leicester.png", w: 600, className: "h-[1.1rem] w-auto sm:h-5", text: false },
+  { name: "University of Lincoln", src: "/partners/lincoln.png", w: 182, className: "h-6 w-auto sm:h-7", text: true },
+  { name: "University of Nottingham", src: "/partners/nottingham.png", w: 529, className: "h-4 w-auto sm:h-[1.1rem]", text: false },
+  { name: "University of East Anglia", src: "/partners/uea.png", w: 268, className: "h-[1.1rem] w-auto sm:h-5", text: false },
+  { name: "University of Leicester", src: "/partners/leicester.png", w: 600, className: "h-4 w-auto sm:h-[1.1rem]", text: false },
 ];
 
 /** The welcome screen: sign in, or carry on to the website. */
@@ -80,7 +80,7 @@ export function IntroGate({ edition }: { edition: Edition }) {
 
           <div className="container-page flex flex-1 flex-col items-center justify-center py-6 text-center sm:py-10">
             {/* The conference mark, assembled one quarter at a time inside turning rings */}
-            <div className="relative mx-auto grid aspect-square w-[min(22vw,84px)] place-items-center sm:w-[124px] gate-crest">
+            <div className="relative mx-auto grid aspect-square w-[min(16vw,60px)] place-items-center sm:w-[84px] gate-crest">
               <div aria-hidden className="gate-ring absolute -inset-[18%] rounded-full border border-white/10" />
               <div aria-hidden className="gate-ring-slow absolute -inset-[40%] rounded-full border border-dashed border-white/[0.09]" />
               {/* A soft, steady glow behind the crest */}
@@ -94,25 +94,26 @@ export function IntroGate({ edition }: { edition: Edition }) {
               </div>
             </div>
 
-            <p className="gate-eyebrow enter-up eyebrow mt-6 text-gold [animation-delay:600ms] sm:mt-10">
-              INSPIRE {edition.year}<span className="hidden sm:inline"> · </span><span className="mt-1.5 block sm:mt-0 sm:inline">National Medical Research Conference</span>
+            <p className="gate-eyebrow enter-up eyebrow mt-5 text-[0.62rem] text-gold [animation-delay:600ms] sm:mt-7 sm:text-[0.7rem]">
+              National Medical Research Conference
             </p>
-            <h2 id="gate-title" className="mt-2.5 text-[2.15rem] font-normal leading-[1.02] sm:mt-4 sm:text-[3.4rem] lg:text-[4rem]">
-              <span className="block overflow-hidden pb-[0.08em]">
-                <span className="enter-rise block [animation-delay:680ms]">{lead}</span>
-              </span>
-              {rest && (
-                <span className="block overflow-hidden pb-[0.12em]">
-                  <span className="enter-rise block text-[0.6em] font-light italic leading-[1.1] text-gold-300 [animation-delay:780ms]">{rest}</span>
+            <h2 id="gate-title" className="mt-1.5 whitespace-nowrap font-display text-[min(11.5vw,3.4rem)] font-normal leading-none tracking-[-0.01em] sm:mt-2 sm:text-[5.5rem] lg:text-[6.5rem]">
+              <span className="block overflow-hidden pb-[0.06em]">
+                <span className="enter-rise block [animation-delay:680ms]">
+                  INSPIRE <span className="text-gold">{edition.year}</span>
                 </span>
-              )}
+              </span>
             </h2>
-            <p id="gate-desc" className="enter-up mt-2.5 text-[0.8rem] text-paper/75 [animation-delay:900ms] sm:mt-4 sm:text-sm">
+            <p className="enter-up mt-1 whitespace-nowrap font-display text-[clamp(0.8rem,4.1vw,1.6rem)] font-light italic leading-tight text-gold-300 [animation-delay:780ms] sm:mt-2">
+              {lead}
+              {rest && <>: {rest}</>}
+            </p>
+            <p id="gate-desc" className="enter-up mt-2 text-[0.72rem] text-paper/70 [animation-delay:900ms] sm:mt-3 sm:text-[0.8rem]">
               {formatEventDate(edition.date)} · {edition.venueName}
             </p>
 
             {/* Heartbeat, drawn across the gate */}
-            <svg aria-hidden viewBox="0 0 600 60" preserveAspectRatio="none" fill="none" className="gate-beat-svg mt-2 h-7 w-full max-w-md sm:mt-4 sm:h-10">
+            <svg aria-hidden viewBox="0 0 600 60" preserveAspectRatio="none" fill="none" className="gate-beat-svg mt-1 h-6 w-full max-w-xs sm:mt-3 sm:h-8 sm:max-w-sm">
               <path
                 pathLength={1}
                 className="gate-beat"
@@ -133,44 +134,44 @@ export function IntroGate({ edition }: { edition: Edition }) {
               />
             </svg>
 
-            <div className="enter-up mt-3 grid w-full max-w-sm gap-2 sm:mt-5 sm:max-w-xl [animation-delay:1050ms] sm:grid-cols-2 sm:gap-4">
+            <div className="enter-up mt-3 grid w-full max-w-xs gap-2 sm:mt-5 sm:max-w-lg [animation-delay:1050ms] sm:grid-cols-2 sm:gap-3">
               <button
                 type="button"
                 data-gate="enter"
                 autoFocus
-                className="shine group flex min-h-[3.75rem] flex-col items-start justify-center gap-0.5 rounded-[4px] bg-paper px-4 py-2.5 text-left sm:min-h-20 sm:gap-1 sm:px-5 sm:py-4 text-navy transition-[transform,box-shadow] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-24px_rgba(201,216,236,0.6)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan"
+                className="shine group flex min-h-[3.25rem] flex-col items-start justify-center gap-0 rounded-[4px] bg-paper px-4 py-2 text-left sm:min-h-16 sm:gap-0.5 sm:px-4 sm:py-3 text-navy transition-[transform,box-shadow] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-24px_rgba(201,216,236,0.6)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan"
               >
-                <span className="flex w-full items-center justify-between font-display text-lg sm:text-xl">
+                <span className="flex w-full items-center justify-between font-display text-base sm:text-lg">
                   Visit the website
                   <ArrowRight aria-hidden className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </span>
-                <span className="text-[0.72rem] text-slate-700 sm:text-[0.8rem]">Programme, speakers, venue and FAQs</span>
+                <span className="text-[0.68rem] text-slate-700 sm:text-[0.72rem]">Programme, speakers, venue and FAQs</span>
               </button>
               <Link
                 href="/login"
                 data-gate="signin"
-                className="gate-guest group flex min-h-[3.75rem] flex-col items-start justify-center gap-0.5 rounded-[4px] border border-white/25 bg-white/[0.04] px-4 py-2.5 text-left sm:min-h-20 sm:gap-1 sm:px-5 sm:py-4 backdrop-blur-sm transition-[transform,border-color,background-color] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/[0.08] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan"
+                className="gate-guest group flex min-h-[3.25rem] flex-col items-start justify-center gap-0 rounded-[4px] border border-white/25 bg-white/[0.04] px-4 py-2 text-left sm:min-h-16 sm:gap-0.5 sm:px-4 sm:py-3 backdrop-blur-sm transition-[transform,border-color,background-color] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/[0.08] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan"
               >
-                <span className="flex w-full items-center justify-between font-display text-lg sm:text-xl text-paper">
+                <span className="flex w-full items-center justify-between font-display text-base sm:text-lg text-paper">
                   Log in
                   <LogIn aria-hidden className="size-4 text-cyan transition-transform duration-300 group-hover:translate-x-1" />
                 </span>
-                <span className="text-[0.72rem] text-paper/70 sm:text-[0.8rem]">Selected delegates, presenters and committee</span>
+                <span className="text-[0.68rem] text-paper/70 sm:text-[0.72rem]">Selected delegates, presenters and committee</span>
               </Link>
               {/* Shown instead of "Sign in" when this browser is already signed in. */}
               <Link
                 href="/portal"
                 data-gate="hub"
-                className="gate-member-only group flex min-h-[3.75rem] flex-col items-start justify-center gap-0.5 rounded-[4px] border border-white/25 bg-white/[0.04] px-4 py-2.5 text-left sm:min-h-20 sm:gap-1 sm:px-5 sm:py-4 backdrop-blur-sm transition-[transform,border-color,background-color] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/[0.08] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan"
+                className="gate-member-only group flex min-h-[3.25rem] flex-col items-start justify-center gap-0 rounded-[4px] border border-white/25 bg-white/[0.04] px-4 py-2 text-left sm:min-h-16 sm:gap-0.5 sm:px-4 sm:py-3 backdrop-blur-sm transition-[transform,border-color,background-color] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/[0.08] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan"
               >
-                <span className="flex w-full items-center justify-between font-display text-lg sm:text-xl text-paper">
+                <span className="flex w-full items-center justify-between font-display text-base sm:text-lg text-paper">
                   Go to My Hub
                   <LayoutDashboard aria-hidden className="size-4 text-cyan transition-transform duration-300 group-hover:translate-x-1" />
                 </span>
-                <span className="text-[0.72rem] text-paper/70 sm:text-[0.8rem]">You&apos;re logged in. Your presentation, agenda and profile</span>
+                <span className="text-[0.68rem] text-paper/70 sm:text-[0.72rem]">You&apos;re logged in. Your presentation, agenda and profile</span>
               </Link>
             </div>
-            <p className="gate-guest enter-fade mt-3 text-[0.8rem] sm:mt-5 text-paper/70 [animation-delay:1250ms]">
+            <p className="gate-guest enter-fade mt-3 text-[0.75rem] sm:mt-4 text-paper/70 [animation-delay:1250ms]">
               New to INSPIRE?{" "}
               <Link href="/signup" data-gate="signup" className="font-semibold text-paper underline decoration-white/40 underline-offset-4 hover:decoration-white">
                 Create an account
@@ -179,12 +180,12 @@ export function IntroGate({ edition }: { edition: Edition }) {
           </div>
 
           <section aria-labelledby="gate-partners" className="gate-partners enter-fade container-page pb-4 text-center [animation-delay:1350ms]">
-            <h3 id="gate-partners" className="font-ui text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-paper/60">Partner universities</h3>
-            <ul className="mt-2.5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5 sm:gap-x-10">
+            <h3 id="gate-partners" className="font-ui text-[0.58rem] font-semibold uppercase tracking-[0.24em] text-paper/55">Partner universities</h3>
+            <ul className="mt-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 sm:gap-x-8">
               {PARTNERS.map((u) => (
                 <li key={u.name} className="flex items-center gap-2.5 opacity-80 transition-opacity duration-300 hover:opacity-100">
                   <img src={u.src} alt={u.text ? "" : u.name} width={u.w} height={160} className={u.className} loading="eager" decoding="async" />
-                  {u.text && <span className="text-left font-display text-[0.7rem] leading-tight text-paper">University<br />of Lincoln</span>}
+                  {u.text && <span className="text-left font-display text-[0.62rem] leading-tight text-paper">University<br />of Lincoln</span>}
                 </li>
               ))}
             </ul>
