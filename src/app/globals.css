@@ -316,10 +316,12 @@
 @keyframes enter-rise { from { transform: translateY(105%); } }
 @keyframes enter-pop { from { opacity: 0; transform: scale(0.96); } }
 @keyframes enter-draw { from { transform: scaleX(0); } }
+@keyframes enter-wipe { from { clip-path: inset(0 100% 0 0); opacity: 0.4; } }
 .enter-fade { animation: enter-fade 0.6s var(--ease-out-expo) backwards; }
 .enter-up { animation: enter-up 0.7s var(--ease-out-expo) backwards; }
 .enter-rise { animation: enter-rise 0.9s var(--ease-out-expo) backwards; }
 .enter-pop { animation: enter-pop 0.8s var(--ease-out-expo) backwards; }
+.enter-wipe { animation: enter-wipe 1.4s var(--ease-out-expo) 0.2s backwards; }
 .enter-draw { transform-origin: left; animation: enter-draw 0.8s var(--ease-out-expo) backwards; }
 
 .animate-drift { animation: drift 22s ease-in-out infinite alternate; will-change: transform; }
@@ -362,7 +364,7 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-drift, .animate-breathe { animation: none !important; }
   .pulse-tracer { display: none; }
-  .enter-rise, .enter-pop, .enter-draw, .enter-up { animation-name: enter-fade !important; }
+  .enter-rise, .enter-pop, .enter-draw, .enter-up, .enter-wipe { animation-name: enter-fade !important; }
   .shine::after { display: none; }
 }
 

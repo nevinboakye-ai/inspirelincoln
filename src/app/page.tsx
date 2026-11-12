@@ -3,13 +3,14 @@ import { IntroGate } from "@/components/home/intro-gate";
 import { AtAGlance } from "@/components/home/sections";
 import { OurStory } from "@/components/home/our-story";
 import { EventJsonLd } from "@/components/seo/event-json-ld";
-import { getConferenceBundle } from "@/lib/data/content";
+import { SponsorsBand } from "@/components/sponsors/sponsors-band";
+import { getConferenceBundle, getSponsors } from "@/lib/data/content";
 import { eventEnd, eventStart, formatEventDate } from "@/lib/time";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const { edition, workshops } = await getConferenceBundle();
+  const [{ edition, workshops }, sponsors] = await Promise.all([getConferenceBundle(), getSponsors()]);
   const start = eventStart(edition);
   return (
     <>
@@ -26,6 +27,7 @@ export default async function HomePage() {
         status={edition.status}
       />
       <AtAGlance edition={edition} workshopCount={workshops.length} />
+      <SponsorsBand sponsors={sponsors} />
       <OurStory />
     </>
   );

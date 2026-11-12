@@ -18,6 +18,7 @@ import type {
   Session,
   ShowcaseItem,
   Speaker,
+  Sponsor,
   TimelineEvent,
   Workshop,
 } from "@/lib/types";
@@ -375,6 +376,28 @@ export const seedPartners: Partner[] = [
   { id: "p-leicester", name: "Leicester", logoUrl: null, url: null, relationship: "Participating student community" },
   { id: "p-nottingham", name: "Nottingham", logoUrl: null, url: null, relationship: "Participating student community" },
   { id: "p-east-anglia", name: "East Anglia", logoUrl: null, url: null, relationship: "Participating student community" },
+];
+
+/** The 2026 sponsors. More are added on the Sponsors page of the dashboard. */
+export const seedSponsors: Sponsor[] = [
+  {
+    id: "sp-rcpsg",
+    name: "Royal College of Physicians and Surgeons of Glasgow",
+    contribution: "Materials for delegates and 2 × £25 Amazon vouchers",
+    description: "The Royal College supports doctors, surgeons, dentists and allied professionals through training, examinations and professional development.",
+    url: "https://rcpsg.ac.uk",
+    logoUrl: null,
+    onCard: true,
+  },
+  {
+    id: "sp-geeky-medics",
+    name: "Geeky Medics",
+    contribution: "2 × 12-month Clinical Skills Plan subscriptions",
+    description: "Clinical skills, OSCE and revision resources used by medical students and doctors around the world.",
+    url: "https://geekymedics.com",
+    logoUrl: null,
+    onCard: true,
+  },
 ];
 
 /** Committee profiles are added through the admin dashboard. */

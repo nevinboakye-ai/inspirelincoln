@@ -81,7 +81,7 @@ function Input({ f, row, relations, error }: { f: FieldDef; row: Record<string, 
       case "image":
         return (
           <div className="space-y-3">
-            {preview && /^https?:\/\//.test(preview) && (
+            {preview && /^(https?:\/\/|\/)/.test(preview) && (
               // eslint-disable-next-line @next/next/no-img-element -- admin preview of arbitrary URLs
               <img src={preview} alt="" className="h-32 w-auto rounded-md border border-navy/10 object-cover" />
             )}

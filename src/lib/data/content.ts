@@ -18,6 +18,7 @@ import type {
   Session,
   ShowcaseItem,
   Speaker,
+  Sponsor,
   TimelineEvent,
   Workshop,
 } from "@/lib/types";
@@ -296,6 +297,30 @@ export const getPartners = cache(async (): Promise<Partner[]> => {
     url: str(r.url),
     relationship: String(r.relationship),
   }));
+});
+
+export function mapSponsor(r: Row): Sponsor {
+  return {
+    id: String(r.id),
+    name: String(r.name),
+    contribution: String(r.contribution ?? ""),
+    description: str(r.description) || null,
+    url: str(r.url) || null,
+    logoUrl: str(r.logo_url) || null,
+    onCard: r.show_on_card == null ? true : Boolean(r.show_on_card),
+  };
+}
+
+/** Published sponsors, in the committee's order. Falls back to the bundled list until the table exists. */
+export const getSponsors = cache(async (): Promise<Sponsor[]> => {
+  const db = createPublicClient();
+  if (!db) return seed.seedSponsors;
+  const { data, error } = await db.from("sponsors").select("*").eq("published", true).order("sort").order("name");
+  if (error) {
+    logError("sponsors", error);
+    return seed.seedSponsors;
+  }
+  return (data ?? []).map(mapSponsor);
 });
 
 export const getCommittee = cache(async (): Promise<CommitteeMember[]> => {

@@ -25,6 +25,7 @@ export const NAV: NavItem[] = [
   { label: "Campus map", href: "/map" },
   { label: "Speakers", href: "/speakers" },
   { label: "Venue & FAQs", href: "/conference" },
+  { label: "Sponsors", href: "/sponsors" },
   { label: "About", href: "/about" },
 ];
 
@@ -35,6 +36,7 @@ export const FOOTER_LINKS = {
     { label: "Campus map", href: "/map" },
     { label: "Speakers", href: "/speakers" },
     { label: "Workshops", href: "/workshops" },
+    { label: "Sponsors", href: "/sponsors" },
   ],
   participate: [
     { label: "Log in", href: "/login" },

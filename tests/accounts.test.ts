@@ -90,7 +90,7 @@ describe("emails", () => {
     const m = renderEmail({ siteUrl: "https://inspirelincoln.uk", preheader: "p", heading: "Hello", paragraphs: ["Body <strong>text</strong>"], cta: { label: "Go", url: "https://inspirelincoln.uk/portal" } });
     expect(m.text).toContain("Body text");
     expect(m.text).toContain("Go: https://inspirelincoln.uk/portal");
-    expect(m.html).toContain("https://inspirelincoln.uk/brand/crest-white.png");
+    expect(m.html).toContain("https://inspirelincoln.uk/brand/conference-mark-white.png");
   });
   it("never uses em dashes", () => {
     const all = ["approved", "waitlisted", "declined"].map((s) => accountDecisionEmail({ siteUrl: "https://x.test", name: "A", status: s as "approved", type: "oral_presenter", note: null })!.html).join("");
