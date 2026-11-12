@@ -1,0 +1,1508 @@
+[
+ {
+  "name": "Lucy Tower",
+  "tags": {
+   "building": "yes",
+   "historic": "citywalls"
+  },
+  "at": [
+   53.234238,
+   -0.541594
+  ]
+ },
+ {
+  "name": "Victorian Prison",
+  "tags": {
+   "building": "yes",
+   "historic": "building",
+   "tourism": "museum"
+  },
+  "at": [
+   53.23447,
+   -0.54068
+  ]
+ },
+ {
+  "name": "Museum of Lincolnshire Life",
+  "tags": {
+   "building": "yes",
+   "tourism": "museum"
+  },
+  "at": [
+   53.23784,
+   -0.544978
+  ]
+ },
+ {
+  "name": "Fosse Way",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.179086,
+   -0.617838
+  ]
+ },
+ {
+  "name": "Middle Street/Cliff Road/Pottergate Road",
+  "tags": {
+   "historic": "road"
+  },
+  "at": [
+   53.017541,
+   -0.565952
+  ]
+ },
+ {
+  "name": "Lincoln to Skegness Roman Road",
+  "tags": {
+   "historic": "road"
+  },
+  "at": [
+   53.192508,
+   0.189863
+  ]
+ },
+ {
+  "name": "Medieval Bishop's Palace",
+  "tags": {
+   "building": "yes",
+   "historic": "building",
+   "website": "https://www.english-heritage.org.uk/visit/places/lincoln-medieval-bishops-palace/"
+  },
+  "at": [
+   53.233187,
+   -0.536567
+  ]
+ },
+ {
+  "name": "Steep Hill",
+  "tags": {
+   "tourism": "street",
+   "wikipedia": "en:Steep Hill"
+  },
+  "at": [
+   53.233289,
+   -0.538586
+  ]
+ },
+ {
+  "name": "Whittons Park",
+  "tags": {
+   "leisure": "park"
+  },
+  "at": [
+   53.239533,
+   -0.550012
+  ]
+ },
+ {
+  "name": "Temple Gardens",
+  "tags": {
+   "leisure": "park"
+  },
+  "at": [
+   53.232327,
+   -0.53623
+  ]
+ },
+ {
+  "name": "Arboretum",
+  "tags": {
+   "leisure": "park"
+  },
+  "at": [
+   53.231967,
+   -0.525872
+  ]
+ },
+ {
+  "name": "Wickham Gardens",
+  "tags": {
+   "leisure": "park"
+  },
+  "at": [
+   53.236788,
+   -0.540903
+  ]
+ },
+ {
+  "name": "Westgate Water Tower",
+  "tags": {
+   "building": "yes",
+   "historic": "yes"
+  },
+  "at": [
+   53.236638,
+   -0.541083
+  ]
+ },
+ {
+  "name": "Liquorice Park",
+  "tags": {
+   "leisure": "park"
+  },
+  "at": [
+   53.234979,
+   -0.54745
+  ]
+ },
+ {
+  "name": "Cobb Hall",
+  "tags": {
+   "building": "yes",
+   "historic": "citywalls"
+  },
+  "at": [
+   53.235297,
+   -0.539728
+  ]
+ },
+ {
+  "name": "Observatory Tower",
+  "tags": {
+   "building": "yes",
+   "historic": "citywalls"
+  },
+  "at": [
+   53.234239,
+   -0.540136
+  ]
+ },
+ {
+  "name": "Bath House",
+  "tags": {
+   "building": "yes",
+   "historic": "building"
+  },
+  "at": [
+   53.235475,
+   -0.540666
+  ]
+ },
+ {
+  "name": "DoubleTree by Hilton Lincoln",
+  "tags": {
+   "building": "yes",
+   "tourism": "hotel",
+   "website": "https://www.hilton.com/en/hotels/huylndi-doubletree-lincoln/"
+  },
+  "at": [
+   53.230045,
+   -0.546905
+  ]
+ },
+ {
+  "name": "The Well at St Paul-in-the-Bail",
+  "tags": {
+   "building": "yes",
+   "historic": "archaeological_site"
+  },
+  "at": [
+   53.235677,
+   -0.538734
+  ]
+ },
+ {
+  "name": "Premier Inn",
+  "tags": {
+   "building": "hotel",
+   "tourism": "hotel",
+   "website": "https://www.premierinn.com/gb/en/hotels/england/lincolnshire/lincoln/lincoln-city-centre.html"
+  },
+  "at": [
+   53.229675,
+   -0.536044
+  ]
+ },
+ {
+  "name": "Pottergate",
+  "tags": {
+   "building": "yes",
+   "historic": "city_gate",
+   "tourism": "attraction"
+  },
+  "at": [
+   53.233229,
+   -0.532939
+  ]
+ },
+ {
+  "name": "Cornhill Market",
+  "tags": {
+   "amenity": "marketplace",
+   "building": "yes"
+  },
+  "at": [
+   53.227972,
+   -0.539218
+  ]
+ },
+ {
+  "name": "St Mark's Square",
+  "tags": {
+   "leisure": "park"
+  },
+  "at": [
+   53.225341,
+   -0.544852
+  ]
+ },
+ {
+  "name": "Holiday Inn",
+  "tags": {
+   "building": "yes",
+   "tourism": "hotel"
+  },
+  "at": [
+   53.229665,
+   -0.546533
+  ]
+ },
+ {
+  "name": "Greyfriars",
+  "tags": {
+   "building": "yes",
+   "historic": "Friary",
+   "wikipedia": "en:Greyfriars, Lincoln"
+  },
+  "at": [
+   53.229325,
+   -0.537093
+  ]
+ },
+ {
+  "name": "The Usher Gallery",
+  "tags": {
+   "building": "yes",
+   "tourism": "gallery"
+  },
+  "at": [
+   53.232096,
+   -0.53655
+  ]
+ },
+ {
+  "name": "Priory Gate",
+  "tags": {
+   "building": "yes",
+   "historic": "city_gate"
+  },
+  "at": [
+   53.234891,
+   -0.534803
+  ]
+ },
+ {
+  "name": "Alfred, Lord Tennyson",
+  "tags": {
+   "tourism": "artwork"
+  },
+  "at": [
+   53.235058,
+   -0.535304
+  ]
+ },
+ {
+  "name": "The Rest",
+  "tags": {
+   "building": "yes",
+   "tourism": "hotel",
+   "website": "https://www.theresthotellincoln.co.uk/"
+  },
+  "at": [
+   53.232979,
+   -0.538115
+  ]
+ },
+ {
+  "name": "St Paul in the Bail",
+  "tags": {
+   "historic": "archaeological_site"
+  },
+  "at": [
+   53.235714,
+   -0.539127
+  ]
+ },
+ {
+  "name": "Stone Bow",
+  "tags": {
+   "building": "yes",
+   "historic": "city_gate",
+   "tourism": "attraction",
+   "wikipedia": "en:Guildhall and Stonebow, Lincoln"
+  },
+  "at": [
+   53.229236,
+   -0.540463
+  ]
+ },
+ {
+  "name": "Lincoln Castle",
+  "tags": {
+   "historic": "castle",
+   "tourism": "attraction",
+   "website": "https://www.lincolncastle.com/",
+   "wikipedia": "en:Lincoln Castle"
+  },
+  "at": [
+   53.234988,
+   -0.541023
+  ]
+ },
+ {
+  "name": "East Gate",
+  "tags": {
+   "historic": "archaeological_site"
+  },
+  "at": [
+   53.235442,
+   -0.535443
+  ]
+ },
+ {
+  "name": "Newport Arch",
+  "tags": {
+   "building": "yes",
+   "historic": "city_gate",
+   "wikipedia": "en:Newport Arch"
+  },
+  "at": [
+   53.237206,
+   -0.538128
+  ]
+ },
+ {
+  "name": "Tower Hotel",
+  "tags": {
+   "building": "yes",
+   "tourism": "hotel"
+  },
+  "at": [
+   53.236194,
+   -0.540775
+  ]
+ },
+ {
+  "name": "Old Rectory",
+  "tags": {
+   "building": "yes",
+   "tourism": "guest_house"
+  },
+  "at": [
+   53.23822,
+   -0.538704
+  ]
+ },
+ {
+  "name": "St. Mary's Guildhall",
+  "tags": {
+   "building": "yes",
+   "historic": "building",
+   "wikipedia": "en:St Mary's Guildhall, Lincoln"
+  },
+  "at": [
+   53.22229,
+   -0.543756
+  ]
+ },
+ {
+  "name": "West Gate",
+  "tags": {
+   "building": "yes",
+   "historic": "city_gate"
+  },
+  "at": [
+   53.235575,
+   -0.542286
+  ]
+ },
+ {
+  "name": "South Gate",
+  "tags": {
+   "building": "yes",
+   "historic": "city_gate"
+  },
+  "at": [
+   53.233835,
+   -0.538867
+  ]
+ },
+ {
+  "name": "Visitor Information Centre",
+  "tags": {
+   "building": "yes",
+   "tourism": "information"
+  },
+  "at": [
+   53.234467,
+   -0.538698
+  ]
+ },
+ {
+  "name": "Mint Wall (Roman fortifications)",
+  "tags": {
+   "building": "yes",
+   "historic": "archaeological_site"
+  },
+  "at": [
+   53.236103,
+   -0.539337
+  ]
+ },
+ {
+  "name": "Castle Hotel & Reform",
+  "tags": {
+   "building": "yes",
+   "tourism": "hotel"
+  },
+  "at": [
+   53.236013,
+   -0.539343
+  ]
+ },
+ {
+  "name": "Bail House Hotel",
+  "tags": {
+   "building": "yes",
+   "tourism": "hotel"
+  },
+  "at": [
+   53.236337,
+   -0.538692
+  ]
+ },
+ {
+  "name": "Summerhouse",
+  "tags": {
+   "building": "yes",
+   "historic": "building"
+  },
+  "at": [
+   53.23624,
+   -0.538915
+  ]
+ },
+ {
+  "name": "Cathedral View Guest House",
+  "tags": {
+   "building": "hotel",
+   "tourism": "guest_house"
+  },
+  "at": [
+   53.235145,
+   -0.537706
+  ]
+ },
+ {
+  "name": "Close wall",
+  "tags": {
+   "building": "yes",
+   "historic": "citywalls"
+  },
+  "at": [
+   53.236781,
+   -0.53719
+  ]
+ },
+ {
+  "name": "Ancient Church Yard Of St. Swithin's",
+  "tags": {
+   "leisure": "park"
+  },
+  "at": [
+   53.229113,
+   -0.53825
+  ]
+ },
+ {
+  "name": "Lincoln Museum",
+  "tags": {
+   "building": "museum",
+   "tourism": "museum",
+   "website": "https://www.lincolnmuseum.com/"
+  },
+  "at": [
+   53.231854,
+   -0.537428
+  ]
+ },
+ {
+  "name": "Jew's House",
+  "tags": {
+   "building": "yes",
+   "historic": "building",
+   "wikipedia": "en:Jew's House"
+  },
+  "at": [
+   53.232146,
+   -0.538868
+  ]
+ },
+ {
+  "name": "Jew's Court",
+  "tags": {
+   "building": "yes",
+   "historic": "building"
+  },
+  "at": [
+   53.232229,
+   -0.538764
+  ]
+ },
+ {
+  "name": "Museum Court",
+  "tags": {
+   "building": "apartments",
+   "tourism": "apartment"
+  },
+  "at": [
+   53.231509,
+   -0.538465
+  ]
+ },
+ {
+  "name": "The Lincoln Hotel",
+  "tags": {
+   "building": "yes",
+   "tourism": "hotel",
+   "website": "https://www.thelincolnhotel.com/"
+  },
+  "at": [
+   53.235761,
+   -0.535242
+  ]
+ },
+ {
+  "name": "Lincoln Cathedral",
+  "tags": {
+   "amenity": "place_of_worship",
+   "building": "cathedral",
+   "historic": "cathedral",
+   "tourism": "attraction",
+   "website": "https://lincolncathedral.com/",
+   "wikipedia": "en:Lincoln Cathedral"
+  },
+  "at": [
+   53.234263,
+   -0.536247
+  ]
+ },
+ {
+  "name": "Exchequergate",
+  "tags": {
+   "building": "yes",
+   "historic": "city_gate",
+   "tourism": "attraction"
+  },
+  "at": [
+   53.234317,
+   -0.538049
+  ]
+ },
+ {
+  "name": "White Hart Hotel",
+  "tags": {
+   "building": "hotel",
+   "tourism": "hotel",
+   "website": "https://www.whitehart-lincoln.co.uk/"
+  },
+  "at": [
+   53.234718,
+   -0.53786
+  ]
+ },
+ {
+  "name": "The Old Palace Lodge",
+  "tags": {
+   "building": "yes",
+   "tourism": "hotel"
+  },
+  "at": [
+   53.233184,
+   -0.537813
+  ]
+ },
+ {
+  "name": "Cantilupe Chantry House",
+  "tags": {
+   "building": "house",
+   "historic": "building"
+  },
+  "at": [
+   53.233688,
+   -0.535681
+  ]
+ },
+ {
+  "name": "The Old Palace Hotel",
+  "tags": {
+   "building": "yes",
+   "historic": "building",
+   "tourism": "hotel"
+  },
+  "at": [
+   53.233377,
+   -0.537104
+  ]
+ },
+ {
+  "name": "The Deanery",
+  "tags": {
+   "building": "yes",
+   "historic": "building"
+  },
+  "at": [
+   53.233954,
+   -0.537677
+  ]
+ },
+ {
+  "name": "Cantilupe Chantry House",
+  "tags": {
+   "building": "yes",
+   "historic": "building"
+  },
+  "at": [
+   53.233753,
+   -0.535641
+  ]
+ },
+ {
+  "name": "Close Wall",
+  "tags": {
+   "building": "yes",
+   "historic": "yes"
+  },
+  "at": [
+   53.233764,
+   -0.536809
+  ]
+ },
+ {
+  "name": "Vicar's Court Gatehouse",
+  "tags": {
+   "building": "yes",
+   "historic": "building"
+  },
+  "at": [
+   53.233571,
+   -0.535234
+  ]
+ },
+ {
+  "name": "Close Wall",
+  "tags": {
+   "building": "yes",
+   "historic": "yes"
+  },
+  "at": [
+   53.233042,
+   -0.537232
+  ]
+ },
+ {
+  "name": "Close Wall",
+  "tags": {
+   "building": "yes",
+   "historic": "yes"
+  },
+  "at": [
+   53.233874,
+   -0.537956
+  ]
+ },
+ {
+  "name": "Holiday Inn",
+  "tags": {
+   "building": "yes",
+   "tourism": "hotel"
+  },
+  "at": [
+   53.22593,
+   -0.551118
+  ]
+ },
+ {
+  "name": "Lincoln Tank Memorial",
+  "tags": {
+   "historic": "monument"
+  },
+  "at": [
+   53.2265,
+   -0.550107
+  ]
+ },
+ {
+  "name": "Travelodge",
+  "tags": {
+   "building": "hotel",
+   "tourism": "hotel"
+  },
+  "at": [
+   53.225385,
+   -0.540744
+  ]
+ },
+ {
+  "name": "Bailgate",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.235641,
+   -0.538436
+  ]
+ },
+ {
+  "name": "Newport",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.237506,
+   -0.538129
+  ]
+ },
+ {
+  "name": "Bailgate",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.234592,
+   -0.538487
+  ]
+ },
+ {
+  "name": "Langworthgate",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.235898,
+   -0.530993
+  ]
+ },
+ {
+  "name": "Steep Hill",
+  "tags": {
+   "historic": "roman_road",
+   "wikipedia": "en:Steep Hill"
+  },
+  "at": [
+   53.232862,
+   -0.538462
+  ]
+ },
+ {
+  "name": "The Strait",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.231714,
+   -0.539226
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.226403,
+   -0.541812
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.230455,
+   -0.539949
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.220145,
+   -0.544859
+  ]
+ },
+ {
+  "name": "High Bridge",
+  "tags": {
+   "historic": "roman_road",
+   "wikipedia": "en:High Bridge, Lincoln"
+  },
+  "at": [
+   53.228511,
+   -0.540667
+  ]
+ },
+ {
+  "name": "Steep Hill",
+  "tags": {
+   "historic": "roman_road",
+   "wikipedia": "en:Steep Hill"
+  },
+  "at": [
+   53.232364,
+   -0.538508
+  ]
+ },
+ {
+  "name": "Steep Hill",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.234086,
+   -0.538712
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.22124,
+   -0.544599
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.224532,
+   -0.542992
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.221886,
+   -0.544372
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.221622,
+   -0.54449
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.227294,
+   -0.541229
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.227007,
+   -0.541425
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.219749,
+   -0.544979
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.22293,
+   -0.543817
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.223024,
+   -0.543835
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.220672,
+   -0.544687
+  ]
+ },
+ {
+  "name": "Steep Hill",
+  "tags": {
+   "historic": "roman_road",
+   "wikipedia": "en:Steep Hill"
+  },
+  "at": [
+   53.233443,
+   -0.538613
+  ]
+ },
+ {
+  "name": "Burton Road",
+  "tags": {
+   "historic": "ancient_road"
+  },
+  "at": [
+   53.240762,
+   -0.546152
+  ]
+ },
+ {
+  "name": "Newport",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.237736,
+   -0.538179
+  ]
+ },
+ {
+  "name": "Burton Road",
+  "tags": {
+   "historic": "ancient_road"
+  },
+  "at": [
+   53.246827,
+   -0.55078
+  ]
+ },
+ {
+  "name": "Newport",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.239877,
+   -0.538183
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.229229,
+   -0.540451
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.228861,
+   -0.540581
+  ]
+ },
+ {
+  "name": "Burton Road",
+  "tags": {
+   "historic": "ancient_road"
+  },
+  "at": [
+   53.238859,
+   -0.544762
+  ]
+ },
+ {
+  "name": "Burton Road",
+  "tags": {
+   "historic": "ancient_road"
+  },
+  "at": [
+   53.239124,
+   -0.54497
+  ]
+ },
+ {
+  "name": "Burton Road",
+  "tags": {
+   "historic": "ancient_road"
+  },
+  "at": [
+   53.237726,
+   -0.543904
+  ]
+ },
+ {
+  "name": "Newport",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.237125,
+   -0.538206
+  ]
+ },
+ {
+  "name": "Newport",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.237194,
+   -0.538209
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.224158,
+   -0.543202
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.225103,
+   -0.542643
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.219046,
+   -0.54516
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.22032,
+   -0.544804
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.220678,
+   -0.544765
+  ]
+ },
+ {
+  "name": "Observatory Tower",
+  "tags": {
+   "historic": "citywalls"
+  },
+  "at": [
+   53.234218,
+   -0.540238
+  ]
+ },
+ {
+  "name": "Newport",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.237947,
+   -0.538291
+  ]
+ },
+ {
+  "name": "The Strait",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.231562,
+   -0.539465
+  ]
+ },
+ {
+  "name": "The Strait",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.232002,
+   -0.538817
+  ]
+ },
+ {
+  "name": "Wragby Road",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.236578,
+   -0.528776
+  ]
+ },
+ {
+  "name": "Wragby Road",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.23747,
+   -0.525938
+  ]
+ },
+ {
+  "name": "Wragby Road",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.239024,
+   -0.521396
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.229401,
+   -0.540384
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.229187,
+   -0.540468
+  ]
+ },
+ {
+  "name": "High Street",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.228271,
+   -0.540759
+  ]
+ },
+ {
+  "name": "Newport",
+  "tags": {
+   "historic": "roman_road"
+  },
+  "at": [
+   53.243327,
+   -0.537947
+  ]
+ },
+ {
+  "name": "Admiral Guest House",
+  "tags": {
+   "tourism": "guest_house"
+  },
+  "at": [
+   53.2318074,
+   -0.5506187
+  ]
+ },
+ {
+  "name": "YMCA",
+  "tags": {
+   "tourism": "hostel"
+  },
+  "at": [
+   53.2288648,
+   -0.5333728
+  ]
+ },
+ {
+  "name": "Roman Reservoir",
+  "tags": {
+   "historic": "archaeological_site"
+  },
+  "at": [
+   53.2370571,
+   -0.5370241
+  ]
+ },
+ {
+  "name": "Lincoln Eleanor Cross",
+  "tags": {
+   "historic": "memorial"
+  },
+  "at": [
+   53.2345576,
+   -0.5402662
+  ]
+ },
+ {
+  "name": "Lucy Tower",
+  "tags": {
+   "historic": "ruins"
+  },
+  "at": [
+   53.2342325,
+   -0.5416189
+  ]
+ },
+ {
+  "name": "Empowerment",
+  "tags": {
+   "tourism": "attraction",
+   "wikipedia": "en:Empowerment (sculpture)"
+  },
+  "at": [
+   53.2284674,
+   -0.5389032
+  ]
+ },
+ {
+  "name": "Doughty's Court",
+  "tags": {
+   "tourism": "hostel"
+  },
+  "at": [
+   53.2279344,
+   -0.5359724
+  ]
+ },
+ {
+  "name": "A Mighty Blow of Freedom: Fuck the Media",
+  "tags": {
+   "tourism": "artwork",
+   "website": "http://www.heslamtrust.org.uk/collection/view/a-mighty-blow-for-freedom-fuck-the-media/"
+  },
+  "at": [
+   53.2320019,
+   -0.5360536
+  ]
+ },
+ {
+  "name": "Welcome to Lincoln",
+  "tags": {
+   "tourism": "information"
+  },
+  "at": [
+   53.2344117,
+   -0.5384595
+  ]
+ },
+ {
+  "name": "Mother and Child",
+  "tags": {
+   "tourism": "artwork",
+   "website": "https://statues.vanderkrogt.net/object.php?webpage=ST&record=gbem058"
+  },
+  "at": [
+   53.2323029,
+   -0.5359114
+  ]
+ },
+ {
+  "name": "King George III",
+  "tags": {
+   "historic": "memorial",
+   "tourism": "artwork"
+  },
+  "at": [
+   53.2353233,
+   -0.5405935
+  ]
+ },
+ {
+  "name": "Roman city gate",
+  "tags": {
+   "historic": "archaeological_site"
+  },
+  "at": [
+   53.2358419,
+   -0.5423331
+  ]
+ },
+ {
+  "name": "Statue of lion in Lincoln Arboretum",
+  "tags": {
+   "tourism": "artwork"
+  },
+  "at": [
+   53.2315429,
+   -0.526213
+  ]
+ },
+ {
+  "name": "George Boole",
+  "tags": {
+   "tourism": "artwork"
+  },
+  "at": [
+   53.226456,
+   -0.5392441
+  ]
+ },
+ {
+  "name": "NCN1",
+  "tags": {
+   "tourism": "information"
+  },
+  "at": [
+   53.2276797,
+   -0.5266395
+  ]
+ },
+ {
+  "name": "NCN1",
+  "tags": {
+   "tourism": "information"
+  },
+  "at": [
+   53.2274079,
+   -0.5266836
+  ]
+ },
+ {
+  "name": "NCN1",
+  "tags": {
+   "tourism": "information"
+  },
+  "at": [
+   53.2293449,
+   -0.525478
+  ]
+ },
+ {
+  "name": "NCN1",
+  "tags": {
+   "tourism": "information"
+  },
+  "at": [
+   53.2307882,
+   -0.5229717
+  ]
+ },
+ {
+  "name": "NCN1",
+  "tags": {
+   "tourism": "information"
+  },
+  "at": [
+   53.2310878,
+   -0.5223357
+  ]
+ },
+ {
+  "name": "NCN1",
+  "tags": {
+   "tourism": "information"
+  },
+  "at": [
+   53.235142,
+   -0.5244354
+  ]
+ },
+ {
+  "name": "NCN1",
+  "tags": {
+   "tourism": "information"
+  },
+  "at": [
+   53.2326336,
+   -0.5222438
+  ]
+ },
+ {
+  "name": "NCN1",
+  "tags": {
+   "tourism": "information"
+  },
+  "at": [
+   53.2326921,
+   -0.5223582
+  ]
+ },
+ {
+  "name": "Lincoln Digs",
+  "tags": {
+   "tourism": "hostel",
+   "website": "https://lincolndigs.co.uk/"
+  },
+  "at": [
+   53.2317454,
+   -0.5515239
+  ]
+ },
+ {
+  "name": "Westlyn Guest House",
+  "tags": {
+   "tourism": "guest_house"
+  },
+  "at": [
+   53.2316972,
+   -0.5512315
+  ]
+ },
+ {
+  "name": "The Hollies Guest House",
+  "tags": {
+   "tourism": "guest_house",
+   "website": "https://www.guesthouselincoln.co.uk/"
+  },
+  "at": [
+   53.2316089,
+   -0.5511001
+  ]
+ }
+]
