@@ -4,6 +4,7 @@ import { Bus, Car, Download, Home, Hourglass, TrainFront } from "lucide-react";
 import { requireAccess } from "@/lib/auth";
 import { loadTravel } from "@/lib/admin/travel";
 import { TRAVEL_LABEL, TRAVEL_MODES, isTravelMode, type TravelMode } from "@/lib/travel";
+import { DownloadButtons } from "@/components/admin/download-buttons";
 import { AdminHeader, btn } from "@/components/admin/ui";
 import { Badge } from "@/components/ui/badge";
 import { Notice } from "@/components/ui/notice";
@@ -30,11 +31,10 @@ export default async function TravelPage({ searchParams }: { searchParams: Promi
         description="Approved delegates tell us in My Hub how they're getting to INSPIRE. Drivers give their car registration so parking can be arranged."
         actions={
           <>
-            <a href="/admin/travel/export?mode=car" className={btn.secondary}>
-              <Car aria-hidden className="size-4" /> Car registrations CSV
-            </a>
-            <a href="/admin/travel/export" className={btn.secondary}>
-              <Download aria-hidden className="size-4" /> Everyone CSV
+            <DownloadButtons set="cars" label="car registrations" short="Car registrations" />
+            <DownloadButtons set="transport" label="transport routes" short="Transport routes" />
+            <a href="/admin/downloads" className={btn.secondary}>
+              <Download aria-hidden className="size-4" /> By university
             </a>
           </>
         }
