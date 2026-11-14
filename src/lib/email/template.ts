@@ -14,6 +14,8 @@ export interface EmailContent {
   /** Paragraphs of trusted text. Use `escapeHtml` on anything a person typed. */
   paragraphs: string[];
   cta?: { label: string; url: string };
+  /** Optional numbered steps, shown as a short checklist under the paragraphs. */
+  steps?: string[];
   /** Optional block of details, shown as a ruled list. */
   details?: { label: string; value: string }[];
   /** Small print under the button, e.g. why they got the email. */
@@ -71,6 +73,20 @@ export function renderEmail(c: EmailContent): { html: string; text: string } {
           .join("")}
       </table>`
     : "";
+  const steps = c.steps?.length
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 24px;">
+        ${c.steps
+          .map(
+            (st, i) => `<tr>
+              <td style="width:40px;padding:0 0 14px;vertical-align:top;">
+                <div style="width:28px;height:28px;border-radius:14px;background:${C.navy};color:${C.paper};font-family:${SANS};font-size:13px;font-weight:700;line-height:28px;text-align:center;">${i + 1}</div>
+              </td>
+              <td style="padding:4px 0 14px;font-family:${SANS};font-size:15px;line-height:1.5;color:${C.ink};vertical-align:top;">${st}</td>
+            </tr>`,
+          )
+          .join("")}
+      </table>`
+    : "";
   const button = c.cta
     ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px;">
         <tr><td style="background:${C.navy};border-radius:3px;">
@@ -108,6 +124,7 @@ export function renderEmail(c: EmailContent): { html: string; text: string } {
         ${c.eyebrow ? `<p style="margin:0 0 12px;font-family:${SANS};font-size:12px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:${C.slate};">${escapeHtml(c.eyebrow)}</p>` : ""}
         <h1 style="margin:0 0 20px;font-family:${SERIF};font-size:30px;line-height:1.2;font-weight:normal;color:${C.ink};">${escapeHtml(c.heading)}</h1>
         ${c.paragraphs.map(p).join("\n")}
+        ${steps}
         ${details}
         ${button}
         ${c.footnote ? `<p style="margin:0 0 24px;font-family:${SANS};font-size:13px;line-height:1.5;color:${C.slate};">${c.footnote}</p>` : ""}
@@ -139,6 +156,8 @@ export function renderEmail(c: EmailContent): { html: string; text: string } {
     c.heading,
     "",
     ...c.paragraphs.map((x) => stripTags(x) + "\n"),
+    ...(c.steps ?? []).map((x, i) => `${i + 1}. ${stripTags(x)}`),
+    ...(c.steps?.length ? [""] : []),
     ...(c.details ?? []).map((d) => `${d.label}: ${d.value}`),
     ...(c.details?.length ? [""] : []),
     ...(c.cta ? [`${c.cta.label}: ${c.cta.url}`, ""] : []),

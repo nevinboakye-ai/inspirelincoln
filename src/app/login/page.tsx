@@ -14,7 +14,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   return (
     <AuthShell
       title="Log in to My Hub"
-      intro={error === "link" ? "That link has expired or was already used. Please log in, or request a new link." : "Upload your presentation, complete your profile and get ready for the day."}
+      intro={error === "link" ? undefined : "Upload your presentation, complete your profile and get ready for the day."}
       footer={
         <>
           Not on the delegate list?{" "}
@@ -25,6 +25,15 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         </>
       }
     >
+      {error === "link" && (
+        <div role="status" className="mb-6 rounded-[3px] border border-gold-600/40 bg-gold/10 p-4 text-sm text-ink">
+          <p className="font-semibold">That link has expired or was already used.</p>
+          <p className="mt-1 text-slate-700">
+            If you were confirming your email, it&apos;s probably done already: log in below with the password you chose. If that doesn&apos;t work,{" "}
+            <Link href="/auth/reset" className="font-semibold text-electric-600 underline underline-offset-4">get a new password link</Link>.
+          </p>
+        </div>
+      )}
       {!siteOpen && (
         <p className="mb-6 rounded-[3px] border border-gold-600/40 bg-gold/10 p-4 text-sm text-ink">
           <strong>The full website opens soon.</strong> Selected delegates and presenters can log in now to upload their presentation and complete their profile.

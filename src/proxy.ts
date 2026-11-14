@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabase/env";
 import { VIEW_AS_COOKIE, openViewAs } from "@/lib/view-as-seal";
+import { strayAuthTarget } from "@/lib/accounts/link-paths";
 
 const PROTECTED = ["/portal", "/admin", "/review"];
 
@@ -43,6 +44,11 @@ export async function proxy(request: NextRequest) {
   if (!url || !key) return response;
 
   const path = request.nextUrl.pathname;
+  // An account link that landed on the wrong page: send it where it belongs.
+  if (request.nextUrl.search) {
+    const target = strayAuthTarget(path, request.nextUrl.searchParams);
+    if (target) return NextResponse.redirect(new URL(target, request.url));
+  }
   const isProtected = PROTECTED.some((p) => path === p || path.startsWith(`${p}/`));
   const gated = !ALWAYS_OPEN.test(path) && !(await isSiteOpen(url, key));
   // Public pages while the site is open need nothing from here.
