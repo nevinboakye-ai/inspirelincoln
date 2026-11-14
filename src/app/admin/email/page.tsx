@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireAccess } from "@/lib/auth";
 import { AdminHeader, Panel } from "@/components/admin/ui";
 import { BroadcastForm, DirectEmailForm } from "@/components/admin/committee-forms";
+import { ReminderForm } from "@/components/admin/reminder-form";
 import { Notice } from "@/components/ui/notice";
 import { ACCOUNT_TYPE_LABEL } from "@/lib/accounts";
 import { emailConfigured } from "@/lib/email/resend";
@@ -38,6 +39,12 @@ export default async function EmailPage() {
           Add RESEND_API_KEY and EMAIL_FROM in Vercel, then redeploy. Until then you can draft and count recipients, but nothing is sent.
         </Notice>
       )}
+      <Panel title="Deadline reminders">
+        <p className="-mt-2 mb-5 text-sm text-slate-700">
+          Remind people what they still need to do, by when, and that their place may be given to someone else. Each person gets their own checklist, worked out from their account, so nobody is asked for something they&apos;ve already done.
+        </p>
+        <ReminderForm />
+      </Panel>
       <Panel title="Email a group">
         <BroadcastForm counts={counts} selected={selected} />
       </Panel>
