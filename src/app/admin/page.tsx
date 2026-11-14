@@ -28,23 +28,27 @@ export default async function CommitteeHome({ searchParams }: { searchParams: Pr
   const sp = await searchParams;
   const { db, profile } = await requireAccess("any", "/admin");
   const { access } = profile;
-  const edition = await getEdition();
-
-  const { data: subs } = await db.from("presentation_submissions").select("user_id, kind, status, version").order("version", { ascending: false }).limit(2000);
+  // Every count is fetched at once, so the overview costs one round trip, not five.
+  const editionP = getEdition();
+  const [edition, { data: subs }, { data: peopleRows }, checkedIn, { data: attendanceRows }] = await Promise.all([
+    editionP,
+    db.from("presentation_submissions").select("user_id, kind, status, version").order("version", { ascending: false }).limit(2000),
+    access.exec ? db.from("profiles").select("account_status, account_type, extra_types").limit(5000) : Promise.resolve({ data: [] }),
+    access.exec
+      ? editionP.then(async (e) => (await db.from("registrations").select("id", { count: "exact", head: true }).eq("edition_id", e.id).not("checked_in_at", "is", null)).count ?? 0)
+      : 0,
+    access.exec ? db.from("presenter_attendance").select("response").limit(5000) : Promise.resolve({ data: [] }),
+  ]);
   const latest = new Map<string, string>();
   for (const s of subs ?? []) if (!latest.has(`${s.user_id}:${s.kind}`)) latest.set(`${s.user_id}:${s.kind}`, s.status);
   const toReview = [...latest.values()].filter((s) => s === "submitted").length;
 
-  const people = access.exec ? ((await db.from("profiles").select("*").limit(5000)).data ?? []).map((p) => ({ ...p, roles: rolesOf(p.account_type as AccountType, p.extra_types as AccountType[] | null) })) : [];
+  const people = ((peopleRows ?? []) as { account_status: string; account_type: string; extra_types: string[] | null }[]).map((p) => ({ ...p, roles: rolesOf(p.account_type as AccountType, p.extra_types as AccountType[] | null) }));
   const pending = people.filter((p) => p.account_status === "pending").length;
   const waitlisted = people.filter((p) => p.account_status === "waitlisted").length;
   const approved = people.filter((p) => p.account_status === "approved");
   const byType = ACCOUNT_TYPES.map((t) => [t, approved.filter((p) => p.roles.includes(t)).length] as [AccountType, number]);
-  const checkedIn = access.exec
-    ? ((await db.from("registrations").select("id", { count: "exact", head: true }).eq("edition_id", edition.id).not("checked_in_at", "is", null)).count ?? 0)
-    : 0;
-
-  const attendance = access.exec ? (await db.from("presenter_attendance").select("response").limit(5000)).data ?? [] : [];
+  const attendance = (attendanceRows ?? []) as { response: string }[];
   const presenterCount = approved.filter((p) => p.roles.includes("oral_presenter") || p.roles.includes("poster_presenter")).length;
   const cantMake = attendance.filter((a) => a.response === "unavailable").length;
 

@@ -14,12 +14,11 @@ export const dynamic = "force-dynamic";
 
 export default async function PeoplePage() {
   const { profile, db } = await requireUser("/portal/people");
-  const switches = await getSwitches();
+  const [switches, { data, error }, logos] = await Promise.all([getSwitches(), db.rpc("my_contacts"), getLogoMap()]);
   // Follows the Delegate Card: hidden until the card is live, except for the owner.
   if (!switches.delegate_card && !profile.access.owner) redirect("/portal");
-  const { data, error } = await db.rpc("my_contacts");
   const contacts = (data ?? []) as SavedContact[];
-  const [photos, logos] = await Promise.all([signAvatars(db, contacts.map((p) => p.card?.avatar_path)), getLogoMap()]);
+  const photos = await signAvatars(db, contacts.map((p) => p.card?.avatar_path));
   for (const p of contacts) {
     if (p.card?.avatar_path) p.card.avatar_url = photos.get(p.card.avatar_path) ?? null;
     if (p.card?.institution) p.card.uni_logo_url = logos[uniKey(p.card.institution)] ?? null;

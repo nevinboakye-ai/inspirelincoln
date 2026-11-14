@@ -61,9 +61,12 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims refreshes an expired session (writing the new cookies) and then
+  // verifies the access token's signature locally against the project's cached
+  // public keys, so most navigations don't wait on the auth server at all.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const claims = claimsData?.claims;
+  const user = claims?.sub ? { id: claims.sub, app_metadata: (claims.app_metadata ?? {}) as Record<string, unknown> } : null;
 
   // Someone given a temporary password chooses their own before anything else.
   if (user?.app_metadata?.must_change_password === true && isProtected) {

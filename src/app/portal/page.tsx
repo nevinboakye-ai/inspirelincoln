@@ -51,6 +51,8 @@ import type { AccountType, SubmissionStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function Card({
   title,
   icon: Icon,
@@ -107,31 +109,43 @@ export default async function PortalHome({
 }) {
   const sp = await searchParams;
   const { profile, db, user } = await requireUser("/portal");
-  const switches = await getSwitches();
-  const showCard = switches.delegate_card || profile.access.owner;
-  // While the website is closed, delegates only use My Hub for their profile and their slides or poster.
-  const focus =
-    !switches.site_open && !profile.access.committee && !profile.access.owner;
-  const [{ edition, sessions, workshops }, sponsors] = await Promise.all([getConferenceBundle(), getSponsors()]);
   const kind = presenterKindOf(profile);
   const status = profile.accountStatus;
   // Approved oral and poster presenters confirm whether they'll be there to present.
   const presenting = Boolean(kind) && status === "approved";
+  const wantChoices = status === "approved" || profile.access.owner || profile.access.can.allocate_workshops;
+  // One code for everything: delegates scan it to see the card, the check-in desk scans it on the day.
+  const cardCode = status === "approved" ? profile.cardCode : null;
 
+  // Everything below is fetched at once rather than one query after another,
+  // so the hub costs about one round trip to the database instead of eight.
+  const switchesP = getSwitches();
+  const contentP = Promise.all([getConferenceBundle(), getSponsors()]);
+  const cardShownP = switchesP.then((sw) => sw.delegate_card || profile.access.owner);
   const [
+    switches,
+    [{ edition, sessions, workshops }, sponsors],
     { data: registration },
     { data: latestSub },
     { data: announcements },
     { data: waitPos },
     { data: attendance },
     { data: travel },
+    qr,
+    photo,
+    uniLogo,
+    choices,
   ] = await Promise.all([
-    db
-      .from("registrations")
-      .select("status, checkin_token, checked_in_at")
-      .eq("user_id", user.id)
-      .eq("edition_id", edition.id)
-      .maybeSingle(),
+    switchesP,
+    contentP,
+    contentP.then(([b]) =>
+      db
+        .from("registrations")
+        .select("status, checkin_token, checked_in_at")
+        .eq("user_id", user.id)
+        .eq("edition_id", b.edition.id)
+        .maybeSingle(),
+    ),
     kind
       ? db
           .from("presentation_submissions")
@@ -163,25 +177,29 @@ export default async function PortalHome({
     status === "approved"
       ? db.from("delegate_travel").select("mode, car_registration, updated_at").eq("user_id", user.id).maybeSingle()
       : Promise.resolve({ data: null }),
+    cardCode
+      ? QRCode.toString(`${SITE_URL}${cardPath(cardCode)}`, {
+          errorCorrectionLevel: "M",
+          type: "svg",
+          margin: 1,
+          color: { dark: "#0c182c", light: "#ffffff" },
+        })
+      : null,
+    cardShownP.then((shown) => (shown ? signAvatar(db, profile.avatarPath) : null)),
+    cardShownP.then(async (shown) => (shown && profile.institution ? ((await getLogoMap())[uniKey(profile.institution)] ?? null) : null)),
+    // Workshop choices: shown to anyone with a confirmed place once ranking has opened.
+    wantChoices ? contentP.then(([b]) => loadWorkshopChoices(db, user.id, UUID.test(b.edition.id) ? b.edition.id : undefined)) : null,
   ]);
+  const showCard = switches.delegate_card || profile.access.owner;
+  // While the website is closed, delegates only use My Hub for their profile and their slides or poster.
+  const focus =
+    !switches.site_open && !profile.access.committee && !profile.access.owner;
   const travelAnswer: TravelAnswer =
     travel && isTravelMode(travel.mode) ? { mode: travel.mode, carRegistration: travel.car_registration, updatedAt: travel.updated_at } : null;
   const answer: AttendanceAnswer = attendance
     ? { response: attendance.response as "confirmed" | "unavailable", note: attendance.note, respondedAt: attendance.responded_at }
     : null;
 
-  // One code for everything: delegates scan it to see the card, the check-in desk scans it on the day.
-  const cardCode = status === "approved" ? profile.cardCode : null;
-  const qr = cardCode
-    ? await QRCode.toString(`${SITE_URL}${cardPath(cardCode)}`, {
-        errorCorrectionLevel: "M",
-        type: "svg",
-        margin: 1,
-        color: { dark: "#0c182c", light: "#ffffff" },
-      })
-    : null;
-  const photo = showCard ? await signAvatar(db, profile.avatarPath) : null;
-  const uniLogo = showCard && profile.institution ? ((await getLogoMap())[uniKey(profile.institution)] ?? null) : null;
   const s = ACCOUNT_STATUS_LABEL[status];
   const subStatus = latestSub
     ? SUBMISSION_STATUS_LABEL[latestSub.status as SubmissionStatus]
@@ -211,8 +229,6 @@ export default async function PortalHome({
         }]
       : []),
   ];
-  // Workshop choices: shown to anyone with a confirmed place once ranking has opened.
-  const choices = status === "approved" || profile.access.owner || profile.access.can.allocate_workshops ? await loadWorkshopChoices(db, user.id) : null;
   const rankOpen = choices ? rankingIsOpen(choices.settings) : false;
   const rankWorkshops: RankWorkshop[] = (choices?.workshops ?? []).map((w) => ({
     number: w.number,

@@ -17,7 +17,13 @@ const nextConfig: NextConfig = {
   cacheComponents: false,
   poweredByHeader: false,
   // Import only the parts of these libraries each page uses.
-  experimental: { optimizePackageImports: ["motion", "motion/react", "lucide-react"] },
+  experimental: {
+    optimizePackageImports: ["motion", "motion/react", "lucide-react"],
+    // Keep pages someone has just visited in the browser for 30 seconds, so
+    // going back and forth between My Hub pages is instant. Saving anything
+    // (a server action that revalidates) clears this straight away.
+    staleTimes: { dynamic: 30, static: 300 },
+  },
   turbopack: {
     rules: {
       "*.css": {
