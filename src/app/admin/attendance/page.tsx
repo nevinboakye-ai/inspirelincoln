@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CalendarCheck2, CalendarX2, Download, Hourglass, ListOrdered } from "lucide-react";
 import { requireAccess } from "@/lib/auth";
 import { loadAttendance, type Answer, type PresenterRow } from "@/lib/admin/attendance";
+import { DownloadButtons } from "@/components/admin/download-buttons";
 import { AdminHeader, Flash, Panel, btn } from "@/components/admin/ui";
 import { OfferSlotForm } from "@/components/admin/offer-slot-form";
 import { Badge } from "@/components/ui/badge";
@@ -63,9 +64,12 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
         title="Presenter attendance"
         description="Oral and poster presenters confirm in My Hub whether they'll be there to present. Use this page to see who has replied and to fill any oral slots from the waiting list."
         actions={
-          <a href="/admin/attendance/export" className={btn.secondary}>
-            <Download aria-hidden className="size-4" /> Download CSV
-          </a>
+          <>
+            <DownloadButtons set="presenters" label="presenters and attendance" />
+            <a href="/admin/attendance/export" className={btn.secondary}>
+              <Download aria-hidden className="size-4" /> CSV
+            </a>
+          </>
         }
       />
 
