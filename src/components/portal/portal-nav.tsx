@@ -66,6 +66,15 @@ export function PortalNav({
           },
         ]
       : []),
+    ...(showNetwork
+      ? [
+          {
+            href: "/portal/network",
+            label: "Network",
+            icon: Users,
+          },
+        ]
+      : []),
     {
       href: "/portal/messages",
       label: "Messages",
@@ -91,15 +100,6 @@ export function PortalNav({
             href: "/portal/submission",
             label: "My submission",
             icon: UploadCloud,
-          },
-        ]
-      : []),
-    ...(showNetwork
-      ? [
-          {
-            href: "/portal/network",
-            label: "Network",
-            icon: Users,
           },
         ]
       : []),
