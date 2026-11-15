@@ -171,3 +171,22 @@ export function rolesChangedEmail(opts: { siteUrl: string; name: string | null; 
   });
   return { subject: types.length > 1 ? "Your INSPIRE roles have been updated" : `Your INSPIRE account is now ${ACCOUNT_TYPE_LABEL[types[0]]}`, ...m };
 }
+
+/** Someone has a message waiting on the website. The message itself stays on the website. */
+export function newMessageEmail(opts: { siteUrl: string; name: string | null; sender: string; conversationId: string }): Mail {
+  const sender = escapeHtml(opts.sender);
+  const m = renderEmail({
+    siteUrl: opts.siteUrl,
+    preheader: `${opts.sender} sent you a message on INSPIRE.`,
+    eyebrow: "New message",
+    heading: "You have a new message",
+    paragraphs: [
+      `Hello ${first(opts.name)},`,
+      `<strong>${sender}</strong> has sent you a message in My Hub.`,
+      "For your privacy, messages are only shown when you sign in. Reply there and they'll see it straight away.",
+    ],
+    cta: { label: "Read the message", url: `${opts.siteUrl}/portal/messages/${opts.conversationId}` },
+    footnote: "We only email you about the first unread message, never every one. You can turn these emails off under Messages in My Hub.",
+  });
+  return { subject: `New message from ${opts.sender} on INSPIRE`, ...m };
+}

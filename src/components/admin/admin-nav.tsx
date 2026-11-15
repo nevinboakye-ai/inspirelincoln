@@ -3,10 +3,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarCog, ClipboardCheck, Eye, FileStack, Gauge, HelpCircle, Inbox, Mail, MapPin, Megaphone, Mic, QrCode, ScrollText, Settings2,
-  Ticket, UserCheck, GraduationCap, ListOrdered, CalendarCheck2, Users, Wrench, DoorOpen, ShieldCheck, UserRound, LayoutDashboard, Activity, BarChart3, HandHeart, Car,
+  Ticket, UserCheck, MessageCircle, GraduationCap, ListOrdered, CalendarCheck2, Users, Wrench, DoorOpen, ShieldCheck, UserRound, LayoutDashboard, Activity, BarChart3, HandHeart, Car,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Access, Capability } from "@/lib/accounts";
+import { useMessages } from "@/components/messages/messages-provider";
 
 type Need = Capability | Capability[] | "owner";
 type LinkDef = { href: string; label: string; icon: typeof Gauge; need?: Need };
@@ -36,6 +37,7 @@ const GROUPS: { title: string; links: LinkDef[] }[] = [
       { href: "/admin/workshops", label: "Workshop places", icon: ListOrdered, need: "allocate_workshops" },
       { href: "/admin/submissions", label: "Slides and posters", icon: FileStack, need: "review_submissions" },
       { href: "/admin/enquiries", label: "Enquiries", icon: Inbox, need: ["answer_enquiries", "manage_people"] },
+      { href: "/portal/messages", label: "Messages", icon: MessageCircle, need: "message_people" },
       { href: "/admin/email", label: "Group email", icon: Mail, need: "send_email" },
     ],
   },
@@ -68,6 +70,7 @@ const GROUPS: { title: string; links: LinkDef[] }[] = [
 
 export function AdminNav({ access, name, position, waiting = 0 }: { access: Access; name: string; position: string; waiting?: number }) {
   const path = usePathname();
+  const { unread } = useMessages();
   const allowed = (l: LinkDef) =>
     !l.need || access.owner || (l.need !== "owner" && (Array.isArray(l.need) ? l.need : [l.need]).some((c) => access.can[c]));
   // The most specific link that matches the page is the current one.
@@ -107,6 +110,12 @@ export function AdminNav({ access, name, position, waiting = 0 }: { access: Acce
                           <span className={cn("ml-auto grid min-w-5 place-items-center rounded-full px-1.5 text-[0.7rem] font-bold leading-5", active ? "bg-gold text-midnight" : "bg-warning text-white")}>
                             {waiting}
                             <span className="sr-only"> waiting for a reply</span>
+                          </span>
+                        )}
+                        {l.href === "/portal/messages" && unread > 0 && (
+                          <span className={cn("ml-auto grid min-w-5 place-items-center rounded-full px-1.5 text-[0.7rem] font-bold leading-5", active ? "bg-gold text-midnight" : "bg-electric-600 text-white")}>
+                            {unread}
+                            <span className="sr-only"> {unread === 1 ? "conversation" : "conversations"} with new messages</span>
                           </span>
                         )}
                       </Link>

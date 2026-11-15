@@ -9,6 +9,7 @@ import { PROFILE_PROMPT_COOKIE, profileGaps } from "@/lib/profile-prompt";
 import { VIEW_AS_COOKIE } from "@/lib/view-as-seal";
 import { signAvatar } from "@/lib/avatar";
 import { unreadForMember } from "@/lib/enquiries";
+import { MessagesProvider } from "@/components/messages/messages-provider";
 
 export const metadata: Metadata = { title: "My conference", robots: { index: false } };
 
@@ -30,6 +31,7 @@ export default async function PortalLayout({ children }: { children: React.React
   // People I've met follows the Delegate Card, which carries the QR code.
   const showPeople = profile.access.owner || (switches.delegate_card && profile.accountStatus === "approved");
   return (
+    <MessagesProvider>
     <div className="min-h-screen bg-paper pb-28 pt-24 sm:pt-28 lg:pb-24">
       <div className="container-page grid gap-5 lg:grid-cols-[15rem_1fr] lg:gap-12">
         <PortalNav
@@ -46,5 +48,6 @@ export default async function PortalLayout({ children }: { children: React.React
         {(gaps.length > 0 || askEmail) && <ProfilePrompt gaps={gaps} name={profile.fullName} photo={promptPhoto} email={askEmail ? profile.email : null} />}
       </div>
     </div>
+    </MessagesProvider>
   );
 }

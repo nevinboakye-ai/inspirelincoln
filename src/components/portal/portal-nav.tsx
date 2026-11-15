@@ -1,19 +1,22 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Gauge, MessagesSquare, LayoutDashboard, LogOut, ShieldCheck, Ticket, UploadCloud, UserRound, ClipboardCheck, NotebookPen, Users } from "lucide-react";
+import { Gauge, MessageCircle, MessagesSquare, LayoutDashboard, LogOut, ShieldCheck, Ticket, UploadCloud, UserRound, ClipboardCheck, NotebookPen, Users } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 import { cn } from "@/lib/cn";
 import type { Access } from "@/lib/accounts";
+import { useMessages } from "@/components/messages/messages-provider";
 
 export function PortalNav({ name, typeLabel, presenter, access, reviewer, showNetwork, showPeople, unreadEnquiries = 0 }: { name: string; typeLabel: string; presenter: boolean; access: Access; reviewer: boolean; showNetwork: boolean; showPeople: boolean; unreadEnquiries?: number }) {
   const path = usePathname();
+  const { unread: unreadMessages } = useMessages();
   const links = [
     { href: "/portal", label: "My conference", icon: Ticket },
+    { href: "/portal/messages", label: "Messages", icon: MessageCircle, badge: unreadMessages, badgeNoun: ["new message", "conversations with new messages"] },
     ...(presenter ? [{ href: "/portal/submission", label: "My submission", icon: UploadCloud }] : []),
     ...(showNetwork ? [{ href: "/portal/network", label: "Network", icon: Users }] : []),
     ...(showPeople ? [{ href: "/portal/people", label: "People I've met", icon: NotebookPen }] : []),
-    { href: "/portal/enquiries", label: "Enquiries", icon: MessagesSquare, badge: unreadEnquiries },
+    { href: "/portal/enquiries", label: "Enquiries", icon: MessagesSquare, badge: unreadEnquiries, badgeNoun: ["new reply", "new replies"] },
     { href: "/portal/profile", label: "Profile and privacy", icon: UserRound },
     ...(reviewer && !access.committee ? [{ href: "/review", label: "Abstract reviews", icon: ClipboardCheck }] : []),
     ...(access.owner ? [{ href: "/admin/platform", label: "Platform dashboard", icon: Gauge }] : []),
@@ -48,7 +51,7 @@ export function PortalNav({ name, typeLabel, presenter, access, reviewer, showNe
                 {"badge" in l && Number(l.badge) > 0 && (
                   <span className={cn("ml-auto grid min-w-5 place-items-center rounded-full px-1.5 text-[0.7rem] font-bold leading-5", active ? "bg-gold text-midnight" : "bg-electric-600 text-white")}>
                     {l.badge}
-                    <span className="sr-only"> new {Number(l.badge) === 1 ? "reply" : "replies"}</span>
+                    <span className="sr-only"> {"badgeNoun" in l && l.badgeNoun ? l.badgeNoun[Number(l.badge) === 1 ? 0 : 1] : "new"}</span>
                   </span>
                 )}
               </Link>

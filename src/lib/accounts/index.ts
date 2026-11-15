@@ -141,6 +141,7 @@ export const CAPABILITIES = [
   "allocate_workshops",
   "check_in",
   "send_email",
+  "message_people",
 ] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
@@ -154,6 +155,7 @@ export const CAPABILITY_LABEL: Record<Capability, { label: string; description: 
   allocate_workshops: { label: "Workshop places", description: "Open and close workshop ranking, set room sizes, run the allocation and publish it." },
   check_in: { label: "Check-in desk", description: "Scan tickets and check people in on the day." },
   send_email: { label: "Group emails", description: "Send emails to groups of delegates, presenters or the committee." },
+  message_people: { label: "Direct messages", description: "Message anyone with an account from My Hub, whatever their status, and send one message to several people at once." },
 };
 
 /** The defaults the database starts with, used only if the access tables aren't set up yet. */
@@ -162,12 +164,12 @@ export const DEFAULT_RULES: Record<AccountType, Capability[]> = {
   oral_presenter: [],
   poster_presenter: [],
   oral_waitlist: [],
-  supporting_committee: ["edit_website", "review_submissions"],
-  academic_team: ["edit_website", "review_submissions"],
-  publicity_team: ["edit_website", "review_submissions"],
-  finance_team: ["edit_website", "review_submissions"],
-  logistics_team: ["edit_website", "review_submissions"],
-  executive_committee: ["edit_website", "review_submissions", "review_accounts", "manage_people", "answer_enquiries", "allocate_workshops", "check_in"],
+  supporting_committee: ["edit_website", "review_submissions", "message_people"],
+  academic_team: ["edit_website", "review_submissions", "message_people"],
+  publicity_team: ["edit_website", "review_submissions", "message_people"],
+  finance_team: ["edit_website", "review_submissions", "message_people"],
+  logistics_team: ["edit_website", "review_submissions", "message_people"],
+  executive_committee: ["edit_website", "review_submissions", "review_accounts", "manage_people", "answer_enquiries", "allocate_workshops", "check_in", "message_people"],
   vice_president: [...CAPABILITIES],
   president: [...CAPABILITIES],
 };
