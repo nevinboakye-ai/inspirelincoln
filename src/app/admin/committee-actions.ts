@@ -8,7 +8,7 @@ import { sendBatch, sendEmail } from "@/lib/email/resend";
 import { accountDecisionEmail, feedbackEmail, oralSlotEmail } from "@/lib/email/messages";
 import { escapeHtml, renderEmail } from "@/lib/email/template";
 import { SITE_URL } from "@/lib/site";
-import { fillPlaceholders } from "@/lib/email/presets";
+import { EMAIL_PRESETS, NOT_ACCEPTED_GROUPS, NOT_ACCEPTED_LABEL, fillPlaceholders, type NotAcceptedGroup } from "@/lib/email/presets";
 import { loginDetailsAvailable, prepareLogins, type LoginDetails } from "@/lib/accounts/login-details";
 import { serviceClient } from "@/lib/view-as";
 import type { AccountStatus, AccountType, SubmissionKind } from "@/lib/types";
@@ -90,7 +90,8 @@ const broadcastSchema = z.object({
   subject: z.string().trim().min(3, "Write a subject.").max(160),
   body: z.string().trim().min(10, "Write your message.").max(10000),
   purpose: z.enum(["service", "marketing"]),
-  types: z.array(z.enum(ACCOUNT_TYPES as [AccountType, ...AccountType[]])).min(1, "Choose at least one group."),
+  types: z.array(z.enum(ACCOUNT_TYPES as [AccountType, ...AccountType[]])),
+  notAccepted: z.array(z.enum(NOT_ACCEPTED_GROUPS as [NotAcceptedGroup, ...NotAcceptedGroup[]])),
   statuses: z.array(z.enum(["pending", "approved", "waitlisted", "declined"])),
   includeSelected: z.boolean(),
   includeLogin: z.boolean(),
@@ -102,9 +103,32 @@ export type BroadcastResult = (ActionResult & { count?: number }) | null;
 type Recipient = { email: string; full_name: string | null; joined: boolean };
 
 /** Someone a group email will go to, as shown in the recipient list. */
-export type RecipientRow = Recipient & { account_type: AccountType; account_status: AccountStatus | null; institution: string | null; id: string | null };
+export type RecipientRow = Recipient & {
+  account_type: AccountType;
+  account_status: AccountStatus | null;
+  institution: string | null;
+  id: string | null;
+  /** On the "Presentation not accepted" list, and whether they still have a delegate place. */
+  not_accepted?: NotAcceptedGroup | null;
+  /** The abstract they submitted, for {title}, when they're on the "Presentation not accepted" list. */
+  abstract_title?: string | null;
+  /** Neither an account nor a selected-list entry: only the email from their abstract submission. */
+  no_account?: boolean;
+};
 
-type Selection = { types: AccountType[]; statuses: AccountStatus[]; purpose: "service" | "marketing"; includeSelected: boolean };
+type Selection = { types: AccountType[]; notAccepted?: NotAcceptedGroup[]; statuses: AccountStatus[]; purpose: "service" | "marketing"; includeSelected: boolean };
+
+type NotAcceptedRow = {
+  email: string;
+  full_name: string | null;
+  account_type: AccountType | null;
+  account_status: AccountStatus | null;
+  institution: string | null;
+  id: string | null;
+  joined: boolean;
+  attending: boolean;
+  abstract_title: string | null;
+};
 
 /** Everyone a group email would reach, with duplicates removed and accounts taking priority over the selected list. */
 async function resolveRecipients(db: Awaited<ReturnType<typeof requireAccess>>["db"], v: Selection): Promise<{ ok: true; people: RecipientRow[] } | { ok: false }> {
@@ -119,6 +143,30 @@ async function resolveRecipients(db: Awaited<ReturnType<typeof requireAccess>>["
   if (accounts.error || selected.error) return { ok: false };
   const seen = new Set<string>();
   const people: RecipientRow[] = [];
+  // People whose presentation wasn't accepted come first, so their row (with their abstract) wins over a duplicate from another group.
+  const groups = v.notAccepted ?? [];
+  if (groups.length) {
+    const { data, error } = await db.rpc("not_accepted_recipients");
+    if (error) return { ok: false };
+    for (const r of (data ?? []) as NotAcceptedRow[]) {
+      const group: NotAcceptedGroup = r.attending ? "attending" : "not_attending";
+      const e = r.email?.toLowerCase();
+      if (!groups.includes(group) || !e || seen.has(e)) continue;
+      seen.add(e);
+      people.push({
+        email: e,
+        full_name: r.full_name,
+        joined: r.joined,
+        account_type: r.account_type ?? "delegate",
+        account_status: r.account_status,
+        institution: r.institution,
+        id: r.id,
+        not_accepted: group,
+        abstract_title: r.abstract_title,
+        no_account: !r.joined && !r.attending,
+      });
+    }
+  }
   for (const [rows, joined] of [[accounts.data, true], [selected.data, false]] as const)
     for (const r of (rows ?? []) as { email: string; full_name: string | null; account_type: AccountType; account_status?: AccountStatus; institution: string | null; id?: string }[]) {
       const e = r.email?.toLowerCase();
@@ -132,6 +180,7 @@ async function resolveRecipients(db: Awaited<ReturnType<typeof requireAccess>>["
 
 const selectionSchema = z.object({
   types: z.array(z.enum(ACCOUNT_TYPES as [AccountType, ...AccountType[]])),
+  notAccepted: z.array(z.enum(NOT_ACCEPTED_GROUPS as [NotAcceptedGroup, ...NotAcceptedGroup[]])).default([]),
   statuses: z.array(z.enum(["pending", "approved", "waitlisted", "declined"])),
   purpose: z.enum(["service", "marketing"]),
   includeSelected: z.boolean(),
@@ -184,6 +233,8 @@ function buildEmail(o: {
   joined: boolean;
   title?: string | null;
   login?: LoginDetails | "sample" | null;
+  /** Not on the site or the selected list, so no "Set up your account" button. */
+  noAccount?: boolean;
 }) {
   const filled = fillPlaceholders(o.body, { first_name: o.name?.split(" ")[0], full_name: o.name, title: o.title, website: WEBSITE });
   const subject = fillPlaceholders(o.subject, { first_name: o.name?.split(" ")[0], full_name: o.name, title: o.title, website: WEBSITE });
@@ -218,9 +269,11 @@ function buildEmail(o: {
       ...(ownSignOff ? [] : [o.sender ? `${escapeHtml(o.sender)}<br>On behalf of the INSPIRE committee` : "The INSPIRE committee"]),
     ],
     details,
-    cta: login ? { label: "Log in to My Hub", url: `${SITE_URL}/login` } : o.joined ? undefined : { label: "Set up your account", url: `${SITE_URL}/auth/activate` },
+    cta: login ? { label: "Log in to My Hub", url: `${SITE_URL}/login` } : o.joined || o.noAccount ? undefined : { label: "Set up your account", url: `${SITE_URL}/auth/activate` },
     footnote: login && login !== "sample" && login.kind === "temporary"
       ? "Keep this email private. The temporary password only works until you choose your own, which you'll be asked to do when you first log in."
+      : o.noAccount
+        ? "You're receiving this because you submitted an abstract to INSPIRE 2026."
       : !o.joined && !login
         ? "You're receiving this because you were selected to attend INSPIRE. Set up your account with this email address to see your Delegate Card."
         : o.purpose === "marketing"
@@ -238,6 +291,7 @@ export async function sendBroadcast(_: BroadcastResult, form: FormData): Promise
     body: form.get("body"),
     purpose: form.get("purpose"),
     types: form.getAll("types"),
+    notAccepted: form.getAll("notAccepted"),
     statuses: form.getAll("statuses"),
     includeSelected: form.get("includeSelected") === "on",
     includeLogin: form.get("includeLogin") === "on",
@@ -249,8 +303,10 @@ export async function sendBroadcast(_: BroadcastResult, form: FormData): Promise
     return { ok: false, error: "Please check the highlighted fields.", fieldErrors: fe };
   }
   const v = parsed.data;
+  if (!v.types.length && !v.notAccepted.length) return { ok: false, error: "Please check the highlighted fields.", fieldErrors: { types: "Choose at least one group." } };
+  if (v.notAccepted.length && v.purpose === "marketing") return { ok: false, error: "The \"Presentation not accepted\" groups are for conference updates only. Choose \"Conference update\"." };
   const withSelected = v.includeSelected && v.purpose === "service";
-  if (!v.statuses.length && !withSelected) return { ok: false, error: "Please check the highlighted fields.", fieldErrors: { statuses: "Choose at least one account status, or include selected delegates." } };
+  if (!v.statuses.length && !withSelected && !v.notAccepted.length) return { ok: false, error: "Please check the highlighted fields.", fieldErrors: { statuses: "Choose at least one account status, or include selected delegates." } };
 
   const found = await resolveRecipients(db, v);
   if (!found.ok) return { ok: false, error: "Could not load the recipients." };
@@ -269,18 +325,23 @@ export async function sendBroadcast(_: BroadcastResult, form: FormData): Promise
   const withLogin = v.includeLogin && v.purpose === "service";
   if (withLogin && !loginDetailsAvailable()) return { ok: false, error: "Login details need SUPABASE_SERVICE_ROLE_KEY in Vercel. Add it and redeploy, or untick \"Include their login details\"." };
   if (v.intent === "test") {
-    const e = buildEmail({ ...v, sender, name: profile.fullName, joined: true, title: profile.presentationTitle, login: withLogin ? "sample" : null });
+    // A "Presentation not accepted" test shows the first person's abstract title, as theirs would.
+    const sampleTitle = v.notAccepted.length ? (recipients.find((r) => r.abstract_title)?.abstract_title ?? "Their abstract title") : profile.presentationTitle;
+    const e = buildEmail({ ...v, sender, name: profile.fullName, joined: true, title: sampleTitle, login: withLogin ? "sample" : null });
     const ok = await sendEmail({ to: user.email!, ...e, subject: `[Test] ${e.subject}` });
     return ok ? { ok: true, message: `A test has been sent to ${user.email}.${withLogin ? " It shows where each person's login details will go." : ""}` } : { ok: false, error: "Email isn't set up yet. Add the Resend settings in Vercel first." };
   }
 
   if (!recipients.length) return { ok: false, error: found.people.length ? "Everyone in those groups has been unticked." : "Nobody matches those groups." };
   const titles = await titlesFor(db, recipients.map((r) => r.email));
-  const logins = withLogin ? await prepareLogins(recipients) : null;
+  // For "Presentation not accepted", {title} is the abstract they submitted.
+  for (const r of recipients) if (r.abstract_title) titles.set(r.email, r.abstract_title);
+  // Nobody without a place gets an account made for them.
+  const logins = withLogin ? await prepareLogins(recipients.filter((r) => !r.no_account)) : null;
   if (withLogin && !logins) return { ok: false, error: "Could not prepare login details. Check SUPABASE_SERVICE_ROLE_KEY in Vercel." };
   const delivered = await sendBatch(
     recipients.map((r) => {
-      const e = buildEmail({ ...v, sender, name: r.full_name, joined: r.joined || Boolean(logins?.get(r.email)), title: titles.get(r.email), login: logins?.get(r.email) ?? null });
+      const e = buildEmail({ ...v, sender, name: r.full_name, joined: r.joined || Boolean(logins?.get(r.email)), title: titles.get(r.email), login: logins?.get(r.email) ?? null, noAccount: r.no_account });
       return { to: r.email, ...e };
     }),
   );
@@ -293,6 +354,7 @@ export async function sendBroadcast(_: BroadcastResult, form: FormData): Promise
     audience_types: v.types,
     audience_statuses: v.statuses,
     include_selected: withSelected,
+    audience_note: v.notAccepted.length ? v.notAccepted.map((g) => NOT_ACCEPTED_LABEL[g].label).join(", ") : null,
     recipient_count: recipients.length,
     delivered_count: delivered,
   });
@@ -413,4 +475,57 @@ export async function offerOralSlot(_: ActionResult, form: FormData): Promise<Ac
   // They leave the waiting list, so the confirmation is shown at the top of the page.
   const params = new URLSearchParams({ offered: to?.name || "They", mail: v.notify ? (emailed ? "sent" : "off") : "no" });
   redirect(`/admin/attendance?${params}`);
+}
+
+const templateSchema = z.object({
+  id: z.string().regex(/^[a-z0-9-]{2,60}$/),
+  subject: z.string().trim().min(3, "Write a subject.").max(160),
+  body: z.string().trim().min(10, "Write your message.").max(10000),
+  types: z.array(z.enum(ACCOUNT_TYPES as [AccountType, ...AccountType[]])),
+  notAccepted: z.array(z.enum(NOT_ACCEPTED_GROUPS as [NotAcceptedGroup, ...NotAcceptedGroup[]])),
+  statuses: z.array(z.enum(["pending", "approved", "waitlisted", "declined"])),
+  includeSelected: z.boolean(),
+  login: z.boolean(),
+});
+
+/**
+ * Saves the committee's own version of a Group email template: subject,
+ * message, recipients and whether login details are included. Everyone who
+ * can send group emails then starts from this version.
+ */
+export async function saveEmailTemplate(input: z.input<typeof templateSchema>): Promise<ActionResult> {
+  const { db, user, profile } = await requireAccess("send_email", "/admin/email");
+  const parsed = templateSchema.safeParse(input);
+  if (!parsed.success) {
+    const fe: Record<string, string> = {};
+    for (const i of parsed.error.issues) fe[String(i.path[0])] ??= i.message;
+    return { ok: false, error: fe.subject || fe.body || "Could not save the template.", fieldErrors: fe };
+  }
+  const v = parsed.data;
+  const base = EMAIL_PRESETS.find((p) => p.id === v.id);
+  if (!base) return { ok: false, error: "That template no longer exists." };
+  const { error } = await db.from("email_templates").upsert({
+    id: v.id,
+    name: base.name,
+    use_note: base.use,
+    subject: v.subject,
+    body: v.body,
+    audience: { types: v.types, statuses: v.statuses, includeSelected: v.includeSelected, notAccepted: v.notAccepted },
+    login: v.login,
+    updated_by: user.id,
+    updated_name: profile.fullName ?? "",
+  });
+  if (error) return { ok: false, error: "Could not save the template. If this is the first time, run setup file 48 in Supabase." };
+  revalidatePath("/admin/email");
+  return { ok: true, message: `Saved. "${base.name}" now starts from your version.` };
+}
+
+/** Puts a template back to the original wording. */
+export async function resetEmailTemplate(id: string): Promise<ActionResult> {
+  const { db } = await requireAccess("send_email", "/admin/email");
+  if (!/^[a-z0-9-]{2,60}$/.test(id)) return { ok: false, error: "Could not reset the template." };
+  const { error } = await db.from("email_templates").delete().eq("id", id);
+  if (error) return { ok: false, error: "Could not reset the template." };
+  revalidatePath("/admin/email");
+  return { ok: true, message: "Back to the original wording." };
 }

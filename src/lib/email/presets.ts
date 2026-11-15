@@ -19,9 +19,23 @@ export interface EmailPreset {
   use: string;
   subject: string;
   body: string;
-  audience: { types: AccountType[]; statuses: AccountStatus[]; includeSelected: boolean };
+  audience: { types: AccountType[]; statuses: AccountStatus[]; includeSelected: boolean; notAccepted?: NotAcceptedGroup[] };
   login: boolean;
+  /** Set when the committee has saved their own version of this template. */
+  saved?: { by: string; at: string };
 }
+
+/**
+ * People whose oral or poster abstract wasn't accepted, from the
+ * "Presentation not accepted" list, split by whether they still have a
+ * delegate place (an approved account or a selected-list entry).
+ */
+export type NotAcceptedGroup = "attending" | "not_attending";
+export const NOT_ACCEPTED_GROUPS: NotAcceptedGroup[] = ["attending", "not_attending"];
+export const NOT_ACCEPTED_LABEL: Record<NotAcceptedGroup, { label: string; hint: string }> = {
+  attending: { label: "Presentation not accepted, attending as a delegate", hint: "Their abstract wasn't accepted, but they have a delegate place." },
+  not_attending: { label: "Presentation not accepted, no delegate place", hint: "Their abstract wasn't accepted and they aren't on the site or the selected list." },
+};
 
 const SIGN_OFF = `Warm regards,
 Lincoln INSPIRE Society
@@ -33,7 +47,54 @@ const LOG_IN = `Log in to My Hub at {website} with the details below. The first 
 
 const PRESENTERS: AccountType[] = [...ROSTER_TYPES];
 
+const NOT_ACCEPTED_OPENING = `Dear {first_name},
+
+Thank you for submitting your abstract, "{title}", to the 2026 INSPIRE National Medical Research Conference, taking place on Saturday 21st November 2026 at Lincoln Medical School, University of Lincoln.
+
+We'd first like to clear up some confusion. So far, everyone coming to INSPIRE has been listed simply as a "delegate" on the website and in our emails, whether they are presenting or not, so it hasn't always been clear who is presenting. We're sorry about that, and we want to make sure you know exactly where you stand.
+
+The standard of abstracts this year was exceptionally high and, with a limited number of oral and poster presentation slots, competition for places was very strong. After careful review, we're sorry to let you know that your abstract has not been selected for presentation on this occasion. This is no reflection on the time and care you have put into your research, and we would warmly encourage you to keep developing it and to submit again in future.`;
+
+
 export const EMAIL_PRESETS: EmailPreset[] = [
+  {
+    id: "presentation-not-accepted-delegate",
+    name: "Presentation not accepted, still attending as a delegate",
+    use: "For the \"Presentation not accepted, attending as a delegate\" group. Clears up the \"delegate\" confusion, explains their abstract wasn't selected, and confirms their delegate place.",
+    subject: "INSPIRE 2026: an update on your abstract, and your delegate place",
+    audience: { types: [], statuses: ["approved"], includeSelected: false, notAccepted: ["attending"] },
+    login: true,
+    body: `${NOT_ACCEPTED_OPENING}
+
+Your delegate place is confirmed
+We're delighted that you'll still be joining us. Your place as a delegate at INSPIRE 2026 is confirmed and nothing else changes: you can attend the keynote talks, the oral and poster sessions and the workshops, and meet students, researchers and clinicians from across the country. You don't need to prepare or upload a poster or slides.
+
+Before the day
+1. ${LOG_IN}
+2. Have a look at your Delegate Card and your programme for the day.
+3. Check your profile, including any access or dietary needs.
+
+We're really looking forward to welcoming you to Lincoln.
+
+${QUESTIONS}
+
+${SIGN_OFF}`,
+  },
+  {
+    id: "presentation-not-accepted-no-place",
+    name: "Presentation not accepted, no delegate place",
+    use: "For the \"Presentation not accepted, no delegate place\" group: people who applied to present but aren't on the site or the selected list. No login details.",
+    subject: "INSPIRE 2026: an update on your abstract",
+    audience: { types: [], statuses: ["approved"], includeSelected: false, notAccepted: ["not_attending"] },
+    login: false,
+    body: `${NOT_ACCEPTED_OPENING}
+
+We don't currently have you down for a delegate place. If you would still like to come along on Saturday 21st November, please get in touch at inspiresoc@lincolnsu.com and we'll let you know whether we can offer you a place.
+
+Thank you once again for your interest in INSPIRE, and we wish you every success with your research.
+
+${SIGN_OFF}`,
+  },
   {
     id: "accept-poster",
     name: "Acceptance: poster presentation",

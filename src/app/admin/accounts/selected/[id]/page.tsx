@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Mail } from "lucide-react";
 import { requireAccess } from "@/lib/auth";
+import { loadEmailTemplates } from "@/lib/email/saved-templates";
 import { AdminHeader, Panel, btn } from "@/components/admin/ui";
 import { DirectEmailForm } from "@/components/admin/committee-forms";
 import { RemoveRosterButton, RosterPersonForm } from "@/components/admin/person-forms";
@@ -96,6 +97,7 @@ export default async function SelectedPersonPage({ params }: { params: Promise<{
                 <DirectEmailForm
                   key={r.email}
                   people={[]}
+                  templates={await loadEmailTemplates(db)}
                   locked
                   defaults={
                     account
