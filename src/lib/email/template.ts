@@ -18,6 +18,14 @@ export interface EmailContent {
   details?: { label: string; value: string }[];
   /** Small print under the button, e.g. why they got the email. */
   footnote?: string;
+  /** A highlighted deadline, shown above the checklist. */
+  deadline?: { label: string; value: string };
+  /** Numbered to-do list, each with a line on what to do and why. Text is escaped. */
+  checklist?: { title: string; detail?: string }[];
+  /** A gold-ruled box for something important, such as what happens if a deadline is missed. Trusted HTML. */
+  callout?: { title: string; body: string };
+  /** Paragraphs after the button, such as a sign-off. Trusted HTML. */
+  closing?: string[];
   /** Absolute origin used for the crest image and footer links. */
   siteUrl: string;
 }
@@ -30,6 +38,9 @@ const C = {
   ink: "#0f1b2e",
   slate: "#555f6e",
   cyan: "#c9d8ec",
+  gold: "#d4af5a",
+  goldInk: "#7a5c14",
+  goldWash: "#fbf5e6",
 };
 
 const SERIF = "Georgia, 'Times New Roman', Times, serif";
@@ -71,6 +82,41 @@ export function renderEmail(c: EmailContent): { html: string; text: string } {
           .join("")}
       </table>`
     : "";
+  const deadline = c.deadline
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 24px;"><tr>
+        <td style="background:${C.midnight};border-radius:3px;padding:16px 20px;">
+          <p style="margin:0;font-family:${SANS};font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:${C.gold};">${escapeHtml(c.deadline.label)}</p>
+          <p style="margin:6px 0 0;font-family:${SERIF};font-size:22px;line-height:1.25;color:${C.paper};">${escapeHtml(c.deadline.value)}</p>
+        </td>
+      </tr></table>`
+    : "";
+  const checklist = c.checklist?.length
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+        ${c.checklist
+          .map(
+            (item, i) => `<tr>
+              <td width="40" style="width:40px;padding:0 0 12px;vertical-align:top;">
+                <table role="presentation" cellpadding="0" cellspacing="0"><tr><td width="28" height="28" align="center" style="width:28px;height:28px;background:${C.navy};border-radius:14px;font-family:${SANS};font-size:13px;font-weight:700;line-height:28px;color:${C.paper};">${i + 1}</td></tr></table>
+              </td>
+              <td style="padding:0 0 12px;vertical-align:top;">
+                <div style="border:1px solid ${C.rule};border-radius:3px;padding:12px 14px;background:#ffffff;">
+                  <p style="margin:0;font-family:${SANS};font-size:15px;font-weight:600;line-height:1.4;color:${C.ink};">${escapeHtml(item.title)}</p>
+                  ${item.detail ? `<p style="margin:4px 0 0;font-family:${SANS};font-size:14px;line-height:1.55;color:${C.slate};">${escapeHtml(item.detail)}</p>` : ""}
+                </div>
+              </td>
+            </tr>`,
+          )
+          .join("")}
+      </table>`
+    : "";
+  const callout = c.callout
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr>
+        <td style="background:${C.goldWash};border-left:4px solid ${C.gold};padding:14px 16px;font-family:${SANS};font-size:14px;line-height:1.55;color:${C.ink};">
+          <p style="margin:0 0 4px;font-family:${SANS};font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:${C.goldInk};">${escapeHtml(c.callout.title)}</p>
+          ${c.callout.body}
+        </td>
+      </tr></table>`
+    : "";
   const button = c.cta
     ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px;">
         <tr><td style="background:${C.navy};border-radius:3px;">
@@ -107,9 +153,9 @@ export function renderEmail(c: EmailContent): { html: string; text: string } {
       <tr><td style="background:#ffffff;padding:36px 32px 12px;border-left:1px solid ${C.rule};border-right:1px solid ${C.rule};">
         ${c.eyebrow ? `<p style="margin:0 0 12px;font-family:${SANS};font-size:12px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:${C.slate};">${escapeHtml(c.eyebrow)}</p>` : ""}
         <h1 style="margin:0 0 20px;font-family:${SERIF};font-size:30px;line-height:1.2;font-weight:normal;color:${C.ink};">${escapeHtml(c.heading)}</h1>
-        ${c.paragraphs.map(p).join("\n")}
+        ${c.paragraphs.map(p).join("\n")}${deadline}${checklist}${callout}
         ${details}
-        ${button}
+        ${button}${(c.closing ?? []).map(p).join("\n")}
         ${c.footnote ? `<p style="margin:0 0 24px;font-family:${SANS};font-size:13px;line-height:1.5;color:${C.slate};">${c.footnote}</p>` : ""}
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr>
           <td style="background:${C.paper};border-left:3px solid ${C.navy};padding:14px 16px;font-family:${SANS};font-size:14px;line-height:1.5;color:${C.ink};">
@@ -139,9 +185,13 @@ export function renderEmail(c: EmailContent): { html: string; text: string } {
     c.heading,
     "",
     ...c.paragraphs.map((x) => stripTags(x) + "\n"),
+    ...(c.deadline ? [`${c.deadline.label.toUpperCase()}: ${c.deadline.value}`, ""] : []),
+    ...(c.checklist ?? []).map((item, i) => `${i + 1}. ${item.title}${item.detail ? `\n   ${item.detail}` : ""}\n`),
+    ...(c.callout ? [`${c.callout.title.toUpperCase()}: ${stripTags(c.callout.body)}`, ""] : []),
     ...(c.details ?? []).map((d) => `${d.label}: ${d.value}`),
     ...(c.details?.length ? [""] : []),
     ...(c.cta ? [`${c.cta.label}: ${c.cta.url}`, ""] : []),
+    ...(c.closing ?? []).map((x) => stripTags(x) + "\n"),
     ...(c.footnote ? [stripTags(c.footnote), ""] : []),
     `Need help? If anything isn't working or you have a question, email us at ${HELP_EMAIL} and we'll get back to you.`,
     "",

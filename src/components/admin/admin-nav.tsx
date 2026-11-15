@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarCog, ClipboardCheck, Eye, FileStack, Gauge, HelpCircle, Inbox, Mail, MapPin, Megaphone, Mic, QrCode, ScrollText, Settings2,
-  Ticket, UserCheck, MessageCircle, GraduationCap, ListOrdered, CalendarCheck2, Users, Wrench, DoorOpen, ShieldCheck, UserRound, LayoutDashboard, Activity, BarChart3, HandHeart, Car,
+  Ticket, UserCheck, MessageCircle, GraduationCap, ListOrdered, CalendarCheck2, Users, Wrench, DoorOpen, ShieldCheck, UserRound, LayoutDashboard, Activity, BarChart3, HandHeart, Car, FileDown,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Access, Capability } from "@/lib/accounts";
@@ -60,6 +60,7 @@ const GROUPS: { title: string; links: LinkDef[] }[] = [
   {
     title: "Records",
     links: [
+      { href: "/admin/downloads", label: "Downloads", icon: FileDown },
       { href: "/admin/registrations", label: "Registrations", icon: Ticket, need: "manage_people" },
       { href: "/admin/abstracts", label: "Abstracts", icon: ClipboardCheck, need: "manage_people" },
       { href: "/admin/users", label: "Site roles", icon: ShieldCheck, need: "owner" },

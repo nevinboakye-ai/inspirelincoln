@@ -16,6 +16,8 @@ const nextConfig: NextConfig = {
   // public pages are statically generated and revalidated, account areas are dynamic.
   cacheComponents: false,
   poweredByHeader: false,
+  // The logo printed on Excel and Word downloads is read from disk.
+  outputFileTracingIncludes: { "/admin/downloads/file": ["./public/brand/conference-logo-navy.png"] },
   // Import only the parts of these libraries each page uses.
   experimental: { optimizePackageImports: ["motion", "motion/react", "lucide-react"] },
   turbopack: {
