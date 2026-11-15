@@ -8,7 +8,7 @@ import { clearTemporaryPassword } from "@/lib/accounts/login-details";
 import { plainClient, serviceClient } from "@/lib/view-as";
 import { SUPABASE_ANON_KEY } from "@/lib/supabase/env";
 import { SITE_URL } from "@/lib/site";
-import { ACCOUNT_TYPES, COMMITTEE_TYPES, POLICY_VERSION, submissionKindFor } from "@/lib/accounts";
+import { ACCOUNT_TYPES, COMMITTEE_TYPES, GUEST_TYPES, POLICY_VERSION, submissionKindFor } from "@/lib/accounts";
 import type { AccountType } from "@/lib/types";
 
 export type AuthState = { error?: string; message?: string; fieldErrors?: Record<string, string> } | null;
@@ -94,7 +94,8 @@ export async function signUp(_: AuthState, form: FormData): Promise<AuthState> {
         institution: v.institution,
         career_stage: v.careerStage,
         programme: v.programme,
-        committee_position: COMMITTEE_TYPES.includes(v.accountType) ? v.committeePosition : "",
+        // Speakers and judges give their job title in the same field.
+        committee_position: COMMITTEE_TYPES.includes(v.accountType) || GUEST_TYPES.includes(v.accountType) ? v.committeePosition : "",
         presentation_title: submissionKindFor(v.accountType) ? v.presentationTitle : "",
         heard_about: v.heardAbout,
         photo_opt_out: v.photoOptOut,

@@ -5,6 +5,8 @@ export const ACCOUNT_TYPES: AccountType[] = [
   "oral_presenter",
   "poster_presenter",
   "oral_waitlist",
+  "speaker",
+  "judge",
   "supporting_committee",
   "academic_team",
   "publicity_team",
@@ -20,6 +22,8 @@ export const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
   oral_presenter: "Oral presenter",
   poster_presenter: "Poster presenter",
   oral_waitlist: "Oral waiting list",
+  speaker: "Speaker",
+  judge: "Judge",
   supporting_committee: "Supporting committee",
   academic_team: "Academic Team",
   publicity_team: "Publicity Team",
@@ -35,6 +39,8 @@ export const ACCOUNT_TYPE_BLURB: Record<AccountType, string> = {
   oral_presenter: "Giving a talk. You'll upload your slides here.",
   poster_presenter: "Presenting a poster. You'll upload it for feedback.",
   oral_waitlist: "Presenting a poster, and on the waiting list for an oral presentation.",
+  speaker: "Giving a keynote, talk or workshop on the day.",
+  judge: "Judging oral and poster presentations on the day.",
   supporting_committee: "Helping run INSPIRE on the supporting committee.",
   academic_team: "Supporting committee: the Academic Team.",
   publicity_team: "Supporting committee: the Publicity Team.",
@@ -60,10 +66,13 @@ export type RosterType = (typeof ROSTER_TYPES)[number];
 export const SUPPORTING_TYPES: AccountType[] = ["supporting_committee", "academic_team", "publicity_team", "finance_team", "logistics_team"];
 export const COMMITTEE_TYPES: AccountType[] = [...SUPPORTING_TYPES, "executive_committee", "vice_president", "president"];
 export const EXEC_TYPES: AccountType[] = ["executive_committee", "vice_president", "president"];
+/** The professionals who come on the day: speakers and judges. Not committee, not delegates. */
+export const GUEST_TYPES: AccountType[] = ["speaker", "judge"];
 
 /** Account types grouped the way the committee thinks about them, for pickers. */
 export const ACCOUNT_TYPE_GROUPS: { title: string; hint: string; types: AccountType[] }[] = [
   { title: "Attending", hint: "Delegates and presenters", types: ["delegate", "oral_presenter", "poster_presenter", "oral_waitlist"] },
+  { title: "Guests on the day", hint: "Speakers and judges", types: GUEST_TYPES },
   { title: "Supporting committee", hint: "Can edit the website and review slides and posters", types: SUPPORTING_TYPES },
   { title: "Executive committee", hint: "Can also review accounts and email groups", types: EXEC_TYPES },
 ];
@@ -83,6 +92,8 @@ export const ROLE_RANK: AccountType[] = [
   "finance_team",
   "logistics_team",
   "supporting_committee",
+  "speaker",
+  "judge",
   "oral_presenter",
   "poster_presenter",
   "oral_waitlist",
@@ -141,6 +152,8 @@ export const CAPABILITIES = [
   "allocate_workshops",
   "check_in",
   "send_email",
+  "judge_presentations",
+  "manage_judging",
 ] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
@@ -154,7 +167,12 @@ export const CAPABILITY_LABEL: Record<Capability, { label: string; description: 
   allocate_workshops: { label: "Workshop places", description: "Open and close workshop ranking, set room sizes, run the allocation and publish it." },
   check_in: { label: "Check-in desk", description: "Scan tickets and check people in on the day." },
   send_email: { label: "Group emails", description: "Send emails to groups of delegates, presenters or the committee." },
+  judge_presentations: { label: "Judge presentations", description: "Use the judging portal on the day: open presenters' slides and posters, mark them and write feedback." },
+  manage_judging: { label: "Judging results", description: "Set the marking criteria, choose who each judge marks, see every mark and comment, and release feedback to presenters." },
 };
+
+/** Permissions that open the committee dashboard. Judging alone doesn't: judges use the judging portal. */
+export const COMMITTEE_CAPABILITIES = CAPABILITIES.filter((c) => c !== "judge_presentations");
 
 /** The defaults the database starts with, used only if the access tables aren't set up yet. */
 export const DEFAULT_RULES: Record<AccountType, Capability[]> = {
@@ -162,21 +180,25 @@ export const DEFAULT_RULES: Record<AccountType, Capability[]> = {
   oral_presenter: [],
   poster_presenter: [],
   oral_waitlist: [],
+  speaker: [],
+  judge: ["judge_presentations"],
   supporting_committee: ["edit_website", "review_submissions"],
   academic_team: ["edit_website", "review_submissions"],
   publicity_team: ["edit_website", "review_submissions"],
   finance_team: ["edit_website", "review_submissions"],
   logistics_team: ["edit_website", "review_submissions"],
-  executive_committee: ["edit_website", "review_submissions", "review_accounts", "manage_people", "answer_enquiries", "allocate_workshops", "check_in"],
-  vice_president: [...CAPABILITIES],
-  president: [...CAPABILITIES],
+  executive_committee: ["edit_website", "review_submissions", "review_accounts", "manage_people", "answer_enquiries", "allocate_workshops", "check_in", "manage_judging"],
+  vice_president: CAPABILITIES.filter((c) => c !== "judge_presentations"),
+  president: CAPABILITIES.filter((c) => c !== "judge_presentations"),
 };
 
 export interface Access {
   /** Each permission, as the database decides it (public.has_access). */
   can: Record<Capability, boolean>;
-  /** Has at least one permission, so can open the committee dashboard. */
+  /** Has at least one committee permission, so can open the committee dashboard. */
   committee: boolean;
+  /** Can use the judging portal (judges, or the committee checking results). */
+  judging: boolean;
   /** Can review accounts. */
   exec: boolean;
   /** Can approve committee and leadership accounts. */
@@ -191,7 +213,14 @@ type AccessInput = { role: UserRole; accountType: AccountType; accountStatus: Ac
 export function accessFromCaps(caps: readonly string[], role: UserRole): Access {
   const owner = role === "admin";
   const can = Object.fromEntries(CAPABILITIES.map((c) => [c, owner || caps.includes(c)])) as Record<Capability, boolean>;
-  return { can, committee: CAPABILITIES.some((c) => can[c]), exec: can.review_accounts, leadership: can.approve_committee, owner };
+  return {
+    can,
+    committee: COMMITTEE_CAPABILITIES.some((c) => can[c]),
+    judging: can.judge_presentations || can.manage_judging,
+    exec: can.review_accounts,
+    leadership: can.approve_committee,
+    owner,
+  };
 }
 
 /** Default access for an account, before any changes on the platform dashboard. */
