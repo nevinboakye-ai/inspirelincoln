@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import QRCode from "qrcode";
 import {
   ArrowRight,
@@ -33,6 +34,9 @@ import { AttendanceCard, type AttendanceAnswer } from "@/components/portal/atten
 import { TravelCard } from "@/components/portal/travel-card";
 import { CardDock } from "@/components/portal/card-dock";
 import { isTravelMode, type TravelAnswer } from "@/lib/travel";
+import { HubScanner } from "@/components/day/hub-scanner";
+import { MyDayCard } from "@/components/day/my-day-card";
+import { workshopSlots } from "@/lib/day/plan";
 import { WorkshopRanking, type RankPlace, type RankWorkshop } from "@/components/portal/workshop-ranking";
 import { closingTimePassed, loadWorkshopChoices, rankingIsOpen } from "@/lib/workshops/choices";
 import {
@@ -320,6 +324,15 @@ export default async function PortalHome({
     ),
   ].filter(Boolean);
 
+  // The on-the-day scanner: committee members, right at the top of their hub.
+  const can = profile.access.can;
+  const scanner = profile.access.owner || can.day_scanner || can.check_in || can.allocate_workshops;
+  const slotOf = workshopSlots(sessions);
+  const scannerSessions = sessions
+    .filter((x) => slotOf.has(x.id))
+    .map((x) => ({ slot: slotOf.get(x.id)!, title: x.title, startsAt: x.startsAt, endsAt: x.endsAt }))
+    .sort((a, b) => a.slot - b.slot);
+
   const dashboards = (profile.access.owner || profile.access.committee) && (
     <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
       {profile.access.owner && (
@@ -439,6 +452,20 @@ export default async function PortalHome({
         {dashboards && <HubItem className="order-last xl:order-none xl:col-start-2 xl:row-start-2">{dashboards}</HubItem>}
 
         <div className="min-w-0 space-y-4 xl:col-start-1 xl:row-span-2 xl:row-start-1">
+          {scanner && (
+            <HubItem>
+              <HubScanner
+                workshops={workshops.map((w) => ({ id: w.id, number: w.number, title: w.title, slug: w.slug, room: w.room ?? null }))}
+                sessions={scannerSessions}
+                canCheckIn={profile.access.owner || can.check_in || can.manage_people}
+              />
+            </HubItem>
+          )}
+          {status === "approved" && !focus && (
+            <Suspense fallback={null}>
+              <MyDayCard db={db} userId={user.id} />
+            </Suspense>
+          )}
           {status !== "approved" && (
             <HubItem>
               <section className="app-card p-4 sm:p-5" aria-labelledby="status-title">

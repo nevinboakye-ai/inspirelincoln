@@ -143,6 +143,8 @@ export interface Workshop {
   accent: "electric" | "cyan" | "violet";
   motif: "manuscript" | "pulse" | "evidence" | "portfolio" | "simulation" | "globe";
   notes: string | null;
+  /** The room it runs in, as the committee set it on Workshop places. */
+  room?: string | null;
 }
 
 export interface Announcement {

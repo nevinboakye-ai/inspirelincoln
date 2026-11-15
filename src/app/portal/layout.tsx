@@ -43,6 +43,7 @@ export default async function PortalLayout({ children }: { children: React.React
           reviewer={profile.siteRole === "reviewer"}
           showNetwork={showNetwork}
           showPeople={showPeople}
+          showMyDay={profile.accountStatus === "approved" || profile.access.owner}
           unreadEnquiries={unreadEnquiries}
         />
         <div className="min-w-0">{children}</div>
