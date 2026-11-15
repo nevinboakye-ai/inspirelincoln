@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState, useTransition } from "react";
-import { ArrowDown, ArrowUp, Check, Clock, Eye, GripVertical, Info, Loader2, Lock, RotateCcw, Sparkles } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, ChevronDown, Clock, Eye, GripVertical, Info, Loader2, Lock, RotateCcw, Sparkles } from "lucide-react";
 import { saveWorkshopRanking } from "@/app/portal/workshop-actions";
 import { WorkshopInfo, type InfoWorkshop } from "@/components/portal/workshop-info";
 import { Overlay } from "@/components/ui/overlay";
@@ -58,6 +58,9 @@ export function WorkshopRanking({
   const start = initial && initial.length === workshops.length && initial.every((id) => byId.has(id)) ? initial : workshops.map((w) => w.id);
   const [order, setOrder] = useState<string[]>(start);
   const [saved, setSaved] = useState<string[] | null>(initial ? start : null);
+  // Once someone has ranked, the card folds down to their top three to save space.
+  const [expanded, setExpanded] = useState(!initial);
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const [savedAt, setSavedAt] = useState<string | null>(rankedAt);
   const [error, setError] = useState<string | null>(null);
   const [announce, setAnnounce] = useState("");
@@ -129,6 +132,8 @@ export function WorkshopRanking({
         setSaved(order);
         setSavedAt(r.savedAt);
         setAnnounce("Your ranking is saved.");
+        setExpanded(false);
+        requestAnimationFrame(() => toggleRef.current?.focus());
       } else setError(r.error);
     });
 
@@ -287,6 +292,9 @@ export function WorkshopRanking({
     );
   };
 
+  const canFold = Boolean(saved) && !preview;
+  const folded = canFold && !expanded;
+
   return (
     <section
       aria-labelledby={headingId}
@@ -312,7 +320,7 @@ export function WorkshopRanking({
       <div className="p-4 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
           <h2 id={headingId} className="flex items-center gap-2 font-display text-xl text-ink">
-            <Sparkles aria-hidden className="size-5 text-electric-600" /> {open ? "Rank your workshops" : "Your workshop ranking"}
+            <Sparkles aria-hidden className="size-5 text-electric-600" /> {open && !saved ? "Rank your workshops" : "Your workshop ranking"}
           </h2>
           {!open && (
             <p className="inline-flex items-center gap-1.5 rounded-full bg-paper-200 px-3 py-1 text-xs font-semibold text-slate-700">
@@ -326,7 +334,7 @@ export function WorkshopRanking({
             </p>
           )}
         </div>
-        {open ? (
+        {folded ? null : open ? (
           <p className="mt-2 text-sm leading-snug text-slate-700">
             All {workshops.length} run in each session and you go to {GO_TO}, one per session. We aim for your top {GO_TO} and use the rest if a room fills. Select a title for details.
           </p>
@@ -338,8 +346,46 @@ export function WorkshopRanking({
           </p>
         )}
 
-        {(open || saved) && (
-          <div className={cn("mt-3", dragging && "cursor-grabbing select-none")} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}>
+        {folded && (
+          <div className="mt-3">
+            <ol aria-label={`Your top ${top}`} className="space-y-1">
+              {(saved ?? order).slice(0, top).map((id, i) => {
+                const w = byId.get(id)!;
+                const c = workshopColour(w.number);
+                return (
+                  <li key={id} className="flex items-center gap-2.5 text-sm text-ink">
+                    <span aria-hidden className="grid size-6 shrink-0 place-items-center rounded-full font-ui text-xs font-bold text-white" style={{ background: c.solid }}>
+                      {i + 1}
+                    </span>
+                    <span className="sr-only">{ordinal(i + 1)}: </span>
+                    <span className="min-w-0 truncate font-semibold">{w.title}</span>
+                  </li>
+                );
+              })}
+            </ol>
+            {open && savedAt && (
+              <p className="mt-2.5 inline-flex items-center gap-1.5 text-sm font-medium text-success">
+                <Check aria-hidden className="size-4" /> Saved {savedWhen(savedAt)}. You can change it until ranking closes.
+              </p>
+            )}
+          </div>
+        )}
+        {canFold && (
+          <button
+            ref={toggleRef}
+            type="button"
+            aria-expanded={expanded}
+            aria-controls={`${headingId}-list`}
+            onClick={() => setExpanded((x) => !x)}
+            className="mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-[3px] border border-navy/20 bg-white px-4 font-ui text-sm font-semibold text-ink hover:bg-paper-200"
+          >
+            <ChevronDown aria-hidden className={cn("size-4 transition-transform", expanded && "rotate-180")} />
+            {expanded ? "Hide my ranking" : open ? `See all ${workshops.length} or change your order` : `See all ${workshops.length}`}
+          </button>
+        )}
+
+        {(open || saved) && !folded && (
+          <div id={`${headingId}-list`} className={cn("mt-3", dragging && "cursor-grabbing select-none")} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}>
             <h3 id={`${headingId}-top`} className="flex flex-wrap items-baseline gap-x-2 font-ui text-xs font-semibold uppercase tracking-[0.14em] text-ink">
               Your top {top} <span className="font-normal normal-case tracking-normal text-slate-700">the workshops we&apos;ll aim to give you</span>
             </h3>
@@ -374,7 +420,7 @@ export function WorkshopRanking({
             </button>
           </div>
         )}
-        {open && !preview && (
+        {open && !preview && !folded && (
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p role={error ? "alert" : undefined} className={cn("text-sm", error ? "font-medium text-danger" : "text-slate-700")}>
               {error ??
