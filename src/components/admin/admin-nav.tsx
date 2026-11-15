@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  CalendarCog, ClipboardCheck, Eye, FileStack, Gauge, HelpCircle, Inbox, Mail, MapPin, Megaphone, Mic, QrCode, ScrollText, Settings2,
+  BellRing, CalendarCog, ClipboardCheck, Eye, FileStack, Gauge, HelpCircle, Inbox, Mail, MapPin, Megaphone, Mic, QrCode, ScrollText, Settings2,
   Ticket, UserCheck, GraduationCap, ListOrdered, CalendarCheck2, Users, Wrench, DoorOpen, ShieldCheck, UserRound, LayoutDashboard, Activity, BarChart3, HandHeart, Car,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -25,6 +25,7 @@ const GROUPS: { title: string; links: LinkDef[] }[] = [
     links: [
       { href: "/admin", label: "Overview", icon: Gauge },
       { href: "/admin/checkin", label: "Check-in", icon: QrCode, need: ["check_in", "manage_people"] },
+      { href: "/admin/on-the-day", label: "On the day", icon: BellRing, need: ["live_alerts", "day_scanner", "allocate_workshops", "check_in"] },
     ],
   },
   {

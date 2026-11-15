@@ -140,6 +140,8 @@ export const CAPABILITIES = [
   "answer_enquiries",
   "allocate_workshops",
   "check_in",
+  "day_scanner",
+  "live_alerts",
   "send_email",
 ] as const;
 export type Capability = (typeof CAPABILITIES)[number];
@@ -153,6 +155,8 @@ export const CAPABILITY_LABEL: Record<Capability, { label: string; description: 
   answer_enquiries: { label: "Member enquiries", description: "Read and reply to the questions and requests delegates send from My Hub." },
   allocate_workshops: { label: "Workshop places", description: "Open and close workshop ranking, set room sizes, run the allocation and publish it." },
   check_in: { label: "Check-in desk", description: "Scan tickets and check people in on the day." },
+  day_scanner: { label: "On-the-day scanner", description: "Scan Delegate Cards from My Hub to see someone's programme for the day and mark them at a workshop." },
+  live_alerts: { label: "On-screen alerts", description: "Turn the \"where to go next\" alerts on or off, place people in sessions, and send an alert to every screen." },
   send_email: { label: "Group emails", description: "Send emails to groups of delegates, presenters or the committee." },
 };
 
@@ -162,12 +166,12 @@ export const DEFAULT_RULES: Record<AccountType, Capability[]> = {
   oral_presenter: [],
   poster_presenter: [],
   oral_waitlist: [],
-  supporting_committee: ["edit_website", "review_submissions"],
-  academic_team: ["edit_website", "review_submissions"],
-  publicity_team: ["edit_website", "review_submissions"],
-  finance_team: ["edit_website", "review_submissions"],
-  logistics_team: ["edit_website", "review_submissions"],
-  executive_committee: ["edit_website", "review_submissions", "review_accounts", "manage_people", "answer_enquiries", "allocate_workshops", "check_in"],
+  supporting_committee: ["edit_website", "review_submissions", "day_scanner"],
+  academic_team: ["edit_website", "review_submissions", "day_scanner"],
+  publicity_team: ["edit_website", "review_submissions", "day_scanner"],
+  finance_team: ["edit_website", "review_submissions", "day_scanner"],
+  logistics_team: ["edit_website", "review_submissions", "day_scanner"],
+  executive_committee: ["edit_website", "review_submissions", "review_accounts", "manage_people", "answer_enquiries", "allocate_workshops", "check_in", "day_scanner", "live_alerts"],
   vice_president: [...CAPABILITIES],
   president: [...CAPABILITIES],
 };

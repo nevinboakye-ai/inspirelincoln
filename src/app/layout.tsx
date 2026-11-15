@@ -10,6 +10,7 @@ import { ViewAsBanner } from "@/components/layout/view-as-banner";
 import { ScrollProgress } from "@/components/motion/effects";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { VisitCounter } from "@/components/layout/visit-counter";
+import { LiveAlerts } from "@/components/day/live-alerts";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { getAnnouncements, getEdition, getSiteOpen, getSponsors } from "@/lib/data/content";
 
@@ -69,6 +70,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <EditShortcut />
           <ViewAsLauncher />
           <VisitCounter />
+          <LiveAlerts />
           <Suspense fallback={null}>
             <ViewAsBanner />
           </Suspense>

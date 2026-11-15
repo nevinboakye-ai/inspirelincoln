@@ -1,15 +1,16 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Gauge, MessagesSquare, LayoutDashboard, LogOut, ShieldCheck, Ticket, UploadCloud, UserRound, ClipboardCheck, NotebookPen, Users } from "lucide-react";
+import { CalendarClock, Gauge, MessagesSquare, LayoutDashboard, LogOut, ShieldCheck, Ticket, UploadCloud, UserRound, ClipboardCheck, NotebookPen, Users } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 import { cn } from "@/lib/cn";
 import type { Access } from "@/lib/accounts";
 
-export function PortalNav({ name, typeLabel, presenter, access, reviewer, showNetwork, showPeople, unreadEnquiries = 0 }: { name: string; typeLabel: string; presenter: boolean; access: Access; reviewer: boolean; showNetwork: boolean; showPeople: boolean; unreadEnquiries?: number }) {
+export function PortalNav({ name, typeLabel, presenter, access, reviewer, showNetwork, showPeople, showMyDay = false, unreadEnquiries = 0 }: { name: string; typeLabel: string; presenter: boolean; access: Access; reviewer: boolean; showNetwork: boolean; showPeople: boolean; showMyDay?: boolean; unreadEnquiries?: number }) {
   const path = usePathname();
   const links = [
     { href: "/portal", label: "My conference", icon: Ticket },
+    ...(showMyDay ? [{ href: "/portal/my-day", label: "My day", icon: CalendarClock }] : []),
     ...(presenter ? [{ href: "/portal/submission", label: "My submission", icon: UploadCloud }] : []),
     ...(showNetwork ? [{ href: "/portal/network", label: "Network", icon: Users }] : []),
     ...(showPeople ? [{ href: "/portal/people", label: "People I've met", icon: NotebookPen }] : []),
