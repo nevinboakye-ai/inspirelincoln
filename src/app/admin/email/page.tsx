@@ -6,6 +6,8 @@ import { ReminderForm } from "@/components/admin/reminder-form";
 import { Notice } from "@/components/ui/notice";
 import { ACCOUNT_TYPE_LABEL } from "@/lib/accounts";
 import { emailConfigured } from "@/lib/email/resend";
+import { loadEmailTemplates } from "@/lib/email/saved-templates";
+import type { NotAcceptedGroup } from "@/lib/email/presets";
 import type { AccountType } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Group email" };
@@ -17,11 +19,20 @@ const when = (d: string) => new Date(d).toLocaleString("en-GB", { timeZone: "Eur
 
 export default async function EmailPage() {
   const { db } = await requireAccess("send_email", "/admin/email");
-  const [{ data: people }, { data: sent }, { data: directory }] = await Promise.all([
+  const [{ data: people }, { data: sent }, { data: directory }, notAccepted, templates] = await Promise.all([
     db.rpc("audience_counts"),
     db.from("email_broadcasts").select("*").order("created_at", { ascending: false }).limit(20),
     db.rpc("email_directory"),
+    db.rpc("not_accepted_recipients"),
+    loadEmailTemplates(db),
   ]);
+  // Null until setup file 48 is run, so the form can say so.
+  const notAcceptedCounts: Record<NotAcceptedGroup, number> | null = notAccepted.error
+    ? null
+    : {
+        attending: ((notAccepted.data ?? []) as { attending: boolean }[]).filter((r) => r.attending).length,
+        not_attending: ((notAccepted.data ?? []) as { attending: boolean }[]).filter((r) => !r.attending).length,
+      };
   const everyone = (directory ?? []) as { email: string; full_name: string | null; detail: string; joined: boolean }[];
   const selected = everyone.filter((p) => !p.joined).length;
   const counts: Partial<Record<AccountType, number>> = {};
@@ -46,10 +57,10 @@ export default async function EmailPage() {
         <ReminderForm />
       </Panel>
       <Panel title="Email a group">
-        <BroadcastForm counts={counts} selected={selected} />
+        <BroadcastForm counts={counts} selected={selected} templates={templates} notAcceptedCounts={notAcceptedCounts} />
       </Panel>
       <Panel title="Email one person">
-        <DirectEmailForm people={everyone} />
+        <DirectEmailForm people={everyone} templates={templates} />
       </Panel>
       <Panel title="Sent">
         {sent?.length ? (
@@ -61,7 +72,7 @@ export default async function EmailPage() {
                   {when(b.created_at)} · {b.sender_name || "Committee"} ·{" "}
                   {b.recipient_email
                     ? <>To {b.recipient_email} · {b.delivered_count ? "Sent" : "Not sent"}</>
-                    : <>{b.purpose === "marketing" ? "News" : "Conference update"} · {(b.audience_types as AccountType[]).map((t) => ACCOUNT_TYPE_LABEL[t]).join(", ")}{b.include_selected ? " and people not yet signed up" : ""} · {b.delivered_count} of {b.recipient_count} sent</>}
+                    : <>{b.purpose === "marketing" ? "News" : "Conference update"} · {[...(b.audience_types as AccountType[]).map((t) => ACCOUNT_TYPE_LABEL[t]), ...(b.audience_note ? [b.audience_note as string] : [])].join(", ")}{b.include_selected ? " and people not yet signed up" : ""} · {b.delivered_count} of {b.recipient_count} sent</>}
                 </p>
               </li>
             ))}

@@ -1,8 +1,8 @@
 "use client";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { Loader2, Send } from "lucide-react";
-import { giveFeedback, previewRecipients, reviewAccount, sendBroadcast, sendDirectEmail, type BroadcastResult, type RecipientRow } from "@/app/admin/committee-actions";
+import { giveFeedback, previewRecipients, resetEmailTemplate, reviewAccount, saveEmailTemplate, sendBroadcast, sendDirectEmail, type BroadcastResult, type RecipientRow } from "@/app/admin/committee-actions";
 import { Badge } from "@/components/ui/badge";
 import type { ActionResult } from "@/app/portal/actions";
 import { ResultBanner } from "@/components/portal/profile-forms";
@@ -12,13 +12,13 @@ import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_GROUPS, ACCOUNT_TYPE_LABEL, ACCOUNT_
 import type { AccountStatus, AccountType } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { btn } from "./ui";
-import { EMAIL_PRESETS, PLACEHOLDER_HELP, type EmailPreset } from "@/lib/email/presets";
+import { EMAIL_PRESETS, NOT_ACCEPTED_GROUPS, NOT_ACCEPTED_LABEL, PLACEHOLDER_HELP, type EmailPreset, type NotAcceptedGroup } from "@/lib/email/presets";
 import { useToast } from "@/components/ui/toast";
 
 const small = "min-h-11 rounded-[3px] border border-navy/15 bg-white px-3 text-sm";
 
 /** Start from one of the committee's ready-made emails. Everything stays editable. */
-function TemplatePicker({ id, onPick }: { id: string; onPick: (p: EmailPreset | null) => void }) {
+function TemplatePicker({ id, onPick, templates = EMAIL_PRESETS }: { id: string; onPick: (p: EmailPreset | null) => void; templates?: EmailPreset[] }) {
   const [chosen, setChosen] = useState<EmailPreset | null>(null);
   return (
     <div className="rounded-[3px] border border-gold-600/40 bg-gold/10 p-4">
@@ -27,16 +27,80 @@ function TemplatePicker({ id, onPick }: { id: string; onPick: (p: EmailPreset | 
         id={id}
         value={chosen?.id ?? ""}
         onChange={(e) => {
-          const p = EMAIL_PRESETS.find((x) => x.id === e.target.value) ?? null;
+          const p = templates.find((x) => x.id === e.target.value) ?? null;
           setChosen(p);
           onPick(p);
         }}
         className={cn(small, "mt-2 w-full")}
       >
         <option value="">Write my own</option>
-        {EMAIL_PRESETS.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        {templates.map((p) => <option key={p.id} value={p.id}>{p.name}{p.saved ? " (edited)" : ""}</option>)}
       </select>
       <p className="mt-2 text-sm text-slate-700">{chosen ? `${chosen.use} You can edit anything before sending.` : "Templates fill in the subject, message and suggested recipients. You can edit anything before sending."}</p>
+      {chosen?.saved && (
+        <p className="mt-1 text-xs text-slate">
+          Using the committee&apos;s saved version{chosen.saved.by ? `, last saved by ${chosen.saved.by}` : ""} on {new Date(chosen.saved.at).toLocaleString("en-GB", { timeZone: "Europe/London", dateStyle: "medium", timeStyle: "short" })}.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Saves the subject, message, recipients and login choice as the committee's
+ * own version of the chosen template, so it can be reused or finished later.
+ */
+function SaveTemplate({
+  template,
+  draft,
+  onReset,
+}: {
+  template: EmailPreset;
+  draft: Parameters<typeof saveEmailTemplate>[0];
+  onReset: () => void;
+}) {
+  const [pending, start] = useTransition();
+  const [result, setResult] = useState<ActionResult>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
+  return (
+    <div className="rounded-[3px] border border-dashed border-navy/20 bg-paper/60 p-3 text-sm">
+      <p className="text-slate-700">
+        Editing <span className="font-semibold text-ink">{template.name}</span>. Save your changes to keep them as this template for next time. Saving doesn&apos;t send anything.
+      </p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => start(async () => setResult(await saveEmailTemplate(draft)))}
+          className={btn.secondary}
+        >
+          {pending && <Loader2 aria-hidden className="size-4 animate-spin" />} Save changes to this template
+        </button>
+        {template.saved &&
+          (confirmReset ? (
+            <>
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() =>
+                  start(async () => {
+                    const r = await resetEmailTemplate(template.id);
+                    setResult(r);
+                    setConfirmReset(false);
+                    if (r?.ok) onReset();
+                  })
+                }
+                className="min-h-11 px-3 font-semibold text-danger"
+              >
+                Yes, go back to the original
+              </button>
+              <button type="button" onClick={() => setConfirmReset(false)} className="min-h-11 px-3 font-medium text-slate-700">Cancel</button>
+            </>
+          ) : (
+            <button type="button" onClick={() => setConfirmReset(true)} className="min-h-11 px-3 font-semibold text-electric-600">Go back to the original wording</button>
+          ))}
+      </div>
+      {result && <p role="status" className={cn("mt-2 font-medium", result.ok ? "text-success" : "text-danger")}>{result.ok ? result.message : result.error}</p>}
     </div>
   );
 }
@@ -144,11 +208,24 @@ export function FeedbackForm({ submissionId }: { submissionId: string }) {
 
 const STATUS_ORDER = ["approved", "waitlisted", "pending", "declined"] as const;
 
-export function BroadcastForm({ counts, selected }: { counts: Partial<Record<AccountType, number>>; selected: number }) {
+export function BroadcastForm({
+  counts,
+  selected,
+  templates = EMAIL_PRESETS,
+  notAcceptedCounts,
+}: {
+  counts: Partial<Record<AccountType, number>>;
+  selected: number;
+  templates?: EmailPreset[];
+  /** How many people are in each "Presentation not accepted" group, or null before setup file 48 is run. */
+  notAcceptedCounts: Record<NotAcceptedGroup, number> | null;
+}) {
   const [state, action, pending] = useActionState<BroadcastResult, FormData>(sendBroadcast, null);
   const [confirming, setConfirming] = useState(false);
   const [purpose, setPurpose] = useState<"service" | "marketing">("service");
   const [types, setTypes] = useState<AccountType[]>(["delegate"]);
+  const [notAccepted, setNotAccepted] = useState<NotAcceptedGroup[]>([]);
+  const [template, setTemplate] = useState<EmailPreset | null>(null);
   const [statuses, setStatuses] = useState<AccountStatus[]>(["approved"]);
   const [includeSelected, setIncludeSelected] = useState(false);
   const [includeLogin, setIncludeLogin] = useState(false);
@@ -156,11 +233,13 @@ export function BroadcastForm({ counts, selected }: { counts: Partial<Record<Acc
   const [body, setBody] = useState("");
   const [excluded, setExcluded] = useState<Set<string>>(new Set());
   const pick = (p: EmailPreset | null) => {
+    setTemplate(p);
     if (!p) return;
     setSubject(p.subject);
     setBody(p.body);
     setPurpose("service");
     setTypes(p.audience.types);
+    setNotAccepted(p.audience.notAccepted ?? []);
     setStatuses(p.audience.statuses);
     setIncludeSelected(p.audience.includeSelected);
     setIncludeLogin(p.login);
@@ -177,7 +256,7 @@ export function BroadcastForm({ counts, selected }: { counts: Partial<Record<Acc
     let live = true;
     const t = setTimeout(async () => {
       setLoading(true);
-      const r = await previewRecipients({ types, statuses, purpose, includeSelected });
+      const r = await previewRecipients({ types, notAccepted, statuses, purpose, includeSelected });
       if (!live) return;
       setLoading(false);
       setPeople(r.ok ? r.people : []);
@@ -187,13 +266,13 @@ export function BroadcastForm({ counts, selected }: { counts: Partial<Record<Acc
       live = false;
       clearTimeout(t);
     };
-  }, [types, statuses, purpose, includeSelected]);
+  }, [types, notAccepted, statuses, purpose, includeSelected]);
 
   const sending = (people ?? []).filter((p) => !excluded.has(p.email));
   return (
     <form onSubmit={submitWithoutReset(action)} className="space-y-6" onChange={() => setConfirming(false)}>
       <ResultBanner state={state} />
-      <TemplatePicker id="group-template" onPick={pick} />
+      <TemplatePicker id="group-template" onPick={pick} templates={templates} />
       <fieldset>
         <legend className="mb-2 text-sm font-semibold text-ink">Send to <span className="text-danger">*</span></legend>
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -220,6 +299,25 @@ export function BroadcastForm({ counts, selected }: { counts: Partial<Record<Acc
             The whole committee
           </button>
         </p>
+        <div className="mt-3 rounded-[3px] border border-navy/15 bg-white p-3">
+          <p className="text-sm font-semibold text-ink">Presentation not accepted</p>
+          <p className="text-sm text-slate-700">
+            People who applied to present an oral or poster and weren&apos;t accepted, matched to their account or selected-list entry. For conference updates only.
+          </p>
+          {notAcceptedCounts === null ? (
+            <p className="mt-2 text-sm text-slate-700">This list isn&apos;t set up yet. Run setup file 48 in Supabase.</p>
+          ) : (
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              {NOT_ACCEPTED_GROUPS.map((g) => (
+                <label key={g} className={cn("flex min-h-11 items-center gap-3 rounded-[3px] border bg-white px-3 py-2 text-sm", notAccepted.includes(g) ? "border-navy ring-1 ring-navy" : "border-navy/15")}>
+                  <input type="checkbox" name="notAccepted" value={g} checked={notAccepted.includes(g)} onChange={() => setNotAccepted(toggle(notAccepted, g))} className="size-4 accent-navy" />
+                  <span className="flex-1 text-ink">{NOT_ACCEPTED_LABEL[g].label}</span>
+                  <span className="text-xs text-slate">{notAcceptedCounts[g]}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
         {fe("types") && <p className="mt-2 text-sm font-medium text-danger">{fe("types")}</p>}
       </fieldset>
       <fieldset>
@@ -287,6 +385,16 @@ export function BroadcastForm({ counts, selected }: { counts: Partial<Record<Acc
         <textarea id="body" name="body" rows={body ? 18 : 10} maxLength={10000} value={body} onChange={(e) => setBody(e.target.value)} className={inputClass} />
       </Field>
       <LoginToggle checked={includeLogin} onChange={setIncludeLogin} disabled={purpose !== "service"} />
+      {template && (
+        <SaveTemplate
+          template={template}
+          draft={{ id: template.id, subject, body, types, notAccepted, statuses, includeSelected, login: includeLogin }}
+          onReset={() => {
+            const original = EMAIL_PRESETS.find((p) => p.id === template.id);
+            if (original) pick(original);
+          }}
+        />
+      )}
       <div className="flex flex-wrap items-center gap-2">
         <button name="intent" value="test" disabled={pending} className={btn.secondary}>Send me a test</button>
         {confirming ? (
@@ -386,8 +494,11 @@ function RecipientList({
                       <span className="block break-all text-xs text-slate">{[p.email, p.institution].filter(Boolean).join(" · ")}</span>
                     </span>
                     <span className="hidden shrink-0 flex-wrap justify-end gap-1 sm:flex">
-                      <Badge tone="violet">{ACCOUNT_TYPE_LABEL[p.account_type]}</Badge>
-                      {p.joined ? (
+                      {p.no_account ? <Badge tone="neutral">No account or place</Badge> : <Badge tone="violet">{ACCOUNT_TYPE_LABEL[p.account_type]}</Badge>}
+                      {p.not_accepted && (p.account_type === "poster_presenter" || p.account_type === "oral_presenter") && (
+                        <Badge tone="danger">Still a presenter on the site</Badge>
+                      )}
+                      {p.no_account ? null : p.joined ? (
                         p.account_status && p.account_status !== "approved" && <Badge tone={ACCOUNT_STATUS_LABEL[p.account_status].tone}>{ACCOUNT_STATUS_LABEL[p.account_status].label}</Badge>
                       ) : (
                         <Badge tone="warning">Not joined yet</Badge>
@@ -414,11 +525,13 @@ export function DirectEmailForm({
   initial = null,
   locked = false,
   defaults,
+  templates = EMAIL_PRESETS,
 }: {
   people: DirectoryPerson[];
   initial?: DirectoryPerson | null;
   locked?: boolean;
   defaults?: { subject: string; body: string };
+  templates?: EmailPreset[];
 }) {
   const [state, action, pending] = useActionState<ActionResult, FormData>(sendDirectEmail, null);
   const [query, setQuery] = useState("");
@@ -476,7 +589,7 @@ export function DirectEmailForm({
       {to && !to.joined && (
         <p className="text-sm text-slate-700">They haven&apos;t set up an account yet, so their email includes a button to do it.</p>
       )}
-      <TemplatePicker id="direct-template" onPick={(p) => { if (p) { setSubject(p.subject); setBody(p.body); setIncludeLogin(p.login); } }} />
+      <TemplatePicker id="direct-template" templates={templates} onPick={(p) => { if (p) { setSubject(p.subject); setBody(p.body); setIncludeLogin(p.login); } }} />
       <Field id="direct-subject" label="Subject" required error={fe("subject")}>
         <input id="direct-subject" name="subject" maxLength={160} value={subject} onChange={(e) => setSubject(e.target.value)} className={inputClass} />
       </Field>

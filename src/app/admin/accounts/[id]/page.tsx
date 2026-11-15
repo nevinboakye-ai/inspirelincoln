@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Crown, Mail, ShieldCheck } from "lucide-react";
 import { requireAccess } from "@/lib/auth";
+import { loadEmailTemplates } from "@/lib/email/saved-templates";
 import { AccountTypePicker } from "@/components/admin/account-type-picker";
 import { AdminHeader, Panel } from "@/components/admin/ui";
 import { AccountReviewForm, DirectEmailForm } from "@/components/admin/committee-forms";
@@ -176,6 +177,7 @@ export default async function PersonPage({ params, searchParams }: { params: Pro
                 <DirectEmailForm
                   key={p.email}
                   people={[]}
+                  templates={await loadEmailTemplates(db)}
                   locked
                   initial={{ email: p.email.toLowerCase(), full_name: p.full_name, detail: [p.institution, rolesLabel(rolesOf(type, extra))].filter(Boolean).join(" · "), joined: true }}
                 />
