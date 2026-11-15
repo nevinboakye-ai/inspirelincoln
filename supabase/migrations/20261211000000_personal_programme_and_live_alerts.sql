@@ -34,7 +34,7 @@ on conflict (key) do update set label = excluded.label, description = excluded.d
 -- executive committee, vice president and president.
 insert into public.access_rules (account_type, capability, allowed)
 select t.account_type::public.account_type, 'day_scanner',
-       t.account_type not in ('delegate', 'oral_presenter', 'poster_presenter', 'oral_waitlist')
+       t.account_type not in ('delegate', 'oral_presenter', 'poster_presenter', 'oral_waitlist', 'speaker', 'judge')
   from (select unnest(enum_range(null::public.account_type))::text as account_type) t
 on conflict do nothing;
 insert into public.access_rules (account_type, capability, allowed)
@@ -53,7 +53,7 @@ returns boolean language sql stable security definer set search_path = public as
   select coalesce((
     select p.account_status = 'approved' and exists (
              select 1 from unnest(public.all_types(p.account_type, p.extra_types)) r
-              where r not in ('delegate', 'oral_presenter', 'poster_presenter', 'oral_waitlist'))
+              where r::text not in ('delegate', 'oral_presenter', 'poster_presenter', 'oral_waitlist', 'speaker', 'judge'))
       from public.profiles p where p.id = auth.uid()
   ), false) or public.is_site_owner()
 $$;
