@@ -235,13 +235,13 @@ export function ProgrammeExplorer({ sessions, speakers, workshops, rooms, editio
             />
           </label>
 
-          <div className="flex flex-wrap gap-2 lg:ml-auto">
-            <select
+          <div className="grid grid-cols-2 gap-2 empty:hidden lg:ml-auto lg:flex">
+            {sessionWorkshops.length > 0 && <select
               aria-label="Filter by workshop"
               value={workshopFilter}
               onChange={(e) => setWorkshopFilter(e.target.value)}
               disabled={!sessionWorkshops.length}
-              className="h-11 rounded-full border border-navy/15 bg-white px-4 text-sm text-ink disabled:opacity-50"
+              className="h-11 min-w-0 rounded-full border border-navy/15 bg-white px-4 text-sm text-ink disabled:opacity-50"
             >
               <option value="">{sessionWorkshops.length ? "All workshops" : "Workshops: times TBC"}</option>
               {sessionWorkshops.map((w) => (
@@ -249,13 +249,13 @@ export function ProgrammeExplorer({ sessions, speakers, workshops, rooms, editio
                   {w.number}. {w.title}
                 </option>
               ))}
-            </select>
-            <select
+            </select>}
+            {sessionSpeakers.length > 0 && <select
               aria-label="Filter by speaker"
               value={speakerFilter}
               onChange={(e) => setSpeakerFilter(e.target.value)}
               disabled={!sessionSpeakers.length}
-              className="h-11 rounded-full border border-navy/15 bg-white px-4 text-sm text-ink disabled:opacity-50"
+              className="h-11 min-w-0 rounded-full border border-navy/15 bg-white px-4 text-sm text-ink disabled:opacity-50"
             >
               <option value="">{sessionSpeakers.length ? "All speakers" : "Speakers: coming soon"}</option>
               {sessionSpeakers.map((s) => (
@@ -263,7 +263,7 @@ export function ProgrammeExplorer({ sessions, speakers, workshops, rooms, editio
                   {s.fullName}
                 </option>
               ))}
-            </select>
+            </select>}
           </div>
         </div>
 

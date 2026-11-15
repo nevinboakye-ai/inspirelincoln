@@ -31,17 +31,13 @@ export function confirmEmailMessage(o: { siteUrl: string; link: string; name?: s
         ? "Thank you for setting up your INSPIRE account. Confirm this is your email address and you'll go straight to My Hub, where your next steps are waiting."
         : "Thank you for registering for INSPIRE. Confirm this is your email address so we can finish setting up your account.",
     ],
-    steps: o.selected
-      ? [
-          "<strong>Tap the button below</strong> to confirm your email.",
-          "On the page that opens, tap <strong>Confirm my email</strong> once more. You'll be signed in.",
-          "In <strong>My Hub</strong>, add your photo and complete your profile before the deadline.",
-        ]
-      : [
-          "<strong>Tap the button below</strong> to confirm your email.",
-          "On the page that opens, tap <strong>Confirm my email</strong> once more. You'll be signed in.",
-          "The committee reviews your account and emails you as soon as it's approved.",
-        ],
+    checklist: [
+      { title: "Tap the button below", detail: "It opens the INSPIRE website." },
+      { title: "Tap Confirm my email once more", detail: "This confirms your email and signs you in." },
+      o.selected
+        ? { title: "Finish your profile in My Hub", detail: "Add your photo and complete your profile before the deadline." }
+        : { title: "Wait for the committee", detail: "We review your account and email you as soon as it's approved." },
+    ],
     cta: { label: "Confirm my email", url: o.link },
     details: [DATE, VENUE],
     footnote:
@@ -61,10 +57,10 @@ export function finishSetupMessage(o: { siteUrl: string; link: string; name?: st
       hello(o.name),
       "You've already started setting up an INSPIRE account with this email address, but it hasn't been confirmed yet. Here's a fresh link to finish.",
     ],
-    steps: [
-      "<strong>Tap the button below</strong> and then <strong>Continue</strong> on the page that opens.",
-      "Choose your password. This confirms your email at the same time.",
-      "You'll go straight to <strong>My Hub</strong>.",
+    checklist: [
+      { title: "Tap the button below, then Continue", detail: "It opens the INSPIRE website." },
+      { title: "Choose your password", detail: "This confirms your email at the same time." },
+      { title: "You're in", detail: "You'll go straight to My Hub." },
     ],
     cta: { label: "Finish setting up", url: o.link },
     footnote: "The link works once and only for a limited time. If you didn't ask for this, you can ignore this email.",
@@ -80,10 +76,10 @@ export function resetPasswordMessage(o: { siteUrl: string; link: string; name?: 
     eyebrow: "Password reset",
     heading: "Choose a new password",
     paragraphs: [hello(o.name), "We received a request to reset the password for your INSPIRE account."],
-    steps: [
-      "<strong>Tap the button below</strong> and then <strong>Continue</strong> on the page that opens.",
-      "Choose a new password of at least 10 characters.",
-      "You'll be signed in and taken to <strong>My Hub</strong>.",
+    checklist: [
+      { title: "Tap the button below, then Continue", detail: "It opens the INSPIRE website." },
+      { title: "Choose a new password", detail: "Use at least 10 characters." },
+      { title: "You're in", detail: "You'll be signed in and taken to My Hub." },
     ],
     cta: { label: "Reset my password", url: o.link },
     footnote:

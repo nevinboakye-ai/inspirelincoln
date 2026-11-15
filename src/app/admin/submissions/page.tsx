@@ -35,7 +35,7 @@ export default async function SubmissionsPage({ searchParams }: { searchParams: 
   const waiting = all.filter((s) => s.status === "submitted").length;
 
   const chip = (label: string, href: string, active: boolean) => (
-    <Link href={href} aria-current={active ? "page" : undefined} className={cn("flex min-h-11 shrink-0 items-center rounded-[3px] px-4 text-sm font-semibold", active ? "bg-navy text-paper" : "border border-navy/15 bg-white text-ink")}>
+    <Link key={href} href={href} aria-current={active ? "page" : undefined} className={cn("flex min-h-11 shrink-0 items-center rounded-[3px] px-4 text-sm font-semibold", active ? "bg-navy text-paper" : "border border-navy/15 bg-white text-ink")}>
       {label}
     </Link>
   );
@@ -54,7 +54,7 @@ export default async function SubmissionsPage({ searchParams }: { searchParams: 
         {(["submitted", "changes_requested", "approved"] as const).map((s) => chip(SUBMISSION_STATUS_LABEL[s].label, q(kind, s), status === s))}
       </div>
       {!rows.length && <p className="rounded-xl border border-dashed border-navy/20 bg-white p-8 text-center text-slate-700">Nothing to review here yet.</p>}
-      <ul className="divide-y divide-navy/10 overflow-hidden rounded-xl border border-navy/10 bg-white">
+      {rows.length > 0 && <ul className="divide-y divide-navy/10 overflow-hidden rounded-xl border border-navy/10 bg-white">
         {rows.map((s) => {
           const st = SUBMISSION_STATUS_LABEL[s.status as SubmissionStatus];
           const fb = (s.submission_feedback as unknown as { count: number }[])?.[0]?.count ?? 0;
@@ -75,7 +75,7 @@ export default async function SubmissionsPage({ searchParams }: { searchParams: 
             </li>
           );
         })}
-      </ul>
+      </ul>}
     </div>
   );
 }

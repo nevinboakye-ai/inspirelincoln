@@ -43,3 +43,25 @@ const BUILT_IN_FILES: Record<string, string[]> = {
 export const BUILT_IN_LOGOS: LogoMap = Object.fromEntries(
   Object.entries(BUILT_IN_FILES).flatMap(([file, names]) => names.map((n) => [n, `/universities/${file}.svg`])),
 );
+
+const DISPLAY_NAME: Record<string, string> = {
+  "university-of-lincoln": "University of Lincoln",
+  "university-of-east-anglia": "University of East Anglia",
+  "university-of-nottingham": "University of Nottingham",
+  "university-of-leeds": "University of Leeds",
+  "hull-york-medical-school": "Hull York Medical School",
+  "keele-university": "Keele University",
+  "kings-college-london": "King's College London",
+};
+const CANONICAL: Record<string, string> = Object.fromEntries(
+  Object.entries(BUILT_IN_FILES).flatMap(([file, names]) => names.map((n) => [n, DISPLAY_NAME[file]!])),
+);
+
+/**
+ * One spelling per university, so "UEA" and "University of East Anglia" are
+ * grouped together. Names we don't know are tidied but otherwise kept.
+ */
+export function universityName(name: string | null | undefined) {
+  const tidy = (name ?? "").trim().replace(/\s+/g, " ");
+  return CANONICAL[uniKey(tidy)] ?? tidy;
+}
