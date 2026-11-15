@@ -676,3 +676,7 @@ dialog.gate.is-leaving { background: transparent; }
 @media (prefers-reduced-motion: reduce) {
   .lanyard-foil, .hub-orb { animation: none; }
 }
+/* A message bubble arriving in a conversation. */
+@keyframes dm-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+}
