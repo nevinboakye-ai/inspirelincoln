@@ -132,29 +132,114 @@ export function submissionKindsFor(types: readonly AccountType[]): SubmissionKin
 
 /** Things a person can be allowed to do. Mirrors public.access_capabilities. */
 export const CAPABILITIES = [
-  "edit_website",
-  "review_submissions",
   "review_accounts",
   "approve_committee",
-  "manage_people",
+  "remove_accounts",
+  "view_attendance",
+  "view_travel",
+  "check_in",
   "answer_enquiries",
   "allocate_workshops",
-  "check_in",
+  "review_submissions",
   "send_email",
+  "manage_people",
+  "view_audit_log",
+  "edit_programme",
+  "edit_speakers",
+  "edit_workshops",
+  "edit_announcements",
+  "edit_committee",
+  "edit_map",
+  "edit_sponsors",
+  "edit_faqs",
+  "edit_settings",
+  "edit_website",
 ] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
 export const CAPABILITY_LABEL: Record<Capability, { label: string; description: string }> = {
-  edit_website: { label: "Edit the website", description: "Programme, speakers, committee, campus map, FAQs, announcements and conference settings." },
-  review_submissions: { label: "Review slides and posters", description: "See presenters' uploads and give feedback, request changes or approve them." },
-  review_accounts: { label: "Review accounts", description: "See new registrations and approve, waitlist or decline them." },
-  approve_committee: { label: "Approve committee accounts", description: "Approve executive committee, vice president and president accounts." },
-  manage_people: { label: "Delegate records", description: "Registrations, abstracts, poster records, enquiries and the audit log. This is personal data." },
+  review_accounts: { label: "Review accounts", description: "New registrations, the selected delegate list, and correcting people's details and roles." },
+  approve_committee: { label: "Approve committee accounts", description: "Approve executive committee, vice president and president accounts, and change executive roles." },
+  remove_accounts: { label: "Remove accounts", description: "Permanently delete someone's account and everything linked to it." },
+  view_attendance: { label: "Presenter attendance", description: "Which presenters have confirmed they're coming, and the oral waiting list." },
+  view_travel: { label: "Travel and parking", description: "How delegates are travelling and their car registrations for parking." },
+  check_in: { label: "Check-in desk", description: "Scan tickets and check people in on the day." },
   answer_enquiries: { label: "Member enquiries", description: "Read and reply to the questions and requests delegates send from My Hub." },
   allocate_workshops: { label: "Workshop places", description: "Open and close workshop ranking, set room sizes, run the allocation and publish it." },
-  check_in: { label: "Check-in desk", description: "Scan tickets and check people in on the day." },
-  send_email: { label: "Group emails", description: "Send emails to groups of delegates, presenters or the committee." },
+  review_submissions: { label: "Review slides and posters", description: "See presenters' uploads and give feedback, request changes or approve them." },
+  send_email: { label: "Group emails", description: "Send emails to groups of delegates, presenters or the committee, or to one person." },
+  manage_people: { label: "Delegate records", description: "Registrations, abstracts and poster records. This is personal data." },
+  view_audit_log: { label: "Audit log", description: "The record of every change made on the dashboard." },
+  edit_programme: { label: "Programme", description: "Programme sessions, times, rooms and the speakers on each session." },
+  edit_speakers: { label: "Speakers", description: "Speaker profiles, photos and biographies." },
+  edit_workshops: { label: "Workshop pages", description: "Workshop descriptions, facilitators and what to bring." },
+  edit_announcements: { label: "Announcements", description: "Announcements shown on the website and in My Hub." },
+  edit_committee: { label: "Committee profiles", description: "Names, roles, photos and biographies on the About page." },
+  edit_map: { label: "Campus map", description: "Places, pins and rooms on the campus map." },
+  edit_sponsors: { label: "Sponsors and logos", description: "Sponsors, partner institutions and university logos." },
+  edit_faqs: { label: "FAQs", description: "Questions and answers on the website." },
+  edit_settings: { label: "Conference settings", description: "Conference status, dates, registration, deadlines, modes and editions." },
+  edit_website: { label: "Other website pages", description: "History timeline, gallery, resources and opportunities." },
 };
+
+/** The areas of the site, grouped the way the dashboard menu groups them. */
+export const CAPABILITY_GROUPS: { title: string; hint: string; caps: Capability[] }[] = [
+  {
+    title: "Accounts",
+    hint: "Who has an account and what they're set up as",
+    caps: ["review_accounts", "approve_committee", "remove_accounts"],
+  },
+  {
+    title: "On the day and people",
+    hint: "Lists of delegates and presenters, and the check-in desk",
+    caps: ["view_attendance", "view_travel", "check_in", "answer_enquiries", "allocate_workshops", "review_submissions", "send_email"],
+  },
+  { title: "Records", hint: "Personal data and the history of changes", caps: ["manage_people", "view_audit_log"] },
+  {
+    title: "Website",
+    hint: "Each part of the public website",
+    caps: ["edit_programme", "edit_speakers", "edit_workshops", "edit_announcements", "edit_committee", "edit_map", "edit_sponsors", "edit_faqs", "edit_settings", "edit_website"],
+  },
+];
+
+/** Every part of the public website someone might be able to edit. */
+export const WEBSITE_CAPABILITIES: Capability[] = CAPABILITY_GROUPS[3].caps;
+
+/**
+ * Where each newer area came from. Before setup file 41 runs, the database
+ * doesn't know these areas yet, so they follow the permission they split from.
+ */
+export const CAPABILITY_PARENT: Partial<Record<Capability, Capability[]>> = {
+  edit_programme: ["edit_website"],
+  edit_speakers: ["edit_website"],
+  edit_workshops: ["edit_website"],
+  edit_announcements: ["edit_website"],
+  edit_committee: ["edit_website"],
+  edit_map: ["edit_website"],
+  edit_sponsors: ["edit_website"],
+  edit_faqs: ["edit_website"],
+  edit_settings: ["edit_website"],
+  view_attendance: ["review_accounts"],
+  view_travel: ["review_accounts", "manage_people"],
+  view_audit_log: ["manage_people"],
+  remove_accounts: [],
+};
+
+/** Returned by public.my_access() once the area permissions are in the database. */
+export const AREAS_MARKER = "areas_v1";
+
+const SUPPORTING_DEFAULT: Capability[] = [...WEBSITE_CAPABILITIES, "review_submissions"];
+const EXEC_DEFAULT: Capability[] = [
+  ...SUPPORTING_DEFAULT,
+  "review_accounts",
+  "view_attendance",
+  "view_travel",
+  "manage_people",
+  "view_audit_log",
+  "answer_enquiries",
+  "allocate_workshops",
+  "check_in",
+];
 
 /** The defaults the database starts with, used only if the access tables aren't set up yet. */
 export const DEFAULT_RULES: Record<AccountType, Capability[]> = {
@@ -162,14 +247,15 @@ export const DEFAULT_RULES: Record<AccountType, Capability[]> = {
   oral_presenter: [],
   poster_presenter: [],
   oral_waitlist: [],
-  supporting_committee: ["edit_website", "review_submissions"],
-  academic_team: ["edit_website", "review_submissions"],
-  publicity_team: ["edit_website", "review_submissions"],
-  finance_team: ["edit_website", "review_submissions"],
-  logistics_team: ["edit_website", "review_submissions"],
-  executive_committee: ["edit_website", "review_submissions", "review_accounts", "manage_people", "answer_enquiries", "allocate_workshops", "check_in"],
-  vice_president: [...CAPABILITIES],
-  president: [...CAPABILITIES],
+  supporting_committee: SUPPORTING_DEFAULT,
+  academic_team: SUPPORTING_DEFAULT,
+  publicity_team: SUPPORTING_DEFAULT,
+  finance_team: SUPPORTING_DEFAULT,
+  logistics_team: SUPPORTING_DEFAULT,
+  executive_committee: EXEC_DEFAULT,
+  // Removing accounts starts with the site owner only.
+  vice_president: CAPABILITIES.filter((c) => c !== "remove_accounts"),
+  president: CAPABILITIES.filter((c) => c !== "remove_accounts"),
 };
 
 export interface Access {
@@ -183,28 +269,45 @@ export interface Access {
   leadership: boolean;
   /** Site owner (site role admin). Above everyone: controls who can do what. */
   owner: boolean;
+  /** Can edit at least one part of the public website. */
+  editor: boolean;
 }
 
 type AccessInput = { role: UserRole; accountType: AccountType; accountStatus: AccountStatus };
 
+/** Whether any of these permissions is allowed. */
+export function canAny(access: Pick<Access, "can" | "owner">, caps: readonly Capability[]) {
+  return access.owner || caps.some((c) => access.can[c]);
+}
+
 /** Builds access from the list of permissions the database returned (public.my_access()). */
 export function accessFromCaps(caps: readonly string[], role: UserRole): Access {
   const owner = role === "admin";
-  const can = Object.fromEntries(CAPABILITIES.map((c) => [c, owner || caps.includes(c)])) as Record<Capability, boolean>;
-  return { can, committee: CAPABILITIES.some((c) => can[c]), exec: can.review_accounts, leadership: can.approve_committee, owner };
+  // Before setup file 41, newer areas follow the permission they came from.
+  const known = caps.includes(AREAS_MARKER);
+  const granted = (c: Capability) => caps.includes(c) || (!known && (CAPABILITY_PARENT[c] ?? []).some((p) => caps.includes(p)));
+  const can = Object.fromEntries(CAPABILITIES.map((c) => [c, owner || granted(c)])) as Record<Capability, boolean>;
+  return {
+    can,
+    committee: CAPABILITIES.some((c) => can[c]),
+    exec: can.review_accounts,
+    leadership: can.approve_committee,
+    owner,
+    editor: WEBSITE_CAPABILITIES.some((c) => can[c]),
+  };
 }
 
 /** Default access for an account, before any changes on the platform dashboard. */
 export function accessFor(p: AccessInput): Access {
   const fromType = p.accountStatus === "approved" ? DEFAULT_RULES[p.accountType] : [];
-  const legacy: Capability[] = p.role === "editor" ? ["edit_website", "review_submissions"] : [];
-  return accessFromCaps([...fromType, ...legacy], p.role);
+  const legacy: Capability[] = p.role === "editor" ? [...WEBSITE_CAPABILITIES, "review_submissions"] : [];
+  return accessFromCaps([...fromType, ...legacy, AREAS_MARKER], p.role);
 }
 
 /** The permission tier the older role gates understand. */
 export function effectiveRole(access: Access, role: UserRole): UserRole {
   if (access.owner || access.can.manage_people) return "admin";
-  if (access.can.edit_website) return "editor";
+  if (access.editor) return "editor";
   return role === "reviewer" ? "reviewer" : "delegate";
 }
 

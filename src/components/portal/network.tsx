@@ -15,6 +15,7 @@ import { uniKey, type LogoMap } from "@/lib/university-logos";
 import { instagramUrl } from "@/lib/instagram";
 import { Crown, Star } from "lucide-react";
 import type { AccountType } from "@/lib/types";
+import { ManagePerson, type ManagedPerson, type ManageRights } from "@/components/admin/manage-person";
 
 export type Delegate = {
   id: string;
@@ -137,7 +138,18 @@ const committeeRole = (p: Delegate) => {
 };
 const roleLabel = (p: Delegate) => p.committee_position || committeeRole(p) || ACCOUNT_TYPE_LABEL[p.account_type];
 
-export function NetworkDirectory({ people, me, logos = {} }: { people: Delegate[]; me: string; logos?: LogoMap }) {
+export function NetworkDirectory({
+  people,
+  me,
+  logos = {},
+  manage,
+}: {
+  people: Delegate[];
+  me: string;
+  logos?: LogoMap;
+  /** Committee tools for each person, keyed by their network id. Only for people allowed to manage accounts. */
+  manage?: { rights: ManageRights; people: Record<string, ManagedPerson> };
+}) {
   const [q, setQ] = useState("");
   const [uni, setUni] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -264,7 +276,12 @@ export function NetworkDirectory({ people, me, logos = {} }: { people: Delegate[
       )}
 
       <Drawer open={Boolean(selected)} onClose={close} label={selected ? `${selected.full_name}'s profile` : "Profile"}>
-        {selected && <PersonDetail p={selected} me={me} logo={logos[uniKey(selected.institution)]} />}
+        {selected && (
+          <>
+            <PersonDetail p={selected} me={me} logo={logos[uniKey(selected.institution)]} />
+            {manage?.people[selected.id] && <ManagePerson key={selected.id} person={manage.people[selected.id]} rights={manage.rights} onRemoved={close} />}
+          </>
+        )}
       </Drawer>
     </section>
   );

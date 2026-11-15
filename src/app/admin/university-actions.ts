@@ -24,7 +24,7 @@ function refresh() {
 
 /** Adds or replaces a university's logo. */
 export async function saveUniversityLogo(_: Result, form: FormData): Promise<Result> {
-  const { db, user } = await requireAccess("edit_website", "/admin/content/universities");
+  const { db, user } = await requireAccess("edit_sponsors", "/admin/content/universities");
   const institution = String(form.get("institution") ?? "").trim().slice(0, 160);
   const file = form.get("logo");
   if (!institution) return { ok: false, error: "Choose a university." };
@@ -51,7 +51,7 @@ export async function saveUniversityLogo(_: Result, form: FormData): Promise<Res
 
 /** Removes an uploaded logo; cards go back to the built-in logo, or the initials. */
 export async function removeUniversityLogo(_: Result, form: FormData): Promise<Result> {
-  const { db } = await requireAccess("edit_website", "/admin/content/universities");
+  const { db } = await requireAccess("edit_sponsors", "/admin/content/universities");
   const key = uniKey(String(form.get("institution") ?? ""));
   const { data: old } = await db.from("university_logos").select("path").eq("institution_key", key).maybeSingle();
   if (!old) return { ok: true, message: "Logo removed." };

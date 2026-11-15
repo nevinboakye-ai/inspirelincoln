@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "University logos" };
 export const dynamic = "force-dynamic";
 
 export default async function UniversitiesPage() {
-  const { db } = await requireAccess("edit_website", "/admin/content/universities");
+  const { db } = await requireAccess("edit_sponsors", "/admin/content/universities");
   const { data, error } = await db.rpc("university_list");
   const rows = (data ?? []) as { institution: string; people: number; path: string | null }[];
   const done = rows.filter((r) => r.path || BUILT_IN_LOGOS[uniKey(r.institution)]).length;

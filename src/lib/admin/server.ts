@@ -1,11 +1,14 @@
 import "server-only";
-import { requireRole } from "@/lib/auth";
+import { requireAccess, requireRole } from "@/lib/auth";
 import type { EntityDef } from "./entities";
 
 export type Db = Awaited<ReturnType<typeof requireRole>>["db"];
 
+/** Each kind of content needs its own area of the website (delegate records for admin-only ones). */
 export function requireEntityAccess(entity: EntityDef) {
-  return requireRole(entity.adminOnly ? ["admin"] : ["editor"], `/admin/content/${entity.key}`);
+  const next = `/admin/content/${entity.key}`;
+  if (entity.adminOnly) return requireRole(["admin"], next);
+  return requireAccess(entity.area ?? "edit_website", next);
 }
 
 export async function currentEditionId(db: Db) {

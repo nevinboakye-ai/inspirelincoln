@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { rolesOf } from "@/lib/accounts";
+import { STAFF_PEOPLE_COLUMNS, selectPeople } from "./people";
 import type { AccountType } from "@/lib/types";
 
 export type Answer = "confirmed" | "unavailable" | "none";
@@ -44,13 +45,14 @@ function presenting(main: AccountType, extra?: AccountType[] | null) {
 /**
  * Everyone who should be presenting (accounts and selected-list entries not yet
  * turned into accounts), with their attendance answer, plus the oral waiting list
- * in the order people were added to it. Needs review_accounts access.
+ * in the order people were added to it. Needs presenter attendance or review_accounts access.
  */
 export async function loadAttendance(db: SupabaseClient) {
   // Presenting can be an extra role (a committee member presenting a poster), so
   // filter here rather than in the query. "*" includes extra_types once setup file 21 has run.
-  const [{ data: allProfiles }, { data: allRoster }, { data: answers }] = await Promise.all([
-    db.from("profiles").select("*").neq("account_status", "declined").limit(5000),
+  type Person = { id: string; email: string; full_name: string | null; institution: string | null; account_type: AccountType; extra_types: AccountType[] | null; account_status: string; presentation_title: string | null; created_at: string };
+  const [allProfiles, { data: allRoster }, { data: answers }] = await Promise.all([
+    selectPeople<Person>(db, STAFF_PEOPLE_COLUMNS, (q) => q.neq("account_status", "declined").limit(5000)),
     db.from("delegate_roster").select("*").limit(5000),
     db.from("presenter_attendance").select("user_id, response, note, responded_at"),
   ]);

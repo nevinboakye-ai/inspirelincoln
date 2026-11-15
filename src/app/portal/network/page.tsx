@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { createHash } from "node:crypto";
 import { Users } from "lucide-react";
 import { redirect } from "next/navigation";
 import { setNetworkOpen } from "@/app/portal/actions";
@@ -7,6 +8,8 @@ import { signAvatars } from "@/lib/avatar";
 import { getLogoMap } from "@/lib/university-logos-server";
 import { Notice } from "@/components/ui/notice";
 import { NetworkCardForm, NetworkDirectory, type Delegate } from "@/components/portal/network";
+import type { ManagedPerson, ManageRights } from "@/components/admin/manage-person";
+import { submissionKindsFor } from "@/lib/accounts";
 
 export const metadata: Metadata = { title: "Delegate network" };
 export const dynamic = "force-dynamic";
@@ -25,6 +28,32 @@ export default async function NetworkPage() {
   const people = (data ?? []) as Delegate[];
   const [photos, logos] = await Promise.all([signAvatars(db, people.map((p) => p.avatar_path)), getLogoMap()]);
   for (const p of people) p.avatar_url = p.avatar_path ? (photos.get(p.avatar_path) ?? null) : null;
+
+  // Committee tools on each profile, for whatever the signed-in person may do.
+  const can = (c: keyof typeof profile.access.can) => owner || profile.access.can[c];
+  const rights: ManageRights = {
+    rename: can("review_accounts"),
+    request: can("review_accounts") || can("send_email"),
+    remove: can("remove_accounts"),
+    accountPage: can("review_accounts"),
+    accessPage: owner,
+  };
+  let manage: { rights: ManageRights; people: Record<string, ManagedPerson> } | undefined;
+  if (Object.values(rights).some(Boolean)) {
+    // People on the selected list show with an id made from their email; find their list entry.
+    const listed = people.some((p) => !p.joined) && can("review_accounts") ? ((await db.from("delegate_roster").select("id, email")).data ?? []) : [];
+    const byHash = new Map(listed.map((r) => [`selected:${createHash("md5").update(r.email).digest("hex")}`, r.id as string]));
+    const entries: [string, ManagedPerson][] = [];
+    for (const p of people) {
+      if (p.id === profile.id) continue;
+      const kinds = submissionKindsFor(p.roles?.length ? p.roles : [p.account_type]);
+      const presents = kinds.length === 2 ? "both" : (kinds[0] ?? null);
+      const id = p.joined ? p.id : byHash.get(p.id);
+      if (!id) continue;
+      entries.push([p.id, { kind: p.joined ? "account" : "list", id, name: p.full_name, institution: p.institution, yearOfStudy: p.year_of_study, presents }]);
+    }
+    manage = { rights, people: Object.fromEntries(entries) };
+  }
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -74,7 +103,7 @@ export default async function NetworkPage() {
           {error ? (
             <Notice tone="warning">The network isn&apos;t available just now. Please try again later.</Notice>
           ) : (
-            <NetworkDirectory people={people} me={profile.id} logos={logos} />
+            <NetworkDirectory people={people} me={profile.id} logos={logos} manage={manage} />
           )}
         </>
       )}

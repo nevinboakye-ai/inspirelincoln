@@ -130,7 +130,7 @@ export async function requireRole(roles: UserRole[], next = "/admin") {
   const ok =
     access.owner ||
     (roles.includes("admin") && access.can.manage_people) ||
-    (roles.includes("editor") && access.can.edit_website) ||
+    (roles.includes("editor") && access.editor) ||
     (roles.includes("reviewer") && (siteRole === "reviewer" || access.can.review_submissions));
   if (!ok) redirect("/portal?denied=1");
   return current;

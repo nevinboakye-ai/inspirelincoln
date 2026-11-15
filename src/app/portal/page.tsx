@@ -468,7 +468,7 @@ export default async function PortalHome({
                 closesAt={choices!.settings.closesAt}
                 places={myPlaces}
                 preview={rankPreview}
-                canEdit={profile.access.can.edit_website}
+                canEdit={profile.access.owner || profile.access.can.edit_workshops}
               />
             </HubItem>
           )}
