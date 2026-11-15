@@ -122,11 +122,11 @@ export default async function JudgingResults({ searchParams }: { searchParams: P
             <Link href="/admin/judging/setup" className={btn.secondary}>
               <Settings2 aria-hidden className="size-4" /> Set up
             </Link>
-            <a href="/admin/judging/export?type=ranking" className={btn.secondary}>
-              <Download aria-hidden className="size-4" /> Ranking (Excel)
+            <a href="/admin/judging/export?format=docx" className={btn.secondary}>
+              <Download aria-hidden className="size-4" /> Word
             </a>
             <a href="/admin/judging/export" className={btn.primary}>
-              <Download aria-hidden className="size-4" /> Every mark (Excel)
+              <Download aria-hidden className="size-4" /> Results (Excel)
             </a>
           </>
         }
