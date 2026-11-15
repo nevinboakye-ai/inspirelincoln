@@ -1,99 +1,3 @@
-1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29
-30
-31
-32
-33
-34
-35
-36
-37
-38
-39
-40
-41
-42
-43
-44
-45
-46
-47
-48
-49
-50
-51
-52
-53
-54
-55
-56
-57
-58
-59
-60
-61
-62
-63
-64
-65
-66
-67
-68
-69
-70
-71
-72
-73
-74
-75
-76
-77
-78
-79
-80
-81
-82
-83
-84
-85
-86
-87
-88
-89
-90
-91
-92
-93
-94
-95
-96
 "use server";
 import { cookies, headers } from "next/headers";
 import { PROFILE_PROMPT_COOKIE, PROFILE_PROMPT_OPTIONS } from "@/lib/profile-prompt";
@@ -190,3 +94,142 @@ export async function signUp(_: AuthState, form: FormData): Promise<AuthState> {
   if (!parsed.success) return { error: "Please check the highlighted answers.", fieldErrors: fieldErrors(parsed.error) };
   const v = parsed.data;
   const db = await createClient();
+  if (!db) return { error: "Accounts are not available yet." };
+  // Only everyday details go in sign-up metadata. Access and dietary needs are added later, with explicit consent.
+  const meta = {
+    full_name: v.fullName,
+    account_type: v.accountType,
+    institution: v.institution,
+    career_stage: v.careerStage,
+    programme: v.programme,
+    // Speakers and judges give their job title in the same field.
+    committee_position: COMMITTEE_TYPES.includes(v.accountType) || GUEST_TYPES.includes(v.accountType) ? v.committeePosition : "",
+    presentation_title: submissionKindFor(v.accountType) ? v.presentationTitle : "",
+    heard_about: v.heardAbout,
+    photo_opt_out: v.photoOptOut,
+    marketing_opt_in: v.marketingOptIn,
+    privacy_ack: true,
+    policy_version: POLICY_VERSION,
+  };
+  const next = safeNext(form.get("next"));
+  if (ownAuthEmails()) {
+    const r = await createAccountAndEmail({ email: v.email, password: v.password, data: meta, next: next === "/portal" ? "/portal?welcome=1" : next });
+    if (r.ok) return { message: v.email };
+    return { error: ownEmailError(r, "register") };
+  }
+  const { data, error } = await db.auth.signUp({
+    email: v.email,
+    password: v.password,
+    options: { data: meta, emailRedirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(next)}` },
+  });
+  if (error) {
+    if (error.message.toLowerCase().includes("already")) return { error: "An account with this email already exists. Try signing in." };
+    if (error.status === 429) return { error: "Too many attempts. Please wait a minute and try again." };
+    // Shows in Vercel's runtime logs so the committee can see the real cause.
+    console.error("Sign-up failed:", error.status, error.code, error.message);
+    const m = error.message.toLowerCase();
+    if (m.includes("sending") || (m.includes("email") && m.includes("confirm")))
+      return { error: "We couldn't send your confirmation email. Please try again later, or email inspiresoc@lincolnsu.com." };
+    if (m.includes("database"))
+      return { error: "We couldn't save your account. Please try again later, or email inspiresoc@lincolnsu.com." };
+    return { error: "We couldn't create your account. Please try again, or email inspiresoc@lincolnsu.com." };
+  }
+  if (data.session) redirect(next);
+  return { message: v.email };
+}
+
+/**
+ * First log in for someone the committee has already selected. Only an email
+ * and password are needed: the database fills in their details from the
+ * selected list and approves them. Anyone not on the list gets an account
+ * that waits for review, so this never reveals who is on the list.
+ */
+export async function activateAccount(_: AuthState, form: FormData): Promise<AuthState> {
+  const parsed = z
+    .object({ email, password, confirm: z.string(), privacyAck: z.literal(true, { message: "Please confirm you have read the privacy notice." }) })
+    .refine((v) => v.password === v.confirm, { message: "Passwords don't match.", path: ["confirm"] })
+    .safeParse({ ...Object.fromEntries(form), privacyAck: form.get("privacyAck") === "on" });
+  if (!parsed.success) return { error: "Please check the highlighted answers.", fieldErrors: fieldErrors(parsed.error) };
+  const db = await createClient();
+  if (!db) return { error: "Accounts are not available yet." };
+  const meta = { privacy_ack: true, policy_version: POLICY_VERSION, account_type: "delegate" };
+  if (ownAuthEmails()) {
+    const r = await createAccountAndEmail({ email: parsed.data.email, password: parsed.data.password, data: meta, next: "/portal?welcome=1", selected: true });
+    if (r.ok) return { message: parsed.data.email };
+    return { error: ownEmailError(r, "activate") };
+  }
+  const { data, error } = await db.auth.signUp({
+    email: parsed.data.email,
+    password: parsed.data.password,
+    options: { data: meta, emailRedirectTo: `${await origin()}/auth/callback?next=/portal` },
+  });
+  if (error) {
+    if (error.message.toLowerCase().includes("already")) return { error: "You already have an account. Log in, or reset your password if you've forgotten it." };
+    if (error.status === 429) return { error: "Too many attempts. Please wait a minute and try again." };
+    console.error("Account set-up failed:", error.status, error.code, error.message);
+    return { error: "We couldn't set up your account. Please try again later, or email inspiresoc@lincolnsu.com." };
+  }
+  // Supabase returns a user with no identities when the email is already registered.
+  if (data.user && data.user.identities?.length === 0) return { error: "You already have an account. Log in, or reset your password if you've forgotten it." };
+  if (data.session) redirect("/portal");
+  return { message: parsed.data.email };
+}
+
+export async function requestReset(_: AuthState, form: FormData): Promise<AuthState> {
+  const parsed = z.object({ email }).safeParse(Object.fromEntries(form));
+  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
+  const db = await createClient();
+  if (!db) return { error: "Accounts are not available yet." };
+  const sent = ownAuthEmails() ? await emailPasswordReset(parsed.data.email) : "failed";
+  if (sent === "failed") {
+    // Supabase's own email, which returns through /auth/callback.
+    const { error } = await db.auth.resetPasswordForEmail(parsed.data.email, { redirectTo: `${await origin()}/auth/callback?next=/auth/update-password` });
+    if (error?.status === 429) return { error: "Too many attempts. Please wait a minute and try again." };
+    if (error) console.error("Password reset email failed:", error.status, error.code, error.message);
+  }
+  // Same response whether or not the account exists, to avoid revealing who has an account.
+  return { message: "If an account exists for that address, we've emailed a link to reset your password. It can take a few minutes, so check your junk folder too." };
+}
+
+export async function updatePassword(_: AuthState, form: FormData): Promise<AuthState> {
+  const parsed = z
+    .object({ password, confirm: z.string() })
+    .refine((v) => v.password === v.confirm, { message: "Passwords don't match.", path: ["confirm"] })
+    .safeParse(Object.fromEntries(form));
+  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
+  const db = await createClient();
+  if (!db) return { error: "Accounts are not available yet." };
+  const { data: { user } } = await db.auth.getUser();
+  // First log in with a temporary password from the committee.
+  const first = user?.app_metadata?.must_change_password === true;
+  if (first && form.get("privacyAck") !== "on") return { fieldErrors: { privacyAck: "Please confirm you have read the privacy notice." } };
+  if (first && user?.email) {
+    // Make sure the temporary password isn't simply kept.
+    const probe = plainClient(SUPABASE_ANON_KEY);
+    const check = await probe.auth.signInWithPassword({ email: user.email, password: parsed.data.password });
+    if (!check.error) {
+      await probe.auth.signOut({ scope: "local" });
+      return { fieldErrors: { password: "Choose a new password, not the temporary one." } };
+    }
+  }
+  const { error } = await db.auth.updateUser({ password: parsed.data.password });
+  if (error) {
+    if (error.code === "same_password") return { fieldErrors: { password: "That's your current password. Choose a different one." } };
+    if (error.code === "weak_password") return { fieldErrors: { password: "Choose a stronger password: mix letters, numbers and symbols." } };
+    console.error("Password update failed:", error.status, error.code, error.message);
+    return { error: first ? "We couldn't save your password. Please try again." : "Your reset link may have expired. Please request a new one from the log in page." };
+  }
+  if (first && user) {
+    await clearTemporaryPassword(user.id);
+    await serviceClient()?.from("consent_records").insert({ user_id: user.id, purpose: "privacy_notice", granted: true, policy_version: POLICY_VERSION, source: "portal" });
+    await db.auth.refreshSession();
+    redirect("/portal?welcome=first");
+  }
+  redirect(form.get("setup") === "1" ? "/portal?welcome=1" : "/portal?password=updated");
+}
+
+export async function signOut() {
+  const db = await createClient();
+  await db?.auth.signOut();
+  redirect("/");
+}
