@@ -379,17 +379,60 @@ select pg_temp.as_user('00000000-0000-0000-0000-0000000000f3');
 select pg_temp.expect(public.has_access('edit_website') and not public.has_access('send_email'), 'supporting committee gets its default access');
 select pg_temp.expect(array_length(public.my_access(), 1) = 2, 'my_access lists exactly what someone can do');
 reset role;
-select pg_temp.as_user('00000000-0000-0000-0000-0000000000f1');
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f2');
 do $$ begin
   update public.access_rules set allowed = true where account_type = 'delegate' and capability = 'edit_website';
-  if found then raise exception 'FAILED: president changed the access rules'; end if;
-  raise notice 'ok - president cannot change the access rules';
+  if found then raise exception 'FAILED: executive committee changed the access rules'; end if;
+  raise notice 'ok - executive committee cannot change the access rules';
+end $$;
+do $$ begin
+  insert into public.access_overrides (user_id, capability, allowed) values ('00000000-0000-0000-0000-0000000000f3', 'edit_website', true);
+  raise exception 'FAILED: executive committee granted individual access';
+exception when insufficient_privilege then raise notice 'ok - executive committee cannot grant individual access'; end $$;
+do $$ begin
+  perform public.owner_activity();
+  raise exception 'FAILED: executive committee saw sign-in activity';
+exception when raise_exception then
+  if sqlerrm like 'FAILED%' then raise; end if;
+  raise notice 'ok - executive committee cannot see sign-in activity';
+end $$;
+reset role;
+-- The president has the platform dashboard (setup file 47), but not over themselves or the site owner.
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f1');
+select pg_temp.expect(public.has_access('manage_platform'), 'the president has the platform dashboard');
+select pg_temp.expect((select count(*) from public.owner_activity()) > 0, 'the president can see sign-in activity');
+select pg_temp.expect(public.owner_metrics(7) ? 'views', 'the president can see website metrics');
+do $$ begin
+  update public.access_rules set allowed = true where account_type = 'delegate' and capability = 'edit_faqs';
+  if not found then raise exception 'FAILED: president could not change the access rules'; end if;
+  update public.access_rules set allowed = false where account_type = 'delegate' and capability = 'edit_faqs';
+  raise notice 'ok - president can change the access rules';
 end $$;
 do $$ begin
   insert into public.access_overrides (user_id, capability, allowed) values (auth.uid(), 'edit_website', true);
   raise exception 'FAILED: president granted themselves access';
-exception when insufficient_privilege then raise notice 'ok - president cannot grant individual access'; end $$;
-select pg_temp.expect((select count(*) from public.access_overrides) = 0, 'president cannot see other people''s individual access');
+exception when insufficient_privilege then raise notice 'ok - president cannot change their own access'; end $$;
+do $$ begin
+  insert into public.access_overrides (user_id, capability, allowed) values ('00000000-0000-0000-0000-00000000000a', 'edit_website', false);
+  raise exception 'FAILED: president changed the site owner''s access';
+exception when insufficient_privilege then raise notice 'ok - president cannot change the site owner''s access'; end $$;
+do $$ begin
+  update public.profiles set role = 'admin' where id = auth.uid();
+  raise exception 'FAILED: president made themselves site owner';
+exception when raise_exception then
+  if sqlerrm like 'FAILED%' then raise; end if;
+  raise notice 'ok - president still cannot change site roles';
+end $$;
+select pg_temp.expect((select count(*) from public.access_overrides) = 0, 'nobody has individual access yet');
+reset role;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+update public.access_rules set allowed = false where account_type = 'president' and capability = 'manage_platform';
+reset role;
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f1');
+select pg_temp.expect(not public.has_access('manage_platform'), 'the site owner can take the platform dashboard away from the president');
+reset role;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+update public.access_rules set allowed = true where account_type = 'president' and capability = 'manage_platform';
 reset role;
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
 update public.access_rules set allowed = true where account_type = 'poster_presenter' and capability = 'check_in';

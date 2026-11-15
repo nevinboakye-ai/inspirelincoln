@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PersonAccessPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { db, profile } = await requireAccess("owner", `/admin/platform/people/${id}`);
+  const { db, profile } = await requireAccess("manage_platform", `/admin/platform/people/${id}`);
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
 
   const [{ data: person }, { data: rules }, { data: overrides }] = await Promise.all([
@@ -58,7 +58,7 @@ export default async function PersonAccessPage({ params }: { params: Promise<{ i
             {role === "admin" ? <Badge tone="violet"><Crown aria-hidden className="size-3" /> Site owner</Badge> : <>{rolesOf(type, extra).map((t) => <Badge key={t} tone="violet">{ACCOUNT_TYPE_LABEL[t]}</Badge>)}</>}
             <Badge tone={st.tone}>{st.label}</Badge>
             {person.committee_position && <Badge>{person.committee_position}</Badge>}
-            {role !== "admin" && <ViewAsButton id={person.id} name={name} back={`/admin/platform/people/${person.id}`} />}
+            {role !== "admin" && profile.access.owner && <ViewAsButton id={person.id} name={name} back={`/admin/platform/people/${person.id}`} />}
           </div>
         }
       />
@@ -66,6 +66,10 @@ export default async function PersonAccessPage({ params }: { params: Promise<{ i
       {role === "admin" ? (
         <Notice tone="info" title="Site owner">
           {person.id === profile.id ? "This is you. " : ""}Site owners always have every permission, so there is nothing to change here.
+        </Notice>
+      ) : person.id === profile.id ? (
+        <Notice tone="info" title="This is you">
+          You can&apos;t change your own access. The site owner, or someone else with the Platform dashboard permission, can change it for you.
         </Notice>
       ) : (
         <>

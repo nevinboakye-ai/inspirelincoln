@@ -58,7 +58,7 @@ function freshness(seen: string | null, now: number) {
 
 export default async function ActivityPage({ searchParams }: { searchParams: Promise<{ q?: string; group?: string; sort?: string; never?: string }> }) {
   const sp = await searchParams;
-  const { db } = await requireAccess("owner", "/admin/platform/activity");
+  const { db } = await requireAccess("manage_platform", "/admin/platform/activity");
   const { data, error } = await db.rpc("owner_activity");
   // eslint-disable-next-line react-hooks/purity -- a server render, once per request
   const now = Date.now();

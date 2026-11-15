@@ -18,9 +18,9 @@ const GROUPS: { title: string; links: LinkDef[] }[] = [
   {
     title: "Platform",
     links: [
-      { href: "/admin/platform", label: "Platform dashboard", icon: LayoutDashboard, need: "owner" },
-      { href: "/admin/platform/activity", label: "Sign-in activity", icon: Activity, need: "owner" },
-      { href: "/admin/platform/metrics", label: "Website metrics", icon: BarChart3, need: "owner" },
+      { href: "/admin/platform", label: "Platform dashboard", icon: LayoutDashboard, need: "manage_platform" },
+      { href: "/admin/platform/activity", label: "Sign-in activity", icon: Activity, need: "manage_platform" },
+      { href: "/admin/platform/metrics", label: "Website metrics", icon: BarChart3, need: "manage_platform" },
     ],
   },
   {

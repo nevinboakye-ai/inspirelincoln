@@ -133,7 +133,7 @@ export function PortalNav({
           },
         ]
       : []),
-    ...(access.owner
+    ...(access.can.manage_platform
       ? [
           {
             href: "/admin/platform",

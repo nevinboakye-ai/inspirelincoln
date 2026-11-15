@@ -181,6 +181,7 @@ export const CAPABILITIES = [
   "edit_faqs",
   "edit_settings",
   "edit_website",
+  "manage_platform",
 ] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
@@ -215,6 +216,7 @@ export const CAPABILITY_LABEL: Record<Capability, { label: string; description: 
   edit_faqs: { label: "FAQs", description: "Questions and answers on the website." },
   edit_settings: { label: "Conference settings", description: "Conference status, dates, registration, deadlines, modes and editions." },
   edit_website: { label: "Other website pages", description: "History timeline, gallery, resources and opportunities." },
+  manage_platform: { label: "Platform dashboard", description: "Site switches, who can do what, individual access, sign-in activity and website metrics. Site roles and View as stay with the site owner." },
 };
 
 /** The areas of the site, grouped the way the dashboard menu groups them. */
@@ -240,6 +242,7 @@ export const CAPABILITY_GROUPS: { title: string; hint: string; caps: Capability[
     hint: "Each part of the public website",
     caps: ["edit_programme", "edit_speakers", "edit_workshops", "edit_announcements", "edit_committee", "edit_map", "edit_sponsors", "edit_faqs", "edit_settings", "edit_website"],
   },
+  { title: "Platform", hint: "Who can do what, site switches and site activity", caps: ["manage_platform"] },
 ];
 
 /** Every part of the public website someone might be able to edit. */
@@ -263,6 +266,7 @@ export const CAPABILITY_PARENT: Partial<Record<Capability, Capability[]>> = {
   view_travel: ["review_accounts", "manage_people"],
   view_audit_log: ["manage_people"],
   remove_accounts: [],
+  manage_platform: [],
 };
 
 /** Returned by public.my_access() once the area permissions are in the database. */
@@ -299,7 +303,8 @@ export const DEFAULT_RULES: Record<AccountType, Capability[]> = {
   executive_committee: EXEC_DEFAULT,
   // Removing accounts starts with the site owner only.
   // Judging presentations is for judges; leadership sees results through manage_judging.
-  vice_president: CAPABILITIES.filter((c) => c !== "remove_accounts" && c !== "judge_presentations"),
+  // The platform dashboard starts with the president only.
+  vice_president: CAPABILITIES.filter((c) => c !== "remove_accounts" && c !== "judge_presentations" && c !== "manage_platform"),
   president: CAPABILITIES.filter((c) => c !== "remove_accounts" && c !== "judge_presentations"),
 };
 

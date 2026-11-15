@@ -48,7 +48,7 @@ function Shortcut({ href, icon: Icon, title, note }: { href: string; icon: typeo
 
 export default async function PlatformPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const sp = await searchParams;
-  const { db, profile } = await requireAccess("owner", "/admin/platform");
+  const { db, profile } = await requireAccess("manage_platform", "/admin/platform");
   const term = sp.q?.trim().slice(0, 80) ?? "";
 
   const [switches, rulesRes, overridesRes, peopleRes, subsRes, auditRes, searchRes] = await Promise.all([
@@ -66,6 +66,9 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
   const ready = !rulesRes.error;
   // Setup file 41 gives each area of the site its own permission.
   const areasReady = !ready || (rulesRes.data ?? []).some((r) => r.capability === "edit_programme");
+  // Setup file 47 makes the platform dashboard a permission the president starts with.
+  const platformReady = !ready || (rulesRes.data ?? []).some((r) => r.capability === "manage_platform");
+  const owner = profile.access.owner;
   const rules = Object.fromEntries(
     ACCOUNT_TYPES.map((t) => [t, Object.fromEntries(CAPABILITIES.map((c) => [c, DEFAULT_RULES[t].includes(c)]))]),
   ) as Record<AccountType, Record<Capability, boolean>>;
@@ -92,12 +95,14 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
         title="Platform dashboard"
         description={
           <>
-            Everything about how the site runs, in one place. As site owner you always have every permission, and only you can change who can see and do what.
+            {owner
+              ? "Everything about how the site runs, in one place. As site owner you always have every permission. Anyone with the Platform dashboard permission (the president, to start with) can also change who can see and do what."
+              : "Everything about how the site runs, in one place: site switches, who can see and do what, and site activity. Site roles and View as stay with the site owner."}
           </>
         }
         actions={
           <span className="inline-flex items-center gap-2 rounded-full bg-midnight px-4 py-2 text-sm font-semibold text-cyan">
-            <Crown aria-hidden className="size-4" /> {profile.fullName ?? "Site owner"}
+            {owner && <Crown aria-hidden className="size-4" />} {profile.fullName ?? (owner ? "Site owner" : "You")}
           </span>
         }
       />
@@ -141,6 +146,12 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
         </Notice>
       )}
 
+      {owner && ready && areasReady && !platformReady && (
+        <Notice tone="warning" title="Run setup file 47 to give the president this dashboard">
+          Run <code>47-president-platform-dashboard.sql</code> in the Supabase SQL editor. Until then only you can open the platform dashboard.
+        </Notice>
+      )}
+
       <section aria-labelledby="pulse">
         <h2 id="pulse" className="sr-only">At a glance</h2>
         <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
@@ -165,7 +176,7 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
         </div>
       </section>
 
-      <ViewAsPicker people={people} types={[...ACCOUNT_TYPES].reverse()} available={viewAsAvailable()} />
+      {owner && <ViewAsPicker people={people} types={[...ACCOUNT_TYPES].reverse()} available={viewAsAvailable()} />}
 
       <section aria-labelledby="matrix" className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-3">
