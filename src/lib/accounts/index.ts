@@ -101,6 +101,8 @@ export const ACCOUNT_TYPES: AccountType[] = [
   "oral_presenter",
   "poster_presenter",
   "oral_waitlist",
+  "speaker",
+  "judge",
   "supporting_committee",
   "academic_team",
   "publicity_team",
@@ -116,6 +118,8 @@ export const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
   oral_presenter: "Oral presenter",
   poster_presenter: "Poster presenter",
   oral_waitlist: "Oral waiting list",
+  speaker: "Speaker",
+  judge: "Judge",
   supporting_committee: "Supporting committee",
   academic_team: "Academic Team",
   publicity_team: "Publicity Team",
@@ -131,6 +135,8 @@ export const ACCOUNT_TYPE_BLURB: Record<AccountType, string> = {
   oral_presenter: "Giving a talk. You'll upload your slides here.",
   poster_presenter: "Presenting a poster. You'll upload it for feedback.",
   oral_waitlist: "Presenting a poster, and on the waiting list for an oral presentation.",
+  speaker: "Giving a keynote, talk or workshop on the day.",
+  judge: "Judging oral and poster presentations on the day.",
   supporting_committee: "Helping run INSPIRE on the supporting committee.",
   academic_team: "Supporting committee: the Academic Team.",
   publicity_team: "Supporting committee: the Publicity Team.",
@@ -156,10 +162,13 @@ export type RosterType = (typeof ROSTER_TYPES)[number];
 export const SUPPORTING_TYPES: AccountType[] = ["supporting_committee", "academic_team", "publicity_team", "finance_team", "logistics_team"];
 export const COMMITTEE_TYPES: AccountType[] = [...SUPPORTING_TYPES, "executive_committee", "vice_president", "president"];
 export const EXEC_TYPES: AccountType[] = ["executive_committee", "vice_president", "president"];
+/** The professionals who come on the day: speakers and judges. Not committee, not delegates. */
+export const GUEST_TYPES: AccountType[] = ["speaker", "judge"];
 
 /** Account types grouped the way the committee thinks about them, for pickers. */
 export const ACCOUNT_TYPE_GROUPS: { title: string; hint: string; types: AccountType[] }[] = [
   { title: "Attending", hint: "Delegates and presenters", types: ["delegate", "oral_presenter", "poster_presenter", "oral_waitlist"] },
+  { title: "Guests on the day", hint: "Speakers and judges", types: GUEST_TYPES },
   { title: "Supporting committee", hint: "Can edit the website and review slides and posters", types: SUPPORTING_TYPES },
   { title: "Executive committee", hint: "Can also review accounts and email groups", types: EXEC_TYPES },
 ];
@@ -179,14 +188,5 @@ export const ROLE_RANK: AccountType[] = [
   "finance_team",
   "logistics_team",
   "supporting_committee",
-  "oral_presenter",
-  "poster_presenter",
-  "oral_waitlist",
-  "delegate",
-];
-const ATTENDING: AccountType[] = ["delegate", "oral_presenter", "poster_presenter", "oral_waitlist"];
-
-/** Every role someone holds, main role first, without repeats. */
-export function rolesOf(main: AccountType, extra?: readonly AccountType[] | null): AccountType[] {
-  return [main, ...(extra ?? []).filter((t, i, a) => t !== main && a.indexOf(t) === i)];
-}
+  "speaker",
+  "judge",

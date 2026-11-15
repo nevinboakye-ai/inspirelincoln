@@ -44,7 +44,7 @@ export function SiteHeader({
   // Read after hydration so server and browser markup match.
   const [member, setMember] = useState(false);
 
-  const inAccountArea = /^\/(admin|portal|review)/.test(pathname);
+  const inAccountArea = /^\/(admin|portal|review|judge)/.test(pathname);
   const inAuth = /^\/(login|signup|auth)/.test(pathname);
 
   useEffect(() => {
@@ -223,7 +223,7 @@ export function SiteHeader({
         pathname={pathname}
         member={member}
       />
-      {!pathname.startsWith("/admin") && !inAuth && !closed && (
+      {!pathname.startsWith("/admin") && !pathname.startsWith("/judge") && !inAuth && !closed && (
         <BottomBar pathname={pathname} />
       )}
     </>

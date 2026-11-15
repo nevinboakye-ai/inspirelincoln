@@ -5,13 +5,14 @@ import { ArrowLeft, ArrowRight, Check, Loader2, MailCheck } from "lucide-react";
 import { signUp, type AuthState } from "@/app/auth/actions";
 import { Field, inputClass } from "@/components/forms/field";
 import { submitWithoutReset } from "@/lib/use-action-form";
-import { ACCOUNT_TYPE_BLURB, ACCOUNT_TYPE_LABEL, CAREER_STAGES, COMMITTEE_TYPES, HEARD_ABOUT, submissionKindFor } from "@/lib/accounts";
+import { ACCOUNT_TYPE_BLURB, ACCOUNT_TYPE_LABEL, CAREER_STAGES, COMMITTEE_TYPES, GUEST_TYPES, HEARD_ABOUT, submissionKindFor } from "@/lib/accounts";
 import type { AccountType } from "@/lib/types";
 import { cn } from "@/lib/cn";
 
 const GROUPS: { title: string; types: AccountType[] }[] = [
   { title: "Attending", types: ["delegate"] },
   { title: "Presenting", types: ["oral_presenter", "poster_presenter"] },
+  { title: "Speaking or judging on the day", types: GUEST_TYPES },
   { title: "INSPIRE committee", types: COMMITTEE_TYPES },
 ];
 
@@ -82,6 +83,7 @@ export function RegisterForm({ next, disabled }: { next: string; disabled: boole
   };
 
   const isCommittee = type ? COMMITTEE_TYPES.includes(type) : false;
+  const isGuest = type ? GUEST_TYPES.includes(type) : false;
   const kind = type ? submissionKindFor(type) : null;
   const fe = (k: string) => errors[k];
   const inv = (k: string) => ({ "aria-invalid": Boolean(fe(k)), "aria-describedby": fe(k) ? `${k}-error` : undefined });
@@ -161,7 +163,7 @@ export function RegisterForm({ next, disabled }: { next: string; disabled: boole
           ))}
         </div>
         {fe("accountType") && <p id="accountType-error" className="mt-3 text-sm font-medium text-danger">{fe("accountType")}</p>}
-        <p className="mt-5 text-sm text-slate">Committee and presenter accounts are checked by the executive committee before they are switched on.</p>
+        <p className="mt-5 text-sm text-slate">Committee, presenter, speaker and judge accounts are checked by the executive committee before they are switched on.</p>
       </fieldset>
 
       {/* Step 2: about you */}
@@ -196,6 +198,11 @@ export function RegisterForm({ next, disabled }: { next: string; disabled: boole
         {isCommittee && (
           <Field id="committeePosition" label="Committee position" required error={fe("committeePosition")} hint="As the committee knows it, so we can check it quickly.">
             <input id="committeePosition" name="committeePosition" placeholder="e.g. Head of Events" className={inputClass} {...inv("committeePosition")} />
+          </Field>
+        )}
+        {isGuest && (
+          <Field id="committeePosition" label="Your job title" error={fe("committeePosition")} hint="Shown on your Delegate Card, for example Consultant Cardiologist.">
+            <input id="committeePosition" name="committeePosition" autoComplete="organization-title" placeholder="e.g. Consultant Cardiologist" className={inputClass} {...inv("committeePosition")} />
           </Field>
         )}
         {kind && (

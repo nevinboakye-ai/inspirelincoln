@@ -18,6 +18,7 @@ import {
   ClipboardCheck,
   NotebookPen,
   Users,
+  Trophy,
 } from "lucide-react";
 
 import { signOut } from "@/app/auth/actions";
@@ -113,6 +114,15 @@ export function PortalNav({
       label: "Profile and privacy",
       icon: UserRound,
     },
+    ...(access.judging
+      ? [
+          {
+            href: "/judge",
+            label: "Judging portal",
+            icon: Trophy,
+          },
+        ]
+      : []),
     ...(reviewer && !access.committee
       ? [
           {

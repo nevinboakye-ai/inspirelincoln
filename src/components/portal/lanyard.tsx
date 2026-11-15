@@ -8,13 +8,15 @@ import { CardCountdown } from "./hub-motion";
 import { SponsorLogo } from "@/components/sponsors/sponsor-logo";
 import type { Sponsor } from "@/lib/types";
 
-export type LanyardTone = "delegate" | "poster" | "oral" | "waitlist" | "committee" | "executive";
+export type LanyardTone = "delegate" | "poster" | "oral" | "waitlist" | "guest" | "committee" | "executive";
 
 const BAND: Record<LanyardTone, string> = {
   delegate: "bg-navy text-paper",
   poster: "bg-gold text-midnight",
   oral: "bg-cyan text-midnight",
   waitlist: "bg-violet text-midnight",
+  // Speakers and judges: ivory with a gold edge, set apart from delegates and the committee.
+  guest: "bg-ivory text-midnight border-y-[3px] border-gold-600",
   committee: "bg-midnight text-gold-300",
   // Gold foil edges and stars, so an executive role reads first from across a room.
   executive: "bg-midnight text-gold-300 border-y-[3px] border-gold shadow-[inset_0_1px_0_rgb(255_255_255/0.08)]",

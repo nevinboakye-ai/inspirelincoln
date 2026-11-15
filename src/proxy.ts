@@ -4,10 +4,10 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabase/env";
 import { VIEW_AS_COOKIE, openViewAs } from "@/lib/view-as-seal";
 import { strayAuthTarget } from "@/lib/accounts/link-paths";
 
-const PROTECTED = ["/portal", "/admin", "/review"];
+const PROTECTED = ["/portal", "/admin", "/review", "/judge"];
 
 /** Pages that stay reachable while the public website is closed. */
-const ALWAYS_OPEN = /^\/(m|login|signup|auth|portal|admin|review|view-as|privacy|cookies|terms|accessibility|contact|api|search-index|opengraph-image|robots\.txt|sitemap\.xml|icon|apple-icon)(\/|$|\.)/;
+const ALWAYS_OPEN = /^\/(m|login|signup|auth|portal|admin|review|judge|view-as|privacy|cookies|terms|accessibility|contact|api|search-index|opengraph-image|robots\.txt|sitemap\.xml|icon|apple-icon)(\/|$|\.)/;
 
 // The "website open" switch, remembered for a short while so most requests
 // don't wait on the database.

@@ -266,6 +266,8 @@ export type AccountType =
   | "oral_presenter"
   | "poster_presenter"
   | "oral_waitlist"
+  | "speaker"
+  | "judge"
   | "supporting_committee"
   | "academic_team"
   | "publicity_team"
