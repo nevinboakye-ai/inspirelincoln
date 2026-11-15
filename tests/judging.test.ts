@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { greetingName, judgeQueue, judgingError, markPercent, nextToMark, rankResults, type BoardEntry, type Criterion, type Mark } from "@/lib/judging";
+import { greetingName, judgeQueue, judgingError, markPercent, nextToMark, previewKind, rankResults, type BoardEntry, type Criterion, type Mark } from "@/lib/judging";
 
 const entry = (id: string, kind: "oral" | "poster", over: Partial<BoardEntry> = {}): BoardEntry => ({
   presenterId: id, kind, name: id, institution: null, title: null, avatarPath: null, label: null, sort: 0, attendance: null, checkedIn: false,
@@ -15,6 +15,15 @@ const mark = (presenterId: string, judge: string, scores: Record<string, number>
 });
 
 describe("judging", () => {
+  it("previews images, PDFs and PowerPoint in the page, and leaves Keynote to download", () => {
+    expect(previewKind("image/png", "poster.png")).toBe("image");
+    expect(previewKind("application/pdf", "talk.pdf")).toBe("pdf");
+    expect(previewKind("", "talk.PDF")).toBe("pdf");
+    expect(previewKind("application/vnd.openxmlformats-officedocument.presentationml.presentation", "talk.pptx")).toBe("office");
+    expect(previewKind("application/octet-stream", "talk.ppt")).toBe("office");
+    expect(previewKind("application/vnd.apple.keynote", "talk.key")).toBeNull();
+  });
+
   it("shows judges only their kinds, never themselves, and only assigned people when assigned", () => {
     const all = [entry("me", "poster"), entry("a", "poster"), entry("b", "poster", { assigned: true }), entry("c", "oral")];
     expect(judgeQueue(all, { me: "me", kinds: ["poster"] }).map((e) => e.presenterId)).toEqual(["b"]);

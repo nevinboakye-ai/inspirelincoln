@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ChevronLeft, ChevronRight, Download, ExternalLink, FileWarning, MapPin, UserCheck, UserX } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, FileWarning, MapPin, UserCheck, UserX } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { signAvatar } from "@/lib/avatar";
 import { loadJudging } from "@/lib/judging-server";
-import { KIND_LABEL, isKind, judgeQueue, nextToMark, previewable } from "@/lib/judging";
+import { KIND_LABEL, isKind, judgeQueue, nextToMark, previewKind } from "@/lib/judging";
 import { Avatar } from "@/components/ui/avatar";
 import { MarkForm } from "@/components/judge/mark-form";
 import { JudgingUnavailable } from "@/components/judge/judging-unavailable";
+import { FilePreview } from "@/components/judge/file-preview";
 
 export const dynamic = "force-dynamic";
 
@@ -31,8 +32,11 @@ export default async function MarkPage({ params }: { params: Promise<{ presenter
   const next = nextToMark(queue, { presenterId, kind });
 
   const file = entry.submission;
-  const view = file ? previewable(file.type) : { image: false, pdf: false };
-  const [{ data: mark }, avatar, signed] = await Promise.all([
+  const view = file ? previewKind(file.type, file.name) : null;
+  // Private links that run out: one that shows the file in the page, one that saves it.
+  // PowerPoint is fetched by Microsoft's viewer, so its link lasts only an hour.
+  const bucket = db.storage.from("submissions");
+  const [{ data: mark }, avatar, shown, saved] = await Promise.all([
     j.settings.editionId
       ? db
           .from("judging_marks")
@@ -44,11 +48,11 @@ export default async function MarkPage({ params }: { params: Promise<{ presenter
           .maybeSingle()
       : Promise.resolve({ data: null }),
     signAvatar(db, entry.avatarPath),
-    file
-      ? db.storage.from("submissions").createSignedUrl(file.path, 60 * 60 * 3, view.image || view.pdf ? undefined : { download: file.name })
-      : Promise.resolve({ data: null }),
+    file && view ? bucket.createSignedUrl(file.path, view === "office" ? 60 * 60 : 60 * 60 * 3) : Promise.resolve({ data: null }),
+    file ? bucket.createSignedUrl(file.path, 60 * 60 * 3, { download: file.name }) : Promise.resolve({ data: null }),
   ]);
-  const fileUrl = signed.data?.signedUrl ?? null;
+  const showUrl = shown.data?.signedUrl ?? null;
+  const downloadUrl = saved.data?.signedUrl ?? null;
   const criteria = j.criteria.filter((c) => c.kind === kind);
   const noun = KIND_LABEL[kind].file;
 
@@ -117,25 +121,8 @@ export default async function MarkPage({ params }: { params: Promise<{ presenter
             ) : null}
             {entry.marksIn > 0 && <span className="rounded-full bg-paper-200 px-2.5 py-1 font-medium text-slate-700">Marked by {entry.marksIn} judge{entry.marksIn === 1 ? "" : "s"}</span>}
           </div>
-          {file && fileUrl ? (
-            <div className="space-y-3">
-              {view.image && (
-                <a href={fileUrl} target="_blank" rel="noopener" className="block overflow-hidden rounded-xl border border-navy/10 bg-paper">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={fileUrl} alt={`${entry.name}'s poster`} className="max-h-[28rem] w-full object-contain" />
-                </a>
-              )}
-              <a
-                href={fileUrl}
-                target="_blank"
-                rel="noopener"
-                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-navy/15 bg-paper px-4 text-sm font-semibold text-ink transition-colors hover:border-navy/40"
-              >
-                {view.image || view.pdf ? <ExternalLink aria-hidden className="size-4" /> : <Download aria-hidden className="size-4" />}
-                {view.image || view.pdf ? `Open the ${noun}` : `Download the ${noun}`}
-                <span className="truncate font-normal text-slate">({file.name})</span>
-              </a>
-            </div>
+          {file && downloadUrl ? (
+            <FilePreview kind={view} url={showUrl ?? downloadUrl} downloadUrl={downloadUrl} name={file.name} noun={noun} who={entry.name} />
           ) : (
             <p className="flex items-center gap-2 rounded-xl bg-paper px-3 py-2.5 text-sm text-slate-700">
               <FileWarning aria-hidden className="size-4 shrink-0 text-warning" /> No {noun} uploaded yet. Mark from the presentation itself.

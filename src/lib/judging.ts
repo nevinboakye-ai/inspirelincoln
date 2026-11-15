@@ -254,5 +254,24 @@ export type ReleasedFeedback = {
   }[];
 };
 
-/** Whether a file can be shown in the page rather than downloaded. */
-export const previewable = (type: string) => ({ image: type.startsWith("image/"), pdf: type === "application/pdf" });
+export type PreviewKind = "image" | "pdf" | "office" | null;
+
+/**
+ * How a submitted file can be shown in the page rather than downloaded:
+ * images and PDFs are drawn in the browser, PowerPoint goes through the
+ * Office viewer, and anything else (Keynote) can only be downloaded. Some
+ * browsers upload without a type, so the file name's extension decides then.
+ */
+export function previewKind(type: string, name = ""): PreviewKind {
+  const t = type.toLowerCase();
+  const ext = name.split(".").pop()?.toLowerCase() ?? "";
+  if (t.startsWith("image/") || (!t && ["png", "jpg", "jpeg", "webp"].includes(ext))) return "image";
+  if (t === "application/pdf" || (!t && ext === "pdf")) return "pdf";
+  if (
+    t === "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
+    t === "application/vnd.ms-powerpoint" ||
+    ((!t || t === "application/octet-stream") && (ext === "pptx" || ext === "ppt"))
+  )
+    return "office";
+  return null;
+}
