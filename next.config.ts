@@ -16,8 +16,16 @@ const nextConfig: NextConfig = {
   // public pages are statically generated and revalidated, account areas are dynamic.
   cacheComponents: false,
   poweredByHeader: false,
+  // The logo printed on Excel and Word downloads is read from disk.
+  outputFileTracingIncludes: { "/admin/downloads/file": ["./public/brand/conference-logo-navy.png"] },
   // Import only the parts of these libraries each page uses.
-  experimental: { optimizePackageImports: ["motion", "motion/react", "lucide-react"] },
+  experimental: {
+    optimizePackageImports: ["motion", "motion/react", "lucide-react"],
+    // Keep pages someone has just visited in the browser for 30 seconds, so
+    // going back and forth between My Hub pages is instant. Saving anything
+    // (a server action that revalidates) clears this straight away.
+    staleTimes: { dynamic: 30, static: 300 },
+  },
   turbopack: {
     rules: {
       "*.css": {

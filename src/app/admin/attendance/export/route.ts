@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { canAny } from "@/lib/accounts";
 import { toCsv } from "@/lib/admin/server";
 import { loadAttendance } from "@/lib/admin/attendance";
 
@@ -10,7 +11,7 @@ const TYPE = { oral_presenter: "Oral", poster_presenter: "Poster" } as const;
 
 export async function GET() {
   const current = await getCurrentUser();
-  if (!current || !current.profile.access.can.review_accounts) return new NextResponse("Not authorised", { status: 403 });
+  if (!current || !canAny(current.profile.access, ["view_attendance", "review_accounts"])) return new NextResponse("Not authorised", { status: 403 });
   const { presenters } = await loadAttendance(current.db);
   const rows = presenters.map((p) => ({
     name: p.name,

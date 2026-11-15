@@ -29,14 +29,16 @@ export default async function SubmissionPage() {
     );
   }
 
-  const edition = await getEdition();
   const label = SUBMISSION_LABEL[kind];
-  const { data: subs } = await db
-    .from("presentation_submissions")
-    .select("id, version, title, status, file_name, created_at, presenter_note")
-    .eq("user_id", user.id)
-    .eq("kind", kind)
-    .order("version", { ascending: false });
+  const [edition, { data: subs }] = await Promise.all([
+    getEdition(),
+    db
+      .from("presentation_submissions")
+      .select("id, version, title, status, file_name, created_at, presenter_note")
+      .eq("user_id", user.id)
+      .eq("kind", kind)
+      .order("version", { ascending: false }),
+  ]);
   const latest = subs?.[0];
   const { data: feedback } = subs?.length
     ? await db.from("submission_feedback").select("id, author_name, decision, body, created_at, submission_id").in("submission_id", subs.map((s) => s.id)).order("created_at")

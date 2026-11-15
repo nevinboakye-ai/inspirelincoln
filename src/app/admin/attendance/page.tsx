@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CalendarCheck2, CalendarX2, Download, Hourglass, ListOrdered } from "lucide-react";
 import { requireAccess } from "@/lib/auth";
 import { loadAttendance, type Answer, type PresenterRow } from "@/lib/admin/attendance";
+import { DownloadButtons } from "@/components/admin/download-buttons";
 import { AdminHeader, Flash, Panel, btn } from "@/components/admin/ui";
 import { OfferSlotForm } from "@/components/admin/offer-slot-form";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +25,9 @@ const TYPE = { oral_presenter: "Oral", poster_presenter: "Poster" } as const;
 
 export default async function AttendancePage({ searchParams }: { searchParams: Promise<{ type?: string; answer?: string; offered?: string; mail?: string }> }) {
   const sp = await searchParams;
-  const { db } = await requireAccess("review_accounts", "/admin/attendance");
+  const { db, profile } = await requireAccess(["view_attendance", "review_accounts"], "/admin/attendance");
+  // Offering an oral slot changes someone's account, so it needs account review too.
+  const canOffer = profile.access.owner || profile.access.can.review_accounts;
   const { presenters, waitlist } = await loadAttendance(db);
 
   const type = sp.type === "oral" ? "oral_presenter" : sp.type === "poster" ? "poster_presenter" : null;
@@ -63,9 +66,12 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
         title="Presenter attendance"
         description="Oral and poster presenters confirm in My Hub whether they'll be there to present. Use this page to see who has replied and to fill any oral slots from the waiting list."
         actions={
-          <a href="/admin/attendance/export" className={btn.secondary}>
-            <Download aria-hidden className="size-4" /> Download CSV
-          </a>
+          <>
+            <DownloadButtons set="presenters" label="presenters and attendance" />
+            <a href="/admin/attendance/export" className={btn.secondary}>
+              <Download aria-hidden className="size-4" /> CSV
+            </a>
+          </>
         }
       />
 
@@ -202,9 +208,11 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
                       {w.institution && <p className="text-sm text-slate-700">{w.institution}</p>}
                       {w.title && <p className="mt-1 text-sm text-ink">{w.title}</p>}
                       {w.source === "list" && <p className="mt-1 text-xs text-slate">Hasn&apos;t logged in yet</p>}
-                      <div className="mt-3">
-                        <OfferSlotForm id={w.id} source={w.source} name={w.name} />
-                      </div>
+                      {canOffer && (
+                        <div className="mt-3">
+                          <OfferSlotForm id={w.id} source={w.source} name={w.name} />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </li>

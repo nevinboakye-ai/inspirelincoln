@@ -1,6 +1,7 @@
 /**
  * Writes INSPIRE-branded HTML for Supabase's authentication emails into
- * supabase/templates/. Paste each file into Supabase: Authentication, then
+ * supabase/templates/. The site normally sends the sign-up and password
+ * emails itself (src/lib/accounts/auth-links.ts); these are the fallback. Paste each file into Supabase: Authentication, then
  * Emails (Templates). They use Supabase's Go template variables, and link to
  * /auth/confirm with a token hash so links work in any browser.
  *
@@ -9,6 +10,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { renderEmail } from "../src/lib/email/template";
+import { confirmEmailMessage, resetPasswordMessage } from "../src/lib/email/auth";
 
 const SITE = "{{ .SiteURL }}";
 const out = join(process.cwd(), "supabase", "templates");
@@ -19,32 +21,13 @@ const confirm = (type: string, next: string) => `${SITE}/auth/confirm?token_hash
 const templates: { file: string; subject: string; html: string }[] = [
   {
     file: "confirm-signup.html",
-    subject: "Confirm your INSPIRE account",
-    html: renderEmail({
-      siteUrl: SITE,
-      preheader: "One tap to verify your email and finish registering for INSPIRE.",
-      eyebrow: "Verify your email",
-      heading: "Welcome to INSPIRE",
-      paragraphs: [
-        "Thank you for registering for INSPIRE. Please confirm this is your email address so we can set up your account.",
-        "Once you've confirmed it, the executive committee will review your account. We'll email you as soon as it's approved, or if you're placed on the waitlist.",
-      ],
-      cta: { label: "Confirm my email", url: confirm("email", "/portal?welcome=1") },
-      footnote: "If you didn't register for INSPIRE, you can ignore this email and no account will be created.",
-    }).html,
+    subject: "Confirm your email for INSPIRE",
+    html: confirmEmailMessage({ siteUrl: SITE, link: confirm("email", "/portal?welcome=1") }).html,
   },
   {
     file: "reset-password.html",
     subject: "Reset your INSPIRE password",
-    html: renderEmail({
-      siteUrl: SITE,
-      preheader: "Choose a new password for your INSPIRE account.",
-      eyebrow: "Password reset",
-      heading: "Choose a new password",
-      paragraphs: ["We received a request to reset the password for your INSPIRE account. The link below works once and expires after an hour."],
-      cta: { label: "Reset my password", url: confirm("recovery", "/auth/update-password") },
-      footnote: "If you didn't ask for this, you can ignore this email. Your password won't change.",
-    }).html,
+    html: resetPasswordMessage({ siteUrl: SITE, link: confirm("recovery", "/auth/update-password") }).html,
   },
   {
     file: "magic-link.html",

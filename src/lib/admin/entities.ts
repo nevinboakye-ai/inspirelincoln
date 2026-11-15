@@ -31,6 +31,8 @@ export interface EntityDef {
   editionScoped?: boolean;
   /** Admin only (otherwise editors may also manage). */
   adminOnly?: boolean;
+  /** The permission needed to manage it (adminOnly entities need delegate records instead). */
+  area?: Capability;
   titleField: string;
   listColumns: string[];
   orderBy: { column: string; ascending?: boolean }[];
@@ -39,6 +41,8 @@ export interface EntityDef {
   revalidate: string[];
 }
 
+import type { Capability } from "@/lib/accounts";
+
 const opts = (...v: [string, string][]) => v.map(([value, label]) => ({ value, label }));
 const SESSION_CATEGORIES = opts(["keynote", "Keynote"], ["research", "Research presentations"], ["workshop", "Workshop"], ["networking", "Networking"], ["break", "Break"], ["closing", "Closing"]);
 const published: FieldDef = { name: "published", label: "Published (visible on the public site)", type: "boolean" };
@@ -46,7 +50,7 @@ const sort: FieldDef = { name: "sort", label: "Sort order", type: "number", hint
 
 export const ENTITIES: EntityDef[] = [
   {
-    key: "sessions", table: "sessions", label: "Programme sessions", singular: "session", editionScoped: true,
+    key: "sessions", area: "edit_programme", table: "sessions", label: "Programme sessions", singular: "session", editionScoped: true,
     description: "Agenda items. Leave times empty until they are confirmed; untimed sessions are shown as provisional.",
     titleField: "title", listColumns: ["category", "starts_at", "is_provisional", "published"], orderBy: [{ column: "sort" }, { column: "starts_at" }],
     revalidate: ["/", "/programme", "/today", "/conference"],
@@ -67,7 +71,7 @@ export const ENTITIES: EntityDef[] = [
     ],
   },
   {
-    key: "speakers", table: "speakers", label: "Speakers", singular: "speaker",
+    key: "speakers", area: "edit_speakers", table: "speakers", label: "Speakers", singular: "speaker",
     description: "Only add confirmed speakers. Unpublished speakers are hidden from the public site.",
     titleField: "full_name", listColumns: ["institution", "session_type", "published"], orderBy: [{ column: "sort" }, { column: "full_name" }],
     revalidate: ["/", "/speakers", "/programme"],
@@ -87,7 +91,7 @@ export const ENTITIES: EntityDef[] = [
     ],
   },
   {
-    key: "workshops", table: "workshops", label: "Workshops", singular: "workshop", editionScoped: true,
+    key: "workshops", area: "edit_workshops", table: "workshops", label: "Workshops", singular: "workshop", editionScoped: true,
     description: "The conference's workshop series.",
     titleField: "title", listColumns: ["number", "facilitator", "published"], orderBy: [{ column: "number" }],
     revalidate: ["/", "/workshops", "/programme"],
@@ -112,7 +116,7 @@ export const ENTITIES: EntityDef[] = [
     ],
   },
   {
-    key: "rooms", table: "rooms", label: "Rooms", singular: "room", editionScoped: true,
+    key: "rooms", area: "edit_programme", table: "rooms", label: "Rooms", singular: "room", editionScoped: true,
     description: "Venue rooms used by programme sessions.",
     titleField: "name", listColumns: ["building", "capacity"], orderBy: [{ column: "sort" }],
     revalidate: ["/programme", "/conference"],
@@ -126,7 +130,7 @@ export const ENTITIES: EntityDef[] = [
     ],
   },
   {
-    key: "announcements", table: "announcements", label: "Announcements", singular: "announcement", editionScoped: true,
+    key: "announcements", area: "edit_announcements", table: "announcements", label: "Announcements", singular: "announcement", editionScoped: true,
     description: "Pinned important or urgent public announcements appear in the site-wide ribbon.",
     titleField: "title", listColumns: ["level", "audience", "pinned", "published"], orderBy: [{ column: "published_at", ascending: false }],
     revalidate: ["/", "/conference", "/today"],
@@ -142,7 +146,7 @@ export const ENTITIES: EntityDef[] = [
     ],
   },
   {
-    key: "faqs", table: "faqs", label: "FAQs", singular: "FAQ", editionScoped: true,
+    key: "faqs", area: "edit_faqs", table: "faqs", label: "FAQs", singular: "FAQ", editionScoped: true,
     description: "Frequently asked questions on the conference page.",
     titleField: "question", listColumns: ["category", "published"], orderBy: [{ column: "sort" }],
     revalidate: ["/conference"],
@@ -154,7 +158,7 @@ export const ENTITIES: EntityDef[] = [
     ],
   },
   {
-    key: "opportunities", table: "opportunities", label: "Opportunities", singular: "opportunity",
+    key: "opportunities", area: "edit_website", table: "opportunities", label: "Opportunities", singular: "opportunity",
     description: "Research and career opportunities. Mark illustrative entries as examples.",
     titleField: "title", listColumns: ["category", "deadline", "is_example", "published"], orderBy: [{ column: "created_at", ascending: false }],
     revalidate: ["/opportunities"],
@@ -173,7 +177,7 @@ export const ENTITIES: EntityDef[] = [
     ],
   },
   {
-    key: "gallery", table: "gallery_assets", label: "Gallery", singular: "image",
+    key: "gallery", area: "edit_website", table: "gallery_assets", label: "Gallery", singular: "image",
     description: "Only publish images you have permission to use. Alt text is required for accessibility.",
     titleField: "caption", listColumns: ["year", "downloadable", "published"], orderBy: [{ column: "year", ascending: false }, { column: "sort" }],
     revalidate: ["/gallery"],
@@ -190,7 +194,7 @@ export const ENTITIES: EntityDef[] = [
     ],
   },
   {
-    key: "partners", table: "partners", label: "Institutions & partners", singular: "partner",
+    key: "partners", area: "edit_sponsors", table: "partners", label: "Institutions & partners", singular: "partner",
     description: "Describe the relationship accurately. Do not imply endorsement that hasn't been given.",
     titleField: "name", listColumns: ["relationship", "published"], orderBy: [{ column: "sort" }],
     revalidate: ["/", "/about"],
@@ -203,7 +207,7 @@ export const ENTITIES: EntityDef[] = [
     ],
   },
   {
-    key: "sponsors", table: "sponsors", label: "Sponsors", singular: "sponsor",
+    key: "sponsors", area: "edit_sponsors", table: "sponsors", label: "Sponsors", singular: "sponsor",
     description: "Sponsors are listed on the Sponsors page, along the foot of every page and on the home page. Lower sort numbers come first. A PNG logo with a transparent background looks best.",
     titleField: "name", listColumns: ["contribution", "show_on_card", "published"], orderBy: [{ column: "sort" }, { column: "name" }],
     revalidate: ["/", "/sponsors", "/portal"],
@@ -218,7 +222,7 @@ export const ENTITIES: EntityDef[] = [
     ],
   },
   {
-    key: "committee", table: "committee_members", label: "Committee", singular: "committee member",
+    key: "committee", area: "edit_committee", table: "committee_members", label: "Committee", singular: "committee member",
     description: "The organising committee directory on the About page.",
     titleField: "name", listColumns: ["role", "institution", "published"], orderBy: [{ column: "sort" }],
     revalidate: ["/about"],
@@ -233,7 +237,7 @@ export const ENTITIES: EntityDef[] = [
     ],
   },
   {
-    key: "map", table: "map_places", label: "Map places", singular: "map place",
+    key: "map", area: "edit_map", table: "map_places", label: "Map places", singular: "map place",
     description: "Places on the campus map at /map. Only pin a place once you know exactly where it is; unpinned places are listed as \"location to be confirmed\". Link a place to a room to show that room's sessions on the map.",
     titleField: "name", listColumns: ["kind", "code", "lat", "location_confirmed", "published"], orderBy: [{ column: "sort" }, { column: "name" }],
     revalidate: ["/map", "/today"],
@@ -252,7 +256,7 @@ export const ENTITIES: EntityDef[] = [
     ],
   },
   {
-    key: "timeline", table: "timeline_events", label: "History timeline", singular: "milestone",
+    key: "timeline", area: "edit_website", table: "timeline_events", label: "History timeline", singular: "milestone",
     description: "Only verified milestones are shown publicly.",
     titleField: "title", listColumns: ["year", "verified", "published"], orderBy: [{ column: "sort" }],
     revalidate: ["/about"],
@@ -265,7 +269,7 @@ export const ENTITIES: EntityDef[] = [
     ],
   },
   {
-    key: "resources", table: "resources", label: "Resources", singular: "resource",
+    key: "resources", area: "edit_website", table: "resources", label: "Resources", singular: "resource",
     description: "Research resources linked from the Research hub and delegate portal.",
     titleField: "title", listColumns: ["category", "published"], orderBy: [{ column: "sort" }],
     revalidate: ["/research", "/portal"],
@@ -292,7 +296,7 @@ export const ENTITIES: EntityDef[] = [
     ],
   },
   {
-    key: "editions", table: "editions", label: "Editions & archive", singular: "edition", adminOnly: true,
+    key: "editions", area: "edit_settings", table: "editions", label: "Editions & archive", singular: "edition",
     description: "Each conference year. Past editions appear in the archive. Use Conference settings to edit the current edition in detail.",
     titleField: "name", listColumns: ["year", "event_date", "is_current", "published"], orderBy: [{ column: "year", ascending: false }],
     revalidate: ["/", "/archive", "/conference"],

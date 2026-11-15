@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/auth";
 import { AdminHeader, Panel } from "@/components/admin/ui";
 import { CurrentEditionForm, SettingsForm } from "@/components/admin/settings-form";
 import { Notice } from "@/components/ui/notice";
@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Conference settings" };
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const { db, profile } = await requireRole(["editor"], "/admin/settings");
+  const { db, profile } = await requireAccess("edit_settings", "/admin/settings");
   const [{ data: row }, { data: editions }] = await Promise.all([
     db.from("editions").select("*").eq("is_current", true).maybeSingle(),
     db.from("editions").select("id, name, is_current").order("year", { ascending: false }),

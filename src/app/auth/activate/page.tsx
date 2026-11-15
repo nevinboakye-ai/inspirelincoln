@@ -6,11 +6,16 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export const metadata: Metadata = { title: "Set up your account", robots: { index: false } };
 
-export default function ActivatePage() {
+export default async function ActivatePage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const { error } = await searchParams;
   return (
     <AuthShell
       title="Set up your account"
-      intro="For delegates and presenters the committee has selected. Use the email you applied with and your place is confirmed straight away."
+      intro={
+        error === "expired"
+          ? "That link has expired or was already used. Fill this in again with the same email and we'll send you a fresh one."
+          : "For delegates and presenters the committee has selected. Use the email you applied with and your place is confirmed straight away."
+      }
       footer={
         <>
           Already set up?{" "}

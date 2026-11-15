@@ -63,13 +63,14 @@ export function ResetForm({ disabled }: { disabled: boolean }) {
 }
 
 /** Choose a new password. The first time (after a temporary password from the committee) it also asks them to read the privacy notice. */
-export function UpdatePasswordForm({ first = false }: { first?: boolean }) {
+export function UpdatePasswordForm({ first = false, setup = false }: { first?: boolean; setup?: boolean }) {
   const [state, action, pending] = useActionState(updatePassword, null);
   return (
     <form onSubmit={submitWithoutReset(action)} noValidate className="space-y-5">
       <Status state={state} />
       {first && <input type="hidden" name="first" value="1" />}
-      <Field id="password" label="New password" required error={fe(state, "password")} hint="At least 10 characters. Don't reuse the temporary one.">
+      {setup && <input type="hidden" name="setup" value="1" />}
+      <Field id="password" label="New password" required error={fe(state, "password")} hint={first ? "At least 10 characters. Don't reuse the temporary one." : "At least 10 characters."}>
         <input id="password" name="password" type="password" autoComplete="new-password" className={inputClass} {...inv(state, "password")} />
       </Field>
       <Field id="confirm" label="Confirm new password" required error={fe(state, "confirm")}>
@@ -88,7 +89,7 @@ export function UpdatePasswordForm({ first = false }: { first?: boolean }) {
           {fe(state, "privacyAck") && <p id="privacyAck-error" className="mt-2 text-sm font-medium text-danger">{fe(state, "privacyAck")}</p>}
         </div>
       )}
-      <Submit pending={pending}>{first ? "Save my password" : "Update password"}</Submit>
+      <Submit pending={pending}>{first || setup ? "Save my password" : "Update password"}</Submit>
     </form>
   );
 }
