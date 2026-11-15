@@ -51,9 +51,16 @@ defaults by account type are:
 **Platform dashboard (`/admin/platform`).** Only the site owner (site role `admin`) sees it. The
 owner always has every permission and can:
 
-- switch any permission on or off for a whole account type,
+- switch any area on or off for a whole account type: each part of the website (programme, speakers,
+  workshop pages, announcements, committee, map, sponsors, FAQs, settings) and each dashboard area
+  (accounts, attendance, travel, check-in, enquiries, workshops, submissions, emails, records, audit
+  log, removing accounts) has its own switch (setup file 41),
 - allow or block a single permission for one person (for example, let a delegate volunteer
   run the check-in desk),
+- remove someone's account permanently (owner only unless granted), optionally taking them off the
+  selected list and emailing them,
+- manage people from their delegate network profile: request a photo, bio, slides and so on by a
+  deadline, correct their name, or remove them,
 - jump straight to editing committee profiles, accepting accounts and reviewing submissions,
 - see recent permission changes, which are all written to the audit log.
 
