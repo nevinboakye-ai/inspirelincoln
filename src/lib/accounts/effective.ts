@@ -1,4 +1,4 @@
-import { CAPABILITIES, type Capability } from "./index";
+import { CAPABILITIES, WEBSITE_CAPABILITIES, type Capability } from "./index";
 import type { AccountStatus, AccountType, UserRole } from "@/lib/types";
 
 export type OverrideMode = "inherit" | "allow" | "block";
@@ -17,7 +17,7 @@ export function effectiveFor(
   const byType = (c: Capability) => types.some((t) => rules[t]?.[c]);
   const out = {} as Record<Capability, { allowed: boolean; source: "owner" | "override" | "type" | "status" | "legacy" }>;
   for (const c of CAPABILITIES) {
-    const legacy = person.role === "editor" && (c === "edit_website" || c === "review_submissions");
+    const legacy = person.role === "editor" && (c === "review_submissions" || WEBSITE_CAPABILITIES.includes(c));
     if (person.role === "admin") out[c] = { allowed: true, source: "owner" };
     else if (overrides[c] !== undefined) out[c] = { allowed: Boolean(overrides[c]) && person.accountStatus !== "declined", source: "override" };
     else if (person.accountStatus !== "approved") out[c] = { allowed: legacy, source: legacy ? "legacy" : "status" };

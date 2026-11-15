@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   const current = await getCurrentUser();
   const can = current?.profile.access;
-  if (!current || !can || !(can.owner || can.can.review_accounts || can.can.manage_people)) return new NextResponse("Not authorised", { status: 403 });
+  if (!current || !can || !(can.owner || can.can.view_travel)) return new NextResponse("Not authorised", { status: 403 });
   const { rows } = await loadTravel(current.db);
   const carsOnly = new URL(req.url).searchParams.get("mode") === "car";
   const out = rows

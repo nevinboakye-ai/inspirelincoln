@@ -99,10 +99,10 @@ export function ReadinessRing({ done, total, small = false }: { done: number; to
   );
 }
 
-/** Cards that rise in one after another when the hub opens. */
+/** Cards that rise in one after another when the hub opens: quick, so the hub is usable at once. */
 export function HubStagger({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <m.div className={className} initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08, delayChildren: 0.15 } } }}>
+    <m.div className={className} initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05, delayChildren: 0 } } }}>
       {children}
     </m.div>
   );
@@ -110,7 +110,7 @@ export function HubStagger({ children, className }: { children: React.ReactNode;
 
 export function HubItem({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <m.div className={className} variants={{ hidden: { opacity: 0, y: 22 }, show: { opacity: 1, y: 0, transition: { duration: 0.7, ease } } }}>
+    <m.div className={className} variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease } } }}>
       {children}
     </m.div>
   );

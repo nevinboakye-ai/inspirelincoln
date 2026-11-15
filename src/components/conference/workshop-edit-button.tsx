@@ -18,7 +18,7 @@ export function WorkshopEditButton({ workshop }: { workshop: EditableWorkshop })
   useEffect(() => {
     if (!hasSessionCookie()) return;
     let live = true;
-    loadAccess().then((a) => live && setCanEdit(Boolean(a.edit)));
+    loadAccess().then((a) => live && setCanEdit(Boolean(a.owner || (a.areas ? a.areas.includes("edit_workshops") : a.edit))));
     return () => {
       live = false;
     };

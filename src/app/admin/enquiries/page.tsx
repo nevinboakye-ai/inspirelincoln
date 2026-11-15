@@ -31,6 +31,9 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
   const view: View = sp.view && sp.view in VIEWS ? (sp.view as View) : "waiting";
   const q = (sp.q ?? "").trim().toLowerCase().slice(0, 80);
 
+  // The older contact form records load alongside the conversations, not after them.
+  const legacyP = canRecords ? db.from("contact_enquiries").select("*").order("created_at", { ascending: false }).limit(300) : Promise.resolve({ data: null });
+
   let rows: ThreadRow[] = [];
   const counts: Record<View, number> = { waiting: 0, replied: 0, resolved: 0, all: 0 };
   if (canAnswer) {
@@ -55,7 +58,7 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
     if (view === "waiting") rows.reverse();
   }
 
-  const { data: legacy } = canRecords ? await db.from("contact_enquiries").select("*").order("created_at", { ascending: false }).limit(300) : { data: null };
+  const { data: legacy } = await legacyP;
 
   return (
     <div className="space-y-6">

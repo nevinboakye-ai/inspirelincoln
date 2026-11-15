@@ -17,7 +17,7 @@ const ICON: Record<TravelMode | "none", typeof Bus> = { inspire_coach: Bus, exte
 
 export default async function TravelPage({ searchParams }: { searchParams: Promise<{ mode?: string }> }) {
   const sp = await searchParams;
-  const { db } = await requireAccess(["review_accounts", "manage_people"], "/admin/travel");
+  const { db } = await requireAccess("view_travel", "/admin/travel");
   const { rows, ready } = await loadTravel(db);
   const filter: TravelMode | "none" | null = isTravelMode(sp.mode) ? sp.mode : sp.mode === "none" ? "none" : null;
   const count = (m: TravelMode | "none") => rows.filter((r) => (r.mode ?? "none") === m).length;

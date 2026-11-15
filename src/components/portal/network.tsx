@@ -1,3 +1,99 @@
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
 "use client";
 import { useActionState, useCallback, useDeferredValue, useMemo, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
@@ -15,6 +111,8 @@ import { uniKey, type LogoMap } from "@/lib/university-logos";
 import { instagramUrl } from "@/lib/instagram";
 import { Crown, Star } from "lucide-react";
 import type { AccountType } from "@/lib/types";
+import { MessageButton } from "@/components/messages/message-button";
+import { ManagePerson, type ManagedPerson, type ManageRights } from "@/components/admin/manage-person";
 
 export type Delegate = {
   id: string;
@@ -45,7 +143,7 @@ export function NetworkCardForm({ profile }: { profile: CardProfile }) {
   return (
     <form onSubmit={submitWithoutReset(action)} noValidate className="space-y-5">
       <ResultBanner state={state} />
-      <Field id="bio" label="Short bio" error={fe("bio")} hint={`What you study, what you're interested in, what you'd like to talk about. ${600 - bio.length} characters left.`}>
+      <Field id="bio" label="Short bio" error={fe("bio")} hint={`What you study, what you're working on (research, projects, societies, sport or anything else outside the course), and what you'd like to talk about on the day. ${600 - bio.length} characters left.`}>
         <textarea
           id="bio"
           name="bio"
@@ -92,328 +190,3 @@ export function NetworkCardForm({ profile }: { profile: CardProfile }) {
         <legend className="sr-only">What to share</legend>
         <label className="flex items-start gap-3 text-sm text-slate-700">
           <input type="checkbox" name="showEmail" defaultChecked={profile.networkShowEmail} className="mt-0.5 size-5 shrink-0 accent-navy" />
-          <span>
-            Show my email (<span className="break-all">{profile.email}</span>) to other delegates
-          </span>
-        </label>
-        <label className="flex items-start gap-3 text-sm text-slate-700">
-          <input type="checkbox" name="listed" defaultChecked={profile.networkListed} className="mt-0.5 size-5 shrink-0 accent-navy" />
-          <span>List me on the delegate network. Untick to hide your card completely.</span>
-        </label>
-      </fieldset>
-      <button type="submit" disabled={pending} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[3px] bg-navy px-6 font-ui font-semibold text-paper hover:bg-navy-700 disabled:opacity-60 sm:w-auto">
-        {pending && <Loader2 aria-hidden className="size-4 animate-spin" />} Save my card
-      </button>
-    </form>
-  );
-}
-
-function LinkedInMark() {
-  return (
-    <svg aria-hidden viewBox="0 0 24 24" className="size-4" fill="currentColor">
-      <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13ZM7.12 20.45H3.56V9h3.56v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0Z" />
-    </svg>
-  );
-}
-
-const TONE_STYLE: Record<string, { band: string; avatar: string }> = {
-  oral_presenter: { band: "bg-cyan", avatar: "bg-cyan/20 text-navy" },
-  poster_presenter: { band: "bg-gold", avatar: "bg-gold/25 text-midnight" },
-  delegate: { band: "bg-navy", avatar: "bg-navy text-cyan" },
-  oral_waitlist: { band: "bg-navy", avatar: "bg-navy text-cyan" },
-  other: { band: "bg-midnight", avatar: "bg-midnight text-gold-300" },
-};
-const toneFor = (t: AccountType) => TONE_STYLE[t] ?? TONE_STYLE.other;
-const rolesOfP = (p: Delegate) => (p.roles?.length ? p.roles : [p.account_type]);
-/** President, vice president and executive committee first, then each team in turn, then everyone else. */
-const RANK: AccountType[] = ["president", "vice_president", "executive_committee", ...COMMITTEE_TYPES.filter((t) => !EXEC_TYPES.includes(t))];
-const rankOf = (p: Delegate) => Math.min(...rolesOfP(p).map((r) => (RANK.includes(r) ? RANK.indexOf(r) : 99)));
-const isExec = (p: Delegate) => rolesOfP(p).some((r) => EXEC_TYPES.includes(r));
-const isCommittee = (p: Delegate) => rankOf(p) < 99;
-/** Their committee role, most senior first. */
-const committeeRole = (p: Delegate) => {
-  const top = RANK[rankOf(p)];
-  return top ? ACCOUNT_TYPE_LABEL[top] : null;
-};
-const roleLabel = (p: Delegate) => p.committee_position || committeeRole(p) || ACCOUNT_TYPE_LABEL[p.account_type];
-
-export function NetworkDirectory({ people, me, logos = {} }: { people: Delegate[]; me: string; logos?: LogoMap }) {
-  const [q, setQ] = useState("");
-  const [uni, setUni] = useState("");
-  const [openId, setOpenId] = useState<string | null>(null);
-  const query = useDeferredValue(q.trim().toLowerCase());
-  const unis = useMemo(() => [...new Set(people.map((p) => p.institution).filter(Boolean) as string[])].sort(), [people]);
-  const shown = useMemo(
-    () =>
-      people.filter(
-        (p) =>
-          (!uni || p.institution === uni) &&
-          (!query || [p.full_name, p.institution, p.bio, p.year_of_study].some((v) => v?.toLowerCase().includes(query))),
-      ),
-    [people, uni, query],
-  );
-  const committee = useMemo(
-    () => shown.filter(isCommittee).sort((a, b) => rankOf(a) - rankOf(b) || a.full_name.localeCompare(b.full_name)),
-    [shown],
-  );
-  const delegates = useMemo(() => shown.filter((p) => !isCommittee(p)), [shown]);
-  const selected = people.find((p) => p.id === openId) ?? null;
-  const close = useCallback(() => setOpenId(null), []);
-
-  return (
-    <section aria-labelledby="people-title" className="space-y-4">
-      <h2 id="people-title" className="font-display text-xl text-ink">
-        Delegates <span className="text-slate">({people.length})</span>
-      </h2>
-      <div className="grid gap-3 sm:grid-cols-[1fr_16rem]">
-        <label className="relative block">
-          <span className="sr-only">Search delegates</span>
-          <Search aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate" />
-          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, university or interest" className={`${inputClass} pl-10`} />
-        </label>
-        <label className="block">
-          <span className="sr-only">University</span>
-          <select value={uni} onChange={(e) => setUni(e.target.value)} className={inputClass}>
-            <option value="">All universities</option>
-            {unis.map((u) => (
-              <option key={u} value={u}>{u}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <p className="sr-only" role="status" aria-live="polite">
-        {shown.length} {shown.length === 1 ? "delegate" : "delegates"} shown
-      </p>
-
-      {shown.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-navy/15 bg-white p-8 text-center text-slate-700">
-          {people.length === 0 ? "No one is listed yet. Add your card above to be the first." : "No one matches that search."}
-        </p>
-      ) : (
-        <div className="space-y-8">
-          {committee.length > 0 && (
-            <div>
-              <h3 className="mb-3 flex items-center gap-2 font-ui text-xs font-semibold uppercase tracking-[0.18em] text-gold-700">
-                <Crown aria-hidden className="size-4" /> The committee <span className="font-normal normal-case tracking-normal text-slate">({committee.length})</span>
-              </h3>
-              <ul className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-3">
-                {committee.map((p) => (
-                  <li key={p.id}>
-                    <CommitteeCard p={p} me={me} logo={logos[uniKey(p.institution)]} onOpen={() => setOpenId(p.id)} />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {delegates.length > 0 && (
-            <div>
-              {committee.length > 0 && (
-                <h3 className="mb-3 font-ui text-xs font-semibold uppercase tracking-[0.18em] text-slate">
-                  Delegates <span className="font-normal normal-case tracking-normal">({delegates.length})</span>
-                </h3>
-              )}
-        <ul className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-3">
-          {delegates.map((p) => {
-            const tone = toneFor(p.account_type);
-            return (
-              <li key={p.id}>
-                <button
-                  type="button"
-                  onClick={() => setOpenId(p.id)}
-                  aria-haspopup="dialog"
-                  className="group relative flex h-full w-full flex-col overflow-hidden rounded-xl border border-navy/10 bg-white text-left shadow-[0_1px_2px_rgba(12,24,44,0.06)] transition-[transform,box-shadow,border-color] duration-300 ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-navy/25 hover:shadow-[0_22px_44px_-26px_rgba(26,49,84,0.55)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600"
-                >
-                  <span aria-hidden className={`h-1.5 w-full ${tone.band}`} />
-                  <span className="flex flex-1 flex-col p-3 sm:p-5">
-                    <span className={PERSON_ROW}>
-                      <Avatar url={p.avatar_url} name={p.full_name} className="size-14 transition-transform duration-300 group-hover:scale-105 sm:size-12" fallbackClassName={`text-sm ${tone.avatar}`} />
-                      <span className="w-full min-w-0 sm:w-auto">
-                        <span className={`${NAME} text-ink`}>
-                          {p.full_name}
-                          {p.id === me && <span className="ml-1.5 text-xs font-normal text-slate">(you)</span>}
-                        </span>
-                        <span className={`${META} text-slate-700`}>
-                          <UniLogo src={logos[uniKey(p.institution)]} name={p.institution} className="size-5 p-0.5" />
-                          <span className="min-w-0 line-clamp-2 sm:line-clamp-1">
-                            {p.institution || (p.year_of_study ? null : " ")}
-                            {p.year_of_study && <span className={p.institution ? "hidden sm:inline" : undefined}>{p.institution ? ` · ${p.year_of_study}` : p.year_of_study}</span>}
-                          </span>
-                        </span>
-                      </span>
-                    </span>
-                    {p.bio && <span className="mt-3 hidden text-sm leading-relaxed text-slate-700 sm:line-clamp-2">{p.bio}</span>}
-                    <span className={FOOT}>
-                      {p.account_type !== "delegate" ? (
-                        <Badge tone={p.account_type.endsWith("presenter") ? "violet" : "neutral"}>{roleLabel(p)}</Badge>
-                      ) : (
-                        <span className="hidden sm:block" />
-                      )}
-                      <span className="hidden items-center gap-1 font-ui text-xs font-semibold text-electric-600 sm:inline-flex">
-                        View profile <ArrowRight aria-hidden className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
-                      </span>
-                    </span>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-            </div>
-          )}
-        </div>
-      )}
-
-      <Drawer open={Boolean(selected)} onClose={close} label={selected ? `${selected.full_name}'s profile` : "Profile"}>
-        {selected && <PersonDetail p={selected} me={me} logo={logos[uniKey(selected.institution)]} />}
-      </Drawer>
-    </section>
-  );
-}
-
-// Cards sit two to a row on phones, so there they stack: photo on top,
-// name and university centred underneath, and the bio left for the profile.
-const PERSON_ROW = "flex flex-col items-center gap-2 text-center sm:flex-row sm:gap-3.5 sm:text-left";
-const NAME = "line-clamp-2 break-words text-sm font-semibold sm:line-clamp-1 sm:text-base";
-const META = "mt-0.5 flex items-center justify-center gap-1.5 text-xs sm:justify-start sm:text-sm";
-const FOOT = "mt-auto flex flex-col items-center gap-2 pt-3 sm:flex-row sm:justify-between sm:pt-4";
-
-/**
- * The committee's cards stand out from delegates': the executive committee's
- * are gold, the rest of the team's are dark with a gold edge.
- */
-function CommitteeCard({ p, me, logo, onOpen }: { p: Delegate; me: string; logo?: string; onOpen: () => void }) {
-  const exec = isExec(p);
-  const team = committeeRole(p);
-  const c = exec
-    ? {
-        card: "bg-[linear-gradient(135deg,var(--color-gold-300)_0%,var(--color-gold)_55%,#c9a24c_100%)] text-midnight ring-gold-600/60 shadow-[0_18px_40px_-24px_rgba(122,92,20,0.75)] hover:shadow-[0_26px_50px_-22px_rgba(122,92,20,0.8)]",
-        strip: "bg-midnight",
-        grid: "opacity-[0.07] invert",
-        crest: "opacity-[0.12] invert",
-        ring: "ring-midnight",
-        fallback: "bg-midnight text-sm text-gold-300",
-        you: "text-midnight/70",
-        meta: "text-midnight/80",
-        bio: "text-midnight/85",
-        badge: "bg-midnight text-gold-300",
-        view: "text-midnight",
-      }
-    : {
-        card: "bg-midnight text-paper ring-white/10 shadow-[0_18px_40px_-26px_rgba(12,24,44,0.9)] hover:shadow-[0_26px_50px_-24px_rgba(12,24,44,0.9)]",
-        strip: "bg-gold/70",
-        grid: "opacity-[0.14]",
-        crest: "opacity-[0.06]",
-        ring: "ring-gold/40",
-        fallback: "bg-paper/10 text-sm text-gold-300",
-        you: "text-paper/60",
-        meta: "text-paper/70",
-        bio: "text-paper/75",
-        badge: "bg-gold/15 text-gold-300 ring-1 ring-inset ring-gold/30",
-        view: "text-gold-300",
-      };
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      aria-haspopup="dialog"
-      className={`group relative flex h-full w-full flex-col overflow-hidden rounded-xl text-left ring-1 transition-[transform,box-shadow] duration-300 ease-[var(--ease-out-expo)] hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600 ${c.card}`}
-    >
-      <span aria-hidden className={`h-1.5 w-full ${c.strip}`} />
-      <span aria-hidden className={`lanyard-grid pointer-events-none absolute inset-0 ${c.grid}`} />
-      {exec && <span aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_30%,rgba(255,255,255,0.35)_45%,transparent_60%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100 motion-reduce:transition-none" />}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/brand/crest-white.png" alt="" aria-hidden className={`pointer-events-none absolute -bottom-6 -right-4 h-28 w-auto ${c.crest}`} />
-      <span className="relative flex flex-1 flex-col p-3 sm:p-5">
-        <span className={PERSON_ROW}>
-          <Avatar url={p.avatar_url} name={p.full_name} className={`size-14 ring-2 transition-transform duration-300 group-hover:scale-105 sm:size-12 ${c.ring}`} fallbackClassName={c.fallback} />
-          <span className="w-full min-w-0 sm:w-auto">
-            <span className={NAME}>
-              {p.full_name}
-              {p.id === me && <span className={`ml-1.5 text-xs font-normal ${c.you}`}>(you)</span>}
-            </span>
-            <span className={`${META} ${c.meta}`}>
-              <UniLogo src={logo} name={p.institution} className="size-5 p-0.5" />
-              <span className="min-w-0 line-clamp-2 sm:line-clamp-1">
-                            {p.institution || (p.year_of_study ? null : " ")}
-                            {p.year_of_study && <span className={p.institution ? "hidden sm:inline" : undefined}>{p.institution ? ` · ${p.year_of_study}` : p.year_of_study}</span>}
-                          </span>
-            </span>
-          </span>
-        </span>
-        {p.bio && <span className={`mt-3 hidden text-sm leading-relaxed sm:line-clamp-2 ${c.bio}`}>{p.bio}</span>}
-        <span className={FOOT}>
-          <span className={`inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full px-2.5 py-1 font-ui text-[0.62rem] font-semibold uppercase tracking-[0.1em] sm:text-[0.68rem] sm:tracking-[0.12em] ${c.badge}`}>
-            {exec && <Star aria-hidden className="size-3 shrink-0 fill-current" />}
-            <span className="truncate">{p.committee_position || team}</span>
-          </span>
-          <span className={`hidden shrink-0 items-center gap-1 font-ui text-xs font-semibold sm:inline-flex ${c.view}`}>
-            View <ArrowRight aria-hidden className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
-          </span>
-        </span>
-        {p.committee_position && team && <span className="sr-only">, {team}</span>}
-      </span>
-    </button>
-  );
-}
-
-function PersonDetail({ p, me, logo }: { p: Delegate; me: string; logo?: string }) {
-  const tone = toneFor(p.account_type);
-  return (
-    <div>
-      <div className="relative overflow-hidden bg-midnight px-6 pb-7 pt-10 text-paper sm:px-8">
-        <div aria-hidden className="lanyard-grid pointer-events-none absolute inset-0 opacity-20" />
-        <div className="relative flex items-center gap-4">
-          <Avatar url={p.avatar_url} name={p.full_name} className="size-16 ring-4 ring-white/10 sm:size-20" fallbackClassName={`text-lg ${tone.avatar}`} />
-          <div className="min-w-0">
-            <h3 className="font-display text-2xl leading-tight">
-              {p.full_name}
-              {p.id === me && <span className="ml-2 align-middle text-sm font-normal text-paper/60">(you)</span>}
-            </h3>
-            <p className="mt-1 text-sm text-gold-300">{roleLabel(p)}</p>
-          </div>
-        </div>
-      </div>
-      <span aria-hidden className={`block h-1.5 w-full ${tone.band}`} />
-      <dl className="grid gap-5 px-6 py-6 sm:px-8">
-        {p.institution && (
-          <div>
-            <dt className="eyebrow text-slate">Medical school</dt>
-            <dd className="mt-1.5 flex items-center gap-3 text-ink">
-              <UniLogo src={logo} name={p.institution} fallback className="size-11 text-[0.62rem]" />
-              {p.institution}
-            </dd>
-          </div>
-        )}
-        {p.year_of_study && (
-          <div>
-            <dt className="eyebrow text-slate">Year of study</dt>
-            <dd className="mt-1 text-ink">{p.year_of_study}</dd>
-          </div>
-        )}
-        <div>
-          <dt className="eyebrow text-slate">About</dt>
-          <dd className="mt-1 whitespace-pre-line leading-relaxed text-slate-700">{p.bio || "They haven't added a bio yet."}</dd>
-        </div>
-      </dl>
-      {(p.linkedin_url || p.instagram || p.email) && (
-        <div className="flex flex-wrap gap-3 border-t border-navy/10 px-6 py-5 sm:px-8">
-          {p.instagram && (
-            <a href={instagramUrl(p.instagram)} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex min-h-11 items-center gap-2 rounded-[3px] border border-navy/15 px-4 text-sm font-semibold text-ink hover:border-navy/35">
-              <InstagramMark /> @{p.instagram}<span className="sr-only"> on Instagram (opens in a new tab)</span>
-            </a>
-          )}
-          {p.linkedin_url && (
-            <a href={p.linkedin_url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex min-h-11 items-center gap-2 rounded-[3px] bg-navy px-4 text-sm font-semibold text-paper hover:bg-navy-700">
-              <LinkedInMark /> LinkedIn<span className="sr-only"> (opens in a new tab)</span>
-            </a>
-          )}
-          {p.email && (
-            <a href={`mailto:${p.email}`} className="inline-flex min-h-11 min-w-0 items-center gap-2 rounded-[3px] border border-navy/15 px-4 text-sm font-semibold text-ink hover:border-navy/35">
-              <Mail aria-hidden className="size-4 shrink-0" /> <span className="truncate">{p.email}</span>
-            </a>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}

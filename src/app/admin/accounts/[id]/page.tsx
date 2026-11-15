@@ -11,7 +11,8 @@ import { PersonDetailsForm } from "@/components/admin/person-forms";
 import { ViewAsButton } from "@/components/admin/view-as";
 import { Badge } from "@/components/ui/badge";
 import { Notice } from "@/components/ui/notice";
-import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, COMMITTEE_TYPES, SUBMISSION_LABEL, SUBMISSION_STATUS_LABEL, rolesLabel, rolesOf } from "@/lib/accounts";
+import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, COMMITTEE_TYPES, EXEC_TYPES, SUBMISSION_LABEL, SUBMISSION_STATUS_LABEL, rolesLabel, rolesOf, submissionKindsFor } from "@/lib/accounts";
+import { PersonRequestForm, RemoveAccountPanel } from "@/components/admin/manage-person";
 import { emailConfigured } from "@/lib/email/resend";
 import type { AccountStatus, AccountType, SubmissionKind, SubmissionStatus } from "@/lib/types";
 
@@ -65,6 +66,9 @@ export default async function PersonPage({ params, searchParams }: { params: Pro
   const name = p.full_name || p.email;
   const ownerAccount = p.role === "admin";
   const locked = ownerAccount && !profile.access.owner;
+  // Removing needs its own permission; executive accounts also need the president or vice president.
+  const canRemove =
+    !ownerAccount && p.id !== user.id && (profile.access.owner || profile.access.can.remove_accounts) && (!rolesOf(type, extra).some((t) => EXEC_TYPES.includes(t)) || profile.access.leadership);
   const back = sp.from === "email" ? { href: "/admin/email", label: "Group email" } : { href: `/admin/accounts?status=${status}`, label: "Accounts" };
 
   return (
@@ -191,6 +195,29 @@ export default async function PersonPage({ params, searchParams }: { params: Pro
               </Panel>
             </section>
           )}
+
+          {!locked && (
+            <section id="request" className="scroll-mt-28">
+              <Panel title={`Ask ${p.full_name?.split(" ")[0] || "them"} for something`}>
+                <p className="-mt-2 mb-4 text-sm text-slate-700">Pick what you need, such as a photo, a bio or their slides. They get a branded email with a link to each step and your deadline.</p>
+                <PersonRequestForm
+                  person={{
+                    kind: "account",
+                    id: p.id,
+                    name,
+                    institution: p.institution,
+                    yearOfStudy: p.year_of_study,
+                    presents: (() => {
+                      const k = submissionKindsFor(rolesOf(type, extra));
+                      return k.length === 2 ? "both" : (k[0] ?? null);
+                    })(),
+                  }}
+                />
+              </Panel>
+            </section>
+          )}
+
+          {canRemove && <RemoveAccountPanel id={p.id} name={name} redirectTo={`/admin/accounts?status=${status}`} />}
         </div>
 
         <aside className="space-y-6" aria-label={`About ${name}`}>

@@ -9,7 +9,9 @@ export async function GET() {
   const current = await getCurrentUser();
   if (!current) return NextResponse.redirect(new URL("/login?next=/portal/profile", process.env.NEXT_PUBLIC_SITE_URL || "https://inspirelincoln.uk"));
   const { db, user } = current;
-  const [profile, registrations, consents, submissions, agenda, workshops, abstracts, enquiries, contacts, conversations, rankings, places] = await Promise.all([
+  const [account, profile, registrations, consents, submissions, agenda, workshops, abstracts, enquiries, contacts, conversations, rankings, places] = await Promise.all([
+    // The full account record (sign-up and last sign-in times) from the auth server.
+    db.auth.getUser(),
     db.from("profiles").select("*").eq("id", user.id).maybeSingle(),
     db.from("registrations").select("status, source, checked_in_at, created_at, updated_at").eq("user_id", user.id),
     db.from("consent_records").select("purpose, granted, policy_version, source, created_at").eq("user_id", user.id).order("created_at"),
@@ -32,7 +34,7 @@ export async function GET() {
   const body = {
     exported_at: new Date().toISOString(),
     controller: "INSPIRE National Medical Research Conference",
-    account: { email: user.email, created_at: user.created_at, last_sign_in_at: user.last_sign_in_at },
+    account: { email: user.email, created_at: account.data.user?.created_at ?? null, last_sign_in_at: account.data.user?.last_sign_in_at ?? null },
     profile: p,
     // Your photo itself, through a private link that works for an hour.
     profile_photo: photoPath ? { download_link: photoLink, link_expires_in_minutes: 60 } : null,

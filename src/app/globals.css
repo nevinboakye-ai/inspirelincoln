@@ -35,6 +35,22 @@
   --color-gold-300: #e6c97f;
   --color-gold-600: #a5802a;
   --color-gold-700: #7a5c14;
+  /* Accent colours for the hub and dashboards: each area of the hub gets its own,
+     so a phone screen of cards reads at a glance. Every one passes AA on white. */
+  --color-teal: #0f766e;
+  --color-teal-100: #d5f0ec;
+  --color-coral: #c2410c;
+  --color-coral-100: #fde4d6;
+  --color-plum: #7e3a8c;
+  --color-plum-100: #f1e1f4;
+  --color-sky: #1f6fb2;
+  --color-sky-100: #dcebf8;
+  --color-rose: #be123c;
+  --color-rose-100: #fde0e6;
+
+  --shadow-soft: 0 1px 2px rgb(12 24 44 / 0.04), 0 8px 24px -16px rgb(12 24 44 / 0.28);
+  --shadow-lift: 0 2px 4px rgb(12 24 44 / 0.05), 0 18px 40px -20px rgb(12 24 44 / 0.45);
+  --shadow-sheet: 0 -12px 48px -12px rgb(12 24 44 / 0.45);
 
   --font-display: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
   --font-ui: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
@@ -84,6 +100,7 @@
 
   html {
     -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
     text-rendering: optimizeLegibility;
     scroll-padding-top: calc(var(--header-h) + 16px);
   }
@@ -122,6 +139,9 @@
   }
 
   [hidden] { display: none !important; }
+
+  /* No 300ms double-tap wait on phones: taps on links and buttons register at once. */
+  a, button, summary, label, [role="button"] { touch-action: manipulation; }
 }
 
 @layer components {
@@ -192,6 +212,55 @@
 
   .fade-edge-x {
     mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  }
+
+  /* ---- App surfaces: the hub, committee dashboard and review pages ---- */
+
+  /* The standard card: white, hairline border, soft shadow, generous radius. */
+  .app-card {
+    @apply rounded-2xl border border-navy/[0.08] bg-white;
+    box-shadow: var(--shadow-soft);
+  }
+  /* A card that is itself a link or button: lifts on hover, presses on tap. */
+  .app-card-link {
+    @apply rounded-2xl border border-navy/[0.08] bg-white;
+    box-shadow: var(--shadow-soft);
+    transition: transform 0.25s var(--ease-out-expo), box-shadow 0.25s var(--ease-out-expo), border-color 0.25s;
+  }
+  @media (hover: hover) {
+    .app-card-link:hover { box-shadow: var(--shadow-lift); border-color: rgb(26 49 84 / 0.18); transform: translateY(-1px); }
+  }
+  .app-card-link:active { transform: scale(0.985); }
+
+  /* Press feedback for anything tappable. */
+  .tap { transition: transform 0.18s var(--ease-out-expo), background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s; }
+  .tap:active { transform: scale(0.97); }
+
+  /* Coloured icon chips, one colour per area. */
+  .icon-chip { @apply grid size-10 shrink-0 place-items-center rounded-xl; }
+  .icon-chip-sm { @apply grid size-8 shrink-0 place-items-center rounded-lg; }
+  .tone-navy { background: var(--color-cyan-300); color: var(--color-navy); }
+  .tone-gold { background: color-mix(in oklab, var(--color-gold) 22%, white); color: var(--color-gold-700); }
+  .tone-teal { background: var(--color-teal-100); color: var(--color-teal); }
+  .tone-coral { background: var(--color-coral-100); color: var(--color-coral); }
+  .tone-plum { background: var(--color-plum-100); color: var(--color-plum); }
+  .tone-sky { background: var(--color-sky-100); color: var(--color-sky); }
+  .tone-rose { background: var(--color-rose-100); color: var(--color-rose); }
+  .tone-success { background: color-mix(in oklab, var(--color-success) 14%, white); color: var(--color-success); }
+
+  /* Horizontal scrollers: no scrollbar, edges fade so it's clear there's more. */
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .scroll-fade-x {
+    mask-image: linear-gradient(to right, transparent 0, black 16px, black calc(100% - 28px), transparent 100%);
+  }
+
+  /* A placeholder that shimmers while content loads. */
+  .skeleton {
+    @apply rounded-lg;
+    background: linear-gradient(100deg, rgb(26 49 84 / 0.06) 30%, rgb(26 49 84 / 0.11) 50%, rgb(26 49 84 / 0.06) 70%);
+    background-size: 300% 100%;
+    animation: skeleton 1.4s ease-in-out infinite;
   }
 
   .noise::after {
@@ -303,8 +372,73 @@
   50% { opacity: 0.08; transform: scale(1.04); }
 }
 
+@keyframes skeleton { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@keyframes sheet-up { from { transform: translateY(100%); } }
+@keyframes sheet-fade { from { opacity: 0; } }
+@keyframes pop-in { from { opacity: 0; transform: translateY(6px) scale(0.98); } }
+.sheet-up { animation: sheet-up 0.42s var(--ease-out-expo) backwards; }
+.sheet-fade { animation: sheet-fade 0.3s ease backwards; }
+.pop-in { animation: pop-in 0.45s var(--ease-out-expo) backwards; }
+
+/* In the hub and committee dashboard, phones feel like an app: the bottom bar is the
+   way around, so the big site footer (whose links are in the menu) stays off. */
+@media (max-width: 1023.98px) {
+  body:has([data-app-shell]) .site-footer { display: none; }
+}
+
+/* Inside the hub and committee dashboard, every white bordered card picks up the
+   app card look (softer radius and a gentle shadow) without each page restating it. */
+[data-app-shell] :is(.rounded-xl, .rounded-lg, .rounded-md).border.bg-white:not(input, select, textarea, button, a) {
+  border-radius: 1rem;
+  border-color: rgb(26 49 84 / 0.08);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Buttons and chips in the app areas use the same soft corners as the cards, and
+   sideways filter rows (status tabs, kinds) scroll without a scrollbar. */
+[data-app-shell] .rounded-\[3px\] { border-radius: 0.75rem; }
+[data-app-shell] .overflow-x-auto:has(> a, > ul > li > a) { scrollbar-width: none; }
+[data-app-shell] .overflow-x-auto:has(> a, > ul > li > a)::-webkit-scrollbar { display: none; }
+[data-app-shell] .overflow-x-auto > a,
+[data-app-shell] .overflow-x-auto > ul > li > a { border-radius: 9999px; }
+
+/* Page banners in the hub (enquiries, network, slides) are tighter on phones, so the
+   things to do start higher up the screen. They also get a gentle gold glow. */
+[data-app-shell] header:is(.bg-midnight, .bg-navy) {
+  border-radius: 1.25rem;
+  background-image: radial-gradient(120% 140% at 100% 0%, rgb(212 175 90 / 0.16), transparent 55%);
+}
+@media (max-width: 639.98px) {
+  [data-app-shell] header:is(.bg-midnight, .bg-navy).p-6 { padding: 1.25rem; }
+  [data-app-shell] header:is(.bg-midnight, .bg-navy) h1 { font-size: 1.75rem; line-height: 1.1; margin-top: 0.5rem; }
+  [data-app-shell] header:is(.bg-midnight, .bg-navy) h1 + p { font-size: 0.9rem; line-height: 1.5; }
+}
+
 /* Each page settles in on navigation. "backwards" so no transform is left behind. */
-.page-enter { animation: page-in 0.35s var(--ease-out-expo) backwards; }
+.page-enter { animation: page-in 0.25s var(--ease-out-expo) backwards; }
+
+/*
+ * Loading placeholders, shown the instant someone taps a link while the page
+ * is fetched. They fade in after a beat, so a fast page never flashes them.
+ */
+@keyframes skeleton-in { from { opacity: 0; } }
+@keyframes skeleton-sheen { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+/* In the components layer, so utilities such as rounded-full on a placeholder win. */
+@layer components {
+  .skeleton-screen { animation: skeleton-in 0.3s ease-out 0.12s backwards; }
+  .skeleton {
+    border-radius: 0.5rem;
+    background-color: rgb(14 27 49 / 0.06);
+    background-image: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 0.65) 50%, transparent 70%);
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation: skeleton-sheen 1.4s ease-in-out infinite;
+  }
+  .skeleton-dark { background-color: rgb(255 255 255 / 0.1); background-image: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 0.12) 50%, transparent 70%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; background-image: none; }
+}
 
 /*
  * First-paint entrances. These are CSS, not JavaScript, so they start the moment
@@ -366,6 +500,8 @@
   .pulse-tracer { display: none; }
   .enter-rise, .enter-pop, .enter-draw, .enter-up, .enter-wipe { animation-name: enter-fade !important; }
   .shine::after { display: none; }
+  .skeleton { animation: none; }
+  .sheet-up, .pop-in { animation-name: sheet-fade !important; }
 }
 
 /* ---------------- Intro gate ---------------- */
@@ -539,4 +675,8 @@ dialog.gate.is-leaving { background: transparent; }
 }
 @media (prefers-reduced-motion: reduce) {
   .lanyard-foil, .hub-orb { animation: none; }
+}
+/* A message bubble arriving in a conversation. */
+@keyframes dm-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
 }

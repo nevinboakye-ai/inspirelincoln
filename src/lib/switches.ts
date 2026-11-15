@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
 export const SWITCHES = {
@@ -6,17 +7,18 @@ export const SWITCHES = {
   network_open: { label: "Delegate network", on: "Open to confirmed delegates", off: "Hidden from everyone but you" },
   delegate_card: { label: "Delegate Card", on: "Shown in My Hub", off: "Hidden from delegates" },
   map_open: { label: "Campus map", on: "Open", off: "Coming soon. Committee members can still preview it" },
+  delegate_messages: { label: "Delegate messages", on: "Confirmed delegates can message each other (while the network is open)", off: "Only the committee can start conversations. Delegates can still reply" },
   presenting_public: { label: "Who's presenting", on: "Shown on cards and the delegate network", off: "Hidden: presenters show as delegates to everyone but themselves and the committee" },
 } as const;
 export type SwitchKey = keyof typeof SWITCHES;
 
 /** The owner's switches. Anything missing (migration not run yet) counts as open, so nobody is locked out by accident. */
-export async function getSwitches(): Promise<Record<SwitchKey, boolean>> {
+export const getSwitches = cache(async (): Promise<Record<SwitchKey, boolean>> => {
   const db = await createClient();
-  const out = { site_open: true, network_open: false, delegate_card: true, map_open: true, presenting_public: false } as Record<SwitchKey, boolean>;
+  const out = { site_open: true, network_open: false, delegate_card: true, map_open: true, presenting_public: false, delegate_messages: true } as Record<SwitchKey, boolean>;
   if (!db) return out;
   const { data, error } = await db.from("site_switches").select("key, enabled");
   if (error || !data) return out;
   for (const r of data) if (r.key in out) out[r.key as SwitchKey] = r.enabled;
   return out;
-}
+});

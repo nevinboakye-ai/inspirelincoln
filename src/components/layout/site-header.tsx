@@ -252,15 +252,25 @@ function BottomBar({ pathname }: { pathname: string }) {
                 href={t.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-16 flex-col items-center justify-center gap-1 font-ui text-[0.7rem] font-semibold",
-                  active ? "text-cyan" : "text-paper/75",
+                  "tap flex min-h-16 flex-col items-center justify-center gap-1 font-ui text-[0.7rem] font-semibold",
+                  active ? "text-paper" : "text-paper/65",
                 )}
               >
-                <t.icon
-                  aria-hidden
-                  className="size-5"
-                  strokeWidth={active ? 2.25 : 1.75}
-                />
+                <span className="relative grid h-8 w-14 place-items-center">
+                  {active && (
+                    <m.span
+                      layoutId="bottom-tab"
+                      aria-hidden
+                      className="absolute inset-0 rounded-full bg-gradient-to-br from-gold-300/30 to-gold/20 ring-1 ring-gold/40"
+                      transition={{ type: "spring", stiffness: 500, damping: 38 }}
+                    />
+                  )}
+                  <t.icon
+                    aria-hidden
+                    className={cn("relative size-5", active && "text-gold-300")}
+                    strokeWidth={active ? 2.25 : 1.75}
+                  />
+                </span>
                 {t.label}
               </Link>
             </li>

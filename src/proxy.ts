@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabase/env";
 import { VIEW_AS_COOKIE, openViewAs } from "@/lib/view-as-seal";
+import { strayAuthTarget } from "@/lib/accounts/link-paths";
 
 const PROTECTED = ["/portal", "/admin", "/review", "/judge"];
 
@@ -43,6 +44,11 @@ export async function proxy(request: NextRequest) {
   if (!url || !key) return response;
 
   const path = request.nextUrl.pathname;
+  // An account link that landed on the wrong page: send it where it belongs.
+  if (request.nextUrl.search) {
+    const target = strayAuthTarget(path, request.nextUrl.searchParams);
+    if (target) return NextResponse.redirect(new URL(target, request.url));
+  }
   const isProtected = PROTECTED.some((p) => path === p || path.startsWith(`${p}/`));
   const gated = !ALWAYS_OPEN.test(path) && !(await isSiteOpen(url, key));
   // Public pages while the site is open need nothing from here.
@@ -61,9 +67,12 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims refreshes an expired session (writing the new cookies) and then
+  // verifies the access token's signature locally against the project's cached
+  // public keys, so most navigations don't wait on the auth server at all.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const claims = claimsData?.claims;
+  const user = claims?.sub ? { id: claims.sub, app_metadata: (claims.app_metadata ?? {}) as Record<string, unknown> } : null;
 
   // Someone given a temporary password chooses their own before anything else.
   if (user?.app_metadata?.must_change_password === true && isProtected) {
@@ -91,15 +100,16 @@ export async function proxy(request: NextRequest) {
       if (hit && Date.now() - hit.at < TTL) staff = hit.value;
       else {
         if (viewing) {
-          const res = await fetch(`${url}/rest/v1/rpc/has_access`, {
+          const res = await fetch(`${url}/rest/v1/rpc/is_editor`, {
             method: "POST",
             headers: { apikey: key, Authorization: `Bearer ${viewing.a}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ cap: "edit_website" }),
+            body: "{}",
             cache: "no-store",
           }).catch(() => null);
           staff = res?.ok ? (await res.json()) === true : false;
         } else {
-          const { data } = await supabase.rpc("has_access", { cap: "edit_website" });
+          // Anyone who can edit some part of the website (public.is_editor).
+          const { data } = await supabase.rpc("is_editor");
           staff = data === true;
         }
         committee.set(who, { value: staff, at: Date.now() });

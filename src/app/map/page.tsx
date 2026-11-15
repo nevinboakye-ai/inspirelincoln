@@ -21,7 +21,7 @@ export default async function MapPage() {
   const switches = await getSwitches();
   if (!switches.map_open) {
     const me = await getCurrentUser();
-    if (!me?.profile.access.can.edit_website && !me?.profile.access.owner)
+    if (!me?.profile.access.can.edit_map && !me?.profile.access.owner)
       return (
         <div className="bg-paper px-4 pb-20 pt-28 sm:pt-36">
           <div className="mx-auto max-w-3xl">
