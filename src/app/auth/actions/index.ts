@@ -230,6 +230,8 @@ export async function updatePassword(_: AuthState, form: FormData): Promise<Auth
 
 export async function signOut() {
   const db = await createClient();
-  await db?.auth.signOut();
+  // Only this browser. Supabase's default ends every session the account has,
+  // which would sign the person out on their phone when they log out on a laptop.
+  await db?.auth.signOut({ scope: "local" });
   redirect("/");
 }
