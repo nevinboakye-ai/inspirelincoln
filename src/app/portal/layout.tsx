@@ -30,8 +30,8 @@ export default async function PortalLayout({ children }: { children: React.React
   // People I've met follows the Delegate Card, which carries the QR code.
   const showPeople = profile.access.owner || (switches.delegate_card && profile.accountStatus === "approved");
   return (
-    <div className="min-h-screen bg-paper pb-28 pt-24 sm:pt-28 lg:pb-24">
-      <div className="container-page grid gap-5 lg:grid-cols-[15rem_1fr] lg:gap-12">
+    <div data-app-shell className="min-h-screen bg-paper pb-28 pt-[var(--header-h)] lg:pb-24 lg:pt-28">
+      <div className="container-page grid gap-4 lg:grid-cols-[15rem_1fr] lg:gap-12">
         <PortalNav
           name={profile.fullName ?? profile.email}
           typeLabel={rolesLabel(rolesOf(profile.accountType, profile.extraTypes))}
