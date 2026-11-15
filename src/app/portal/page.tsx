@@ -27,7 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Notice } from "@/components/ui/notice";
 import { SavedAgenda } from "@/components/portal/saved-agenda";
 import { HubAnnouncements, HubChecklist } from "@/components/portal/hub-sections";
-import { Lanyard, type LanyardTone } from "@/components/portal/lanyard";
+import { Lanyard, isGoldCard, type LanyardTone } from "@/components/portal/lanyard";
 import { Countdown, HubItem, HubStagger } from "@/components/portal/hub-motion";
 import { MaskRise } from "@/components/motion/effects";
 import { AttendanceCard, type AttendanceAnswer } from "@/components/portal/attendance-card";
@@ -421,7 +421,7 @@ export default async function PortalHome({
             <HubItem>
               <aside aria-labelledby="lanyard-h">
                 <h2 id="lanyard-h" className="sr-only">Your INSPIRE {edition.year} lanyard</h2>
-                <CardDock year={edition.year} name={profile.fullName ?? profile.email} role={rolesLabel(rolesOf(profile.accountType, profile.extraTypes))} photo={photo}>
+                <CardDock year={edition.year} name={profile.fullName ?? profile.email} role={rolesLabel(rolesOf(profile.accountType, profile.extraTypes))} photo={photo} gold={isGoldCard(lanyardRoles(profile))}>
                   <Lanyard
                     year={edition.year}
                     theme={edition.theme}

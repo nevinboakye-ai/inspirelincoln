@@ -17,10 +17,14 @@ const BAND: Record<LanyardTone, string> = {
   waitlist: "bg-violet text-midnight",
   // Speakers and judges: ivory with a gold edge, set apart from delegates and the committee.
   guest: "bg-ivory text-midnight border-y-[3px] border-gold-600",
-  committee: "bg-midnight text-gold-300",
-  // Gold foil edges and stars, so an executive role reads first from across a room.
-  executive: "bg-midnight text-gold-300 border-y-[3px] border-gold shadow-[inset_0_1px_0_rgb(255_255_255/0.08)]",
+  // The committee's card is gold all over, so their bands are gold too.
+  committee: "bg-[linear-gradient(135deg,var(--color-gold-300)_0%,var(--color-gold)_55%,#c9a24c_100%)] text-midnight",
+  // Navy edges and stars on gold, so an executive role reads first from across a room.
+  executive: "bg-[linear-gradient(135deg,var(--color-gold-300)_0%,var(--color-gold)_55%,#c9a24c_100%)] text-midnight border-y-[3px] border-midnight shadow-[inset_0_1px_0_rgb(255_255_255/0.35)]",
 };
+
+/** Committee members' cards are gold where everyone else's are navy. */
+export const isGoldCard = (roles: { tone: LanyardTone }[]) => roles.some((r) => r.tone === "committee" || r.tone === "executive");
 
 export interface LanyardProps {
   year: number;
@@ -186,6 +190,7 @@ export function Lanyard(p: LanyardProps) {
   };
 
   const long = p.name.length > 22;
+  const gold = isGoldCard(p.roles);
 
   return (
     <div className="flex flex-col items-center">
@@ -206,9 +211,9 @@ export function Lanyard(p: LanyardProps) {
             <svg aria-hidden viewBox="0 50 300 120" className="-mb-3 block w-full overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_45%)]">
               <defs>
                 <linearGradient id={`${strapId}-r`} x1="0" x2="1">
-                  <stop offset="0" stopColor="#14284a" />
-                  <stop offset="0.5" stopColor="#1f3a64" />
-                  <stop offset="1" stopColor="#14284a" />
+                  <stop offset="0" stopColor={gold ? "#a5802a" : "#14284a"} />
+                  <stop offset="0.5" stopColor={gold ? "#e6c97f" : "#1f3a64"} />
+                  <stop offset="1" stopColor={gold ? "#a5802a" : "#14284a"} />
                 </linearGradient>
                 <linearGradient id={`${strapId}-m`} x1="0" x2="1">
                   <stop offset="0" stopColor="#8d96a3" />
@@ -294,17 +299,18 @@ function Face({ hidden, back, children, className }: { hidden: boolean; back?: b
 }
 
 function Front({ year, name, detail, photo, uniLogo, roles, dateLabel, venue, countdown, long, hidden, sheen }: LanyardProps & { long: boolean; hidden: boolean; sheen: ReturnType<typeof useMotionTemplate> | null }) {
+  const gold = isGoldCard(roles);
   return (
     <Face hidden={hidden} className="bg-ivory text-ink ring-1 ring-black/5">
-      <div className="relative bg-midnight px-6 pb-5 pt-10 text-paper">
-        <div aria-hidden className="lanyard-grid pointer-events-none absolute inset-0 opacity-[0.18]" />
+      <div className={cn("relative px-6 pb-5 pt-10", gold ? "bg-[linear-gradient(135deg,var(--color-gold-300)_0%,var(--color-gold)_55%,#c9a24c_100%)] text-midnight" : "bg-midnight text-paper")}>
+        <div aria-hidden className={cn("lanyard-grid pointer-events-none absolute inset-0", gold ? "opacity-[0.08] invert" : "opacity-[0.18]")} />
         <div className="relative flex items-center gap-3">
-          <img src="/brand/conference-mark-white.png" alt="" aria-hidden className="h-11 w-auto" />
+          <img src={gold ? "/brand/conference-mark-navy.png" : "/brand/conference-mark-white.png"} alt="" aria-hidden className="h-11 w-auto" />
           <div className="leading-none">
             <p className="font-display text-[1.55rem] tracking-tight">
-              INSPIRE <span className="text-gold">{year}</span>
+              INSPIRE <span className={gold ? "text-navy" : "text-gold"}>{year}</span>
             </p>
-            <p className="mt-1.5 font-ui text-[0.5rem] font-semibold uppercase tracking-[0.16em] text-paper/70">National Medical Research Conference</p>
+            <p className={cn("mt-1.5 font-ui text-[0.5rem] font-semibold uppercase tracking-[0.16em]", gold ? "text-midnight/75" : "text-paper/70")}>National Medical Research Conference</p>
           </div>
         </div>
       </div>
@@ -350,44 +356,47 @@ function Front({ year, name, detail, photo, uniLogo, roles, dateLabel, venue, co
   );
 }
 
-function Back({ year, qr, reference, checkedIn, shared = true, sponsors = [], hidden }: LanyardProps & { hidden: boolean }) {
+function Back({ year, qr, reference, checkedIn, shared = true, sponsors = [], roles, hidden }: LanyardProps & { hidden: boolean }) {
+  const gold = isGoldCard(roles);
+  // On the committee's gold card, text that is pale on navy turns navy.
+  const t = (navy: string, onGold: string) => (gold ? onGold : navy);
   return (
-    <Face back hidden={hidden} className="bg-midnight text-paper ring-1 ring-gold/40">
-      <div aria-hidden className="lanyard-grid pointer-events-none absolute inset-0 opacity-[0.12]" />
+    <Face back hidden={hidden} className={gold ? "bg-[linear-gradient(135deg,var(--color-gold-300)_0%,var(--color-gold)_55%,#c9a24c_100%)] text-midnight ring-1 ring-gold-600/60" : "bg-midnight text-paper ring-1 ring-gold/40"}>
+      <div aria-hidden className={cn("lanyard-grid pointer-events-none absolute inset-0", gold ? "opacity-[0.08] invert" : "opacity-[0.12]")} />
       <div className="relative flex h-full flex-col items-center px-6 pb-6 pt-11 text-center">
-        <p className="font-ui text-[0.62rem] font-semibold uppercase tracking-[0.24em] text-gold">Scan me · INSPIRE {year}</p>
-        <p className="mt-1.5 text-[0.7rem] leading-snug text-paper/65">To connect, and to check in on the day</p>
+        <p className={cn("font-ui text-[0.62rem] font-semibold uppercase tracking-[0.24em]", t("text-gold", "text-midnight"))}>Scan me · INSPIRE {year}</p>
+        <p className={cn("mt-1.5 text-[0.7rem] leading-snug", t("text-paper/65", "text-midnight/70"))}>To connect, and to check in on the day</p>
         {qr ? (
           <>
             <div className={cn("relative mt-4", sponsors.length ? "mt-3 w-[66%]" : "w-[80%]")}>
-              <div className="rounded-xl bg-white p-2.5 ring-2 ring-gold/60" role="img" aria-label={`Your Delegate Card QR code${reference ? `, code ${reference}` : ""}`} dangerouslySetInnerHTML={{ __html: qr }} />
+              <div className={cn("rounded-xl bg-white p-2.5 ring-2", t("ring-gold/60", "ring-midnight/50"))} role="img" aria-label={`Your Delegate Card QR code${reference ? `, code ${reference}` : ""}`} dangerouslySetInnerHTML={{ __html: qr }} />
               {checkedIn && (
                 <span className="absolute -right-3 -top-3 rotate-12 rounded-md border-2 border-success bg-white px-2 py-1 font-ui text-[0.65rem] font-bold uppercase tracking-[0.16em] text-success shadow">
                   Checked in
                 </span>
               )}
             </div>
-            {reference && <p className="mt-3 font-mono text-xs tracking-[0.16em] text-paper/75">{reference}</p>}
-            <p className="mt-auto text-[0.8rem] leading-snug text-paper/85">
+            {reference && <p className={cn("mt-3 font-mono text-xs tracking-[0.16em]", t("text-paper/75", "text-midnight/80"))}>{reference}</p>}
+            <p className={cn("mt-auto text-[0.8rem] leading-snug", t("text-paper/85", "text-midnight/90"))}>
               {checkedIn
                 ? "You're checked in. Enjoy the conference."
                 : shared
                   ? "Delegates scan this to see your card and save you. Show it at registration to check in."
                   : "Sharing is off, so people who scan see nothing about you. Show it at registration to check in."}
             </p>
-            <p className="mt-2 text-[0.66rem] text-paper/60">The code is a private link. It holds no personal details.</p>
+            <p className={cn("mt-2 text-[0.66rem]", t("text-paper/60", "text-midnight/70"))}>The code is a private link. It holds no personal details.</p>
           </>
         ) : (
           <>
-            <div aria-hidden className="mt-6 grid aspect-square w-[70%] place-items-center rounded-xl border border-dashed border-paper/25">
-              <img src="/brand/conference-mark-white.png" alt="" className="h-16 w-auto opacity-40" />
+            <div aria-hidden className={cn("mt-6 grid aspect-square w-[70%] place-items-center rounded-xl border border-dashed", t("border-paper/25", "border-midnight/30"))}>
+              <img src={gold ? "/brand/conference-mark-navy.png" : "/brand/conference-mark-white.png"} alt="" className="h-16 w-auto opacity-40" />
             </div>
-            <p className="mt-auto text-sm leading-snug text-paper/80">Your QR code will appear here once your place is confirmed.</p>
+            <p className={cn("mt-auto text-sm leading-snug", t("text-paper/80", "text-midnight/85"))}>Your QR code will appear here once your place is confirmed.</p>
           </>
         )}
         {sponsors.length > 0 && (
-          <div className="-mb-2 mt-2.5 flex w-full items-center justify-center gap-2 border-t border-white/10 pt-2">
-            <p className="shrink-0 font-ui text-[0.45rem] font-semibold uppercase leading-tight tracking-[0.18em] text-paper/50">Supported<br />by</p>
+          <div className={cn("-mb-2 mt-2.5 flex w-full items-center justify-center gap-2 border-t pt-2", t("border-white/10", "border-midnight/15"))}>
+            <p className={cn("shrink-0 font-ui text-[0.45rem] font-semibold uppercase leading-tight tracking-[0.18em]", t("text-paper/50", "text-midnight/60"))}>Supported<br />by</p>
             <ul className="flex flex-wrap items-center justify-center gap-1.5">
               {sponsors.map((s) => (
                 <li key={s.id}>
@@ -426,7 +435,7 @@ function bandHeight(roles: LanyardProps["roles"]) {
 /**
  * The coloured role bands across the foot of the card, like the stripes on a
  * printed lanyard, each in that role's colour. Executive roles get a taller
- * stripe with gold edges and stars.
+ * stripe with navy edges and stars.
  */
 function RoleBands({ roles }: { roles: LanyardProps["roles"] }) {
   const list = roles.length ? roles : [{ label: "Delegate", tone: "delegate" as const }];
@@ -440,13 +449,13 @@ function RoleBands({ roles }: { roles: LanyardProps["roles"] }) {
           className={cn(
             "flex min-h-0 items-center justify-center gap-2 px-3 text-center font-ui font-bold uppercase leading-none",
             r.tone === "executive" ? cn("flex-[1.43] tracking-[0.16em]", r.label.length > 16 ? "text-[0.8rem]" : "text-[0.95rem]") : cn("flex-1", many ? "text-[0.7rem] tracking-[0.22em]" : "text-sm tracking-[0.28em]"),
-            i > 0 && r.tone !== "executive" && bands[i - 1].tone !== "executive" && "border-t border-white/25",
+            i > 0 && r.tone !== "executive" && bands[i - 1].tone !== "executive" && (r.tone === "committee" ? "border-t border-midnight/20" : "border-t border-white/25"),
             BAND[r.tone],
           )}
         >
-          {r.tone === "executive" && <Star aria-hidden className="size-3.5 shrink-0 fill-gold text-gold" />}
+          {r.tone === "executive" && <Star aria-hidden className="size-3.5 shrink-0 fill-midnight text-midnight" />}
           <span className="truncate">{r.label}</span>
-          {r.tone === "executive" && <Star aria-hidden className="size-3.5 shrink-0 fill-gold text-gold" />}
+          {r.tone === "executive" && <Star aria-hidden className="size-3.5 shrink-0 fill-midnight text-midnight" />}
         </li>
       ))}
     </ul>
