@@ -168,7 +168,8 @@ export function MessagesShell({
         </div>
       </section>
 
-      <div className={cn("min-w-0", !inside && path !== "/portal/messages/new" && "hidden lg:block")}>{children}</div>
+      {/* min-h-0 keeps a long list or conversation inside the panel (scrolling within it) instead of stretching past the page. */}
+      <div className={cn("min-w-0 lg:min-h-0", !inside && path !== "/portal/messages/new" && "hidden lg:block")}>{children}</div>
 
       <Drawer open={settings} onClose={() => setSettings(false)} label="Message settings">
         <MessageSettings prefs={prefs} owner={owner} delegateMessages={delegateMessages} />
