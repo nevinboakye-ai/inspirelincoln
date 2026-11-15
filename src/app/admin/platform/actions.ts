@@ -15,9 +15,9 @@ const NOT_READY = "The access settings aren't set up in the database yet. Run th
 /** A newer area isn't in the database yet (the foreign key to access_capabilities fails). */
 const NEEDS_AREAS = "That area isn't in the database yet. Run setup file 41 (access areas) in Supabase, then try again.";
 
-/** Turns one permission on or off for everyone with an account type. Site owner only. */
+/** Turns one permission on or off for everyone with an account type. Site owner, or anyone with the Platform dashboard permission. */
 export async function setRule(input: { accountType: AccountType; capability: Capability; allowed: boolean }): Promise<PlatformResult> {
-  const { db } = await requireAccess("owner", "/admin/platform");
+  const { db } = await requireAccess("manage_platform", "/admin/platform");
   const v = z.object({ accountType, capability, allowed: z.boolean() }).safeParse(input);
   if (!v.success) return { ok: false, error: "That change isn't valid." };
   const { error } = await db
@@ -28,9 +28,9 @@ export async function setRule(input: { accountType: AccountType; capability: Cap
   return { ok: true };
 }
 
-/** Puts every account type back to how the site started. Site owner only. */
+/** Puts every account type back to how the site started. Site owner, or anyone with the Platform dashboard permission. */
 export async function resetRules(): Promise<PlatformResult> {
-  const { db } = await requireAccess("owner", "/admin/platform");
+  const { db } = await requireAccess("manage_platform", "/admin/platform");
   const rows = ACCOUNT_TYPES.flatMap((t) => CAPABILITIES.map((c) => ({ account_type: t, capability: c, allowed: DEFAULT_RULES[t].includes(c) })));
   const { error } = await db.from("access_rules").upsert(rows, { onConflict: "account_type,capability" });
   if (error) return { ok: false, error: error.code === "42P01" ? NOT_READY : error.code === "23503" ? NEEDS_AREAS : "Could not reset the permissions." };
@@ -38,12 +38,12 @@ export async function resetRules(): Promise<PlatformResult> {
   return { ok: true, message: "Permissions are back to the defaults." };
 }
 
-/** Gives or removes one permission for one person, or goes back to their account type's default. Site owner only. */
+/** Gives or removes one permission for one person, or goes back to their account type's default. Site owner, or anyone with the Platform dashboard permission. */
 export async function setOverride(input: { userId: string; capability: Capability; mode: "inherit" | "allow" | "block" }): Promise<PlatformResult> {
-  const { db, user } = await requireAccess("owner", "/admin/platform");
+  const { db, user } = await requireAccess("manage_platform", "/admin/platform");
   const v = z.object({ userId: z.string().uuid(), capability, mode: z.enum(["inherit", "allow", "block"]) }).safeParse(input);
   if (!v.success) return { ok: false, error: "That change isn't valid." };
-  if (v.data.userId === user.id) return { ok: false, error: "As site owner you always have every permission." };
+  if (v.data.userId === user.id) return { ok: false, error: "You can't change your own access." };
   const { data: target } = await db.from("profiles").select("role").eq("id", v.data.userId).maybeSingle();
   if (!target) return { ok: false, error: "That account no longer exists." };
   if (target.role === "admin") return { ok: false, error: "Site owners always have every permission." };
@@ -59,12 +59,12 @@ export async function setOverride(input: { userId: string; capability: Capabilit
   return { ok: true };
 }
 
-/** Sets several permissions for one person at once, e.g. every website area. Site owner only. */
+/** Sets several permissions for one person at once, e.g. every website area. Site owner, or anyone with the Platform dashboard permission. */
 export async function setOverrides(input: { userId: string; capabilities: Capability[]; mode: "inherit" | "allow" | "block" }): Promise<PlatformResult> {
-  const { db, user } = await requireAccess("owner", "/admin/platform");
+  const { db, user } = await requireAccess("manage_platform", "/admin/platform");
   const v = z.object({ userId: z.string().uuid(), capabilities: z.array(capability).min(1).max(CAPABILITIES.length), mode: z.enum(["inherit", "allow", "block"]) }).safeParse(input);
   if (!v.success) return { ok: false, error: "That change isn't valid." };
-  if (v.data.userId === user.id) return { ok: false, error: "As site owner you always have every permission." };
+  if (v.data.userId === user.id) return { ok: false, error: "You can't change your own access." };
   const { data: target } = await db.from("profiles").select("role").eq("id", v.data.userId).maybeSingle();
   if (!target) return { ok: false, error: "That account no longer exists." };
   if (target.role === "admin") return { ok: false, error: "Site owners always have every permission." };
@@ -79,9 +79,9 @@ export async function setOverrides(input: { userId: string; capabilities: Capabi
   return { ok: true };
 }
 
-/** Turns one permission on or off for several account types at once. Site owner only. */
+/** Turns one permission on or off for several account types at once. Site owner, or anyone with the Platform dashboard permission. */
 export async function setRules(input: { accountTypes: AccountType[]; capabilities: Capability[]; allowed: boolean }): Promise<PlatformResult> {
-  const { db } = await requireAccess("owner", "/admin/platform");
+  const { db } = await requireAccess("manage_platform", "/admin/platform");
   const v = z.object({ accountTypes: z.array(accountType).min(1), capabilities: z.array(capability).min(1), allowed: z.boolean() }).safeParse(input);
   if (!v.success) return { ok: false, error: "That change isn't valid." };
   const rows = v.data.accountTypes.flatMap((t) => v.data.capabilities.map((c) => ({ account_type: t, capability: c, allowed: v.data.allowed })));
@@ -91,9 +91,9 @@ export async function setRules(input: { accountTypes: AccountType[]; capabilitie
   return { ok: true };
 }
 
-/** Turns one of the site switches on or off. Site owner only. */
+/** Turns one of the site switches on or off. Site owner, or anyone with the Platform dashboard permission. */
 export async function setSwitch(form: FormData) {
-  const { db, user } = await requireAccess("owner", "/admin/platform");
+  const { db, user } = await requireAccess("manage_platform", "/admin/platform");
   const key = String(form.get("key"));
   if (!(key in SWITCHES)) return;
   await db.from("site_switches").upsert({ key, enabled: form.get("enabled") === "on", updated_by: user.id, updated_at: new Date().toISOString() });

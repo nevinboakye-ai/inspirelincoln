@@ -342,14 +342,14 @@ export default async function PortalHome({
     .map((x) => ({ slot: slotOf.get(x.id)!, title: x.title, startsAt: x.startsAt, endsAt: x.endsAt }))
     .sort((a, b) => a.slot - b.slot);
 
-  const dashboards = (profile.access.owner || profile.access.committee) && (
+  const dashboards = (profile.access.can.manage_platform || profile.access.committee) && (
     <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-      {profile.access.owner && (
+      {profile.access.can.manage_platform && (
         <Link href="/admin/platform" className="group flex items-center gap-3 tap rounded-2xl border border-cyan/40 bg-midnight px-4 py-3.5 text-paper transition-colors hover:border-cyan">
           <Gauge aria-hidden className="size-5 shrink-0 text-cyan" />
           <span className="min-w-0 flex-1">
             <span className="block font-semibold leading-snug">Platform dashboard</span>
-            <span className="block truncate text-xs text-paper/70">Switches, view as anyone, access, accounts</span>
+            <span className="block truncate text-xs text-paper/70">{profile.access.owner ? "Switches, view as anyone, access, accounts" : "Switches, access, activity and metrics"}</span>
           </span>
           <ArrowRight aria-hidden className="size-4 shrink-0 transition-transform group-hover:translate-x-1" />
         </Link>

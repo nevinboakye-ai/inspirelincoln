@@ -123,7 +123,7 @@ function Ranked({ rows, unit, empty }: { rows: { key: string; label: React.React
 
 export default async function MetricsPage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
   const sp = await searchParams;
-  const { db } = await requireAccess("owner", "/admin/platform/metrics");
+  const { db } = await requireAccess("manage_platform", "/admin/platform/metrics");
   const days = RANGES.find((r) => String(r.days) === sp.days)?.days ?? 30;
   const { data, error } = await db.rpc("owner_metrics", { p_days: days });
   const m = data as Metrics | null;
