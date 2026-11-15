@@ -80,8 +80,12 @@ export default async function CardPage({ params }: { params: Promise<{ code: str
 
   const { data, error } = await current.db.rpc("card_lookup", { code });
   const res = (data ?? { state: "unknown" }) as CardLookup;
-  if (res.card?.avatar_path) res.card.avatar_url = await signAvatar(current.db, res.card.avatar_path);
-  if (res.card?.institution) res.card.uni_logo_url = (await getLogoMap())[uniKey(res.card.institution)] ?? null;
+  if (res.card) {
+    const card = res.card;
+    const [photo, logos] = await Promise.all([card.avatar_path ? signAvatar(current.db, card.avatar_path) : null, card.institution ? getLogoMap() : null]);
+    if (card.avatar_path) card.avatar_url = photo;
+    if (card.institution && logos) card.uni_logo_url = logos[uniKey(card.institution)] ?? null;
+  }
   const desk = res.checkin ? <CheckInPanel info={res.checkin} /> : null;
 
   if (error) {

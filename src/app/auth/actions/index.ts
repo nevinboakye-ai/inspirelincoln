@@ -8,6 +8,7 @@ import { clearTemporaryPassword } from "@/lib/accounts/login-details";
 import { plainClient, serviceClient } from "@/lib/view-as";
 import { SUPABASE_ANON_KEY } from "@/lib/supabase/env";
 import { SITE_URL } from "@/lib/site";
+import { createAccountAndEmail, emailPasswordReset, ownAuthEmails } from "@/lib/accounts/auth-links";
 import { ACCOUNT_TYPES, COMMITTEE_TYPES, POLICY_VERSION, submissionKindFor } from "@/lib/accounts";
 import type { AccountType } from "@/lib/types";
 
@@ -29,6 +30,17 @@ function fieldErrors(err: z.ZodError) {
   const out: Record<string, string> = {};
   for (const i of err.issues) out[String(i.path[0])] ??= i.message;
   return out;
+}
+
+function ownEmailError(r: Extract<Awaited<ReturnType<typeof createAccountAndEmail>>, { ok: false }>, flow: "register" | "activate") {
+  if (r.reason === "exists")
+    return flow === "activate"
+      ? "You already have an account. Log in, or reset your password if you've forgotten it."
+      : "An account with this email already exists. Try logging in, or reset your password.";
+  if (r.reason === "rate") return "We've just sent you an email. Please wait a minute before trying again, and check your junk folder.";
+  if (r.reason === "send") return "We couldn't send your email just now. Please try again in a minute, or email inspiresoc@lincolnsu.com.";
+  console.error("Account email failed:", r.detail);
+  return "We couldn't set up your account. Please try again later, or email inspiresoc@lincolnsu.com.";
 }
 
 export async function signIn(_: AuthState, form: FormData): Promise<AuthState> {
@@ -83,27 +95,31 @@ export async function signUp(_: AuthState, form: FormData): Promise<AuthState> {
   const v = parsed.data;
   const db = await createClient();
   if (!db) return { error: "Accounts are not available yet." };
+  // Only everyday details go in sign-up metadata. Access and dietary needs are added later, with explicit consent.
+  const meta = {
+    full_name: v.fullName,
+    account_type: v.accountType,
+    institution: v.institution,
+    career_stage: v.careerStage,
+    programme: v.programme,
+    committee_position: COMMITTEE_TYPES.includes(v.accountType) ? v.committeePosition : "",
+    presentation_title: submissionKindFor(v.accountType) ? v.presentationTitle : "",
+    heard_about: v.heardAbout,
+    photo_opt_out: v.photoOptOut,
+    marketing_opt_in: v.marketingOptIn,
+    privacy_ack: true,
+    policy_version: POLICY_VERSION,
+  };
+  const next = safeNext(form.get("next"));
+  if (ownAuthEmails()) {
+    const r = await createAccountAndEmail({ email: v.email, password: v.password, data: meta, next: next === "/portal" ? "/portal?welcome=1" : next });
+    if (r.ok) return { message: v.email };
+    return { error: ownEmailError(r, "register") };
+  }
   const { data, error } = await db.auth.signUp({
     email: v.email,
     password: v.password,
-    options: {
-      // Only everyday details go in sign-up metadata. Access and dietary needs are added later, with explicit consent.
-      data: {
-        full_name: v.fullName,
-        account_type: v.accountType,
-        institution: v.institution,
-        career_stage: v.careerStage,
-        programme: v.programme,
-        committee_position: COMMITTEE_TYPES.includes(v.accountType) ? v.committeePosition : "",
-        presentation_title: submissionKindFor(v.accountType) ? v.presentationTitle : "",
-        heard_about: v.heardAbout,
-        photo_opt_out: v.photoOptOut,
-        marketing_opt_in: v.marketingOptIn,
-        privacy_ack: true,
-        policy_version: POLICY_VERSION,
-      },
-      emailRedirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(safeNext(form.get("next")))}`,
-    },
+    options: { data: meta, emailRedirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(next)}` },
   });
   if (error) {
     if (error.message.toLowerCase().includes("already")) return { error: "An account with this email already exists. Try signing in." };
@@ -117,7 +133,7 @@ export async function signUp(_: AuthState, form: FormData): Promise<AuthState> {
       return { error: "We couldn't save your account. Please try again later, or email inspiresoc@lincolnsu.com." };
     return { error: "We couldn't create your account. Please try again, or email inspiresoc@lincolnsu.com." };
   }
-  if (data.session) redirect(safeNext(form.get("next")));
+  if (data.session) redirect(next);
   return { message: v.email };
 }
 
@@ -135,13 +151,16 @@ export async function activateAccount(_: AuthState, form: FormData): Promise<Aut
   if (!parsed.success) return { error: "Please check the highlighted answers.", fieldErrors: fieldErrors(parsed.error) };
   const db = await createClient();
   if (!db) return { error: "Accounts are not available yet." };
+  const meta = { privacy_ack: true, policy_version: POLICY_VERSION, account_type: "delegate" };
+  if (ownAuthEmails()) {
+    const r = await createAccountAndEmail({ email: parsed.data.email, password: parsed.data.password, data: meta, next: "/portal?welcome=1", selected: true });
+    if (r.ok) return { message: parsed.data.email };
+    return { error: ownEmailError(r, "activate") };
+  }
   const { data, error } = await db.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
-    options: {
-      data: { privacy_ack: true, policy_version: POLICY_VERSION, account_type: "delegate" },
-      emailRedirectTo: `${await origin()}/auth/callback?next=/portal`,
-    },
+    options: { data: meta, emailRedirectTo: `${await origin()}/auth/callback?next=/portal` },
   });
   if (error) {
     if (error.message.toLowerCase().includes("already")) return { error: "You already have an account. Log in, or reset your password if you've forgotten it." };
@@ -160,9 +179,15 @@ export async function requestReset(_: AuthState, form: FormData): Promise<AuthSt
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
   const db = await createClient();
   if (!db) return { error: "Accounts are not available yet." };
-  await db.auth.resetPasswordForEmail(parsed.data.email, { redirectTo: `${await origin()}/auth/callback?next=/auth/update-password` });
+  const sent = ownAuthEmails() ? await emailPasswordReset(parsed.data.email) : "failed";
+  if (sent === "failed") {
+    // Supabase's own email, which returns through /auth/callback.
+    const { error } = await db.auth.resetPasswordForEmail(parsed.data.email, { redirectTo: `${await origin()}/auth/callback?next=/auth/update-password` });
+    if (error?.status === 429) return { error: "Too many attempts. Please wait a minute and try again." };
+    if (error) console.error("Password reset email failed:", error.status, error.code, error.message);
+  }
   // Same response whether or not the account exists, to avoid revealing who has an account.
-  return { message: "If an account exists for that address, we have emailed a link to reset your password." };
+  return { message: "If an account exists for that address, we've emailed a link to reset your password. It can take a few minutes, so check your junk folder too." };
 }
 
 export async function updatePassword(_: AuthState, form: FormData): Promise<AuthState> {
@@ -187,14 +212,19 @@ export async function updatePassword(_: AuthState, form: FormData): Promise<Auth
     }
   }
   const { error } = await db.auth.updateUser({ password: parsed.data.password });
-  if (error) return { error: first ? "We couldn't save your password. Please try again." : "Your reset link may have expired. Please request a new one." };
+  if (error) {
+    if (error.code === "same_password") return { fieldErrors: { password: "That's your current password. Choose a different one." } };
+    if (error.code === "weak_password") return { fieldErrors: { password: "Choose a stronger password: mix letters, numbers and symbols." } };
+    console.error("Password update failed:", error.status, error.code, error.message);
+    return { error: first ? "We couldn't save your password. Please try again." : "Your reset link may have expired. Please request a new one from the log in page." };
+  }
   if (first && user) {
     await clearTemporaryPassword(user.id);
     await serviceClient()?.from("consent_records").insert({ user_id: user.id, purpose: "privacy_notice", granted: true, policy_version: POLICY_VERSION, source: "portal" });
     await db.auth.refreshSession();
     redirect("/portal?welcome=first");
   }
-  redirect("/portal?password=updated");
+  redirect(form.get("setup") === "1" ? "/portal?welcome=1" : "/portal?password=updated");
 }
 
 export async function signOut() {

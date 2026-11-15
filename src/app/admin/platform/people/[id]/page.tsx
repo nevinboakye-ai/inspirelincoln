@@ -6,6 +6,7 @@ import { requireAccess } from "@/lib/auth";
 import { AccountTypePicker } from "@/components/admin/account-type-picker";
 import { AdminHeader, Panel } from "@/components/admin/ui";
 import { PersonAccess } from "@/components/admin/platform-forms";
+import { RemoveAccountPanel } from "@/components/admin/manage-person";
 import { ViewAsButton } from "@/components/admin/view-as";
 import { Badge } from "@/components/ui/badge";
 import { Notice } from "@/components/ui/notice";
@@ -77,12 +78,13 @@ export default async function PersonAccessPage({ params }: { params: Promise<{ i
             </Notice>
           )}
           <p className="max-w-3xl text-sm text-slate-700">
-            <strong className="text-ink">Default</strong> follows what you&apos;ve set for {rolesLabel(rolesOf(type, extra)).toLowerCase()} accounts{extra.length ? " (any of their roles that allows something allows it)" : ""}. <strong className="text-ink">Allow</strong> or <strong className="text-ink">Block</strong> applies to {name} only. Changes save straight away and are recorded in the audit log.
+            Every area of the dashboard and the website is listed below, grouped like the menu. <strong className="text-ink">Default</strong> follows what you&apos;ve set for {rolesLabel(rolesOf(type, extra)).toLowerCase()} accounts{extra.length ? " (any of their roles that allows something allows it)" : ""}. <strong className="text-ink">Allow</strong> or <strong className="text-ink">Block</strong> applies to {name} only. Changes save straight away and are recorded in the audit log.
           </p>
           <Panel title="Roles">
             <AccountTypePicker id={person.id} type={type} extra={extra} status={status} canLead={profile.access.leadership} name={name} />
           </Panel>
           <PersonAccess userId={person.id} name={name} initial={initial} defaults={defaults} />
+          <RemoveAccountPanel id={person.id} name={name} redirectTo="/admin/platform#people" />
         </>
       )}
     </div>

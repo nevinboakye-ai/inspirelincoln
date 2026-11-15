@@ -205,7 +205,7 @@ export const DATASETS: Dataset[] = [
     title: "Presenters and attendance",
     description: "Oral and poster presenters, what they're presenting, and whether they've confirmed they'll attend.",
     section: "Presenters",
-    need: ["review_accounts"],
+    need: ["view_attendance", "review_accounts"],
     byUniversity: true,
     async load(ctx) {
       const { presenters } = await attendance(ctx);
@@ -236,7 +236,7 @@ export const DATASETS: Dataset[] = [
     title: "Oral presentation waiting list",
     description: "Poster presenters waiting for an oral slot, in the order they joined the list.",
     section: "Presenters",
-    need: ["review_accounts"],
+    need: ["view_attendance", "review_accounts"],
     byUniversity: true,
     async load(ctx) {
       const { waitlist } = await attendance(ctx);
@@ -307,7 +307,7 @@ export const DATASETS: Dataset[] = [
     title: "Transport routes",
     description: "How each approved delegate is getting to INSPIRE (INSPIRE coach, their own coach, train, car or local), grouped by route.",
     section: "Travel",
-    need: ["review_accounts", "manage_people"],
+    need: ["view_travel"],
     byUniversity: true,
     async load(ctx) {
       const { rows } = await travel(ctx);
@@ -332,7 +332,7 @@ export const DATASETS: Dataset[] = [
     title: "Car registrations",
     description: "Delegates driving to INSPIRE and their registration plates, for parking and campus security.",
     section: "Travel",
-    need: ["review_accounts", "manage_people"],
+    need: ["view_travel"],
     byUniversity: true,
     async load(ctx) {
       const { rows } = await travel(ctx);

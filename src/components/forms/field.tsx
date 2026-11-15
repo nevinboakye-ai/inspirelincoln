@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 export const inputClass =
-  "w-full rounded-md border bg-white px-4 py-3 text-[1rem] text-ink placeholder:text-slate/70 transition-[border-color,box-shadow] focus:outline-none focus:ring-4 aria-[invalid=true]:border-danger aria-[invalid=true]:focus:ring-danger/15 border-navy/15 focus:border-electric-600 focus:ring-electric/15 disabled:bg-paper-200";
+  "w-full rounded-xl border bg-white px-4 py-3 text-[1rem] text-ink placeholder:text-slate/70 transition-[border-color,box-shadow] focus:outline-none focus:ring-4 aria-[invalid=true]:border-danger aria-[invalid=true]:focus:ring-danger/15 border-navy/15 focus:border-electric-600 focus:ring-electric/15 disabled:bg-paper-200";
 
 export function Field({ id, label, hint, error, required, children, className }: { id: string; label: string; hint?: ReactNode; error?: string; required?: boolean; children: ReactNode; className?: string }) {
   return (

@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
 export const SWITCHES = {
@@ -12,7 +13,7 @@ export const SWITCHES = {
 export type SwitchKey = keyof typeof SWITCHES;
 
 /** The owner's switches. Anything missing (migration not run yet) counts as open, so nobody is locked out by accident. */
-export async function getSwitches(): Promise<Record<SwitchKey, boolean>> {
+export const getSwitches = cache(async (): Promise<Record<SwitchKey, boolean>> => {
   const db = await createClient();
   const out = { site_open: true, network_open: false, delegate_card: true, map_open: true, presenting_public: false, delegate_messages: true } as Record<SwitchKey, boolean>;
   if (!db) return out;
@@ -20,4 +21,4 @@ export async function getSwitches(): Promise<Record<SwitchKey, boolean>> {
   if (error || !data) return out;
   for (const r of data) if (r.key in out) out[r.key as SwitchKey] = r.enabled;
   return out;
-}
+});

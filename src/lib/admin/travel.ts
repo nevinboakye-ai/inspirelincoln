@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isTravelMode, type TravelMode } from "@/lib/travel";
+import { selectPeople } from "./people";
 
 export type TravelRow = {
   id: string;
@@ -13,11 +14,11 @@ export type TravelRow = {
 
 /**
  * Every approved account with how they said they're travelling (or null
- * when they haven't answered yet). Needs review_accounts or manage_people.
+ * when they haven't answered yet). Needs the travel and parking area.
  */
 export async function loadTravel(db: SupabaseClient) {
-  const [{ data: profiles }, { data: answers, error }] = await Promise.all([
-    db.from("profiles").select("id, full_name, email, institution").eq("account_status", "approved").limit(5000),
+  const [profiles, { data: answers, error }] = await Promise.all([
+    selectPeople<{ id: string; full_name: string | null; email: string; institution: string | null }>(db, "id, full_name, email, institution", (q) => q.eq("account_status", "approved").limit(5000)),
     db.from("delegate_travel").select("user_id, mode, car_registration, updated_at").limit(5000),
   ]);
   const byUser = new Map((answers ?? []).map((a) => [a.user_id as string, a]));

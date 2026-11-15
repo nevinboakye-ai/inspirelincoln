@@ -49,10 +49,10 @@ function Shortcut({ href, icon: Icon, title, note }: { href: string; icon: typeo
 export default async function PlatformPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const sp = await searchParams;
   const { db, profile } = await requireAccess("owner", "/admin/platform");
-  const switches = await getSwitches();
   const term = sp.q?.trim().slice(0, 80) ?? "";
 
-  const [rulesRes, overridesRes, peopleRes, subsRes, auditRes, searchRes] = await Promise.all([
+  const [switches, rulesRes, overridesRes, peopleRes, subsRes, auditRes, searchRes] = await Promise.all([
+    getSwitches(),
     db.from("access_rules").select("account_type, capability, allowed"),
     db.from("access_overrides").select("user_id, capability, allowed, updated_at").order("updated_at", { ascending: false }),
     db.from("profiles").select("id, full_name, email, account_type, account_status, role, committee_position").limit(5000),
@@ -64,6 +64,8 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
   ]);
 
   const ready = !rulesRes.error;
+  // Setup file 41 gives each area of the site its own permission.
+  const areasReady = !ready || (rulesRes.data ?? []).some((r) => r.capability === "edit_programme");
   const rules = Object.fromEntries(
     ACCOUNT_TYPES.map((t) => [t, Object.fromEntries(CAPABILITIES.map((c) => [c, DEFAULT_RULES[t].includes(c)]))]),
   ) as Record<AccountType, Record<Capability, boolean>>;
@@ -133,6 +135,12 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
         </Notice>
       )}
 
+      {!areasReady && (
+        <Notice tone="warning" title="Run setup file 41 to control each area separately">
+          Run <code>41-access-areas-and-account-removal.sql</code> in the Supabase SQL editor. Until then the website areas below move together with &ldquo;Other website pages&rdquo;, attendance and travel follow &ldquo;Review accounts&rdquo;, and only you can remove accounts.
+        </Notice>
+      )}
+
       <section aria-labelledby="pulse">
         <h2 id="pulse" className="sr-only">At a glance</h2>
         <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
@@ -163,7 +171,7 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 id="matrix" className="flex items-center gap-2 font-display text-xl text-ink"><SlidersHorizontal aria-hidden className="size-5 text-navy" /> Who can do what</h2>
-            <p className="max-w-3xl text-sm text-slate-700">Choose what each account type can see and do. The database enforces every switch, so nobody can get around it.</p>
+            <p className="max-w-3xl text-sm text-slate-700">Every area of the dashboard and the website has its own switch. Choose what each account type can open, or turn a whole group on or off at once. The database enforces every switch, so nobody can get around it.</p>
           </div>
         </div>
         <AccessMatrix initial={rules} types={[...ACCOUNT_TYPES].reverse()} />
@@ -172,7 +180,7 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
       <section aria-labelledby="people-h" id="people" className="scroll-mt-28 space-y-3">
         <div>
           <h2 className="flex items-center gap-2 font-display text-xl text-ink" id="people-h"><UserCog aria-hidden className="size-5 text-navy" /> Individual access</h2>
-          <p className="max-w-3xl text-sm text-slate-700">Give one person extra access, or take something away, without changing their whole account type. For example, let a delegate volunteer run the check-in desk.</p>
+          <p className="max-w-3xl text-sm text-slate-700">Give one person access to any area, or take it away, without changing their whole account type. For example, let a delegate volunteer run the check-in desk, or let one committee member edit only the programme. You can also remove their account from there.</p>
         </div>
         <form role="search" className="flex gap-2">
           <label htmlFor="q" className="sr-only">Find a person</label>

@@ -10,16 +10,18 @@ import type { AccountType } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-function Action({ href, icon: Icon, title, value, note }: { href: string; icon: typeof UserCheck; title: string; value?: number | string; note?: string }) {
+function Action({ href, icon: Icon, title, value, note, tone = "tone-navy" }: { href: string; icon: typeof UserCheck; title: string; value?: number | string; note?: string; tone?: string }) {
   return (
-    <Link href={href} className="group flex items-start gap-4 rounded-xl border border-navy/10 bg-white p-5 transition-colors hover:border-navy/30">
-      <span className="grid size-10 shrink-0 place-items-center rounded-[3px] bg-navy text-cyan"><Icon aria-hidden className="size-5" /></span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm text-slate-700">{title}</span>
-        {value !== undefined && <span className="mt-1 block font-display text-3xl text-ink">{value}</span>}
-        {note && <span className="mt-1 block text-xs text-slate">{note}</span>}
+    <Link href={href} className="app-card-link group flex flex-col gap-3 p-3.5 sm:flex-row sm:items-start sm:gap-4 sm:p-5">
+      <span className="flex items-center justify-between sm:contents">
+        <span className={`icon-chip ${tone}`}><Icon aria-hidden className="size-5" /></span>
+        <ArrowRight aria-hidden className="size-4 shrink-0 text-slate transition-transform group-hover:translate-x-0.5 sm:order-last sm:mt-1" />
       </span>
-      <ArrowRight aria-hidden className="mt-1 size-4 shrink-0 text-slate transition-transform group-hover:translate-x-0.5" />
+      <span className="min-w-0 flex-1">
+        {value !== undefined && <span className="block font-display text-[1.75rem] leading-none text-ink sm:order-2 sm:mt-1 sm:text-3xl">{value}</span>}
+        <span className="mt-1.5 block text-[0.85rem] font-medium leading-snug text-slate-700 sm:text-sm">{title}</span>
+        {note && <span className="mt-1 block text-xs leading-snug text-slate">{note}</span>}
+      </span>
     </Link>
   );
 }
@@ -28,23 +30,27 @@ export default async function CommitteeHome({ searchParams }: { searchParams: Pr
   const sp = await searchParams;
   const { db, profile } = await requireAccess("any", "/admin");
   const { access } = profile;
-  const edition = await getEdition();
-
-  const { data: subs } = await db.from("presentation_submissions").select("user_id, kind, status, version").order("version", { ascending: false }).limit(2000);
+  // Every count is fetched at once, so the overview costs one round trip, not five.
+  const editionP = getEdition();
+  const [edition, { data: subs }, { data: peopleRows }, checkedIn, { data: attendanceRows }] = await Promise.all([
+    editionP,
+    db.from("presentation_submissions").select("user_id, kind, status, version").order("version", { ascending: false }).limit(2000),
+    access.exec ? db.from("profiles").select("account_status, account_type, extra_types").limit(5000) : Promise.resolve({ data: [] }),
+    access.exec
+      ? editionP.then(async (e) => (await db.from("registrations").select("id", { count: "exact", head: true }).eq("edition_id", e.id).not("checked_in_at", "is", null)).count ?? 0)
+      : 0,
+    access.exec ? db.from("presenter_attendance").select("response").limit(5000) : Promise.resolve({ data: [] }),
+  ]);
   const latest = new Map<string, string>();
   for (const s of subs ?? []) if (!latest.has(`${s.user_id}:${s.kind}`)) latest.set(`${s.user_id}:${s.kind}`, s.status);
   const toReview = [...latest.values()].filter((s) => s === "submitted").length;
 
-  const people = access.exec ? ((await db.from("profiles").select("*").limit(5000)).data ?? []).map((p) => ({ ...p, roles: rolesOf(p.account_type as AccountType, p.extra_types as AccountType[] | null) })) : [];
+  const people = ((peopleRows ?? []) as { account_status: string; account_type: string; extra_types: string[] | null }[]).map((p) => ({ ...p, roles: rolesOf(p.account_type as AccountType, p.extra_types as AccountType[] | null) }));
   const pending = people.filter((p) => p.account_status === "pending").length;
   const waitlisted = people.filter((p) => p.account_status === "waitlisted").length;
   const approved = people.filter((p) => p.account_status === "approved");
   const byType = ACCOUNT_TYPES.map((t) => [t, approved.filter((p) => p.roles.includes(t)).length] as [AccountType, number]);
-  const checkedIn = access.exec
-    ? ((await db.from("registrations").select("id", { count: "exact", head: true }).eq("edition_id", edition.id).not("checked_in_at", "is", null)).count ?? 0)
-    : 0;
-
-  const attendance = access.exec ? (await db.from("presenter_attendance").select("response").limit(5000)).data ?? [] : [];
+  const attendance = (attendanceRows ?? []) as { response: string }[];
   const presenterCount = approved.filter((p) => p.roles.includes("oral_presenter") || p.roles.includes("poster_presenter")).length;
   const cantMake = attendance.filter((a) => a.response === "unavailable").length;
 
@@ -61,42 +67,43 @@ export default async function CommitteeHome({ searchParams }: { searchParams: Pr
 
       <section aria-labelledby="todo">
         <h2 id="todo" className="mb-3 font-display text-xl text-ink">Needs you</h2>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {access.exec && <Action href="/admin/accounts" icon={UserCheck} title="Accounts awaiting review" value={pending} note={waitlisted ? `${waitlisted} on the waitlist` : undefined} />}
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-4 xl:grid-cols-3">
+          {access.exec && <Action href="/admin/accounts" icon={UserCheck} tone="tone-coral" title="Accounts awaiting review" value={pending} note={waitlisted ? `${waitlisted} on the waitlist` : undefined} />}
           {access.exec && (
             <Action
               href="/admin/attendance"
               icon={CalendarCheck2}
+              tone="tone-teal"
               title="Presenters who've confirmed"
               value={`${attendance.length - cantMake} of ${presenterCount}`}
               note={cantMake ? `${cantMake} can't make it` : "Oral and poster presenters"}
             />
           )}
-          <Action href="/admin/submissions?status=submitted" icon={FileStack} title="Slides and posters to review" value={toReview} />
-          {access.leadership && <Action href="/admin/email" icon={Mail} title="Email a group" note="Delegates, presenters or the committee" />}
+          <Action href="/admin/submissions?status=submitted" icon={FileStack} tone="tone-gold" title="Slides and posters to review" value={toReview} />
+          {access.leadership && <Action href="/admin/email" icon={Mail} tone="tone-plum" title="Email a group" note="Delegates, presenters or the committee" />}
         </div>
       </section>
 
       <section aria-labelledby="site">
         <h2 id="site" className="mb-3 font-display text-xl text-ink">Update the website</h2>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <Action href="/admin/content/announcements" icon={Megaphone} title="Post an announcement" note="Shows on the homepage and in everyone's account" />
-          <Action href="/admin/content/sessions" icon={CalendarCog} title="Edit the programme" note="Times, rooms and speakers" />
-          <Action href="/admin/content/map" icon={MapPin} title="Edit the campus map" note="Pin buildings and rooms" />
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-4 xl:grid-cols-3">
+          <Action href="/admin/content/announcements" icon={Megaphone} tone="tone-rose" title="Post an announcement" note="Shows on the homepage and in everyone's account" />
+          <Action href="/admin/content/sessions" icon={CalendarCog} tone="tone-sky" title="Edit the programme" note="Times, rooms and speakers" />
+          <Action href="/admin/content/map" icon={MapPin} tone="tone-teal" title="Edit the campus map" note="Pin buildings and rooms" />
         </div>
       </section>
 
       {access.exec && (
         <Panel title="Who's coming">
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+          <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
             {byType.map(([t, n]) => (
-              <div key={t}>
+              <div key={t} className="rounded-xl bg-paper/70 p-3">
                 <dt className="text-sm text-slate-700">{ACCOUNT_TYPE_LABEL[t]}</dt>
                 <dd className="font-display text-2xl text-ink">{n}</dd>
               </div>
             ))}
-            <div>
-              <dt className="text-sm text-slate-700">Checked in</dt>
+            <div className="rounded-xl bg-success/10 p-3">
+              <dt className="text-sm text-success">Checked in</dt>
               <dd className="font-display text-2xl text-ink">{checkedIn}</dd>
             </div>
           </dl>

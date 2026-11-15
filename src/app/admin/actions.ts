@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireEntityAccess, currentEditionId, type Db } from "@/lib/admin/server";
 import { getEntity } from "@/lib/admin/entities";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/auth";
 import { fromZonedInputValue } from "@/lib/time";
 import type { ActionResult } from "@/app/portal/actions";
 
@@ -164,7 +164,7 @@ const lines = (v: FormDataEntryValue | null) => String(v ?? "").split("\n").map(
 const text = (v: FormDataEntryValue | null) => String(v ?? "").trim();
 
 export async function saveSettings(_: ActionResult, form: FormData): Promise<ActionResult> {
-  const { db } = await requireRole(["editor"], "/admin/settings");
+  const { db } = await requireAccess("edit_settings", "/admin/settings");
   const id = text(form.get("id"));
   const fieldErrors: Record<string, string> = {};
   const time = (k: string) => {
@@ -239,7 +239,7 @@ export async function saveSettings(_: ActionResult, form: FormData): Promise<Act
 }
 
 export async function setCurrentEdition(_: ActionResult, form: FormData): Promise<ActionResult> {
-  const { db } = await requireRole(["admin"], "/admin/settings");
+  const { db } = await requireAccess("edit_settings", "/admin/settings");
   const id = text(form.get("edition"));
   const { error: e1 } = await db.from("editions").update({ is_current: false }).eq("is_current", true);
   const { error: e2 } = await db.from("editions").update({ is_current: true }).eq("id", id);

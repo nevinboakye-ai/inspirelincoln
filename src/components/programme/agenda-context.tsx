@@ -94,8 +94,10 @@ export function AgendaProvider({ children }: { children: React.ReactNode }) {
         setReady(true);
         return;
       }
-      const { data } = await db.auth.getUser();
-      const uid = data.user?.id ?? null;
+      // The local session is enough to know whose agenda this is (row level
+      // security checks every read and write), and it needs no network trip.
+      const { data } = await db.auth.getSession();
+      const uid = data.session?.user.id ?? null;
       if (!uid || cancelled) {
         setReady(true);
         return;

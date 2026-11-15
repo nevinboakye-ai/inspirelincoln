@@ -30,14 +30,16 @@ const box = "rounded-xl border border-navy/10 bg-white p-5 sm:p-8";
 
 export default async function ProfilePage() {
   const { profile, db, user } = await requireUser("/portal/profile");
-  const { data: consents } = await db
-    .from("consent_records")
-    .select("id, purpose, granted, policy_version, created_at")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(30);
+  const [{ data: consents }, photo] = await Promise.all([
+    db
+      .from("consent_records")
+      .select("id, purpose, granted, policy_version, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(30),
+    signAvatar(db, profile.avatarPath),
+  ]);
   const s = ACCOUNT_STATUS_LABEL[profile.accountStatus];
-  const photo = await signAvatar(db, profile.avatarPath);
   return (
     <div className="space-y-5 sm:space-y-6">
       <header>
