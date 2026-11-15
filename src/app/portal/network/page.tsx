@@ -9,6 +9,7 @@ import { signAvatars } from "@/lib/avatar";
 import { getLogoMap } from "@/lib/university-logos-server";
 import { getSwitches } from "@/lib/switches";
 import { Notice } from "@/components/ui/notice";
+import { CreateAccountButton } from "@/components/admin/create-account";
 import {
   NetworkCardForm,
   NetworkDirectory,
@@ -191,6 +192,15 @@ export default async function NetworkPage() {
           </p>
         </div>
       </header>
+
+      {(owner || profile.access.can.review_accounts) && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-navy/10 bg-white px-5 py-4">
+          <p className="min-w-0 flex-1 text-sm text-slate-700">
+            <strong className="text-ink">Add someone.</strong> Create a delegate, presenter, speaker, judge or committee account. It&apos;s approved straight away and shows here once they&apos;ve logged in.
+          </p>
+          <CreateAccountButton canLead={profile.access.leadership} className="w-full sm:w-auto" />
+        </div>
+      )}
 
       {owner && (
         <form

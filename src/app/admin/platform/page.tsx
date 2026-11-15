@@ -144,7 +144,7 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
       <section aria-labelledby="pulse">
         <h2 id="pulse" className="sr-only">At a glance</h2>
         <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-          <Stat href="/admin/accounts" label="Awaiting review" value={count("pending")} icon={UserCheck} note={`${count("waitlisted")} on the waitlist`} />
+          <Stat href="/admin/accounts?status=pending" label="Awaiting review" value={count("pending")} icon={UserCheck} note={`${count("waitlisted")} on the waitlist`} />
           <Stat href="/admin/accounts?status=approved" label="Approved accounts" value={count("approved")} icon={Users} />
           <Stat href="/admin/submissions" label="Slides and posters to review" value={toReview} icon={FileStack} />
           <Stat href="#people" label="People with custom access" value={customPeople.length} icon={UserCog} />
@@ -157,7 +157,7 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
           <Shortcut href="/admin/platform/activity" icon={Activity} title="Sign-in activity" note="When each person last signed in and was last active" />
           <Shortcut href="/admin/platform/metrics" icon={BarChart3} title="Website metrics" note="Visits, visitors, top pages, where people come from" />
           <Shortcut href="/admin/content/committee" icon={Users} title="Committee profiles" note="Names, roles, photos and biographies on the About page" />
-          <Shortcut href="/admin/accounts" icon={UserCheck} title="Accept accounts" note="Approve, waitlist or decline new registrations" />
+          <Shortcut href="/admin/accounts?status=pending" icon={UserCheck} title="Accept accounts" note="Approve, waitlist or decline new registrations" />
           <Shortcut href="/admin/submissions" icon={FileStack} title="Review submissions" note="Slides and posters, with feedback to presenters" />
           <Shortcut href="/admin/content/sessions" icon={CalendarCog} title="Programme" note="Sessions, times, rooms and speakers" />
           <Shortcut href="/admin/email" icon={Mail} title="Group email" note="Email delegates, presenters or the committee" />

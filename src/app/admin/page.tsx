@@ -68,7 +68,7 @@ export default async function CommitteeHome({ searchParams }: { searchParams: Pr
       <section aria-labelledby="todo">
         <h2 id="todo" className="mb-3 font-display text-xl text-ink">Needs you</h2>
         <div className="grid grid-cols-2 gap-2.5 sm:gap-4 xl:grid-cols-3">
-          {access.exec && <Action href="/admin/accounts" icon={UserCheck} tone="tone-coral" title="Accounts awaiting review" value={pending} note={waitlisted ? `${waitlisted} on the waitlist` : undefined} />}
+          {access.exec && <Action href="/admin/accounts?status=pending" icon={UserCheck} tone="tone-coral" title="Accounts awaiting review" value={pending} note={waitlisted ? `${waitlisted} on the waitlist` : undefined} />}
           {access.exec && (
             <Action
               href="/admin/attendance"

@@ -4,6 +4,7 @@ import { ArrowRight, Mail } from "lucide-react";
 import { requireAccess } from "@/lib/auth";
 import { AdminHeader } from "@/components/admin/ui";
 import { AccountReviewForm } from "@/components/admin/committee-forms";
+import { CreateAccountButton } from "@/components/admin/create-account";
 import { RolesButton } from "@/components/admin/roles";
 import { Badge } from "@/components/ui/badge";
 import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_GROUPS, ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES, rolesOf } from "@/lib/accounts";
@@ -16,11 +17,11 @@ export const dynamic = "force-dynamic";
 type Tab = AccountStatus | "all";
 
 const TABS: { status: Tab; label: string }[] = [
+  { status: "all", label: "Everyone" },
+  { status: "approved", label: "Approved" },
   { status: "pending", label: "Awaiting review" },
   { status: "waitlisted", label: "Waitlist" },
-  { status: "approved", label: "Approved" },
   { status: "declined", label: "Declined" },
-  { status: "all", label: "Everyone" },
 ];
 
 /** Tabs where each person needs a decision get full cards; the rest get a compact list. */
@@ -31,7 +32,7 @@ const when = (d: string) => new Date(d).toLocaleString("en-GB", { timeZone: "Eur
 export default async function AccountsPage({ searchParams }: { searchParams: Promise<{ status?: string; type?: string; q?: string }> }) {
   const sp = await searchParams;
   const { db, user, profile } = await requireAccess("review_accounts", "/admin/accounts");
-  const status = (TABS.find((t) => t.status === sp.status)?.status ?? "pending") as Tab;
+  const status = (TABS.find((t) => t.status === sp.status)?.status ?? "all") as Tab;
   const type = ACCOUNT_TYPES.includes(sp.type as AccountType) ? (sp.type as AccountType) : null;
 
   const [{ data: all }, { data: roster }] = await Promise.all([
@@ -71,6 +72,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
       <AdminHeader
         title="Accounts"
         description="Everyone who registers appears here first. Approving an account confirms their place and switches on presenter or committee access. Use the roles button to give anyone one or more roles, for example vice president and Academic Team. Select a name to edit their details or email them."
+        actions={<CreateAccountButton canLead={profile.access.leadership} />}
       />
 
       <nav aria-label="Account status" className="-mx-4 overflow-x-auto px-4">
