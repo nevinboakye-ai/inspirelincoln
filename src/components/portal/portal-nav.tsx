@@ -56,6 +56,16 @@ export function PortalNav({
       label: "My conference",
       icon: Ticket,
     },
+    // Judges come to My Hub mainly to mark, so the judging portal sits right after it.
+    ...(access.judging
+      ? [
+          {
+            href: "/judge",
+            label: "Judging portal",
+            icon: Trophy,
+          },
+        ]
+      : []),
     {
       href: "/portal/messages",
       label: "Messages",
@@ -114,15 +124,6 @@ export function PortalNav({
       label: "Profile and privacy",
       icon: UserRound,
     },
-    ...(access.judging
-      ? [
-          {
-            href: "/judge",
-            label: "Judging portal",
-            icon: Trophy,
-          },
-        ]
-      : []),
     ...(reviewer && !access.committee
       ? [
           {

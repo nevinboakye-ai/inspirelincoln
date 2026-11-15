@@ -382,6 +382,34 @@ export async function saveTravel(_: ActionResult, form: FormData): Promise<Actio
   return { ok: true, message: `Thank you. We've saved your answer: ${TRAVEL_LABEL[mode].label}${reg ? `, ${reg}` : ""}.` };
 }
 
+/**
+ * Judges are only asked for a car registration, and only if they're driving.
+ * Saving one records them as coming by car; "I'm not driving" removes it.
+ */
+export async function saveParking(_: ActionResult, form: FormData): Promise<ActionResult> {
+  const { user, db, profile } = await requireUser("/portal");
+  if (profile.accountStatus !== "approved") return { ok: false, error: "You can add your car registration once your account is confirmed." };
+  const driving = form.get("driving") !== "no";
+  let error: { message: string } | null;
+  let reg: string | null = null;
+  if (driving) {
+    reg = cleanRegistration(String(form.get("carRegistration") ?? ""));
+    if (!reg) return { ok: false, fieldErrors: { carRegistration: "Enter your car registration, for example AB12 CDE." } };
+    ({ error } = await db
+      .from("delegate_travel")
+      .upsert({ user_id: user.id, mode: "car", car_registration: reg, updated_at: new Date().toISOString() }, { onConflict: "user_id" }));
+  } else {
+    ({ error } = await db.from("delegate_travel").delete().eq("user_id", user.id));
+  }
+  if (error) {
+    if (/VIEW_AS/.test(error.message)) return { ok: false, error: "You're viewing as someone else, so changes are switched off." };
+    return { ok: false, error: "We couldn't save that. Please try again." };
+  }
+  revalidatePath("/portal");
+  revalidatePath("/admin/travel");
+  return { ok: true, message: reg ? `Thank you. We've saved your car registration, ${reg}.` : "Thank you. We've removed your car registration." };
+}
+
 /** The finish-your-profile prompt has been seen, so it won't show again until they next sign in. */
 /** Their answer to "show your email to other delegates?" from the profile prompt. */
 export async function chooseEmailSharing(share: boolean): Promise<ActionResult> {

@@ -32,6 +32,7 @@ import { Countdown, HubItem, HubStagger } from "@/components/portal/hub-motion";
 import { MaskRise } from "@/components/motion/effects";
 import { AttendanceCard, type AttendanceAnswer } from "@/components/portal/attendance-card";
 import { TravelCard } from "@/components/portal/travel-card";
+import { ParkingCard } from "@/components/portal/parking-card";
 import { GuestHub } from "@/components/portal/guest-hub";
 import { CardDock } from "@/components/portal/card-dock";
 import { isTravelMode, type TravelAnswer } from "@/lib/travel";
@@ -50,6 +51,7 @@ import {
   rolesLabel,
   rolesOf,
   EXEC_TYPES,
+  isJudgeOnly,
 } from "@/lib/accounts";
 import type { AccountType, SubmissionStatus } from "@/lib/types";
 
@@ -122,7 +124,9 @@ export default async function PortalHome({
   const status = profile.accountStatus;
   // Approved oral and poster presenters confirm whether they'll be there to present.
   const presenting = Boolean(kind) && status === "approved";
-  const wantChoices = status === "approved" || profile.access.owner || profile.access.can.allocate_workshops;
+  // Judges come to judge: no workshop ranking, and only a car registration if they're driving.
+  const judgeOnly = isJudgeOnly(profile.accountType, profile.extraTypes);
+  const wantChoices = !judgeOnly && (status === "approved" || profile.access.owner || profile.access.can.allocate_workshops);
   // One code for everything: delegates scan it to see the card, the check-in desk scans it on the day.
   const cardCode = status === "approved" ? profile.cardCode : null;
 
@@ -227,7 +231,7 @@ export default async function PortalHome({
           href: "#attend-h",
         }]
       : []),
-    ...(status === "approved"
+    ...(status === "approved" && !judgeOnly
       ? [{ label: "Tell us how you're getting here", done: Boolean(travelAnswer), href: "#travel" }]
       : []),
     ...(kind
@@ -274,14 +278,17 @@ export default async function PortalHome({
   const lanyard = status === "approved" && showCard;
 
   const attendPending = presenting && !answer;
-  const travelPending = status === "approved" && !travelAnswer;
+  const travelPending = status === "approved" && !travelAnswer && !judgeOnly;
 
   // Short answers (travel, attendance, slides) sit side by side as slim tiles.
   const tiles = [
     presenting && !attendPending && (
       <AttendanceCard key="attend" answer={answer} kind={kind!} dateLabel={formatEventDate(edition.date)} venue={edition.venueName} />
     ),
-    status === "approved" && !travelPending && <TravelCard key="travel" answer={travelAnswer} />,
+    status === "approved" && !travelPending && !judgeOnly && <TravelCard key="travel" answer={travelAnswer} />,
+    status === "approved" && judgeOnly && (
+      <ParkingCard key="parking" registration={travelAnswer?.mode === "car" ? travelAnswer.carRegistration : null} />
+    ),
     kind && (
       <section key="sub" aria-labelledby="sub-h" className="app-card flex items-center gap-3 p-3 pr-2 sm:p-4 sm:pr-3">
         <span className="icon-chip tone-gold">

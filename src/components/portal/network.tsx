@@ -300,8 +300,8 @@ const META = "mt-0.5 flex items-center justify-center gap-1.5 text-xs sm:justify
 const FOOT = "mt-auto flex flex-col items-center gap-2 pt-3 sm:flex-row sm:justify-between sm:pt-4";
 
 /**
- * The committee's cards stand out from delegates': the executive committee's
- * are gold, the rest of the team's are dark with a gold edge.
+ * The committee's cards are gold so they stand out from delegates'. The
+ * executive committee's are a deeper gold with a navy edge, a star and a shine.
  */
 function CommitteeCard({ p, me, logo, onOpen }: { p: Delegate; me: string; logo?: string; onOpen: () => void }) {
   const exec = isExec(p);
@@ -321,17 +321,17 @@ function CommitteeCard({ p, me, logo, onOpen }: { p: Delegate; me: string; logo?
         view: "text-midnight",
       }
     : {
-        card: "bg-midnight text-paper ring-white/10 shadow-[0_18px_40px_-26px_rgba(12,24,44,0.9)] hover:shadow-[0_26px_50px_-24px_rgba(12,24,44,0.9)]",
-        strip: "bg-gold/70",
-        grid: "opacity-[0.14]",
-        crest: "opacity-[0.06]",
-        ring: "ring-gold/40",
-        fallback: "bg-paper/10 text-sm text-gold-300",
-        you: "text-paper/60",
-        meta: "text-paper/70",
-        bio: "text-paper/75",
-        badge: "bg-gold/15 text-gold-300 ring-1 ring-inset ring-gold/30",
-        view: "text-gold-300",
+        card: "bg-[linear-gradient(135deg,#f6e7bd_0%,var(--color-gold-300)_60%,var(--color-gold)_100%)] text-midnight ring-gold-600/40 shadow-[0_18px_40px_-26px_rgba(122,92,20,0.6)] hover:shadow-[0_26px_50px_-24px_rgba(122,92,20,0.7)]",
+        strip: "bg-gold-600",
+        grid: "opacity-[0.06] invert",
+        crest: "opacity-[0.1] invert",
+        ring: "ring-gold-600/60",
+        fallback: "bg-midnight text-sm text-gold-300",
+        you: "text-midnight/70",
+        meta: "text-midnight/80",
+        bio: "text-midnight/85",
+        badge: "bg-midnight/90 text-gold-300",
+        view: "text-midnight",
       };
   return (
     <button
