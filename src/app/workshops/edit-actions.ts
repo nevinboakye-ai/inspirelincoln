@@ -15,7 +15,7 @@ const schema = z.object({
 
 /** Changes a workshop's name and wording from the page itself. Needs the "Edit the website" permission. */
 export async function saveWorkshopText(input: z.input<typeof schema>): Promise<WorkshopTextResult> {
-  const { db } = await requireAccess("edit_website", "/workshops");
+  const { db } = await requireAccess("edit_workshops", "/workshops");
   const parsed = schema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Please check the details." };
   const { id, ...row } = parsed.data;

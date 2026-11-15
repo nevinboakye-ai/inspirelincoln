@@ -112,3 +112,23 @@ describe("oral waiting list", () => {
     expect(splitRoles(["delegate", "oral_waitlist"])).toEqual({ main: "poster_presenter", extra: ["oral_waitlist"] });
   });
 });
+
+describe("access areas", () => {
+  it("before setup file 41, new areas follow the permission they came from", () => {
+    const a = accessFromCaps(["edit_website", "review_accounts"], "delegate");
+    expect(a.can.edit_programme && a.can.edit_settings && a.can.view_attendance && a.can.view_travel).toBe(true);
+    expect(a.can.remove_accounts).toBe(false);
+    expect(a.editor).toBe(true);
+  });
+  it("after setup file 41, each area is its own answer", () => {
+    const a = accessFromCaps(["edit_programme", "areas_v1"], "delegate");
+    expect(a.can.edit_programme).toBe(true);
+    expect(a.can.edit_faqs).toBe(false);
+    expect(a.can.edit_website).toBe(false);
+    expect(a.editor && a.committee).toBe(true);
+  });
+  it("only the site owner removes accounts by default", () => {
+    expect(accessFor(p("president", "approved")).can.remove_accounts).toBe(false);
+    expect(accessFor(p("delegate", "pending", "admin")).can.remove_accounts).toBe(true);
+  });
+});

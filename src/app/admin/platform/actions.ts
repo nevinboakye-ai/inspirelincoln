@@ -12,6 +12,8 @@ const capability = z.enum(CAPABILITIES as unknown as [Capability, ...Capability[
 const accountType = z.enum(ACCOUNT_TYPES as [AccountType, ...AccountType[]]);
 
 const NOT_READY = "The access settings aren't set up in the database yet. Run the access control migration first.";
+/** A newer area isn't in the database yet (the foreign key to access_capabilities fails). */
+const NEEDS_AREAS = "That area isn't in the database yet. Run setup file 41 (access areas) in Supabase, then try again.";
 
 /** Turns one permission on or off for everyone with an account type. Site owner only. */
 export async function setRule(input: { accountType: AccountType; capability: Capability; allowed: boolean }): Promise<PlatformResult> {
@@ -21,7 +23,7 @@ export async function setRule(input: { accountType: AccountType; capability: Cap
   const { error } = await db
     .from("access_rules")
     .upsert({ account_type: v.data.accountType, capability: v.data.capability, allowed: v.data.allowed }, { onConflict: "account_type,capability" });
-  if (error) return { ok: false, error: error.code === "42P01" ? NOT_READY : "Could not save that change." };
+  if (error) return { ok: false, error: error.code === "42P01" ? NOT_READY : error.code === "23503" ? NEEDS_AREAS : "Could not save that change." };
   revalidatePath("/admin", "layout");
   return { ok: true };
 }
@@ -31,7 +33,7 @@ export async function resetRules(): Promise<PlatformResult> {
   const { db } = await requireAccess("owner", "/admin/platform");
   const rows = ACCOUNT_TYPES.flatMap((t) => CAPABILITIES.map((c) => ({ account_type: t, capability: c, allowed: DEFAULT_RULES[t].includes(c) })));
   const { error } = await db.from("access_rules").upsert(rows, { onConflict: "account_type,capability" });
-  if (error) return { ok: false, error: error.code === "42P01" ? NOT_READY : "Could not reset the permissions." };
+  if (error) return { ok: false, error: error.code === "42P01" ? NOT_READY : error.code === "23503" ? NEEDS_AREAS : "Could not reset the permissions." };
   revalidatePath("/admin", "layout");
   return { ok: true, message: "Permissions are back to the defaults." };
 }
@@ -52,8 +54,40 @@ export async function setOverride(input: { userId: string; capability: Capabilit
           .from("access_overrides")
           .upsert({ user_id: v.data.userId, capability: v.data.capability, allowed: v.data.mode === "allow" }, { onConflict: "user_id,capability" });
   const { error } = await q;
-  if (error) return { ok: false, error: error.code === "42P01" ? NOT_READY : "Could not save that change." };
+  if (error) return { ok: false, error: error.code === "42P01" ? NOT_READY : error.code === "23503" ? NEEDS_AREAS : "Could not save that change." };
   revalidatePath("/admin/platform", "layout");
+  return { ok: true };
+}
+
+/** Sets several permissions for one person at once, e.g. every website area. Site owner only. */
+export async function setOverrides(input: { userId: string; capabilities: Capability[]; mode: "inherit" | "allow" | "block" }): Promise<PlatformResult> {
+  const { db, user } = await requireAccess("owner", "/admin/platform");
+  const v = z.object({ userId: z.string().uuid(), capabilities: z.array(capability).min(1).max(CAPABILITIES.length), mode: z.enum(["inherit", "allow", "block"]) }).safeParse(input);
+  if (!v.success) return { ok: false, error: "That change isn't valid." };
+  if (v.data.userId === user.id) return { ok: false, error: "As site owner you always have every permission." };
+  const { data: target } = await db.from("profiles").select("role").eq("id", v.data.userId).maybeSingle();
+  if (!target) return { ok: false, error: "That account no longer exists." };
+  if (target.role === "admin") return { ok: false, error: "Site owners always have every permission." };
+  const { error } =
+    v.data.mode === "inherit"
+      ? await db.from("access_overrides").delete().eq("user_id", v.data.userId).in("capability", v.data.capabilities)
+      : await db
+          .from("access_overrides")
+          .upsert(v.data.capabilities.map((c) => ({ user_id: v.data.userId, capability: c, allowed: v.data.mode === "allow" })), { onConflict: "user_id,capability" });
+  if (error) return { ok: false, error: error.code === "42P01" ? NOT_READY : error.code === "23503" ? NEEDS_AREAS : "Could not save those changes." };
+  revalidatePath("/admin/platform", "layout");
+  return { ok: true };
+}
+
+/** Turns one permission on or off for several account types at once. Site owner only. */
+export async function setRules(input: { accountTypes: AccountType[]; capabilities: Capability[]; allowed: boolean }): Promise<PlatformResult> {
+  const { db } = await requireAccess("owner", "/admin/platform");
+  const v = z.object({ accountTypes: z.array(accountType).min(1), capabilities: z.array(capability).min(1), allowed: z.boolean() }).safeParse(input);
+  if (!v.success) return { ok: false, error: "That change isn't valid." };
+  const rows = v.data.accountTypes.flatMap((t) => v.data.capabilities.map((c) => ({ account_type: t, capability: c, allowed: v.data.allowed })));
+  const { error } = await db.from("access_rules").upsert(rows, { onConflict: "account_type,capability" });
+  if (error) return { ok: false, error: error.code === "42P01" ? NOT_READY : error.code === "23503" ? NEEDS_AREAS : "Could not save those changes." };
+  revalidatePath("/admin", "layout");
   return { ok: true };
 }
 

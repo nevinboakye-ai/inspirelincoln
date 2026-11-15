@@ -91,15 +91,16 @@ export async function proxy(request: NextRequest) {
       if (hit && Date.now() - hit.at < TTL) staff = hit.value;
       else {
         if (viewing) {
-          const res = await fetch(`${url}/rest/v1/rpc/has_access`, {
+          const res = await fetch(`${url}/rest/v1/rpc/is_editor`, {
             method: "POST",
             headers: { apikey: key, Authorization: `Bearer ${viewing.a}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ cap: "edit_website" }),
+            body: "{}",
             cache: "no-store",
           }).catch(() => null);
           staff = res?.ok ? (await res.json()) === true : false;
         } else {
-          const { data } = await supabase.rpc("has_access", { cap: "edit_website" });
+          // Anyone who can edit some part of the website (public.is_editor).
+          const { data } = await supabase.rpc("is_editor");
           staff = data === true;
         }
         committee.set(who, { value: staff, at: Date.now() });

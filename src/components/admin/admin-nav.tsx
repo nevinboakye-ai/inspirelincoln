@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarCog, ClipboardCheck, Eye, FileStack, Gauge, HelpCircle, Inbox, Mail, MapPin, Megaphone, Mic, QrCode, ScrollText, Settings2,
-  Ticket, UserCheck, GraduationCap, ListOrdered, CalendarCheck2, Users, Wrench, DoorOpen, ShieldCheck, UserRound, LayoutDashboard, Activity, BarChart3, HandHeart, Car, FileDown,
+  Ticket, UserCheck, GraduationCap, ListOrdered, CalendarCheck2, Users, Wrench, DoorOpen, ShieldCheck, UserRound, LayoutDashboard, Activity, BarChart3, HandHeart, Car, FileDown, History,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Access, Capability } from "@/lib/accounts";
@@ -31,8 +31,8 @@ const GROUPS: { title: string; links: LinkDef[] }[] = [
     title: "People",
     links: [
       { href: "/admin/accounts", label: "Accounts", icon: UserCheck, need: "review_accounts" },
-      { href: "/admin/attendance", label: "Presenter attendance", icon: CalendarCheck2, need: "review_accounts" },
-      { href: "/admin/travel", label: "Travel and parking", icon: Car, need: ["review_accounts", "manage_people"] },
+      { href: "/admin/attendance", label: "Presenter attendance", icon: CalendarCheck2, need: ["view_attendance", "review_accounts"] },
+      { href: "/admin/travel", label: "Travel and parking", icon: Car, need: "view_travel" },
       { href: "/admin/workshops", label: "Workshop places", icon: ListOrdered, need: "allocate_workshops" },
       { href: "/admin/submissions", label: "Slides and posters", icon: FileStack, need: "review_submissions" },
       { href: "/admin/enquiries", label: "Enquiries", icon: Inbox, need: ["answer_enquiries", "manage_people"] },
@@ -42,17 +42,18 @@ const GROUPS: { title: string; links: LinkDef[] }[] = [
   {
     title: "Website",
     links: [
-      { href: "/admin/content/committee", label: "Committee profiles", icon: Users, need: "edit_website" },
-      { href: "/admin/content/sessions", label: "Programme", icon: CalendarCog, need: "edit_website" },
-      { href: "/admin/content/announcements", label: "Announcements", icon: Megaphone, need: "edit_website" },
-      { href: "/admin/content/speakers", label: "Speakers", icon: Mic, need: "edit_website" },
-      { href: "/admin/content/workshops", label: "Workshops", icon: Wrench, need: "edit_website" },
-      { href: "/admin/content/map", label: "Campus map", icon: MapPin, need: "edit_website" },
-      { href: "/admin/content/rooms", label: "Rooms", icon: DoorOpen, need: "edit_website" },
-      { href: "/admin/content/universities", label: "University logos", icon: GraduationCap, need: "edit_website" },
-      { href: "/admin/content/sponsors", label: "Sponsors", icon: HandHeart, need: "edit_website" },
-      { href: "/admin/content/faqs", label: "FAQs", icon: HelpCircle, need: "edit_website" },
-      { href: "/admin/settings", label: "Conference settings", icon: Settings2, need: "edit_website" },
+      { href: "/admin/content/committee", label: "Committee profiles", icon: Users, need: "edit_committee" },
+      { href: "/admin/content/sessions", label: "Programme", icon: CalendarCog, need: "edit_programme" },
+      { href: "/admin/content/announcements", label: "Announcements", icon: Megaphone, need: "edit_announcements" },
+      { href: "/admin/content/speakers", label: "Speakers", icon: Mic, need: "edit_speakers" },
+      { href: "/admin/content/workshops", label: "Workshops", icon: Wrench, need: "edit_workshops" },
+      { href: "/admin/content/map", label: "Campus map", icon: MapPin, need: "edit_map" },
+      { href: "/admin/content/rooms", label: "Rooms", icon: DoorOpen, need: "edit_programme" },
+      { href: "/admin/content/universities", label: "University logos", icon: GraduationCap, need: "edit_sponsors" },
+      { href: "/admin/content/sponsors", label: "Sponsors", icon: HandHeart, need: "edit_sponsors" },
+      { href: "/admin/content/faqs", label: "FAQs", icon: HelpCircle, need: "edit_faqs" },
+      { href: "/admin/content/timeline", label: "History timeline", icon: History, need: "edit_website" },
+      { href: "/admin/settings", label: "Conference settings", icon: Settings2, need: "edit_settings" },
     ],
   },
   {
@@ -62,7 +63,7 @@ const GROUPS: { title: string; links: LinkDef[] }[] = [
       { href: "/admin/registrations", label: "Registrations", icon: Ticket, need: "manage_people" },
       { href: "/admin/abstracts", label: "Abstracts", icon: ClipboardCheck, need: "manage_people" },
       { href: "/admin/users", label: "Site roles", icon: ShieldCheck, need: "owner" },
-      { href: "/admin/audit", label: "Audit log", icon: ScrollText, need: "manage_people" },
+      { href: "/admin/audit", label: "Audit log", icon: ScrollText, need: "view_audit_log" },
     ],
   },
 ];
