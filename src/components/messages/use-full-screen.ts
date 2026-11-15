@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from "react";
+import { lockScroll } from "@/lib/scroll-lock";
 
 /**
  * On phones a conversation (or the new message picker) covers the screen
@@ -20,8 +21,14 @@ export function useFullScreenOnPhones(ref: React.RefObject<HTMLElement | null>) 
       el.style.height = `${vv.height}px`;
       el.style.top = `${vv.offsetTop}px`;
     };
+    // Only phones lock the page behind the conversation.
+    let release: (() => void) | null = null;
     const lock = () => {
-      document.documentElement.style.overflow = phone.matches ? "hidden" : "";
+      if (phone.matches && !release) release = lockScroll();
+      if (!phone.matches && release) {
+        release();
+        release = null;
+      }
       fit();
     };
     lock();
@@ -29,7 +36,7 @@ export function useFullScreenOnPhones(ref: React.RefObject<HTMLElement | null>) 
     vv?.addEventListener("scroll", fit);
     phone.addEventListener("change", lock);
     return () => {
-      document.documentElement.style.overflow = "";
+      release?.();
       vv?.removeEventListener("resize", fit);
       vv?.removeEventListener("scroll", fit);
       phone.removeEventListener("change", lock);

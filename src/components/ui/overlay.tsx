@@ -2,6 +2,7 @@
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { lockScroll } from "@/lib/scroll-lock";
 
 /**
  * The part of the screen not covered by the on-screen keyboard. Phones
@@ -44,7 +45,7 @@ export function Overlay({ open, onClose, labelledBy, children }: { open: boolean
   useEffect(() => {
     if (!open) return;
     restore.current = document.activeElement as HTMLElement;
-    document.documentElement.style.overflow = "hidden";
+    const release = lockScroll();
     const t = setTimeout(() => panel.current?.querySelector<HTMLElement>("[data-autofocus]")?.focus() ?? panel.current?.focus(), 30);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -65,7 +66,7 @@ export function Overlay({ open, onClose, labelledBy, children }: { open: boolean
     return () => {
       clearTimeout(t);
       document.removeEventListener("keydown", onKey);
-      document.documentElement.style.overflow = "";
+      release();
       restore.current?.focus?.();
     };
   }, [open, onClose]);

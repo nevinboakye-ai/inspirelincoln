@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { searchItems, type QuickAnswer, type SearchIndex, type SearchItem } from "@/lib/search/types";
 import { cn } from "@/lib/cn";
+import { lockScroll } from "@/lib/scroll-lock";
 
 /**
  * Global search (⌘K / Ctrl+K / "/") across pages, sessions, speakers, workshops,
@@ -74,12 +75,13 @@ export function CommandPalette({ defaultOpen = false }: { defaultOpen?: boolean 
   }, []);
 
   useEffect(() => {
-    if (open) {
-      document.documentElement.style.overflow = "hidden";
-      setTimeout(() => inputRef.current?.focus(), 10);
-    } else {
-      document.documentElement.style.overflow = "";
-    }
+    if (!open) return;
+    const release = lockScroll();
+    const t = setTimeout(() => inputRef.current?.focus(), 10);
+    return () => {
+      clearTimeout(t);
+      release();
+    };
   }, [open]);
 
   const results = useMemo<SearchItem[]>(() => (index && query ? searchItems(index.items, query) : []), [index, query]);
