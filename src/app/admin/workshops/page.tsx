@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, Eye } from "lucide-react";
+import { Eye } from "lucide-react";
 import { requireAccess } from "@/lib/auth";
+import { DownloadButtons } from "@/components/admin/download-buttons";
 import { AdminHeader, Panel, btn } from "@/components/admin/ui";
 import { ChoiceSettingsForm, PlacesTable, RunAllocationForm, WorkshopRoomsForm, type PlaceRow } from "@/components/admin/workshop-board";
 import { Badge } from "@/components/ui/badge";
@@ -120,9 +121,10 @@ export default async function WorkshopPlacesPage() {
               <Eye aria-hidden className="size-4" /> {open ? "See it on My Hub" : "Preview what delegates see"}
             </Link>
             {hasPlaces && (
-              <a href="/admin/workshops/export" className={btn.secondary}>
-                <Download aria-hidden className="size-4" /> Download places (CSV)
-              </a>
+              <>
+                <DownloadButtons set="workshop_places" label="workshop places" short="Places" />
+                <DownloadButtons set="workshop_registers" label="workshop registers" short="Registers" />
+              </>
             )}
           </>
         }
