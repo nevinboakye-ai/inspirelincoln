@@ -209,13 +209,14 @@ function ScannerPanel({ titleId, workshops, sessions, canCheckIn }: { titleId: s
   const slotNow = now != null ? likelySlot(sessions, now) : 1;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
+    <div data-scroller className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
       <div className="sticky top-0 z-[1] border-b border-navy/10 bg-white/95 px-4 pb-3 pt-4 backdrop-blur sm:px-5">
         <h2 id={titleId} className="flex min-h-11 items-center gap-2 pr-14 font-display text-xl text-ink">
           <ScanLine aria-hidden className="size-5 text-electric-600" /> Scanner
         </h2>
         {/* What each scan does */}
-        <div role="radiogroup" aria-label="What a scan does" className="mt-2.5 flex gap-1.5 overflow-x-auto pb-0.5">
+        {/* Hidden while finding by name: it doesn't apply there, and on a phone the keyboard needs the room. */}
+        <div role="radiogroup" aria-label="What a scan does" className={cn("mt-2.5 flex gap-1.5 overflow-x-auto pb-0.5", tab === "find" && "hidden")}>
           <ModeChip on={mode.kind === "look"} onClick={() => setMode({ kind: "look" })}>
             <Search aria-hidden className="size-3.5" /> Look up
           </ModeChip>
@@ -225,7 +226,7 @@ function ScannerPanel({ titleId, workshops, sessions, canCheckIn }: { titleId: s
             </ModeChip>
           )}
         </div>
-        {mode.kind === "door" && (
+        {mode.kind === "door" && tab === "scan" && (
           <div className="mt-2.5 grid grid-cols-[auto_1fr] gap-2">
             <label className="sr-only" htmlFor={`${titleId}-slot`}>Session</label>
             <select
@@ -553,6 +554,10 @@ function FindByName({ onPick }: { onPick: (id: string) => void }) {
   const [hits, setHits] = useState<ScanHit[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const id = useId();
+  const box = useRef<HTMLDivElement>(null);
+  // The box is the first thing under the header, so scrolling the sheet to the
+  // top keeps it in view with the names between it and the keyboard.
+  const lift = () => box.current?.closest<HTMLElement>("[data-scroller]")?.scrollTo({ top: 0 });
   useEffect(() => {
     const query = q.trim();
     if (query.length < 2) return;
@@ -576,9 +581,9 @@ function FindByName({ onPick }: { onPick: (id: string) => void }) {
   }, [q]);
   const searching = q.trim().length >= 2;
   return (
-    <div className="space-y-2">
+    <div ref={box} className="space-y-2">
       <label htmlFor={`${id}-q`} className="sr-only">Name, medical school or email</label>
-      <input id={`${id}-q`} type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, medical school or full email" autoComplete="off" className={inputClass} autoFocus />
+      <input id={`${id}-q`} type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, medical school or full email" autoComplete="off" enterKeyHint="search" onFocus={() => setTimeout(lift, 300)} className={inputClass} autoFocus />
       {error && <p className="text-sm text-danger">{error}</p>}
       {searching && hits?.length === 0 && <p className="text-sm text-slate-700">No approved accounts match. Try their medical school.</p>}
       {searching && hits && hits.length > 0 && (
