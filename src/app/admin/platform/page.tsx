@@ -49,10 +49,10 @@ function Shortcut({ href, icon: Icon, title, note }: { href: string; icon: typeo
 export default async function PlatformPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const sp = await searchParams;
   const { db, profile } = await requireAccess("owner", "/admin/platform");
-  const switches = await getSwitches();
   const term = sp.q?.trim().slice(0, 80) ?? "";
 
-  const [rulesRes, overridesRes, peopleRes, subsRes, auditRes, searchRes] = await Promise.all([
+  const [switches, rulesRes, overridesRes, peopleRes, subsRes, auditRes, searchRes] = await Promise.all([
+    getSwitches(),
     db.from("access_rules").select("account_type, capability, allowed"),
     db.from("access_overrides").select("user_id, capability, allowed, updated_at").order("updated_at", { ascending: false }),
     db.from("profiles").select("id, full_name, email, account_type, account_status, role, committee_position").limit(5000),

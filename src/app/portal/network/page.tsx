@@ -6,6 +6,7 @@ import { setNetworkOpen } from "@/app/portal/actions";
 import { requireUser } from "@/lib/auth";
 import { signAvatars } from "@/lib/avatar";
 import { getLogoMap } from "@/lib/university-logos-server";
+import { getSwitches } from "@/lib/switches";
 import { Notice } from "@/components/ui/notice";
 import { NetworkCardForm, NetworkDirectory, type Delegate } from "@/components/portal/network";
 import type { ManagedPerson, ManageRights } from "@/components/admin/manage-person";
@@ -17,16 +18,20 @@ export const dynamic = "force-dynamic";
 export default async function NetworkPage() {
   const { profile, db } = await requireUser("/portal/network");
   const owner = profile.access.owner;
-  const { data: sw } = await db.from("site_switches").select("enabled").eq("key", "network_open").maybeSingle();
-  // If the switch table isn't there yet, keep the network closed to everyone but the owner.
-  const live = Boolean(sw?.enabled);
-  // Hidden entirely from everyone but the owner until it is opened.
-  if (!live && !owner) redirect("/portal");
   const staff = profile.access.exec || profile.access.owner;
   const open = profile.accountStatus === "approved" || profile.siteRole === "admin" || staff;
-  const { data, error } = open ? await db.rpc("network_directory") : { data: null, error: null };
+  // The switch (already read for the menu), the directory and the logos are fetched together.
+  const [switches, { data, error }, logos] = await Promise.all([
+    getSwitches(),
+    open ? db.rpc("network_directory") : Promise.resolve({ data: null, error: null }),
+    getLogoMap(),
+  ]);
+  // If the switch table isn't there yet, the network stays closed to everyone but the owner.
+  const live = switches.network_open;
+  // Hidden entirely from everyone but the owner until it is opened.
+  if (!live && !owner) redirect("/portal");
   const people = (data ?? []) as Delegate[];
-  const [photos, logos] = await Promise.all([signAvatars(db, people.map((p) => p.avatar_path)), getLogoMap()]);
+  const photos = await signAvatars(db, people.map((p) => p.avatar_path));
   for (const p of people) p.avatar_url = p.avatar_path ? (photos.get(p.avatar_path) ?? null) : null;
 
   // Committee tools on each profile, for whatever the signed-in person may do.

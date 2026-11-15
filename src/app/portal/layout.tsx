@@ -20,12 +20,15 @@ export default async function PortalLayout({ children }: { children: React.React
   const gaps = prompting ? profileGaps(profile) : [];
   // Everyone is asked once whether to show their email to other delegates.
   const askEmail = prompting && !profile.networkEmailAsked;
-  const promptPhoto = gaps.length || askEmail ? await signAvatar(db, profile.avatarPath) : null;
-  // Conversations where the committee has replied since they last looked.
-  const { data: mine } = await db.from("enquiry_threads").select("last_from, last_message_at, member_read_at").eq("user_id", profile.id).eq("last_from", "committee").limit(100);
+  // Fetched together so the hub's frame costs one round trip, not three.
+  const [promptPhoto, { data: mine }, switches] = await Promise.all([
+    gaps.length || askEmail ? signAvatar(db, profile.avatarPath) : null,
+    // Conversations where the committee has replied since they last looked.
+    db.from("enquiry_threads").select("last_from, last_message_at, member_read_at").eq("user_id", profile.id).eq("last_from", "committee").limit(100),
+    // The network stays out of the menu entirely until the owner opens it.
+    getSwitches(),
+  ]);
   const unreadEnquiries = (mine ?? []).filter(unreadForMember).length;
-  // The network stays out of the menu entirely until the owner opens it.
-  const switches = await getSwitches();
   const showNetwork = profile.access.owner || switches.network_open;
   // People I've met follows the Delegate Card, which carries the QR code.
   const showPeople = profile.access.owner || (switches.delegate_card && profile.accountStatus === "approved");

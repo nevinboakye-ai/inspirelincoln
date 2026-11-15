@@ -33,9 +33,12 @@ export const closingTimePassed = (s: ChoiceSettings, now = Date.now()) => Boolea
  * settings, and this person's ranking and places. `ready` is false until
  * the database set-up has been run.
  */
-export async function loadWorkshopChoices(db: SupabaseClient, userId: string) {
-  const { data: ed } = await db.from("editions").select("id").eq("is_current", true).maybeSingle();
-  const editionId = (ed?.id as string | undefined) ?? null;
+export async function loadWorkshopChoices(db: SupabaseClient, userId: string, knownEditionId?: string | null) {
+  // Pass the current edition's id when the page already has it, to save a round trip.
+  const editionId =
+    knownEditionId !== undefined
+      ? knownEditionId
+      : (((await db.from("editions").select("id").eq("is_current", true).maybeSingle()).data?.id as string | undefined) ?? null);
   const empty = {
     editionId,
     workshops: [] as ChoiceWorkshop[],

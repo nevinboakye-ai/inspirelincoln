@@ -415,7 +415,30 @@
 }
 
 /* Each page settles in on navigation. "backwards" so no transform is left behind. */
-.page-enter { animation: page-in 0.35s var(--ease-out-expo) backwards; }
+.page-enter { animation: page-in 0.25s var(--ease-out-expo) backwards; }
+
+/*
+ * Loading placeholders, shown the instant someone taps a link while the page
+ * is fetched. They fade in after a beat, so a fast page never flashes them.
+ */
+@keyframes skeleton-in { from { opacity: 0; } }
+@keyframes skeleton-sheen { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+/* In the components layer, so utilities such as rounded-full on a placeholder win. */
+@layer components {
+  .skeleton-screen { animation: skeleton-in 0.3s ease-out 0.12s backwards; }
+  .skeleton {
+    border-radius: 0.5rem;
+    background-color: rgb(14 27 49 / 0.06);
+    background-image: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 0.65) 50%, transparent 70%);
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation: skeleton-sheen 1.4s ease-in-out infinite;
+  }
+  .skeleton-dark { background-color: rgb(255 255 255 / 0.1); background-image: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 0.12) 50%, transparent 70%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; background-image: none; }
+}
 
 /*
  * First-paint entrances. These are CSS, not JavaScript, so they start the moment

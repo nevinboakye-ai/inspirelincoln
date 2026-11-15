@@ -1,4 +1,5 @@
 import "server-only";
+import type { User } from "@supabase/supabase-js";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
@@ -47,18 +48,43 @@ export interface Profile {
   access: Access;
 }
 
-/** The verified current user (via Supabase getUser, not the unverified session) and profile. */
+/** The signed-in person, as read from their verified access token. */
+export type SessionUser = Pick<User, "id" | "email" | "app_metadata" | "user_metadata">;
+
+/**
+ * Who is signed in, from a verified access token. getClaims checks the token's
+ * signature locally against the project's cached public keys, so pages don't
+ * wait on a round trip to the auth server on every navigation (with the older
+ * shared-secret keys it falls back to asking the auth server, as before).
+ */
+async function verifiedUser(db: NonNullable<Awaited<ReturnType<typeof createClient>>>): Promise<SessionUser | null> {
+  const { data, error } = await db.auth.getClaims();
+  const c = data?.claims;
+  if (error || !c?.sub) return null;
+  return {
+    id: c.sub,
+    email: (c.email as string | undefined) ?? undefined,
+    app_metadata: (c.app_metadata ?? {}) as User["app_metadata"],
+    user_metadata: (c.user_metadata ?? {}) as User["user_metadata"],
+  };
+}
+
+/** The verified current user (from a verified access token, never the unverified session) and profile. */
 export const getCurrentUser = cache(async () => {
   const db = await createClient();
   if (!db) return null;
-  const {
-    data: { user },
-  } = await db.auth.getUser();
+  const user = await verifiedUser(db);
   if (!user) return null;
   const [{ data: p }, caps] = await Promise.all([
     db.from("profiles").select("*").eq("id", user.id).maybeSingle(),
     db.rpc("my_access"),
   ]);
+  // No profile row: make sure the account still exists (a removed account's
+  // token stays valid until it expires) before carrying on with the defaults.
+  if (!p) {
+    const { data: live } = await db.auth.getUser();
+    if (!live.user) return null;
+  }
   const base = {
     role: ((p?.role as UserRole) ?? "delegate") as UserRole,
     accountType: ((p?.account_type as AccountType) ?? "delegate") as AccountType,
