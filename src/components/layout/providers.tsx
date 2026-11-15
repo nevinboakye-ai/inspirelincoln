@@ -4,6 +4,7 @@ import { ToastProvider } from "@/components/ui/toast";
 import { AgendaProvider } from "@/components/programme/agenda-context";
 import { SearchLauncher } from "./search-launcher";
 import { ConsentBanner } from "./consent-banner";
+import { ScrollGuard } from "./scroll-guard";
 
 // Animation features load after the page is interactive, so buttons respond straight away.
 const loadFeatures = () => import("@/components/motion/features").then((mod) => mod.default);
@@ -17,6 +18,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           {children}
           <SearchLauncher />
           <ConsentBanner />
+          <ScrollGuard />
         </AgendaProvider>
       </ToastProvider>
       </MotionConfig>

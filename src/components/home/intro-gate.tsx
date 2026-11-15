@@ -33,7 +33,7 @@ if(signedIn){var h=d.querySelector('[data-gate=hub]');if(h)h.focus()}}
 document.addEventListener('cancel',function(e){if(e.target===gate()){e.preventDefault();leave()}},true);
 document.addEventListener('close',function(e){if(e.target!==gate())return;root.classList.remove('gate-open');var m=document.getElementById('main');if(m)m.focus({preventScroll:true})},true);
 document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('[data-gate]');if(!t)return;
-if(t.getAttribute('data-gate')==='enter'){e.preventDefault();leave()}else remember()});
+if(t.getAttribute('data-gate')==='enter'){e.preventDefault();leave()}else{remember();root.classList.remove('gate-open')}});
 window.__inspireGate=show;show();
 })();`;
 
