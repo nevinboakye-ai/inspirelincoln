@@ -4,8 +4,9 @@ import { z } from "zod";
 import { createClient as createAdminClient, type SupabaseClient } from "@supabase/supabase-js";
 import { SUPABASE_URL } from "@/lib/supabase/env";
 import { requireAccess } from "@/lib/auth";
-import { EXEC_TYPES, rolesOf } from "@/lib/accounts";
-import { REQUEST_KEYS, accountRemovedEmail, requestEmail, type RequestItem } from "@/lib/accounts/requests";
+import { ACCOUNT_TYPE_LABEL, EXEC_TYPES, rolesLabel, rolesOf, splitRoles } from "@/lib/accounts";
+import { prepareLogins } from "@/lib/accounts/login-details";
+import { REQUEST_KEYS, accountRemovedEmail, requestEmail, welcomeEmail, type RequestItem } from "@/lib/accounts/requests";
 import { STAFF_PEOPLE_COLUMNS, selectPeople } from "@/lib/admin/people";
 import { sendEmail } from "@/lib/email/resend";
 import { SITE_URL } from "@/lib/site";
@@ -237,4 +238,110 @@ export async function sendPersonRequest(_: ActionResult, form: FormData): Promis
     delivered_count: 1,
   });
   return { ok: true, message: `Sent to ${to.name || to.email}.` };
+}
+
+const createSchema = z.object({
+  fullName: z.string().trim().min(2, "Enter their name.").max(120, "Keep it under 120 characters."),
+  email: z.string().trim().toLowerCase().regex(/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i, "Enter a valid email address."),
+  institution: z.string().trim().max(160, "Keep it under 160 characters.").optional().default(""),
+  yearOfStudy: z.string().trim().max(40, "Keep it under 40 characters.").optional().default(""),
+  position: z.string().trim().max(120, "Keep it under 120 characters.").optional().default(""),
+  presentationTitle: z.string().trim().max(300, "Keep it under 300 characters.").optional().default(""),
+  note: z.string().trim().max(1500, "Keep the note under 1500 characters.").optional().default(""),
+  notify: z.boolean(),
+});
+
+/**
+ * Creates an account of any type (delegate, presenter, speaker, judge,
+ * committee...), already approved. They go on the selected list with their
+ * roles, so whenever their login is made it is approved with those roles.
+ * With the service key set, the login is created straight away with a
+ * temporary password they change on first login; otherwise they set up
+ * the account themselves from the email.
+ */
+export async function createAccount(_: ActionResult, form: FormData): Promise<ActionResult> {
+  const { db, user, profile } = await requireAccess("review_accounts", "/admin/accounts");
+  const parsed = createSchema.safeParse({ ...Object.fromEntries(form), notify: form.get("notify") === "on" });
+  const roles = splitRoles(form.getAll("types").map(String));
+  if (!parsed.success || "error" in roles) {
+    const fe: Record<string, string> = {};
+    if (!parsed.success) for (const i of parsed.error.issues) fe[String(i.path[0])] ??= i.message;
+    if ("error" in roles) fe.types = roles.error;
+    return { ok: false, error: "Please check the highlighted fields.", fieldErrors: fe };
+  }
+  const v = parsed.data;
+  const types = rolesOf(roles.main, roles.extra);
+  if (types.some((t) => EXEC_TYPES.includes(t)) && !profile.access.leadership)
+    return { ok: false, fieldErrors: { types: "Only the president or vice president can create executive committee accounts." } };
+
+  const { data: existing } = await db.from("profiles").select("id").eq("email", v.email).maybeSingle();
+  if (existing) return { ok: false, fieldErrors: { email: "Someone already has an account with this email. Open their account to change their roles." } };
+
+  // On the selected list first, so the account is approved with these roles however it's made.
+  const { error: listError } = await db.from("delegate_roster").upsert(
+    {
+      email: v.email,
+      full_name: v.fullName,
+      institution: v.institution || null,
+      year_of_study: v.yearOfStudy || null,
+      presentation_title: v.presentationTitle || null,
+      account_type: roles.main,
+      ...(roles.extra.length ? { extra_types: roles.extra } : {}),
+    },
+    { onConflict: "email" },
+  );
+  if (listError)
+    return {
+      ok: false,
+      error: /check constraint|invalid input value/i.test(listError.message)
+        ? "The database can't store this type of account yet. Run the latest setup files in Supabase, then try again."
+        : /executive/i.test(listError.message)
+          ? "Only the president or vice president can create executive committee accounts."
+          : "Could not create the account.",
+    };
+
+  // Make the login now when the service key is set.
+  const logins = await prepareLogins([{ email: v.email, joined: false, account_type: roles.main }]);
+  const login = logins?.get(v.email);
+  let id: string | null = null;
+  if (login) {
+    const { data: made } = await db.from("profiles").select("id, account_type, account_status").eq("email", v.email).maybeSingle();
+    id = made?.id ?? null;
+    if (id) {
+      // Make sure every role, the approval and their position are on the new account.
+      await db
+        .from("profiles")
+        .update({
+          full_name: v.fullName,
+          institution: v.institution || null,
+          year_of_study: v.yearOfStudy || null,
+          presentation_title: v.presentationTitle || null,
+          committee_position: v.position || null,
+          account_type: roles.main,
+          account_status: "approved",
+          ...(roles.extra.length ? { extra_types: roles.extra } : {}),
+        })
+        .eq("id", id);
+    }
+  }
+
+  let emailed = false;
+  if (v.notify) {
+    const mail = welcomeEmail({
+      siteUrl: SITE_URL,
+      name: v.fullName,
+      roles: rolesLabel(types),
+      login: login?.kind === "temporary" ? { email: login.email, password: login.password } : null,
+      email: v.email,
+      note: v.note || null,
+      sender: profile.fullName || "The INSPIRE committee",
+    });
+    emailed = await sendEmail({ to: v.email, replyTo: user.email ?? undefined, ...mail });
+  }
+
+  for (const path of ["/admin/accounts", "/admin/accounts/roster", "/portal/network", "/admin"]) revalidatePath(path);
+  const what = ACCOUNT_TYPE_LABEL[roles.main].toLowerCase();
+  const made = id ? `${v.fullName}'s ${what} account is ready` : `${v.fullName} is set up as ${what}. Their account is approved as soon as they sign up with ${v.email}`;
+  const mailNote = v.notify ? (emailed ? ", and they've been emailed how to log in." : ". The email couldn't be sent, so check the email settings in Vercel.") : ".";
+  return { ok: true, message: made + mailNote, id: id ?? undefined };
 }

@@ -79,3 +79,42 @@ export function accountRemovedEmail(opts: { siteUrl: string; name: string | null
   });
   return { subject: "Your INSPIRE account has been removed", ...m };
 }
+
+/** Welcomes someone the committee has made an account for, with how to log in. */
+export function welcomeEmail(opts: {
+  siteUrl: string;
+  name: string | null;
+  roles: string;
+  /** A temporary password when their login was created now; otherwise they set up the account themselves. */
+  login: { email: string; password: string } | null;
+  email: string;
+  note?: string | null;
+  sender: string;
+}) {
+  const { siteUrl, name, roles, login, email, note, sender } = opts;
+  const site = siteUrl.replace(/^https?:\/\//, "");
+  const m = renderEmail({
+    siteUrl,
+    preheader: `Your INSPIRE account is ready: ${roles}.`,
+    eyebrow: "Your account",
+    heading: "Welcome to INSPIRE",
+    paragraphs: [
+      `Hello ${first(name)},`,
+      `The INSPIRE committee has set up an account for you as <strong>${escapeHtml(roles)}</strong>.`,
+      login
+        ? "Log in with the details below. The first time you do, you'll be asked to choose your own password."
+        : `Set up your account with this email address (<strong>${escapeHtml(email)}</strong>) and choose a password. It's approved as soon as you do.`,
+      ...(note ? [`A note from ${escapeHtml(sender)}: &ldquo;${escapeHtml(note).replace(/\n/g, "<br>")}&rdquo;`] : []),
+    ],
+    details: login
+      ? [
+          { label: "Website", value: `${site}/login` },
+          { label: "Email", value: login.email },
+          { label: "Temporary password", value: login.password },
+        ]
+      : undefined,
+    cta: login ? { label: "Log in to My Hub", url: `${siteUrl}/login` } : { label: "Set up your account", url: `${siteUrl}/auth/activate` },
+    footnote: `Sent by ${escapeHtml(sender)} on behalf of the INSPIRE committee.`,
+  });
+  return { subject: "Your INSPIRE account is ready", ...m };
+}
