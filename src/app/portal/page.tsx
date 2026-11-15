@@ -33,6 +33,7 @@ import { Countdown, HubItem, HubStagger } from "@/components/portal/hub-motion";
 import { MaskRise } from "@/components/motion/effects";
 import { AttendanceCard, type AttendanceAnswer } from "@/components/portal/attendance-card";
 import { TravelCard } from "@/components/portal/travel-card";
+import { WhatsAppCard } from "@/components/portal/whatsapp-card";
 import { ParkingCard } from "@/components/portal/parking-card";
 import { GuestHub } from "@/components/portal/guest-hub";
 import { CardDock } from "@/components/portal/card-dock";
@@ -277,6 +278,9 @@ export default async function PortalHome({
   else if (showRanking && choices!.ranking) steps.push({ label: "Rank your workshops", done: true, href: "#workshops" });
   const needsGiven = Boolean(profile.accessibilityNeeds || profile.dietaryRequirements);
   const lanyard = status === "approved" && showCard;
+  // The WhatsApp group: confirmed delegates and the committee, once the switch is on. Whoever runs the switches can preview it.
+  const canSwitch = profile.access.owner || profile.access.can.manage_platform;
+  const whatsapp = switches.whatsapp_group ? status === "approved" || profile.access.committee || profile.access.owner : canSwitch;
 
   const attendPending = presenting && !answer;
   const travelPending = status === "approved" && !travelAnswer && !judgeOnly;
@@ -450,6 +454,12 @@ export default async function PortalHome({
           <HubItem>
             <HubChecklist steps={steps} needsGiven={needsGiven} />
           </HubItem>
+
+          {whatsapp && (
+            <HubItem>
+              <WhatsAppCard previewNote={!switches.whatsapp_group ? "Only you can see this for now. Turn on the WhatsApp group switch in the Platform dashboard to show it to delegates." : null} />
+            </HubItem>
+          )}
 
           {!focus && (announcements?.length ?? 0) > 0 && (
             <HubItem>
