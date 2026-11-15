@@ -394,6 +394,26 @@
   box-shadow: var(--shadow-soft);
 }
 
+/* Buttons and chips in the app areas use the same soft corners as the cards, and
+   sideways filter rows (status tabs, kinds) scroll without a scrollbar. */
+[data-app-shell] .rounded-\[3px\] { border-radius: 0.75rem; }
+[data-app-shell] .overflow-x-auto:has(> a, > ul > li > a) { scrollbar-width: none; }
+[data-app-shell] .overflow-x-auto:has(> a, > ul > li > a)::-webkit-scrollbar { display: none; }
+[data-app-shell] .overflow-x-auto > a,
+[data-app-shell] .overflow-x-auto > ul > li > a { border-radius: 9999px; }
+
+/* Page banners in the hub (enquiries, network, slides) are tighter on phones, so the
+   things to do start higher up the screen. They also get a gentle gold glow. */
+[data-app-shell] header:is(.bg-midnight, .bg-navy) {
+  border-radius: 1.25rem;
+  background-image: radial-gradient(120% 140% at 100% 0%, rgb(212 175 90 / 0.16), transparent 55%);
+}
+@media (max-width: 639.98px) {
+  [data-app-shell] header:is(.bg-midnight, .bg-navy).p-6 { padding: 1.25rem; }
+  [data-app-shell] header:is(.bg-midnight, .bg-navy) h1 { font-size: 1.75rem; line-height: 1.1; margin-top: 0.5rem; }
+  [data-app-shell] header:is(.bg-midnight, .bg-navy) h1 + p { font-size: 0.9rem; line-height: 1.5; }
+}
+
 /* Each page settles in on navigation. "backwards" so no transform is left behind. */
 .page-enter { animation: page-in 0.35s var(--ease-out-expo) backwards; }
 
