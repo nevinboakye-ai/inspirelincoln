@@ -20,6 +20,7 @@ import { cn } from "@/lib/cn";
 import { Logo } from "./logo";
 import { openCommandPalette } from "./search-launcher";
 import { hasSessionCookie } from "@/lib/supabase/session-hint";
+import { useScrollLock } from "@/lib/scroll-lock";
 
 function isActive(pathname: string, href: string) {
   const path = href.split("#")[0];
@@ -82,9 +83,7 @@ export function SiteHeader({
     } catch {}
   }, [ribbon]);
 
-  useEffect(() => {
-    document.documentElement.style.overflow = menuOpen ? "hidden" : "";
-  }, [menuOpen]);
+  useScrollLock(menuOpen);
 
   // The map fills the screen under a fixed-height header, so the ribbon stays off it.
   const onMap = pathname.startsWith("/map");

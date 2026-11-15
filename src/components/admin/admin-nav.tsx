@@ -9,6 +9,7 @@ import {
 import { cn } from "@/lib/cn";
 import type { Access, Capability } from "@/lib/accounts";
 import { useMessages } from "@/components/messages/messages-provider";
+import { lockScroll } from "@/lib/scroll-lock";
 
 type Need = Capability | Capability[] | "owner";
 type LinkDef = { href: string; label: string; icon: typeof Gauge; need?: Need };
@@ -88,10 +89,10 @@ export function AdminNav({ access, name, position, waiting = 0 }: { access: Acce
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     document.addEventListener("keydown", onKey);
-    document.documentElement.style.overflow = "hidden";
+    const release = lockScroll();
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.documentElement.style.overflow = "";
+      release();
     };
   }, [open]);
   const groups = GROUPS.map((g) => ({ ...g, links: g.links.filter(allowed) })).filter((g) => g.links.length);

@@ -2,6 +2,7 @@
 import { AnimatePresence, m } from "motion/react";
 import { X } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
+import { lockScroll } from "@/lib/scroll-lock";
 
 /**
  * Accessible side drawer (bottom sheet on small screens): focus is moved in,
@@ -24,7 +25,7 @@ export function Drawer({
   useEffect(() => {
     if (!open) return;
     restore.current = document.activeElement as HTMLElement;
-    document.documentElement.style.overflow = "hidden";
+    const release = lockScroll();
     const t = setTimeout(() => panel.current?.querySelector<HTMLElement>("[data-autofocus], button")?.focus(), 30);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -45,7 +46,7 @@ export function Drawer({
     return () => {
       clearTimeout(t);
       document.removeEventListener("keydown", onKey);
-      document.documentElement.style.overflow = "";
+      release();
       restore.current?.focus?.();
     };
   }, [open, onClose]);
