@@ -63,6 +63,11 @@ export default async function PortalLayout({
     (switches.delegate_card &&
       profile.accountStatus === "approved");
 
+  // My Day is available to approved delegates and the site owner.
+  const showMyDay =
+    profile.accountStatus === "approved" ||
+    profile.access.owner;
+
   return (
     <MessagesProvider>
       <div
@@ -80,10 +85,13 @@ export default async function PortalLayout({
             reviewer={profile.siteRole === "reviewer"}
             showNetwork={showNetwork}
             showPeople={showPeople}
+            showMyDay={showMyDay}
             unreadEnquiries={unreadEnquiries}
           />
 
-          <div className="min-w-0">{children}</div>
+          <div className="min-w-0">
+            {children}
+          </div>
 
           {(gaps.length > 0 || askEmail) && (
             <ProfilePrompt

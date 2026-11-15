@@ -8,31 +8,12 @@ import { sortedRoles, type CheckInOutcome } from "@/lib/card";
 import { inputClass } from "@/components/forms/field";
 import { cn } from "@/lib/cn";
 import { btn } from "./ui";
+import { beep, useQrScanner } from "@/lib/use-qr-scanner";
 
-type Detector = { detect: (src: CanvasImageSource) => Promise<{ rawValue: string }[]> };
 type Status = { expected: number; checkedIn: number; recent: Recent[] };
 type Shown = { outcome: CheckInOutcome; at: number } | { error: string; at: number };
 
 const time = (iso: string) => new Date(iso).toLocaleTimeString("en-GB", { timeZone: "Europe/London", hour: "2-digit", minute: "2-digit" });
-
-/** A short tone: higher for a good check-in, lower for anything that needs a look. */
-function beep(good: boolean) {
-  try {
-    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const ctx = new Ctx();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.frequency.value = good ? 880 : 300;
-    g.gain.setValueAtTime(0.0001, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + (good ? 0.18 : 0.4));
-    o.connect(g).connect(ctx.destination);
-    o.start();
-    o.stop(ctx.currentTime + 0.45);
-    o.onended = () => ctx.close();
-  } catch {}
-  navigator.vibrate?.(good ? 60 : [80, 60, 80]);
-}
 
 /**
  * The check-in desk. Scan the QR code on someone's Delegate Card with this
@@ -47,8 +28,6 @@ export function CheckInDesk({ initial }: { initial: Status }) {
   const [paused, setPaused] = useState(false);
   const [camError, setCamError] = useState<string | null>(null);
   const [code, setCode] = useState("");
-  const video = useRef<HTMLVideoElement>(null);
-  const last = useRef<{ v: string; t: number }>({ v: "", t: 0 });
   const pausedRef = useRef(false);
   const resultRef = useRef<HTMLDivElement>(null);
   const ids = useId();
@@ -111,81 +90,14 @@ export function CheckInDesk({ initial }: { initial: Status }) {
     return () => clearTimeout(t);
   }, [shown, scanning]);
 
-  // The camera: the browser's own QR reader where there is one, otherwise jsQR.
-  useEffect(() => {
-    if (!scanning) return;
-    let stream: MediaStream | null = null;
-    let timer = 0;
-    let stopped = false;
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-
-    (async () => {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
-        if (stopped || !video.current) return stream?.getTracks().forEach((t) => t.stop());
-        video.current.srcObject = stream;
-        await video.current.play();
-        const BD = (window as unknown as { BarcodeDetector?: new (o: { formats: string[] }) => Detector }).BarcodeDetector;
-        let detector: Detector | null = null;
-        if (BD) {
-          try {
-            detector = new BD({ formats: ["qr_code"] });
-          } catch {}
-        }
-        const jsQR = detector ? null : (await import("jsqr")).default;
-
-        const tick = async () => {
-          if (stopped) return;
-          const v = video.current;
-          if (v && v.readyState >= 2 && !pausedRef.current) {
-            let value: string | undefined;
-            try {
-              if (detector) {
-                value = (await detector.detect(v))[0]?.rawValue;
-              } else if (jsQR && ctx) {
-                // Read the middle of the frame at a modest size: fast, and where people hold the code.
-                const s = Math.min(v.videoWidth, v.videoHeight);
-                const size = Math.min(s, 640);
-                canvas.width = size;
-                canvas.height = size;
-                ctx.drawImage(v, (v.videoWidth - s) / 2, (v.videoHeight - s) / 2, s, s, 0, 0, size, size);
-                value = jsQR(ctx.getImageData(0, 0, size, size).data, size, size, { inversionAttempts: "dontInvert" })?.data;
-              }
-            } catch {}
-            const now = Date.now();
-            if (value && (value !== last.current.v || now - last.current.t > 5000)) {
-              last.current = { v: value, t: now };
-              pausedRef.current = true;
-              submit(value);
-            }
-          }
-          timer = window.setTimeout(tick, detector ? 200 : 120);
-        };
-        tick();
-      } catch (e) {
-        const name = (e as { name?: string })?.name;
-        setCamError(
-          name === "NotAllowedError"
-            ? "Camera access was blocked. Allow the camera for this site in your browser settings, or type the code below."
-            : name === "NotFoundError"
-              ? "No camera was found on this device. Type the code or search by name below."
-              : "The camera couldn't start. Type the code or search by name below.",
-        );
-        setScanning(false);
-      }
-    })();
-
-    // Let the camera go when the tab is hidden, so it doesn't drain the battery.
-    const hide = () => document.visibilityState === "hidden" && setScanning(false);
-    document.addEventListener("visibilitychange", hide);
-    return () => {
-      stopped = true;
-      clearTimeout(timer);
-      stream?.getTracks().forEach((t) => t.stop());
-      document.removeEventListener("visibilitychange", hide);
-    };
-  }, [scanning, submit]);
+  // The camera, shared with the scanner in My Hub.
+  const video = useQrScanner({
+    active: scanning,
+    paused: pausedRef,
+    onValue: submit,
+    onError: setCamError,
+    onStop: () => setScanning(false),
+  });
 
   const pct = status.expected ? Math.min(100, Math.round((status.checkedIn / status.expected) * 100)) : 0;
 

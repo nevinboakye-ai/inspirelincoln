@@ -128,6 +128,7 @@ function mapWorkshop(r: Row): Workshop {
     accent: (r.accent as Workshop["accent"]) ?? "electric",
     motif: (r.motif as Workshop["motif"]) ?? "pulse",
     notes: str(r.notes),
+    room: str(r.room),
   };
 }
 

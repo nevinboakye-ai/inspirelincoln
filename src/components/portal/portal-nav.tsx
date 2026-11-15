@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import {
+  CalendarClock,
   Gauge,
   MessageCircle,
   MessagesSquare,
@@ -18,6 +19,7 @@ import {
   NotebookPen,
   Users,
 } from "lucide-react";
+
 import { signOut } from "@/app/auth/actions";
 import { cn } from "@/lib/cn";
 import type { Access } from "@/lib/accounts";
@@ -31,6 +33,7 @@ export function PortalNav({
   reviewer,
   showNetwork,
   showPeople,
+  showMyDay = false,
   unreadEnquiries = 0,
 }: {
   name: string;
@@ -40,28 +43,63 @@ export function PortalNav({
   reviewer: boolean;
   showNetwork: boolean;
   showPeople: boolean;
+  showMyDay?: boolean;
   unreadEnquiries?: number;
 }) {
   const path = usePathname();
   const { unread: unreadMessages } = useMessages();
 
   const links = [
-    { href: "/portal", label: "My conference", icon: Ticket },
+    {
+      href: "/portal",
+      label: "My conference",
+      icon: Ticket,
+    },
     {
       href: "/portal/messages",
       label: "Messages",
       icon: MessageCircle,
       badge: unreadMessages,
-      badgeNoun: ["new message", "conversations with new messages"],
+      badgeNoun: [
+        "conversation with new messages",
+        "conversations with new messages",
+      ],
     },
+    ...(showMyDay
+      ? [
+          {
+            href: "/portal/my-day",
+            label: "My day",
+            icon: CalendarClock,
+          },
+        ]
+      : []),
     ...(presenter
-      ? [{ href: "/portal/submission", label: "My submission", icon: UploadCloud }]
+      ? [
+          {
+            href: "/portal/submission",
+            label: "My submission",
+            icon: UploadCloud,
+          },
+        ]
       : []),
     ...(showNetwork
-      ? [{ href: "/portal/network", label: "Network", icon: Users }]
+      ? [
+          {
+            href: "/portal/network",
+            label: "Network",
+            icon: Users,
+          },
+        ]
       : []),
     ...(showPeople
-      ? [{ href: "/portal/people", label: "People I've met", icon: NotebookPen }]
+      ? [
+          {
+            href: "/portal/people",
+            label: "People I've met",
+            icon: NotebookPen,
+          },
+        ]
       : []),
     {
       href: "/portal/enquiries",
@@ -76,32 +114,50 @@ export function PortalNav({
       icon: UserRound,
     },
     ...(reviewer && !access.committee
-      ? [{ href: "/review", label: "Abstract reviews", icon: ClipboardCheck }]
+      ? [
+          {
+            href: "/review",
+            label: "Abstract reviews",
+            icon: ClipboardCheck,
+          },
+        ]
       : []),
     ...(access.owner
-      ? [{ href: "/admin/platform", label: "Platform dashboard", icon: Gauge }]
+      ? [
+          {
+            href: "/admin/platform",
+            label: "Platform dashboard",
+            icon: Gauge,
+          },
+        ]
       : []),
     ...(access.committee
-      ? [{
-          href: "/admin",
-          label: "Committee dashboard",
-          icon: access.exec ? ShieldCheck : LayoutDashboard,
-        }]
+      ? [
+          {
+            href: "/admin",
+            label: "Committee dashboard",
+            icon: access.exec
+              ? ShieldCheck
+              : LayoutDashboard,
+          },
+        ]
       : []),
   ];
 
   const strip = useRef<HTMLUListElement>(null);
 
-  // On phones, keep the active tab visible when navigating.
+  // Keep the active mobile navigation tab visible.
   useEffect(() => {
-    const el = strip.current?.querySelector<HTMLElement>(
-      '[aria-current="page"]'
-    );
+    const el =
+      strip.current?.querySelector<HTMLElement>(
+        '[aria-current="page"]'
+      );
 
     if (
       el &&
       strip.current &&
-      strip.current.scrollWidth > strip.current.clientWidth
+      strip.current.scrollWidth >
+        strip.current.clientWidth
     ) {
       strip.current.scrollTo({
         left: el.offsetLeft - 16,
@@ -121,7 +177,9 @@ export function PortalNav({
         </span>
 
         <span className="min-w-0">
-          <span className="block truncate font-semibold">{name}</span>
+          <span className="block truncate font-semibold">
+            {name}
+          </span>
           <span className="block truncate text-xs text-paper/65">
             {typeLabel}
           </span>
@@ -136,13 +194,19 @@ export function PortalNav({
           const active =
             l.href === "/portal"
               ? path === "/portal"
-              : path.startsWith(l.href);
+              : path === l.href ||
+                path.startsWith(`${l.href}/`);
 
           return (
-            <li key={l.href} className="shrink-0">
+            <li
+              key={l.href}
+              className="shrink-0"
+            >
               <Link
                 href={l.href}
-                aria-current={active ? "page" : undefined}
+                aria-current={
+                  active ? "page" : undefined
+                }
                 className={cn(
                   "tap flex min-h-10 items-center gap-2 whitespace-nowrap rounded-full px-3.5 text-[0.8125rem] font-semibold lg:min-h-11 lg:rounded-xl lg:px-3 lg:text-sm lg:font-medium",
                   active
@@ -154,30 +218,39 @@ export function PortalNav({
                   aria-hidden
                   className={cn(
                     "size-4",
-                    active ? "text-gold-300" : "text-electric-600"
+                    active
+                      ? "text-gold-300"
+                      : "text-electric-600"
                   )}
                 />
 
                 {l.label}
 
-                {"badge" in l && Number(l.badge) > 0 && (
-                  <span
-                    className={cn(
-                      "ml-auto grid min-w-5 place-items-center rounded-full px-1.5 text-[0.7rem] font-bold leading-5",
-                      active
-                        ? "bg-gold text-midnight"
-                        : "bg-coral text-white"
-                    )}
-                  >
-                    {l.badge}
-                    <span className="sr-only">
-                      {" "}
-                      {"badgeNoun" in l && l.badgeNoun
-                        ? l.badgeNoun[Number(l.badge) === 1 ? 0 : 1]
-                        : "new"}
+                {"badge" in l &&
+                  Number(l.badge) > 0 && (
+                    <span
+                      className={cn(
+                        "ml-auto grid min-w-5 place-items-center rounded-full px-1.5 text-[0.7rem] font-bold leading-5",
+                        active
+                          ? "bg-gold text-midnight"
+                          : "bg-coral text-white"
+                      )}
+                    >
+                      {l.badge}
+
+                      <span className="sr-only">
+                        {" "}
+                        {"badgeNoun" in l &&
+                        l.badgeNoun
+                          ? l.badgeNoun[
+                              Number(l.badge) === 1
+                                ? 0
+                                : 1
+                            ]
+                          : "new"}
+                      </span>
                     </span>
-                  </span>
-                )}
+                  )}
               </Link>
             </li>
           );
@@ -189,7 +262,10 @@ export function PortalNav({
               type="submit"
               className="tap flex min-h-10 w-full items-center gap-2 whitespace-nowrap rounded-full bg-white px-3.5 text-[0.8125rem] font-semibold text-slate-700 ring-1 ring-navy/[0.08] hover:bg-paper-200 lg:min-h-11 lg:rounded-xl lg:bg-transparent lg:px-3 lg:text-sm lg:font-medium lg:ring-0"
             >
-              <LogOut aria-hidden className="size-4" />
+              <LogOut
+                aria-hidden
+                className="size-4"
+              />
               Log out
             </button>
           </form>
@@ -208,7 +284,9 @@ function initials(name: string) {
   return (
     (
       (parts[0]?.[0] ?? "") +
-      (parts.length > 1 ? parts[parts.length - 1][0] : "")
+      (parts.length > 1
+        ? parts[parts.length - 1][0]
+        : "")
     ).toUpperCase() || "?"
   );
 }
