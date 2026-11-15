@@ -23,7 +23,13 @@ export default async function NetworkPage() {
   const open = profile.accountStatus === "approved" || profile.siteRole === "admin" || staff;
   const { data, error } = open ? await db.rpc("network_directory") : { data: null, error: null };
   const people = (data ?? []) as Delegate[];
-  const [photos, logos] = await Promise.all([signAvatars(db, people.map((p) => p.avatar_path)), getLogoMap()]);
+  // Who they can message: everyone, for the committee; otherwise the people the database allows.
+  const [photos, logos, contacts] = await Promise.all([
+    signAvatars(db, people.map((p) => p.avatar_path)),
+    getLogoMap(),
+    open ? db.rpc("dm_contacts") : Promise.resolve({ data: null }),
+  ]);
+  const messageable = ((contacts.data ?? []) as { id: string }[]).map((c) => c.id);
   for (const p of people) p.avatar_url = p.avatar_path ? (photos.get(p.avatar_path) ?? null) : null;
 
   return (
@@ -74,7 +80,7 @@ export default async function NetworkPage() {
           {error ? (
             <Notice tone="warning">The network isn&apos;t available just now. Please try again later.</Notice>
           ) : (
-            <NetworkDirectory people={people} me={profile.id} logos={logos} />
+            <NetworkDirectory people={people} me={profile.id} logos={logos} messageable={messageable} />
           )}
         </>
       )}

@@ -239,7 +239,7 @@ function PersonRow({ c, several, picked, busy, onPick, committee }: { c: Contact
       className={cn("flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-paper/70 active:bg-paper", picked && "bg-cyan-300/60")}
     >
       {several && (
-        <span aria-hidden className={cn("grid size-6 shrink-0 place-items-center rounded-md border-2 transition-colors", picked ? "border-navy bg-navy text-paper" : "border-navy/25 bg-white")}>
+        <span aria-hidden className={cn("grid size-6 shrink-0 place-items-center rounded-[6px] border-2 transition-colors", picked ? "border-navy bg-navy text-paper" : "border-navy/25 bg-white")}>
           {picked && <Check className="size-4" strokeWidth={3} />}
         </span>
       )}

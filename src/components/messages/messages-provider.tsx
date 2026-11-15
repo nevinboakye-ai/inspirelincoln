@@ -34,7 +34,9 @@ export function MessagesProvider({ children }: { children: ReactNode }) {
   const [popup, setPopup] = useState<UnreadSummary["latest"]>(null);
   const seen = useRef<string | null | undefined>(undefined);
   const pathRef = useRef(path);
-  pathRef.current = path;
+  useEffect(() => {
+    pathRef.current = path;
+  }, [path]);
   const kick = useRef<() => void>(() => {});
 
   useEffect(() => {
@@ -84,10 +86,6 @@ export function MessagesProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Opening the conversation the pop-up is about dismisses it.
-  useEffect(() => {
-    if (popup && path === `/portal/messages/${popup.conversation}`) setPopup(null);
-  }, [path, popup]);
 
   useEffect(() => {
     if (!popup) return;
@@ -95,6 +93,8 @@ export function MessagesProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(t);
   }, [popup]);
 
+  // Opening the conversation the pop-up is about hides it.
+  const showing = popup && path !== `/portal/messages/${popup.conversation}` ? popup : null;
   const refresh = useCallback(() => kick.current(), []);
   const value = useMemo(() => ({ unread: summary.conversations, version, refresh }), [summary.conversations, version, refresh]);
 
@@ -103,9 +103,9 @@ export function MessagesProvider({ children }: { children: ReactNode }) {
       {children}
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+5rem)] z-[60] flex justify-center px-3 lg:inset-x-auto lg:bottom-6 lg:right-6 lg:justify-end">
         <AnimatePresence>
-          {popup && (
+          {showing && (
             <m.div
-              key={popup.id}
+              key={showing.id}
               initial={{ opacity: 0, y: 24, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 16, scale: 0.98 }}
@@ -113,14 +113,14 @@ export function MessagesProvider({ children }: { children: ReactNode }) {
               className="pointer-events-auto relative w-full max-w-sm overflow-hidden rounded-2xl bg-midnight text-paper shadow-[0_24px_60px_-20px_rgba(12,24,44,0.8)] ring-1 ring-gold/30"
             >
               <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-gold" />
-              <Link href={`/portal/messages/${popup.conversation}`} onClick={() => setPopup(null)} className="flex items-start gap-3 py-3.5 pl-5 pr-12">
+              <Link href={`/portal/messages/${showing.conversation}`} onClick={() => setPopup(null)} className="flex items-start gap-3 py-3.5 pl-5 pr-12">
                 <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-full bg-gold/15 text-gold">
                   <MessageCircle aria-hidden className="size-[1.1rem]" />
                 </span>
                 <span className="min-w-0">
                   <span className="block font-ui text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-gold">New message</span>
-                  <span className="block truncate font-semibold">{popup.name}</span>
-                  <span className="line-clamp-2 text-sm text-paper/75">{popup.body}</span>
+                  <span className="block truncate font-semibold">{showing.name}</span>
+                  <span className="line-clamp-2 text-sm text-paper/75">{showing.body}</span>
                 </span>
               </Link>
               <button type="button" onClick={() => setPopup(null)} aria-label="Dismiss" className="absolute right-1.5 top-1.5 grid size-10 place-items-center rounded-full text-paper/60 hover:text-paper">

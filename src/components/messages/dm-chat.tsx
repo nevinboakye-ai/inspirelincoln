@@ -108,7 +108,9 @@ export function DmChat({
   // Poll for new messages: often while the page is in front, rarely when it isn't.
   const lastAt = messages.filter((m) => !m.state).at(-1)?.created_at ?? null;
   const lastAtRef = useRef(lastAt);
-  lastAtRef.current = lastAt;
+  useEffect(() => {
+    lastAtRef.current = lastAt;
+  }, [lastAt]);
   useEffect(() => {
     let timer: number | undefined;
     let stopped = false;
@@ -348,7 +350,7 @@ export function DmChat({
                       <div
                         className={cn(
                           "whitespace-pre-wrap break-words rounded-[1.25rem] px-3.5 py-2 text-[0.95rem] leading-relaxed [overflow-wrap:anywhere] motion-safe:animate-[dm-in_220ms_var(--ease-out-expo)]",
-                          own ? "bg-navy text-paper" : m.from_committee ? "bg-midnight text-paper ring-1 ring-gold/30" : "bg-white text-ink shadow-[0_1px_2px_rgba(12,24,44,0.08)] ring-1 ring-navy/[0.08]",
+                          own ? "bg-navy text-paper" : m.from_committee ? "bg-white text-ink shadow-[0_1px_2px_rgba(12,24,44,0.08)] ring-1 ring-gold/60" : "bg-white text-ink shadow-[0_1px_2px_rgba(12,24,44,0.08)] ring-1 ring-navy/[0.08]",
                           own ? (groupEnd ? "rounded-br-md" : "") : groupEnd ? "rounded-bl-md" : "",
                           m.state === "sending" && "opacity-70",
                           m.state === "failed" && "bg-danger/90",

@@ -15,6 +15,7 @@ import { uniKey, type LogoMap } from "@/lib/university-logos";
 import { instagramUrl } from "@/lib/instagram";
 import { Crown, Star } from "lucide-react";
 import type { AccountType } from "@/lib/types";
+import { MessageButton } from "@/components/messages/message-button";
 
 export type Delegate = {
   id: string;
@@ -137,7 +138,8 @@ const committeeRole = (p: Delegate) => {
 };
 const roleLabel = (p: Delegate) => p.committee_position || committeeRole(p) || ACCOUNT_TYPE_LABEL[p.account_type];
 
-export function NetworkDirectory({ people, me, logos = {} }: { people: Delegate[]; me: string; logos?: LogoMap }) {
+export function NetworkDirectory({ people, me, logos = {}, messageable }: { people: Delegate[]; me: string; logos?: LogoMap; /** Who the viewer can message. Omit to hide the Message button. */ messageable?: Set<string> | string[] }) {
+  const canMessage = useMemo(() => new Set(messageable ?? []), [messageable]);
   const [q, setQ] = useState("");
   const [uni, setUni] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -264,7 +266,7 @@ export function NetworkDirectory({ people, me, logos = {} }: { people: Delegate[
       )}
 
       <Drawer open={Boolean(selected)} onClose={close} label={selected ? `${selected.full_name}'s profile` : "Profile"}>
-        {selected && <PersonDetail p={selected} me={me} logo={logos[uniKey(selected.institution)]} />}
+        {selected && <PersonDetail p={selected} me={me} logo={logos[uniKey(selected.institution)]} canMessage={canMessage.has(selected.id)} />}
       </Drawer>
     </section>
   );
@@ -356,7 +358,7 @@ function CommitteeCard({ p, me, logo, onOpen }: { p: Delegate; me: string; logo?
   );
 }
 
-function PersonDetail({ p, me, logo }: { p: Delegate; me: string; logo?: string }) {
+function PersonDetail({ p, me, logo, canMessage }: { p: Delegate; me: string; logo?: string; canMessage?: boolean }) {
   const tone = toneFor(p.account_type);
   return (
     <div>
@@ -372,6 +374,9 @@ function PersonDetail({ p, me, logo }: { p: Delegate; me: string; logo?: string 
             <p className="mt-1 text-sm text-gold-300">{roleLabel(p)}</p>
           </div>
         </div>
+        {canMessage && p.id !== me && p.joined && (
+          <MessageButton personId={p.id} name={p.full_name} variant="gold" label={`Message ${p.full_name.split(/\s+/)[0]}`} className="relative mt-5 w-full sm:w-auto [&>button]:min-h-12 [&>button]:w-full [&>button]:rounded-xl" />
+        )}
       </div>
       <span aria-hidden className={`block h-1.5 w-full ${tone.band}`} />
       <dl className="grid gap-5 px-6 py-6 sm:px-8">
