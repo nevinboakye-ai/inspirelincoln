@@ -8,7 +8,9 @@ import { CardCountdown } from "./hub-motion";
 import { SponsorLogo } from "@/components/sponsors/sponsor-logo";
 import type { Sponsor } from "@/lib/types";
 
-export type LanyardTone = "delegate" | "poster" | "oral" | "waitlist" | "guest" | "committee" | "executive";
+import { isGoldCard, type LanyardTone } from "@/lib/lanyard-tone";
+
+export type { LanyardTone };
 
 const BAND: Record<LanyardTone, string> = {
   delegate: "bg-navy text-paper",
@@ -22,9 +24,6 @@ const BAND: Record<LanyardTone, string> = {
   // Navy edges and stars on gold, so an executive role reads first from across a room.
   executive: "bg-[linear-gradient(135deg,var(--color-gold-300)_0%,var(--color-gold)_55%,#c9a24c_100%)] text-midnight border-y-[3px] border-midnight shadow-[inset_0_1px_0_rgb(255_255_255/0.35)]",
 };
-
-/** Committee members' cards are gold where everyone else's are navy. */
-export const isGoldCard = (roles: { tone: LanyardTone }[]) => roles.some((r) => r.tone === "committee" || r.tone === "executive");
 
 export interface LanyardProps {
   year: number;
