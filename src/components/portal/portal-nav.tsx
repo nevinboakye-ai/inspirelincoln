@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Gauge, MessagesSquare, LayoutDashboard, LogOut, ShieldCheck, Ticket, UploadCloud, UserRound, ClipboardCheck, NotebookPen, Users } from "lucide-react";
+import { Gauge, MessagesSquare, LayoutDashboard, LogOut, ShieldCheck, Ticket, UploadCloud, UserRound, ClipboardCheck, NotebookPen, Users, Trophy } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 import { cn } from "@/lib/cn";
 import type { Access } from "@/lib/accounts";
@@ -15,6 +15,7 @@ export function PortalNav({ name, typeLabel, presenter, access, reviewer, showNe
     ...(showPeople ? [{ href: "/portal/people", label: "People I've met", icon: NotebookPen }] : []),
     { href: "/portal/enquiries", label: "Enquiries", icon: MessagesSquare, badge: unreadEnquiries },
     { href: "/portal/profile", label: "Profile and privacy", icon: UserRound },
+    ...(access.judging ? [{ href: "/judge", label: "Judging portal", icon: Trophy }] : []),
     ...(reviewer && !access.committee ? [{ href: "/review", label: "Abstract reviews", icon: ClipboardCheck }] : []),
     ...(access.owner ? [{ href: "/admin/platform", label: "Platform dashboard", icon: Gauge }] : []),
     ...(access.committee ? [{ href: "/admin", label: "Committee dashboard", icon: access.exec ? ShieldCheck : LayoutDashboard }] : []),

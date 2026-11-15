@@ -32,6 +32,7 @@ import { Countdown, HubItem, HubStagger, ReadinessRing } from "@/components/port
 import { MaskRise } from "@/components/motion/effects";
 import { AttendanceCard, type AttendanceAnswer } from "@/components/portal/attendance-card";
 import { TravelCard } from "@/components/portal/travel-card";
+import { GuestHub } from "@/components/portal/guest-hub";
 import { CardDock } from "@/components/portal/card-dock";
 import { isTravelMode, type TravelAnswer } from "@/lib/travel";
 import { WorkshopRanking, type RankPlace, type RankWorkshop } from "@/components/portal/workshop-ranking";
@@ -74,7 +75,7 @@ function Card({
   );
 }
 
-const TONE: Partial<Record<AccountType, LanyardTone>> = { delegate: "delegate", poster_presenter: "poster", oral_presenter: "oral", oral_waitlist: "waitlist" };
+const TONE: Partial<Record<AccountType, LanyardTone>> = { delegate: "delegate", poster_presenter: "poster", oral_presenter: "oral", oral_waitlist: "waitlist", speaker: "guest", judge: "guest" };
 
 /**
  * Every role for the lanyard, most senior first. Presenters and the oral
@@ -503,6 +504,8 @@ export default async function PortalHome({
               </section>
             </HubItem>
           )}
+
+          <GuestHub db={db} profile={profile} />
 
           {(showRanking || rankPreview) && (
             <HubItem>

@@ -174,6 +174,15 @@ Never commit secrets or paste the service role key anywhere public.
   same pin. Link a place to a programme room to list that room's sessions on the map. Tick
   "Location confirmed" when a room is final. Map tiles come from CARTO (OpenStreetMap data) and load
   in the visitor's browser.
+- **Judging (speakers and judges):** judges and speakers sign up with the *Judge* or *Speaker* account
+  type (under "Speaking or judging on the day") and you approve them under *Accounts*. Under
+  *Judging → Set up*, check the marking criteria, choose whether each judge marks talks, posters or
+  both (and optionally exactly who), add where to find each presentation ("Board 12"), and link
+  speaker accounts to their speaker profile. On the day judges open `/judge` on their phones, scan a
+  presenter's Delegate Card (or use their phone camera on it) and mark. Marks and comments are
+  visible only to people with the *Judging results* permission. Close judging once prizes are
+  decided, then switch on *Release feedback to presenters* (with or without marks and judge names);
+  presenters then read it in My Hub. Results download as a ranking or as every mark.
 - **On the day:** turn on *Event-day mode*, open *Check-in* on a phone or laptop at the desk and scan
   QR codes (camera scanning works in Chrome/Edge on Android; manual code entry works everywhere).
 - **Afterwards:** set status to "Conference concluded" and turn on *Post-conference mode*.

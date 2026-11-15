@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { ArrowRight, EyeOff, Lock, QrCode, Settings } from "lucide-react";
+import { notFound, redirect } from "next/navigation";
+import { ArrowRight, ClipboardCheck, EyeOff, Lock, QrCode, Settings } from "lucide-react";
+import { KIND_LABEL, isKind } from "@/lib/judging";
 import { getCurrentUser } from "@/lib/auth";
 import { CARD_CODE, cardPath, cleanCode, type CardLookup } from "@/lib/card";
 import { ContactCard } from "@/components/card/contact-card";
@@ -78,11 +79,37 @@ export default async function CardPage({ params }: { params: Promise<{ code: str
     );
   }
 
+  // Judges scanning a presenter's card with their phone camera go straight to marking them.
+  let judgePanel: React.ReactNode = null;
+  if (current.profile.access.can.judge_presentations) {
+    const { data: j } = await current.db.rpc("judging_lookup", { code });
+    const found = (j ?? {}) as { state?: string; presenter_id?: string; kinds?: string[] };
+    const kinds = (found.kinds ?? []).filter(isKind);
+    if (found.state === "ok" && found.presenter_id && found.presenter_id !== current.profile.id) {
+      if (kinds.length === 1) redirect(`/judge/${found.presenter_id}/${kinds[0]}`);
+      judgePanel = (
+        <section className="rounded-2xl border border-gold/40 bg-gold/10 p-5">
+          <p className="flex items-center gap-2 font-semibold text-ink"><ClipboardCheck aria-hidden className="size-5 text-gold-700" /> Mark this presenter</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {kinds.map((k) => (
+              <Link key={k} href={`/judge/${found.presenter_id}/${k}`} className={`${linkBtn} bg-navy text-paper hover:bg-navy-700`}>{KIND_LABEL[k].one}</Link>
+            ))}
+          </div>
+        </section>
+      );
+    }
+  }
+
   const { data, error } = await current.db.rpc("card_lookup", { code });
   const res = (data ?? { state: "unknown" }) as CardLookup;
   if (res.card?.avatar_path) res.card.avatar_url = await signAvatar(current.db, res.card.avatar_path);
   if (res.card?.institution) res.card.uni_logo_url = (await getLogoMap())[uniKey(res.card.institution)] ?? null;
-  const desk = res.checkin ? <CheckInPanel info={res.checkin} /> : null;
+  const desk = (
+    <>
+      {judgePanel}
+      {res.checkin ? <CheckInPanel info={res.checkin} /> : null}
+    </>
+  );
 
   if (error) {
     return (
