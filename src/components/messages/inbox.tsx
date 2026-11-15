@@ -28,6 +28,7 @@ export function MessagesShell({
   owner,
   delegateMessages,
   committee,
+  judge = false,
   children,
 }: {
   initialRows: InboxRow[];
@@ -36,6 +37,8 @@ export function MessagesShell({
   owner: boolean;
   delegateMessages: boolean;
   committee: boolean;
+  /** Judges message the committee only. */
+  judge?: boolean;
   children: ReactNode;
 }) {
   const path = usePathname();
@@ -153,7 +156,7 @@ export function MessagesShell({
           {!ready ? (
             <p className="p-6 text-sm text-slate-700">Messages aren&apos;t available just now. Please try again later.</p>
           ) : rows.length === 0 ? (
-            <EmptyInbox committee={committee} />
+            <EmptyInbox committee={committee} judge={judge} />
           ) : shown.length === 0 ? (
             <p className="p-6 text-center text-sm text-slate-700">No conversations match that search.</p>
           ) : (
@@ -172,7 +175,7 @@ export function MessagesShell({
       <div className={cn("min-w-0 lg:min-h-0", !inside && path !== "/portal/messages/new" && "hidden lg:block")}>{children}</div>
 
       <Drawer open={settings} onClose={() => setSettings(false)} label="Message settings">
-        <MessageSettings prefs={prefs} owner={owner} delegateMessages={delegateMessages} />
+        <MessageSettings prefs={prefs} owner={owner} delegateMessages={delegateMessages} judge={judge} />
       </Drawer>
     </div>
   );
@@ -232,7 +235,7 @@ function InboxItem({ row: r, active }: { row: InboxRow; active: boolean }) {
   );
 }
 
-function EmptyInbox({ committee }: { committee: boolean }) {
+function EmptyInbox({ committee, judge }: { committee: boolean; judge: boolean }) {
   return (
     <div className="px-6 py-10 text-center">
       <span aria-hidden className="mx-auto grid size-14 place-items-center rounded-full bg-cyan-300 text-navy">
@@ -242,7 +245,9 @@ function EmptyInbox({ committee }: { committee: boolean }) {
       <p className="mx-auto mt-1.5 max-w-xs text-sm text-slate-700">
         {committee
           ? "Message anyone with an account, or send the same message to a whole group. Each person gets it privately."
-          : "Say hello to someone you'd like to meet. You can message other delegates from the delegate network, and the committee can message you here too."}
+          : judge
+            ? "Message the committee here if you need anything, before or on the day. Only the committee can message you."
+            : "Say hello to someone you'd like to meet. You can message other delegates from the delegate network, and the committee can message you here too."}
       </p>
     </div>
   );
@@ -261,7 +266,7 @@ function Toggle({ checked, onChange, title, children, disabled }: { checked: boo
   );
 }
 
-function MessageSettings({ prefs, owner, delegateMessages }: { prefs: Prefs; owner: boolean; delegateMessages: boolean }) {
+function MessageSettings({ prefs, owner, delegateMessages, judge }: { prefs: Prefs; owner: boolean; delegateMessages: boolean; judge: boolean }) {
   const [p, setP] = useState(prefs);
   const [dm, setDm] = useState(delegateMessages);
   const [pending, start] = useTransition();
@@ -290,9 +295,11 @@ function MessageSettings({ prefs, owner, delegateMessages }: { prefs: Prefs; own
       </p>
       <h2 className="mt-2 font-display text-2xl text-ink">Message settings</h2>
       <div className="mt-6 space-y-3">
-        <Toggle checked={p.open} onChange={(v) => save({ ...p, open: v })} title="Messages from other delegates" disabled={pending}>
-          Let confirmed delegates start a conversation with you. The committee can always message you, and you can always reply.
-        </Toggle>
+        {!judge && (
+          <Toggle checked={p.open} onChange={(v) => save({ ...p, open: v })} title="Messages from other delegates" disabled={pending}>
+            Let confirmed delegates start a conversation with you. The committee can always message you, and you can always reply.
+          </Toggle>
+        )}
         <Toggle checked={p.email} onChange={(v) => save({ ...p, email: v })} title="Email me about new messages" disabled={pending}>
           <BellRing aria-hidden className="mr-1 inline size-3.5 align-[-2px]" /> One short email when a message is waiting and you haven&apos;t been on the website. Never one per message.
         </Toggle>

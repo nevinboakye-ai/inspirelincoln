@@ -111,6 +111,17 @@ export function hasRole(p: { accountType: AccountType; extraTypes?: readonly Acc
   return rolesOf(p.accountType, p.extraTypes).some((t) => types.includes(t));
 }
 
+/**
+ * A judge who is only here to judge: no delegate, presenter or committee role
+ * alongside it. They aren't asked to rank workshops or say how they're
+ * travelling (only a car registration if they drive), and they can message
+ * the committee but not delegates.
+ */
+export function isJudgeOnly(main: AccountType, extra?: readonly AccountType[] | null) {
+  const roles = rolesOf(main, extra);
+  return roles.includes("judge") && roles.every((t) => GUEST_TYPES.includes(t));
+}
+
 /** "Vice president · Academic Team" */
 export function rolesLabel(types: readonly AccountType[]) {
   return types.map((t) => ACCOUNT_TYPE_LABEL[t]).join(" · ");

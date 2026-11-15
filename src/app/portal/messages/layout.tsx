@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { MessagesShell } from "@/components/messages/inbox";
 import { requireUser } from "@/lib/auth";
+import { isJudgeOnly } from "@/lib/accounts";
 import { loadInbox } from "@/lib/messages-server";
 
 export const metadata: Metadata = { title: "Messages" };
@@ -25,6 +26,7 @@ export default async function MessagesLayout({ children }: { children: React.Rea
       owner={profile.access.owner}
       delegateMessages={sw?.enabled ?? true}
       committee={profile.access.owner || profile.access.can.message_people}
+      judge={isJudgeOnly(profile.accountType, profile.extraTypes)}
     >
       {children}
     </MessagesShell>

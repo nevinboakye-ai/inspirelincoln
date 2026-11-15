@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { serviceClient } from "@/lib/view-as";
-import { rolesOf } from "@/lib/accounts";
+import { isJudgeOnly, rolesOf } from "@/lib/accounts";
 import { rankingIsOpen } from "@/lib/workshops/choices";
 import type { AccountStatus, AccountType, SubmissionKind, SubmissionStatus } from "@/lib/types";
 import type { ReminderPerson } from "./reminders";
@@ -104,6 +104,7 @@ export async function loadReminderAudience(): Promise<{ ok: true; audience: Remi
       }
       seen.add(email);
       const roles = rolesOf(p.account_type, p.extra_types);
+      const judgeOnly = isJudgeOnly(p.account_type, p.extra_types);
       people.push({
         email,
         fullName: p.full_name,
@@ -114,8 +115,9 @@ export async function loadReminderAudience(): Promise<{ ok: true; audience: Remi
         photo: Boolean(p.avatar_path),
         details: Boolean(p.full_name?.trim() && p.institution?.trim()),
         bio: p.bio,
-        travel: travelled ? travelled.has(p.id) : true,
-        ranked: open ? ranked.has(p.id) : null,
+        // Judges aren't asked how they're travelling or to rank workshops.
+        travel: travelled && !judgeOnly ? travelled.has(p.id) : true,
+        ranked: open && !judgeOnly ? ranked.has(p.id) : null,
         attendance: attend.get(p.id) ?? null,
         submissions: {
           slides: latest.get(`${p.id}:slides`)?.status ?? null,
