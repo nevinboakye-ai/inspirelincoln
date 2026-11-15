@@ -3,14 +3,12 @@ import QRCode from "qrcode";
 import {
   ArrowRight,
   CalendarDays,
-  Check,
   Clock,
   Gauge,
   UserRound,
   Hourglass,
   LayoutDashboard,
   MapPin,
-  Megaphone,
   Ticket,
   UploadCloud,
   XCircle,
@@ -27,8 +25,9 @@ import { formatEventDate } from "@/lib/time";
 import { Badge } from "@/components/ui/badge";
 import { Notice } from "@/components/ui/notice";
 import { SavedAgenda } from "@/components/portal/saved-agenda";
+import { HubAnnouncements, HubChecklist } from "@/components/portal/hub-sections";
 import { Lanyard, type LanyardTone } from "@/components/portal/lanyard";
-import { Countdown, HubItem, HubStagger, ReadinessRing } from "@/components/portal/hub-motion";
+import { Countdown, HubItem, HubStagger } from "@/components/portal/hub-motion";
 import { MaskRise } from "@/components/motion/effects";
 import { AttendanceCard, type AttendanceAnswer } from "@/components/portal/attendance-card";
 import { TravelCard } from "@/components/portal/travel-card";
@@ -56,20 +55,25 @@ function Card({
   icon: Icon,
   children,
   className = "",
+  tone = "tone-navy",
 }: {
   title: string;
   icon: typeof Ticket;
+  tone?: string;
   children: React.ReactNode;
   className?: string;
 }) {
   return (
     <section
-      className={`rounded-xl border border-navy/10 bg-white p-4 transition-shadow duration-300 hover:shadow-[0_14px_34px_-22px_rgba(14,27,49,0.45)] sm:p-5 ${className}`}
+      className={`app-card p-4 sm:p-5 ${className}`}
     >
       <h2 className="flex items-center gap-2 font-display text-lg text-ink">
-        <Icon aria-hidden className="size-4 text-electric-600" /> {title}
+        <span className={`icon-chip-sm ${tone}`}>
+          <Icon aria-hidden className="size-4" />
+        </span>
+        {title}
       </h2>
-      <div className="mt-2.5">{children}</div>
+      <div className="mt-3">{children}</div>
     </section>
   );
 }
@@ -94,7 +98,7 @@ function lanyardRoles(p: { accountType: AccountType; extraTypes: AccountType[]; 
 }
 
 const linkBtn =
-  "inline-flex min-h-12 items-center justify-center gap-2 rounded-[3px] px-5 font-ui text-sm font-semibold";
+  "tap inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-5 font-ui text-sm font-semibold";
 
 export default async function PortalHome({
   searchParams,
@@ -144,7 +148,7 @@ export default async function PortalHome({
       : Promise.resolve({ data: null }),
     db
       .from("announcements")
-      .select("id, title, body, level")
+      .select("id, title, body, level, pinned, published_at")
       .eq("published", true)
       .in(
         "audience",
@@ -245,14 +249,11 @@ export default async function PortalHome({
     : null;
   if (showRanking && rankOpen && !choices!.ranking) steps.push({ label: rankBy ? `Rank your workshops by ${rankBy}` : "Rank your workshops", done: false, href: "#workshops" });
   else if (showRanking && choices!.ranking) steps.push({ label: "Rank your workshops", done: true, href: "#workshops" });
-  const doneCount = steps.filter((x) => x.done).length;
   const needsGiven = Boolean(profile.accessibilityNeeds || profile.dietaryRequirements);
   const lanyard = status === "approved" && showCard;
 
   const attendPending = presenting && !answer;
   const travelPending = status === "approved" && !travelAnswer;
-  const todo = steps.filter((x) => !x.done);
-  const done = steps.filter((x) => x.done);
 
   // Short answers (travel, attendance, slides) sit side by side as slim tiles.
   const tiles = [
@@ -261,8 +262,8 @@ export default async function PortalHome({
     ),
     status === "approved" && !travelPending && <TravelCard key="travel" answer={travelAnswer} />,
     kind && (
-      <section key="sub" aria-labelledby="sub-h" className="flex items-center gap-3 rounded-xl border border-navy/10 bg-white p-3 pr-2 sm:p-4 sm:pr-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-paper-200 text-electric-600">
+      <section key="sub" aria-labelledby="sub-h" className="app-card flex items-center gap-3 p-3 pr-2 sm:p-4 sm:pr-3">
+        <span className="icon-chip tone-gold">
           <UploadCloud aria-hidden className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
@@ -283,7 +284,7 @@ export default async function PortalHome({
         </div>
         <Link
           href="/portal/submission"
-          className={`inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[3px] px-3 font-ui text-sm font-semibold ${latestSub && latestSub.status !== "changes_requested" ? "text-electric-600 hover:bg-paper-200" : "bg-navy text-paper"}`}
+          className={`inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-4 font-ui text-sm font-semibold tap ${latestSub && latestSub.status !== "changes_requested" ? "text-electric-600 hover:bg-paper-200" : "bg-navy text-paper"}`}
         >
           {latestSub ? (latestSub.status === "changes_requested" ? "See feedback" : "View") : "Upload"}
           <ArrowRight aria-hidden className="size-4" />
@@ -306,7 +307,7 @@ export default async function PortalHome({
   const dashboards = (profile.access.owner || profile.access.committee) && (
     <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
       {profile.access.owner && (
-        <Link href="/admin/platform" className="group flex items-center gap-3 rounded-xl border border-cyan/40 bg-midnight px-4 py-3 text-paper transition-colors hover:border-cyan">
+        <Link href="/admin/platform" className="group flex items-center gap-3 tap rounded-2xl border border-cyan/40 bg-midnight px-4 py-3.5 text-paper transition-colors hover:border-cyan">
           <Gauge aria-hidden className="size-5 shrink-0 text-cyan" />
           <span className="min-w-0 flex-1">
             <span className="block font-semibold leading-snug">Platform dashboard</span>
@@ -316,7 +317,7 @@ export default async function PortalHome({
         </Link>
       )}
       {profile.access.committee && (
-        <Link href="/admin" className="group flex items-center gap-3 rounded-xl bg-navy px-4 py-3 text-paper">
+        <Link href="/admin" className="group flex items-center gap-3 tap rounded-2xl bg-gradient-to-br from-navy to-navy-600 px-4 py-3.5 text-paper">
           <LayoutDashboard aria-hidden className="size-5 shrink-0 text-cyan" />
           <span className="min-w-0 flex-1">
             <span className="block font-semibold leading-snug">Committee dashboard</span>
@@ -409,61 +410,14 @@ export default async function PortalHome({
           )}
 
           <HubItem>
-            <section aria-labelledby="ready-h" className="rounded-xl border border-navy/10 bg-white p-4">
-              <div className="flex items-center gap-3">
-                <ReadinessRing small done={doneCount} total={steps.length} />
-                <div className="min-w-0">
-                  <h2 id="ready-h" className="font-display text-lg leading-tight text-ink">
-                    {todo.length === 0 ? "You're all set for the day" : "Get ready for INSPIRE"}
-                  </h2>
-                  <p className="text-sm text-slate-700">
-                    {todo.length === 0 ? "Everything we need is in. See you on the day." : `${todo.length} ${todo.length === 1 ? "thing" : "things"} left to do`}
-                  </p>
-                </div>
-              </div>
-              {todo.length > 0 && (
-                <ol aria-label="Still to do" className="mt-3 flex flex-wrap gap-1.5">
-                  {todo.map((x) => {
-                    const inner = (
-                      <>
-                        <span aria-hidden className="size-3.5 shrink-0 rounded-full border-2 border-gold" />
-                        <span className="min-w-0">
-                          {x.label}
-                          <span className="sr-only">, to do</span>
-                        </span>
-                        {x.href && <ArrowRight aria-hidden className="size-3.5 shrink-0 text-slate transition-transform group-hover:translate-x-0.5" />}
-                      </>
-                    );
-                    const cls = "flex min-h-10 items-center gap-2 rounded-full border border-gold/50 bg-gold/[0.08] py-1.5 pl-2.5 pr-3 text-[0.8rem] font-semibold leading-snug text-ink";
-                    return (
-                      <li key={x.label}>
-                        {x.href ? (
-                          <Link href={x.href} className={`group ${cls} hover:bg-paper-200`}>{inner}</Link>
-                        ) : (
-                          <span className={cls}>{inner}</span>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ol>
-              )}
-              {done.length > 0 && (
-                <ul aria-label="Done" className="mt-2.5 flex flex-wrap gap-1.5">
-                  {done.map((x) => (
-                    <li key={x.label} className="inline-flex items-center gap-1 rounded-full bg-success/10 py-0.5 pl-1 pr-2 text-xs font-medium text-success">
-                      <Check aria-hidden className="size-3.5" />
-                      {x.label}
-                      <span className="sr-only">, done</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <p className="mt-2.5 text-xs text-slate">
-                Optional: {needsGiven ? "thank you for telling us about your access or dietary needs." : "any access or dietary needs?"}{" "}
-                <Link href="/portal/profile#needs" className="font-semibold text-electric-600 underline underline-offset-4">{needsGiven ? "Review" : "Add them"}</Link>
-              </p>
-            </section>
+            <HubChecklist steps={steps} needsGiven={needsGiven} />
           </HubItem>
+
+          {!focus && (announcements?.length ?? 0) > 0 && (
+            <HubItem>
+              <HubAnnouncements items={announcements!} />
+            </HubItem>
+          )}
         </div>
 
         {dashboards && <HubItem className="order-last xl:order-none xl:col-start-2 xl:row-start-2">{dashboards}</HubItem>}
@@ -471,7 +425,7 @@ export default async function PortalHome({
         <div className="min-w-0 space-y-4 xl:col-start-1 xl:row-span-2 xl:row-start-1">
           {status !== "approved" && (
             <HubItem>
-              <section className="rounded-xl border border-navy/10 bg-white p-4 sm:p-5" aria-labelledby="status-title">
+              <section className="app-card p-4 sm:p-5" aria-labelledby="status-title">
                 <div className="flex items-start gap-3">
                   <span className="grid size-10 shrink-0 place-items-center rounded-full bg-paper-200">
                     {status === "pending" ? (
@@ -536,7 +490,7 @@ export default async function PortalHome({
 
           {focus ? (
             <HubItem>
-              <Card title="Your profile" icon={UserRound}>
+              <Card title="Your profile" icon={UserRound} tone="tone-plum">
                 <p className="text-sm text-slate-700">Check your details, add a short bio and LinkedIn, and tell us about any access or dietary needs.</p>
                 <Link href="/portal/profile" className={`${linkBtn} mt-3 w-full bg-navy text-paper sm:w-auto`}>
                   Go to your profile <ArrowRight aria-hidden className="size-4" />
@@ -544,27 +498,11 @@ export default async function PortalHome({
               </Card>
             </HubItem>
           ) : (
-            <div className={`grid gap-4 ${(announcements?.length ?? 0) > 0 ? "md:grid-cols-2" : ""}`}>
-              <HubItem>
-                <Card title="My agenda" icon={CalendarDays}>
-                  <SavedAgenda sessions={sessions} workshops={workshops} />
-                </Card>
-              </HubItem>
-              {(announcements?.length ?? 0) > 0 && (
-                <HubItem>
-                  <Card title="Announcements" icon={Megaphone}>
-                    <ul className="space-y-2">
-                      {announcements!.map((a) => (
-                        <li key={a.id} className="rounded-md bg-paper p-3">
-                          <p className="text-sm font-semibold text-ink">{a.title}</p>
-                          {a.body && <p className="mt-0.5 text-sm text-slate-700">{a.body}</p>}
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                </HubItem>
-              )}
-            </div>
+            <HubItem>
+              <Card title="My agenda" icon={CalendarDays} tone="tone-sky">
+                <SavedAgenda sessions={sessions} workshops={workshops} />
+              </Card>
+            </HubItem>
           )}
         </div>
       </HubStagger>

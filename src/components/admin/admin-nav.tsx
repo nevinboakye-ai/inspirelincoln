@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   CalendarCog, ClipboardCheck, Eye, FileStack, Gauge, HelpCircle, Inbox, Mail, MapPin, Megaphone, Mic, QrCode, ScrollText, Settings2,
-  Ticket, UserCheck, GraduationCap, ListOrdered, CalendarCheck2, Users, Wrench, DoorOpen, ShieldCheck, UserRound, LayoutDashboard, Activity, BarChart3, HandHeart, Car, FileDown, History,
+  Ticket, UserCheck, GraduationCap, ListOrdered, CalendarCheck2, Users, Wrench, DoorOpen, ShieldCheck, UserRound, LayoutDashboard, Activity, BarChart3, HandHeart, Car, FileDown, LayoutGrid, X, History,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Access, Capability } from "@/lib/accounts";
@@ -76,58 +77,168 @@ export function AdminNav({ access, name, position, waiting = 0 }: { access: Acce
   const current = GROUPS.flatMap((g) => g.links)
     .filter((l) => (l.href === "/admin" ? path === "/admin" : path === l.href || path.startsWith(`${l.href}/`)))
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+  const [open, setOpen] = useState(false);
+  useEffect(() => setOpen(false), [path]);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("keydown", onKey);
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.documentElement.style.overflow = "";
+    };
+  }, [open]);
+  const groups = GROUPS.map((g) => ({ ...g, links: g.links.filter(allowed) })).filter((g) => g.links.length);
+  const currentLink = groups.flatMap((g) => g.links).find((l) => l.href === current);
+  const CurrentIcon = currentLink?.icon ?? Gauge;
+  const badge = (l: LinkDef, active: boolean) =>
+    l.href === "/admin/enquiries" &&
+    waiting > 0 && (
+      <span className={cn("ml-auto grid min-w-5 place-items-center rounded-full px-1.5 text-[0.7rem] font-bold leading-5", active ? "bg-gold text-midnight" : "bg-coral text-white")}>
+        {waiting}
+        <span className="sr-only"> waiting for a reply</span>
+      </span>
+    );
   return (
-    <nav aria-label="Committee dashboard" className="min-w-0 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
-      <div className="mb-5 flex items-center gap-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-navy text-cyan">
-          <UserRound aria-hidden className="size-5" />
-        </span>
-        <span className="min-w-0">
-          <span className="block truncate text-sm font-semibold text-ink">{name}</span>
-          <span className="block truncate text-xs text-slate">{position}</span>
-        </span>
+    <>
+      {/* Phones and tablets: one slim bar saying where you are, with every area a tap away. */}
+      <div className="sticky top-[var(--header-h)] z-30 -mx-4 border-b border-navy/[0.07] bg-paper/90 px-4 py-2.5 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:hidden">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-expanded={open}
+          aria-controls="admin-sheet"
+          className="tap flex min-h-12 w-full items-center gap-3 rounded-2xl bg-white px-3 text-left shadow-[var(--shadow-soft)] ring-1 ring-navy/[0.08]"
+        >
+          <span className="icon-chip-sm bg-navy text-gold-300">
+            <CurrentIcon aria-hidden className="size-4" />
+          </span>
+          <span className="min-w-0 flex-1 leading-tight">
+            <span className="block font-ui text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-slate">Committee dashboard</span>
+            <span className="block truncate font-semibold text-ink">{currentLink?.label ?? "Overview"}</span>
+          </span>
+          {waiting > 0 && (
+            <span className="grid min-w-5 place-items-center rounded-full bg-coral px-1.5 text-[0.7rem] font-bold leading-5 text-white">
+              {waiting}
+              <span className="sr-only"> enquiries waiting</span>
+            </span>
+          )}
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-paper-200 px-3 py-1.5 font-ui text-xs font-semibold text-ink">
+            <LayoutGrid aria-hidden className="size-3.5" /> Menu
+          </span>
+        </button>
       </div>
-      <div className="-mx-4 flex gap-6 overflow-x-auto px-4 pb-2 lg:mx-0 lg:block lg:space-y-6 lg:overflow-visible lg:px-0">
-        {GROUPS.map((g) => {
-          const links = g.links.filter(allowed);
-          if (!links.length) return null;
-          return (
-            <div key={g.title} className="shrink-0">
+
+      {open && (
+        <div className="fixed inset-0 z-[70] lg:hidden" role="dialog" aria-modal="true" aria-label="Committee dashboard menu" id="admin-sheet">
+          <button type="button" aria-label="Close menu" onClick={() => setOpen(false)} className="sheet-fade absolute inset-0 bg-midnight/55 backdrop-blur-[2px]" />
+          <nav aria-label="Committee dashboard" className="sheet-up absolute inset-x-0 bottom-0 flex max-h-[88dvh] flex-col rounded-t-[28px] bg-paper shadow-[var(--shadow-sheet)]">
+            <div className="flex shrink-0 items-center gap-3 px-5 pb-3 pt-2">
+              <span aria-hidden className="absolute left-1/2 top-2 h-1 w-10 -translate-x-1/2 rounded-full bg-navy/15" />
+              <span className="mt-4 grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-gold-300 to-gold-600 font-ui text-sm font-bold text-midnight">{initials(name)}</span>
+              <span className="mt-4 min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold text-ink">{name}</span>
+                <span className="block truncate text-xs text-slate">{position}</span>
+              </span>
+              <button type="button" onClick={() => setOpen(false)} className="tap mt-4 grid size-10 place-items-center rounded-full bg-white ring-1 ring-navy/10" aria-label="Close menu">
+                <X aria-hidden className="size-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto overscroll-contain px-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
+              {groups.map((g, gi) => (
+                <div key={g.title} className="mb-4">
+                  <p className="mb-2 px-1 font-ui text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate">{g.title}</p>
+                  <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {g.links.map((l, i) => {
+                      const active = l.href === current;
+                      return (
+                        <li key={l.href} className="pop-in" style={{ animationDelay: `${gi * 40 + i * 25}ms` }}>
+                          <Link
+                            href={l.href}
+                            aria-current={active ? "page" : undefined}
+                            className={cn(
+                              "tap flex min-h-14 items-center gap-2.5 rounded-2xl p-2.5 text-[0.8rem] font-semibold leading-tight",
+                              active ? "bg-navy text-paper" : "bg-white text-ink ring-1 ring-navy/[0.07]",
+                            )}
+                          >
+                            <span className={cn("icon-chip-sm", active ? "bg-white/10 text-gold-300" : TONES[(gi + i) % TONES.length])}>
+                              <l.icon aria-hidden className="size-4" />
+                            </span>
+                            <span className="min-w-0 flex-1">{l.label}</span>
+                            {badge(l, active)}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
+              <div className="grid grid-cols-2 gap-2 border-t border-navy/10 pt-4">
+                <Link href="/portal" className="tap flex min-h-12 items-center justify-center gap-2 rounded-full bg-white text-sm font-semibold text-ink ring-1 ring-navy/10">
+                  <UserRound aria-hidden className="size-4" /> My Hub
+                </Link>
+                <Link href="/" className="tap flex min-h-12 items-center justify-center gap-2 rounded-full bg-white text-sm font-semibold text-ink ring-1 ring-navy/10">
+                  <Eye aria-hidden className="size-4" /> Website
+                </Link>
+              </div>
+            </div>
+          </nav>
+        </div>
+      )}
+
+      {/* Wide screens: the full menu in a sticky side column. */}
+      <nav aria-label="Committee dashboard" className="hidden min-w-0 lg:sticky lg:top-24 lg:block lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto lg:pb-6">
+        <div className="mb-5 flex items-center gap-3 rounded-2xl bg-midnight p-3 text-paper">
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-gold-300 to-gold-600 font-ui text-sm font-bold text-midnight">{initials(name)}</span>
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-semibold">{name}</span>
+            <span className="block truncate text-xs text-paper/65">{position}</span>
+          </span>
+        </div>
+        <div className="space-y-5">
+          {groups.map((g) => (
+            <div key={g.title}>
               <p className="mb-1 px-3 font-ui text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate">{g.title}</p>
-              <ul className="flex gap-1 lg:flex-col">
-                {links.map((l) => {
+              <ul className="flex flex-col gap-0.5">
+                {g.links.map((l) => {
                   const active = l.href === current;
                   return (
-                    <li key={l.href} className="shrink-0">
+                    <li key={l.href}>
                       <Link
                         href={l.href}
                         aria-current={active ? "page" : undefined}
-                        className={cn("flex min-h-11 items-center gap-2.5 whitespace-nowrap rounded-[3px] px-3 text-sm font-medium", active ? "bg-navy text-paper" : "text-slate-700 hover:bg-paper-200")}
-                      >
-                        <l.icon aria-hidden className="size-4" /> {l.label}
-                        {l.href === "/admin/enquiries" && waiting > 0 && (
-                          <span className={cn("ml-auto grid min-w-5 place-items-center rounded-full px-1.5 text-[0.7rem] font-bold leading-5", active ? "bg-gold text-midnight" : "bg-warning text-white")}>
-                            {waiting}
-                            <span className="sr-only"> waiting for a reply</span>
-                          </span>
+                        className={cn(
+                          "tap flex min-h-10 items-center gap-2.5 whitespace-nowrap rounded-xl px-3 text-sm font-medium",
+                          active ? "bg-navy text-paper shadow-[0_6px_16px_-8px_rgba(12,24,44,0.7)]" : "text-slate-700 hover:bg-white hover:text-ink",
                         )}
+                      >
+                        <l.icon aria-hidden className={cn("size-4", active ? "text-gold-300" : "text-electric-600")} /> {l.label}
+                        {badge(l, active)}
                       </Link>
                     </li>
                   );
                 })}
               </ul>
             </div>
-          );
-        })}
-        <div className="shrink-0 border-navy/10 lg:border-t lg:pt-4">
-          <Link href="/portal" className="flex min-h-11 items-center gap-2.5 whitespace-nowrap rounded-[3px] px-3 text-sm font-medium text-slate-700 hover:bg-paper-200">
-            <UserRound aria-hidden className="size-4" /> My account
-          </Link>
-          <Link href="/" className="flex min-h-11 items-center gap-2.5 whitespace-nowrap rounded-[3px] px-3 text-sm font-medium text-slate-700 hover:bg-paper-200">
-            <Eye aria-hidden className="size-4" /> View the website
-          </Link>
+          ))}
+          <div className="border-t border-navy/10 pt-4">
+            <Link href="/portal" className="tap flex min-h-10 items-center gap-2.5 whitespace-nowrap rounded-xl px-3 text-sm font-medium text-slate-700 hover:bg-white">
+              <UserRound aria-hidden className="size-4" /> My Hub
+            </Link>
+            <Link href="/" className="tap flex min-h-10 items-center gap-2.5 whitespace-nowrap rounded-xl px-3 text-sm font-medium text-slate-700 hover:bg-white">
+              <Eye aria-hidden className="size-4" /> View the website
+            </Link>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </>
   );
+}
+
+const TONES = ["tone-navy", "tone-teal", "tone-sky", "tone-plum", "tone-coral", "tone-gold", "tone-rose"];
+
+function initials(name: string) {
+  const parts = name.replace(/@.*/, "").split(/[\s._-]+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase() || "?";
 }
