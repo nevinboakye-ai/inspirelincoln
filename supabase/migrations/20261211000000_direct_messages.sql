@@ -28,7 +28,7 @@ on conflict (key) do update set label = excluded.label, description = excluded.d
 
 insert into public.access_rules (account_type, capability, allowed)
 select t.account_type::public.account_type, 'message_people',
-       t.account_type not in ('delegate', 'oral_presenter', 'poster_presenter', 'oral_waitlist')
+       t.account_type not in ('delegate', 'oral_presenter', 'poster_presenter', 'oral_waitlist', 'speaker', 'judge')
   from (select unnest(enum_range(null::public.account_type))::text as account_type) t
 on conflict do nothing;
 
