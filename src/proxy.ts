@@ -15,6 +15,18 @@ let siteOpen: { value: boolean; at: number } | null = null;
 const committee = new Map<string, { value: boolean; at: number }>();
 const TTL = 20_000;
 
+/** The sign-in cookies (one cookie, or several chunks of one: sb-<ref>-auth-token.0, .1, ...). */
+const AUTH_COOKIE = /^sb-.+-auth-token(\.\d+)?$/;
+/**
+ * Set by the server each time it re-issues the sign-in cookies. Safari keeps a
+ * cookie written by the page's own JavaScript for at most 7 days, so a session
+ * the browser refreshed itself would vanish after a week away; a cookie the
+ * server sends lasts the full 400 days. Re-sending once a day keeps it that way.
+ */
+const KEPT_COOKIE = "il-session-kept";
+const KEEP_EVERY = 24 * 60 * 60 * 1000;
+const COOKIE_LIFETIME = 400 * 24 * 60 * 60; // the longest browsers allow
+
 async function isSiteOpen(url: string, key: string) {
   if (siteOpen && Date.now() - siteOpen.at < TTL) return siteOpen.value;
   let value = true; // If the switch can't be read (e.g. migration not run), stay open.
@@ -52,41 +64,84 @@ export async function proxy(request: NextRequest) {
   const isProtected = PROTECTED.some((p) => path === p || path.startsWith(`${p}/`));
   const gated = !ALWAYS_OPEN.test(path) && !(await isSiteOpen(url, key));
   // Public pages while the site is open need nothing from here.
-  if (!isProtected && !gated && !/^\/(login|auth|m)(\/|$)/.test(path)) return response;
+  const signedIn = request.cookies.getAll().some((c) => AUTH_COOKIE.test(c.name) && c.value);
+  // Guests on public pages need nothing from here. Anyone signed in always goes
+  // through, so their session is refreshed wherever they are on the site: a
+  // page that refreshes it itself can't save the new cookies, and Supabase then
+  // ends the whole session when the old refresh token is used again.
+  if (!signedIn && !isProtected && !gated && !/^\/(login|auth|m)(\/|$)/.test(path)) return response;
 
+  // Cookies the refresh wrote, so a redirect carries them too (a redirect that
+  // drops them leaves the browser holding a spent refresh token).
+  let written: { name: string; value: string; options: Parameters<typeof response.cookies.set>[2] }[] = [];
+  let noStore: Record<string, string> = {};
   const supabase = createServerClient(url, key, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet, headers) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+        Object.entries(headers ?? {}).forEach(([k, v]) => response.headers.set(k, v));
+        written = cookiesToSet;
+        noStore = headers ?? {};
       },
     },
   });
+  const redirect = (to: URL) => {
+    const r = NextResponse.redirect(to);
+    written.forEach(({ name, value, options }) => r.cookies.set(name, value, options));
+    Object.entries(noStore).forEach(([k, v]) => r.headers.set(k, v));
+    return r;
+  };
 
-  // getClaims refreshes an expired session (writing the new cookies) and then
-  // verifies the access token's signature locally against the project's cached
-  // public keys, so most navigations don't wait on the auth server at all.
-  const { data: claimsData } = await supabase.auth.getClaims();
-  const claims = claimsData?.claims;
-  const user = claims?.sub ? { id: claims.sub, app_metadata: (claims.app_metadata ?? {}) as Record<string, unknown> } : null;
+  let user: { id: string; app_metadata: Record<string, unknown> } | null = null;
+  if (isProtected || gated) {
+    // getClaims refreshes an expired session (writing the new cookies) and then
+    // verifies the access token's signature locally against the project's cached
+    // public keys, so most navigations don't wait on the auth server at all.
+    const { data: claimsData } = await supabase.auth.getClaims();
+    const claims = claimsData?.claims;
+    user = claims?.sub ? { id: claims.sub, app_metadata: (claims.app_metadata ?? {}) as Record<string, unknown> } : null;
+  } else {
+    // Only keep the session fresh here: it reads the cookies and talks to the
+    // auth server only when the access token has run out. Pages that need to
+    // know who someone is check that themselves.
+    await supabase.auth.getSession();
+  }
+
+  // Re-send the sign-in cookies from the server once a day so the browser
+  // keeps them for the full lifetime (see KEPT_COOKIE).
+  if (!written.length && signedIn) {
+    const last = Number(request.cookies.get(KEPT_COOKIE)?.value);
+    if (!(Date.now() - last < KEEP_EVERY)) {
+      const options = { path: "/", sameSite: "lax" as const, httpOnly: false, secure: request.nextUrl.protocol === "https:", maxAge: COOKIE_LIFETIME };
+      written = request.cookies
+        .getAll()
+        .filter((c) => AUTH_COOKIE.test(c.name) && c.value)
+        .map(({ name, value }) => ({ name, value, options }));
+      written.push({ name: KEPT_COOKIE, value: String(Date.now()), options: { ...options, httpOnly: true } });
+      noStore = { "Cache-Control": "private, no-cache, no-store, must-revalidate, max-age=0" };
+      written.forEach(({ name, value, options: o }) => response.cookies.set(name, value, o));
+      Object.entries(noStore).forEach(([k, v]) => response.headers.set(k, v));
+    }
+  }
 
   // Someone given a temporary password chooses their own before anything else.
   if (user?.app_metadata?.must_change_password === true && isProtected) {
     const to = request.nextUrl.clone();
     to.pathname = "/auth/update-password";
     to.search = "?first=1";
-    return NextResponse.redirect(to);
+    return redirect(to);
   }
 
   if (!user && isProtected) {
     const login = request.nextUrl.clone();
     login.pathname = "/login";
     login.search = `?next=${encodeURIComponent(path)}`;
-    return NextResponse.redirect(login);
+    return redirect(login);
   }
 
   if (gated) {
@@ -120,7 +175,7 @@ export async function proxy(request: NextRequest) {
       const to = request.nextUrl.clone();
       to.pathname = user ? "/portal" : "/login";
       to.search = "";
-      return NextResponse.redirect(to);
+      return redirect(to);
     }
   }
   return response;
