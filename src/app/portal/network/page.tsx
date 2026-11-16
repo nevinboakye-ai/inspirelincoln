@@ -227,7 +227,6 @@ export default async function NetworkPage() {
       ) : (
         <>
           <YourCardPanel
-            listed={profile.networkListed}
             hasBio={Boolean(profile.bio?.trim())}
           >
             <NetworkCardForm
@@ -236,7 +235,6 @@ export default async function NetworkPage() {
                 linkedinUrl: profile.linkedinUrl,
                 instagram: profile.instagram,
                 networkShowEmail: profile.networkShowEmail,
-                networkListed: profile.networkListed,
                 email: profile.email,
               }}
             />

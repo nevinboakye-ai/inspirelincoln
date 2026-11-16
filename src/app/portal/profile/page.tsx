@@ -89,7 +89,6 @@ export default async function ProfilePage() {
             linkedinUrl: profile.linkedinUrl,
             instagram: profile.instagram,
             networkShowEmail: profile.networkShowEmail,
-            networkListed: profile.networkListed,
             email: profile.email,
           }}
         />
