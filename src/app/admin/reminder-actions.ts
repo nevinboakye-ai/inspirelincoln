@@ -4,7 +4,7 @@ import { z } from "zod";
 import { requireAccess } from "@/lib/auth";
 import { rolesLabel } from "@/lib/accounts";
 import { sendBatch, sendEmail } from "@/lib/email/resend";
-import { formatDeadline, needsReminder, reminderEmail, tasksFor, type ReminderKind, type ReminderPerson, type TaskKey } from "@/lib/email/reminders";
+import { BIO_MIN_WORDS, formatDeadline, needsReminder, wordCount, reminderEmail, tasksFor, type ReminderKind, type ReminderPerson, type TaskKey } from "@/lib/email/reminders";
 import { loadReminderAudience } from "@/lib/email/reminder-audience";
 import { loginDetailsAvailable, prepareLogins, type LoginDetails } from "@/lib/accounts/login-details";
 import { SITE_URL } from "@/lib/site";
@@ -22,7 +22,7 @@ export type ReminderRow = {
   tasks: { key: TaskKey; title: string }[];
 };
 
-const kindSchema = z.enum(["sign_in", "presenter"]);
+const kindSchema = z.enum(["final", "sign_in", "presenter"]);
 
 function senderLine(profile: { fullName: string | null; accountStatus: string; accountType: AccountType; committeePosition: string | null }) {
   const role =
@@ -112,10 +112,10 @@ export async function previewReminder(input: z.input<typeof previewSchema>): Pro
     institution: "University of Lincoln",
     joined: false,
     signedIn: v.data.kind === "presenter",
-    roles: v.data.kind === "presenter" ? ["oral_presenter"] : ["delegate"],
+    roles: v.data.kind === "sign_in" ? ["delegate"] : ["oral_presenter"],
     photo: false,
     details: false,
-    bio: v.data.kind === "presenter" ? "Medical student interested in digital health." : null,
+    bio: v.data.kind !== "sign_in" ? "Medical student interested in digital health." : null,
     travel: false,
     ranked: false,
     attendance: null,
@@ -130,6 +130,7 @@ export async function previewReminder(input: z.input<typeof previewSchema>): Pro
     tasks,
     deadline,
     login: !sample.signedIn ? loginRows("sample") : undefined,
+    bioDone: wordCount(sample.bio) >= BIO_MIN_WORDS,
     note: v.data.note,
     sender: senderLine(profile),
   });
@@ -173,14 +174,14 @@ export async function sendReminders(_: ActionResult, form: FormData): Promise<Ac
       kind: v.kind,
       siteUrl: SITE_URL,
       name: profile.fullName,
-      roles: v.kind === "presenter" ? ["oral_presenter"] : ["delegate"],
+      roles: v.kind === "sign_in" ? ["delegate"] : ["oral_presenter"],
       tasks: tasksFor(v.kind, {
         email: user.email!,
         fullName: profile.fullName,
         institution: null,
         joined: true,
         signedIn: false,
-        roles: v.kind === "presenter" ? ["oral_presenter"] : ["delegate"],
+        roles: v.kind === "sign_in" ? ["delegate"] : ["oral_presenter"],
         photo: false,
         details: false,
         bio: null,
@@ -223,6 +224,7 @@ export async function sendReminders(_: ActionResult, form: FormData): Promise<Ac
         tasks: tasksFor(v.kind, p),
         deadline,
         login: p.signedIn ? undefined : loginRows(logins.get(p.email) ?? null),
+        bioDone: wordCount(p.bio) >= BIO_MIN_WORDS,
         note: v.note,
         sender,
       });
@@ -230,7 +232,7 @@ export async function sendReminders(_: ActionResult, form: FormData): Promise<Ac
     }),
   );
 
-  const label = v.kind === "sign_in" ? "Reminder: sign in and complete tasks" : "Reminder: presenter tasks";
+  const label = v.kind === "final" ? "Final reminder: all outstanding tasks" : v.kind === "sign_in" ? "Reminder: sign in and complete tasks" : "Reminder: presenter tasks";
   await db.from("email_broadcasts").insert({
     sent_by: user.id,
     sender_name: sender,
