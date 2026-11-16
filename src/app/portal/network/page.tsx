@@ -1,7 +1,6 @@
 
 import type { Metadata } from "next";
 import { createHash } from "node:crypto";
-import { Users } from "lucide-react";
 import { redirect } from "next/navigation";
 import { setNetworkOpen } from "@/app/portal/actions";
 import { requireUser } from "@/lib/auth";
@@ -15,6 +14,10 @@ import {
   NetworkDirectory,
   type Delegate,
 } from "@/components/portal/network";
+import {
+  NetworkIntro,
+  YourCardPanel,
+} from "@/components/portal/network-panels";
 import type {
   ManagedPerson,
   ManageRights,
@@ -164,34 +167,7 @@ export default async function NetworkPage() {
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      <header className="relative overflow-hidden rounded-xl bg-midnight p-6 text-paper sm:p-8">
-        <img
-          src="/brand/crest-white.png"
-          alt=""
-          aria-hidden
-          className="pointer-events-none absolute -bottom-10 -right-6 h-48 w-auto opacity-[0.07]"
-        />
-
-        <div className="relative">
-          <p className="eyebrow flex items-center gap-2 text-gold">
-            <Users aria-hidden className="size-4" />
-            Delegate network
-          </p>
-
-          <h1 className="mt-3 font-display text-3xl sm:text-4xl">
-            Meet who&apos;s coming
-          </h1>
-
-          <p className="mt-3 max-w-xl text-sm text-paper/75 sm:text-base">
-            Everyone at INSPIRE is a medical student, so this
-            is a rare chance to meet people on the same path
-            as you from other medical schools. Make friends,
-            swap details and stay in touch long after the day.
-            Add a short bio and your LinkedIn so people can
-            find you.
-          </p>
-        </div>
-      </header>
+      <NetworkIntro canMessage={messageable.length > 0} />
 
       {(owner || profile.access.can.review_accounts) && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-navy/10 bg-white px-5 py-4">
@@ -250,36 +226,21 @@ export default async function NetworkPage() {
         </Notice>
       ) : (
         <>
-          <section
-            className="rounded-xl border border-navy/10 bg-white p-5 sm:p-7"
-            aria-labelledby="card-title"
+          <YourCardPanel
+            listed={profile.networkListed}
+            hasBio={Boolean(profile.bio?.trim())}
           >
-            <h2
-              id="card-title"
-              className="font-display text-xl text-ink"
-            >
-              Your card
-            </h2>
-
-            <p className="mt-1 text-sm text-slate-700">
-              Your name, university and year are shown
-              to other confirmed delegates. Everything
-              else is up to you.
-            </p>
-
-            <div className="mt-5">
-              <NetworkCardForm
-                profile={{
-                  bio: profile.bio,
-                  linkedinUrl: profile.linkedinUrl,
-                  instagram: profile.instagram,
-                  networkShowEmail: profile.networkShowEmail,
-                  networkListed: profile.networkListed,
-                  email: profile.email,
-                }}
-              />
-            </div>
-          </section>
+            <NetworkCardForm
+              profile={{
+                bio: profile.bio,
+                linkedinUrl: profile.linkedinUrl,
+                instagram: profile.instagram,
+                networkShowEmail: profile.networkShowEmail,
+                networkListed: profile.networkListed,
+                email: profile.email,
+              }}
+            />
+          </YourCardPanel>
 
           {error ? (
             <Notice tone="warning">
