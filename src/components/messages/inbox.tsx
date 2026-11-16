@@ -13,7 +13,7 @@ import { useMessages } from "./messages-provider";
 
 type Prefs = { open: boolean; email: boolean };
 
-const POLL_VISIBLE = 12_000;
+const POLL_VISIBLE = 30_000;
 const POLL_HIDDEN = 90_000;
 
 /**

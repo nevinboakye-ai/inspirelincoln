@@ -5,6 +5,9 @@ import { cache } from "react";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { SUPABASE_ANON_KEY, SUPABASE_URL, isSupabaseConfigured } from "./env";
+import { SERVER_DB_TIMEOUT_MS, timedFetch } from "./timed-fetch";
+
+const dbFetch = timedFetch(SERVER_DB_TIMEOUT_MS);
 import { VIEW_AS_COOKIE, openViewAs, readOnlyFetch, type ViewAsPayload } from "@/lib/view-as-seal";
 
 /**
@@ -38,6 +41,7 @@ export async function createSessionClient() {
   if (!isSupabaseConfigured) return null;
   const cookieStore = await cookies();
   return createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { fetch: dbFetch },
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -61,6 +65,7 @@ export function createPublicClient() {
   if (!isSupabaseConfigured) return null;
   return createPlainClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: dbFetch },
   });
 }
 

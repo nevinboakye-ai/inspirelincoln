@@ -5,6 +5,9 @@
  * and is read only: every write is refused while it is active.
  */
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
+import { SERVER_DB_TIMEOUT_MS, timedFetch } from "@/lib/supabase/timed-fetch";
+
+const readFetch = timedFetch(SERVER_DB_TIMEOUT_MS);
 
 export const VIEW_AS_COOKIE = "inspire_view_as";
 /** Readable by the page, so the banner can say who you're viewing as. Holds the name only. */
@@ -71,7 +74,7 @@ export const readOnlyFetch: typeof fetch = async (input, init) => {
     method === "GET" || method === "HEAD" ||
     (method === "POST" && p.startsWith("/rest/v1/rpc/") && READ_ONLY_RPC.has(p.slice("/rest/v1/rpc/".length))) ||
     (method === "POST" && p.startsWith("/storage/v1/object/sign/"));
-  if (ok) return fetch(input, init);
+  if (ok) return readFetch(input, init);
   return new Response(JSON.stringify({ code: "VIEW_AS", message: "Read only while viewing as someone", details: null, hint: null }), {
     status: 403,
     headers: { "Content-Type": "application/json" },
