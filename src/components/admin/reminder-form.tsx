@@ -31,7 +31,7 @@ const CHIP: Record<TaskKey, string> = {
  * sees their own outstanding tasks.
  */
 export function ReminderForm() {
-  const [kind, setKind] = useState<ReminderKind>("sign_in");
+  const [kind, setKind] = useState<ReminderKind>("final");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("21:00");
   const [note, setNote] = useState("");
@@ -95,7 +95,7 @@ export function ReminderForm() {
 
       <fieldset>
         <legend className="mb-2 text-sm font-semibold text-ink">Which reminder?</legend>
-        <div className="grid gap-2 md:grid-cols-2">
+        <div className="grid gap-2 lg:grid-cols-3">
           {REMINDER_KINDS.map((k) => (
             <label
               key={k.id}
@@ -151,7 +151,7 @@ export function ReminderForm() {
           </h3>
           {people !== null && !loadError && (
             <p className="mt-1 text-sm text-slate-700">
-              {all.length ? "Each email lists only that person's own tasks. Untick anyone you want to leave out." : kind === "sign_in" ? "Everyone with a place has signed in. Nobody needs this reminder." : "Every presenter has finished their tasks. Nobody needs this reminder."}
+              {all.length ? "Each email lists only that person's own tasks. Untick anyone you want to leave out." : kind === "final" ? "Everyone with a place has finished their tasks. Nobody needs this reminder." : kind === "sign_in" ? "Everyone with a place has signed in. Nobody needs this reminder." : "Every presenter has finished their tasks. Nobody needs this reminder."}
             </p>
           )}
           {counts.length > 0 && (

@@ -101,3 +101,44 @@ describe("reminderEmail", () => {
     expect(e.html).not.toContain("<b>Alex");
   });
 });
+
+describe("final reminder", () => {
+  const base = { siteUrl: "https://inspirelincoln.uk", deadline: "Monday 16 November, 9pm" };
+  it("goes to anyone attending with any task left, but not people who can't present or are finished", () => {
+    expect(needsReminder("final", done)).toBe(false);
+    expect(needsReminder("final", { ...done, travel: false })).toBe(true);
+    expect(needsReminder("final", { ...presenter, photo: false })).toBe(true);
+    expect(needsReminder("final", { ...presenter, photo: false, attendance: "unavailable" })).toBe(false);
+    expect(needsReminder("final", { ...done, travel: false, roles: ["finance_team"] })).toBe(false);
+  });
+  it("holds every bio to the booklet standard, delegates included", () => {
+    expect(tasksFor("final", { ...done, bio: "Medical student." }).map((t) => t.key)).toEqual(["bio_short"]);
+    expect(tasksFor("final", { ...done, bio: null, travel: false, ranked: false }).map((t) => t.key)).toEqual(["bio", "workshops", "travel"]);
+    expect(tasksFor("final", { ...done, bio: null })[0].title).toContain("booklet and certificates");
+  });
+  it("tells presenters they may lose their place and explains how to write the bio", () => {
+    const p = { ...presenter, bio: null, photo: false, submissions: {} };
+    const e = reminderEmail({ ...base, kind: "final", name: "Alex Example", roles: p.roles, tasks: tasksFor("final", p) });
+    expect(e.subject).toBe("Final reminder: 3 things to complete by Monday 16 November, 9pm");
+    expect(e.html).toContain("may lose your presenting place");
+    expect(e.html).toContain("Your biography will be published");
+    expect(e.html).toContain("third person");
+    expect(e.html).toContain("Upload your presentation slides");
+    expect(e.text).toContain("YOUR BIOGRAPHY WILL BE PUBLISHED");
+    expect(e.text).toContain("Hello Alex,");
+  });
+  it("asks delegates with a bio already to re-read it, without the presenter warning", () => {
+    const p = { ...done, travel: false };
+    const e = reminderEmail({ ...base, kind: "final", name: "Sam", roles: p.roles, tasks: tasksFor("final", p), bioDone: true });
+    expect(e.subject).toBe("Final reminder: 1 thing to complete by Monday 16 November, 9pm");
+    expect(e.html).toContain("Please re-read your biography");
+    expect(e.html).not.toContain("presenting place");
+  });
+  it("warns delegates who haven't signed in that their place may go", () => {
+    const p = { ...done, signedIn: false, photo: false };
+    const e = reminderEmail({ ...base, kind: "final", name: "Sam", roles: p.roles, tasks: tasksFor("final", p), login: [{ label: "Temporary password", value: "abcd" }] });
+    expect(e.html).toContain("delegate place may be given to someone");
+    expect(e.html).toContain("your login details are below");
+    expect(e.html).toContain("abcd");
+  });
+});

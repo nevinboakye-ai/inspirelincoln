@@ -7,12 +7,21 @@ import type { AccountType, SubmissionKind, SubmissionStatus } from "@/lib/types"
  *  - "sign_in": people with a place who haven't signed in to My Hub yet.
  *  - "presenter": oral and poster presenters with presenter tasks left
  *    (bio, photo, slides or poster), needed for the booklet and certificates.
+ *  - "final": the last reminder before the deadline, to everyone with a place
+ *    and anything left at all. Everyone's photo and biography are published
+ *    in the post-conference booklet and on certificates, so every bio is held
+ *    to the booklet standard.
  * Pure functions, so the same logic drives the committee's preview, the
  * recipient list and the emails themselves.
  */
-export type ReminderKind = "sign_in" | "presenter";
+export type ReminderKind = "final" | "sign_in" | "presenter";
 
 export const REMINDER_KINDS: { id: ReminderKind; name: string; use: string }[] = [
+  {
+    id: "final",
+    name: "Final reminder: everyone with tasks left",
+    use: "Delegates and presenters with anything still to do. Lists all their tasks, explains that every photo and biography is published in the booklet and on certificates, and warns presenters they may lose their presenting place.",
+  },
   {
     id: "sign_in",
     name: "Haven't signed in yet",
@@ -73,9 +82,11 @@ const NOUN: Record<SubmissionKind, string> = { slides: "slides", poster: "poster
  * What someone still has to do, most important first. For presenters, the
  * booklet and certificate items come before the general ones.
  */
-export function outstandingTasks(p: ReminderPerson): Task[] {
+export function outstandingTasks(p: ReminderPerson, opts: { booklet?: boolean } = {}): Task[] {
   const kinds = presenterKinds(p.roles);
   const presenter = kinds.length > 0;
+  // Presenters' bios are always printed. With `booklet`, everyone's are.
+  const published = presenter || Boolean(opts.booklet);
   const tasks: Task[] = [];
 
   if (!p.signedIn)
@@ -114,28 +125,35 @@ export function outstandingTasks(p: ReminderPerson): Task[] {
   }
 
   const words = wordCount(p.bio);
+  const covers = `your full name, course, year of study and university, and your interests in medicine and research${presenter ? ", plus what your project explores" : ""}`;
   if (!words)
     tasks.push({
       key: "bio",
-      title: presenter ? "Write your biography for the booklet" : "Write a short bio",
-      detail: presenter
-        ? "60 to 100 words, written in the third person: your course, year and university, your research interests and what your project explores. It's printed beside your abstract, so please check spelling and grammar."
-        : "A few lines about you and your interests, so other delegates can get to know you before the day.",
+      title: opts.booklet ? "Write your biography for the booklet and certificates" : presenter ? "Write your biography for the booklet" : "Write a short bio",
+      detail: opts.booklet
+        ? `60 to 100 words, in full sentences and the third person, covering ${covers}. It will be published exactly as you write it, so please check spelling, grammar and capitalisation.`
+        : presenter
+          ? "60 to 100 words, written in the third person: your course, year and university, your research interests and what your project explores. It's printed beside your abstract, so please check spelling and grammar."
+          : "A few lines about you and your interests, so other delegates can get to know you before the day.",
     });
-  else if (presenter && words < BIO_MIN_WORDS)
+  else if (published && words < BIO_MIN_WORDS)
     tasks.push({
       key: "bio_short",
-      title: "Expand your biography for the booklet",
-      detail: `Your bio is currently ${words} ${words === 1 ? "word" : "words"}. For the printed booklet, please expand it to 60 to 100 words in the third person: your course, year and university, your research interests and what your project explores.`,
+      title: opts.booklet ? "Expand your biography for the booklet and certificates" : "Expand your biography for the booklet",
+      detail: opts.booklet
+        ? `Your biography is currently ${words} ${words === 1 ? "word" : "words"}, which is too short to publish. Please rewrite it as 60 to 100 words, in full sentences and the third person, covering ${covers}.`
+        : `Your bio is currently ${words} ${words === 1 ? "word" : "words"}. For the printed booklet, please expand it to 60 to 100 words in the third person: your course, year and university, your research interests and what your project explores.`,
     });
 
   if (!p.photo)
     tasks.push({
       key: "photo",
       title: "Add a photo of yourself",
-      detail: presenter
-        ? "A clear, front-facing headshot. It appears beside your biography in the booklet and on your Delegate Card."
-        : "A clear, front-facing photo for your Delegate Card, so people can find you on the day.",
+      detail: opts.booklet
+        ? "A clear, recent, front-facing headshot, ideally against a plain background. It is published beside your biography in the post-conference booklet and appears on your Delegate Card."
+        : presenter
+          ? "A clear, front-facing headshot. It appears beside your biography in the booklet and on your Delegate Card."
+          : "A clear, front-facing photo for your Delegate Card, so people can find you on the day.",
     });
 
   if (!p.details)
@@ -168,6 +186,8 @@ export const PRESENTER_TASKS: TaskKey[] = ["sign_in", "attend", "upload", "resub
 /** Whether someone should get this reminder at all. */
 export function needsReminder(kind: ReminderKind, p: ReminderPerson) {
   if (!isAttending(p)) return false;
+  // Presenters who've told us they can't come aren't chased for presenter tasks.
+  if (kind === "final") return p.attendance !== "unavailable" && tasksFor("final", p).length > 0;
   if (kind === "sign_in") return !p.signedIn;
   if (!presenterKinds(p.roles).length || p.attendance === "unavailable") return false;
   return outstandingTasks(p).some((t) => PRESENTER_TASKS.includes(t.key) && t.key !== "sign_in" && t.key !== "attend");
@@ -198,6 +218,8 @@ export type ReminderEmailInput = {
   deadline: string;
   /** Rows for the login box, when the committee includes login details. */
   login?: { label: string; value: string }[];
+  /** Final reminder: they already have a full-length bio, so we only ask them to re-read it. */
+  bioDone?: boolean;
   /** Optional extra line from the committee. Plain text. */
   note?: string | null;
   sender?: string | null;
@@ -217,6 +239,8 @@ export function reminderEmail(o: ReminderEmailInput) {
   const things = `${count} ${count === 1 ? "thing" : "things"}`;
   const note = o.note?.trim() ? [escapeHtml(o.note.trim()).replace(/\n/g, "<br>")] : [];
   const signOff = o.sender ? `${escapeHtml(o.sender)}<br>On behalf of the INSPIRE committee` : "Warm regards,<br>The INSPIRE committee";
+
+  if (o.kind === "final") return finalEmail(o, { presenter, what, count, things, note, signOff });
 
   if (o.kind === "sign_in") {
     const subject = `Action needed: sign in to My Hub by ${o.deadline}`;
@@ -273,8 +297,87 @@ export function reminderEmail(o: ReminderEmailInput) {
   return { subject, ...r };
 }
 
-/** Tasks to list in a given reminder: the presenter email sticks to presenter items. */
+const bioExample = (presenter: boolean) =>
+  `“Amara Okafor is a third-year medical student at the University of Lincoln. She is particularly interested in cardiology and in how digital tools can improve patient care, and she is an active member of her university's student research society. ${
+    presenter
+      ? "Her project, presented at INSPIRE 2026, explores how wearable devices could support the earlier detection of atrial fibrillation in primary care."
+      : "At INSPIRE 2026 she is looking forward to learning how new technologies are evaluated before they reach patients."
+  }”`;
+
+/** The final reminder: every task left, the booklet standard for bios, and what's at stake. */
+function finalEmail(
+  o: ReminderEmailInput,
+  x: { presenter: boolean; what: string; count: number; things: string; note: string[]; signOff: string },
+) {
+  const signIn = o.tasks.some((t) => t.key === "sign_in");
+  const bioTask = o.tasks.some((t) => t.key === "bio" || t.key === "bio_short");
+  const an = x.what === "oral presentation" ? "an" : "a";
+  const deadline = escapeHtml(o.deadline);
+
+  const notes: { title: string; body: string }[] = [];
+  if (bioTask)
+    notes.push({
+      title: "Your biography will be published",
+      body: [
+        "Every attendee's photo and biography will be published in the <strong>post-conference booklet</strong> and on <strong>certificates</strong>, exactly as you submit them. Please take ten minutes to write yours properly. A good biography is:",
+        "• <strong>60 to 100 words</strong>, written in full sentences",
+        "• In the <strong>third person</strong> (“Amara is…”, not “I am…”)",
+        `• About your full name, course, year of study and university, and your interests in medicine and research${x.presenter ? ", plus what your project explores" : ""}`,
+        "• Carefully checked for spelling, grammar and capitalisation, with no abbreviations, emojis or text speak",
+        "",
+        `<em>For example:</em> ${bioExample(x.presenter)}`,
+      ].join("<br>"),
+    });
+  else if (o.bioDone)
+    notes.push({
+      title: "Please re-read your biography",
+      body: "Every attendee's photo and biography will be published in the <strong>post-conference booklet</strong> and on <strong>certificates</strong>, exactly as submitted. Before the deadline, please re-read yours in My Hub and make sure it's 60 to 100 words, written in the third person, and free of spelling and grammar mistakes.",
+    });
+
+  const callout = x.presenter
+    ? {
+        title: "You may lose your presenting place",
+        body: `If your tasks aren't completed by <strong>${deadline}</strong>, you may lose your presenting place, which will be offered to someone on the waiting list. We would also be unable to include you in the booklet or issue your certificate of presentation.`,
+      }
+    : signIn
+      ? {
+          title: "Your place depends on it",
+          body: `Places at INSPIRE are limited and in high demand. If you haven't signed in and completed these by <strong>${deadline}</strong>, your delegate place may be given to someone on the waiting list.`,
+        }
+      : {
+          title: "Please don't miss the deadline",
+          body: `We finalise the booklet, certificates, workshop places and travel plans straight after <strong>${deadline}</strong>, so anything still missing then may not be included.`,
+        };
+
+  const subject = `Final reminder: ${x.things} to complete by ${o.deadline}`;
+  const r = renderEmail({
+    siteUrl: o.siteUrl,
+    preheader: `This is our last reminder. Please complete ${x.things} in My Hub by ${o.deadline}.`,
+    eyebrow: "Final reminder",
+    heading: x.presenter ? "Last chance to complete your presenter tasks" : "Last chance to complete your tasks",
+    paragraphs: [
+      `Hello ${firstName(o.name)},`,
+      `This is our final reminder before the deadline of <strong>${deadline}</strong>. We're looking forward to welcoming you to Lincoln on Saturday 21 November, and there ${x.count === 1 ? "is" : "are"} still <strong>${x.things}</strong> we need from you.${signIn ? " You haven't signed in to My Hub yet, so your login details are below." : ""}`,
+      x.presenter
+        ? `As you're giving ${an} ${x.what}, these are needed to finalise the programme, the <strong>post-conference booklet</strong> and your <strong>certificate of presentation</strong>. Please complete every item below.`
+        : "Please complete every item below. Each one only takes a few minutes in My Hub.",
+      ...x.note,
+    ],
+    deadline: { label: "Final deadline", value: o.deadline },
+    checklist: o.tasks.map((t) => ({ title: t.title, detail: t.detail })),
+    notes,
+    callout,
+    details: o.login,
+    cta: { label: "Complete my tasks", url: `${o.siteUrl}/${signIn ? "login" : "portal"}` },
+    closing: ["Thank you, and we can't wait to see you in Lincoln.", x.signOff],
+    footnote: `You're receiving this because you have a place at INSPIRE 2026 and it's about the conference.${o.login?.some((d) => /temporary/i.test(d.label)) ? " Keep this email private. The temporary password only works until you choose your own." : ""}`,
+  });
+  return { subject, ...r };
+}
+
+/** Tasks to list in a given reminder: the presenter email sticks to presenter items, the final one lists everything. */
 export function tasksFor(kind: ReminderKind, p: ReminderPerson) {
+  if (kind === "final") return outstandingTasks(p, { booklet: true });
   const all = outstandingTasks(p);
   return kind === "presenter" ? all.filter((t) => PRESENTER_TASKS.includes(t.key)) : all;
 }
