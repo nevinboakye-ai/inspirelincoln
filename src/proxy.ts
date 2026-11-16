@@ -3,6 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabase/env";
 import { VIEW_AS_COOKIE, openViewAs } from "@/lib/view-as-seal";
 import { strayAuthTarget } from "@/lib/accounts/link-paths";
+import { PROXY_DB_TIMEOUT_MS, timedFetch } from "@/lib/supabase/timed-fetch";
+
+const dbFetch = timedFetch(PROXY_DB_TIMEOUT_MS);
 
 const PROTECTED = ["/portal", "/admin", "/review", "/judge"];
 
@@ -29,9 +32,11 @@ const COOKIE_LIFETIME = 400 * 24 * 60 * 60; // the longest browsers allow
 
 async function isSiteOpen(url: string, key: string) {
   if (siteOpen && Date.now() - siteOpen.at < TTL) return siteOpen.value;
-  let value = true; // If the switch can't be read (e.g. migration not run), stay open.
+  // If the switch can't be read (migration not run, or the database is slow),
+  // keep the last answer, or stay open, rather than hold up every page.
+  let value = siteOpen?.value ?? true;
   try {
-    const res = await fetch(`${url}/rest/v1/site_switches?key=eq.site_open&select=enabled`, { headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: "no-store" });
+    const res = await dbFetch(`${url}/rest/v1/site_switches?key=eq.site_open&select=enabled`, { headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: "no-store" });
     if (res.ok) {
       const rows = (await res.json()) as { enabled: boolean }[];
       if (rows.length) value = rows[0].enabled;
@@ -76,6 +81,7 @@ export async function proxy(request: NextRequest) {
   let written: { name: string; value: string; options: Parameters<typeof response.cookies.set>[2] }[] = [];
   let noStore: Record<string, string> = {};
   const supabase = createServerClient(url, key, {
+    global: { fetch: dbFetch },
     cookies: {
       getAll() {
         return request.cookies.getAll();
@@ -155,7 +161,7 @@ export async function proxy(request: NextRequest) {
       if (hit && Date.now() - hit.at < TTL) staff = hit.value;
       else {
         if (viewing) {
-          const res = await fetch(`${url}/rest/v1/rpc/is_editor`, {
+          const res = await dbFetch(`${url}/rest/v1/rpc/is_editor`, {
             method: "POST",
             headers: { apikey: key, Authorization: `Bearer ${viewing.a}`, "Content-Type": "application/json" },
             body: "{}",

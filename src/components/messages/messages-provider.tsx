@@ -18,7 +18,7 @@ type Ctx = {
 const MessagesContext = createContext<Ctx>({ unread: 0, version: 0, refresh: () => {} });
 export const useMessages = () => useContext(MessagesContext);
 
-const VISIBLE = 20_000;
+const VISIBLE = 60_000;
 const HIDDEN = 120_000;
 
 /**
