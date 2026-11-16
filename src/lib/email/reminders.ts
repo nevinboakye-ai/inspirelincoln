@@ -8,9 +8,9 @@ import type { AccountType, SubmissionKind, SubmissionStatus } from "@/lib/types"
  *  - "presenter": oral and poster presenters with presenter tasks left
  *    (bio, photo, slides or poster), needed for the booklet and certificates.
  *  - "final": the last reminder before the deadline, to everyone with a place
- *    and anything left at all. Everyone's photo and biography are published
- *    in the post-conference booklet and on certificates, so every bio is held
- *    to the booklet standard.
+ *    and anything left at all. Presenters' photos and biographies are
+ *    published in the post-conference booklet and on certificates; delegates'
+ *    may be, so they get lighter guidance on writing theirs.
  * Pure functions, so the same logic drives the committee's preview, the
  * recipient list and the emails themselves.
  */
@@ -20,7 +20,7 @@ export const REMINDER_KINDS: { id: ReminderKind; name: string; use: string }[] =
   {
     id: "final",
     name: "Final reminder: everyone with tasks left",
-    use: "Delegates and presenters with anything still to do. Lists all their tasks, explains that every photo and biography is published in the booklet and on certificates, and warns presenters they may lose their presenting place.",
+    use: "Delegates and presenters with anything still to do. Lists all their tasks, explains how photos and biographies are used in the booklet and on certificates, and warns presenters they may lose their presenting place.",
   },
   {
     id: "sign_in",
@@ -129,18 +129,22 @@ export function outstandingTasks(p: ReminderPerson, opts: { booklet?: boolean } 
   if (!words)
     tasks.push({
       key: "bio",
-      title: opts.booklet ? "Write your biography for the booklet and certificates" : presenter ? "Write your biography for the booklet" : "Write a short bio",
-      detail: opts.booklet
+      title: opts.booklet && presenter ? "Write your biography for the booklet and certificates" : presenter ? "Write your biography for the booklet" : opts.booklet ? "Write a short biography" : "Write a short bio",
+      detail: opts.booklet && presenter
         ? `60 to 100 words, in full sentences and the third person, covering ${covers}. It will be published exactly as you write it, so please check spelling, grammar and capitalisation.`
-        : presenter
+        : opts.booklet
+          ? "Around 60 to 100 words about your course, year and university and your interests. It may be published in the post-conference booklet, so see the tips below."
+          : presenter
           ? "60 to 100 words, written in the third person: your course, year and university, your research interests and what your project explores. It's printed beside your abstract, so please check spelling and grammar."
           : "A few lines about you and your interests, so other delegates can get to know you before the day.",
     });
   else if (published && words < BIO_MIN_WORDS)
     tasks.push({
       key: "bio_short",
-      title: opts.booklet ? "Expand your biography for the booklet and certificates" : "Expand your biography for the booklet",
-      detail: opts.booklet
+      title: opts.booklet && presenter ? "Expand your biography for the booklet and certificates" : opts.booklet ? "Add a little more to your biography" : "Expand your biography for the booklet",
+      detail: !presenter
+        ? `Your biography is currently ${words} ${words === 1 ? "word" : "words"}. As it may be published in the post-conference booklet, please aim for around 60 to 100 words. See the tips below.`
+        : opts.booklet
         ? `Your biography is currently ${words} ${words === 1 ? "word" : "words"}, which is too short to publish. Please rewrite it as 60 to 100 words, in full sentences and the third person, covering ${covers}.`
         : `Your bio is currently ${words} ${words === 1 ? "word" : "words"}. For the printed booklet, please expand it to 60 to 100 words in the third person: your course, year and university, your research interests and what your project explores.`,
     });
@@ -149,9 +153,11 @@ export function outstandingTasks(p: ReminderPerson, opts: { booklet?: boolean } 
     tasks.push({
       key: "photo",
       title: "Add a photo of yourself",
-      detail: opts.booklet
+      detail: opts.booklet && presenter
         ? "A clear, recent, front-facing headshot, ideally against a plain background. It is published beside your biography in the post-conference booklet and appears on your Delegate Card."
-        : presenter
+        : opts.booklet
+          ? "A clear, front-facing photo for your Delegate Card. It may also appear beside your biography in the post-conference booklet."
+          : presenter
           ? "A clear, front-facing headshot. It appears beside your biography in the booklet and on your Delegate Card."
           : "A clear, front-facing photo for your Delegate Card, so people can find you on the day.",
     });
@@ -297,12 +303,8 @@ export function reminderEmail(o: ReminderEmailInput) {
   return { subject, ...r };
 }
 
-const bioExample = (presenter: boolean) =>
-  `“Amara Okafor is a third-year medical student at the University of Lincoln. She is particularly interested in cardiology and in how digital tools can improve patient care, and she is an active member of her university's student research society. ${
-    presenter
-      ? "Her project, presented at INSPIRE 2026, explores how wearable devices could support the earlier detection of atrial fibrillation in primary care."
-      : "At INSPIRE 2026 she is looking forward to learning how new technologies are evaluated before they reach patients."
-  }”`;
+const BIO_EXAMPLE =
+  "“Amara Okafor is a third-year medical student at the University of Lincoln. She is particularly interested in cardiology and in how digital tools can improve patient care, and she is an active member of her university's student research society. Her project, presented at INSPIRE 2026, explores how wearable devices could support the earlier detection of atrial fibrillation in primary care.”";
 
 /** The final reminder: every task left, the booklet standard for bios, and what's at stake. */
 function finalEmail(
@@ -315,23 +317,28 @@ function finalEmail(
   const deadline = escapeHtml(o.deadline);
 
   const notes: { title: string; body: string }[] = [];
-  if (bioTask)
+  if (bioTask && !x.presenter)
+    notes.push({
+      title: "Tips for your biography",
+      body: "Your photo and biography may be published in the post-conference booklet and on certificates, so it's worth a few minutes to get it right. Aim for 60 to 100 words in the third person (“Amara is…”), mention your course, year and university and your interests, and give it a quick check for spelling and grammar.",
+    });
+  else if (bioTask)
     notes.push({
       title: "Your biography will be published",
       body: [
-        "Every attendee's photo and biography will be published in the <strong>post-conference booklet</strong> and on <strong>certificates</strong>, exactly as you submit them. Please take ten minutes to write yours properly. A good biography is:",
+        "Your photo and biography will be published in the <strong>post-conference booklet</strong> and on <strong>certificates</strong>, exactly as you submit them. Please take ten minutes to write yours properly. A good biography is:",
         "• <strong>60 to 100 words</strong>, written in full sentences",
         "• In the <strong>third person</strong> (“Amara is…”, not “I am…”)",
         `• About your full name, course, year of study and university, and your interests in medicine and research${x.presenter ? ", plus what your project explores" : ""}`,
         "• Carefully checked for spelling, grammar and capitalisation, with no abbreviations, emojis or text speak",
         "",
-        `<em>For example:</em> ${bioExample(x.presenter)}`,
+        `<em>For example:</em> ${BIO_EXAMPLE}`,
       ].join("<br>"),
     });
-  else if (o.bioDone)
+  else if (o.bioDone && x.presenter)
     notes.push({
       title: "Please re-read your biography",
-      body: "Every attendee's photo and biography will be published in the <strong>post-conference booklet</strong> and on <strong>certificates</strong>, exactly as submitted. Before the deadline, please re-read yours in My Hub and make sure it's 60 to 100 words, written in the third person, and free of spelling and grammar mistakes.",
+      body: "Your photo and biography will be published in the <strong>post-conference booklet</strong> and on <strong>certificates</strong>, exactly as submitted. Before the deadline, please re-read yours in My Hub and make sure it's 60 to 100 words, written in the third person, and free of spelling and grammar mistakes.",
     });
 
   const callout = x.presenter

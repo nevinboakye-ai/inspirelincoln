@@ -111,10 +111,11 @@ describe("final reminder", () => {
     expect(needsReminder("final", { ...presenter, photo: false, attendance: "unavailable" })).toBe(false);
     expect(needsReminder("final", { ...done, travel: false, roles: ["finance_team"] })).toBe(false);
   });
-  it("holds every bio to the booklet standard, delegates included", () => {
+  it("asks for a fuller bio from everyone, as it may be published", () => {
     expect(tasksFor("final", { ...done, bio: "Medical student." }).map((t) => t.key)).toEqual(["bio_short"]);
     expect(tasksFor("final", { ...done, bio: null, travel: false, ranked: false }).map((t) => t.key)).toEqual(["bio", "workshops", "travel"]);
-    expect(tasksFor("final", { ...done, bio: null })[0].title).toContain("booklet and certificates");
+    expect(tasksFor("final", { ...presenter, bio: null })[0].title).toContain("booklet and certificates");
+    expect(tasksFor("final", { ...done, bio: null })[0].detail).toContain("may be published");
   });
   it("tells presenters they may lose their place and explains how to write the bio", () => {
     const p = { ...presenter, bio: null, photo: false, submissions: {} };
@@ -127,12 +128,22 @@ describe("final reminder", () => {
     expect(e.text).toContain("YOUR BIOGRAPHY WILL BE PUBLISHED");
     expect(e.text).toContain("Hello Alex,");
   });
-  it("asks delegates with a bio already to re-read it, without the presenter warning", () => {
-    const p = { ...done, travel: false };
-    const e = reminderEmail({ ...base, kind: "final", name: "Sam", roles: p.roles, tasks: tasksFor("final", p), bioDone: true });
-    expect(e.subject).toBe("Final reminder: 1 thing to complete by Monday 16 November, 9pm");
+  it("asks presenters with a bio already to re-read it", () => {
+    const p = { ...presenter, photo: false };
+    const e = reminderEmail({ ...base, kind: "final", name: "Alex", roles: p.roles, tasks: tasksFor("final", p), bioDone: true });
     expect(e.html).toContain("Please re-read your biography");
+  });
+  it("gives delegates light bio tips, saying it may be published, without the presenter warning", () => {
+    const p = { ...done, bio: null, travel: false };
+    const e = reminderEmail({ ...base, kind: "final", name: "Sam", roles: p.roles, tasks: tasksFor("final", p) });
+    expect(e.subject).toBe("Final reminder: 2 things to complete by Monday 16 November, 9pm");
+    expect(e.html).toContain("Tips for your biography");
+    expect(e.html).toContain("may be published");
+    expect(e.html).not.toContain("will be published");
+    expect(e.html).not.toContain("For example");
     expect(e.html).not.toContain("presenting place");
+    const finished = reminderEmail({ ...base, kind: "final", name: "Sam", roles: done.roles, tasks: tasksFor("final", { ...done, travel: false }), bioDone: true });
+    expect(finished.html).not.toContain("biography");
   });
   it("warns delegates who haven't signed in that their place may go", () => {
     const p = { ...done, signedIn: false, photo: false };
