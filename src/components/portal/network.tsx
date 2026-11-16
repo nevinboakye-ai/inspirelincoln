@@ -176,6 +176,8 @@ export function NetworkDirectory({
   const delegates = useMemo(() => shown.filter((p) => !isCommittee(p)), [shown]);
   const selected = people.find((p) => p.id === openId) ?? null;
   const close = useCallback(() => setOpenId(null), []);
+  /** Whether to offer a Message button: the database has already decided who you can message. */
+  const reachable = (p: Delegate) => p.id !== me && p.joined && canMessage.has(p.id);
 
   return (
     <section aria-labelledby="people-title" className="space-y-4">
@@ -215,8 +217,9 @@ export function NetworkDirectory({
               </h3>
               <ul className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-3">
                 {committee.map((p) => (
-                  <li key={p.id}>
-                    <CommitteeCard p={p} me={me} logo={logos[uniKey(p.institution)]} onOpen={() => setOpenId(p.id)} />
+                  <li key={p.id} className="relative">
+                    <CommitteeCard p={p} me={me} logo={logos[uniKey(p.institution)]} onOpen={() => setOpenId(p.id)} messageable={reachable(p)} />
+                    {reachable(p) && <CardMessage p={p} variant={isExec(p) ? "dark" : "gold"} />}
                   </li>
                 ))}
               </ul>
@@ -233,7 +236,7 @@ export function NetworkDirectory({
           {delegates.map((p) => {
             const tone = toneFor(p.account_type);
             return (
-              <li key={p.id}>
+              <li key={p.id} className="relative">
                 <button
                   type="button"
                   onClick={() => setOpenId(p.id)}
@@ -244,7 +247,7 @@ export function NetworkDirectory({
                   <span className="flex flex-1 flex-col p-3 sm:p-5">
                     <span className={PERSON_ROW}>
                       <Avatar url={p.avatar_url} name={p.full_name} className="size-14 transition-transform duration-300 group-hover:scale-105 sm:size-12" fallbackClassName={`text-sm ${tone.avatar}`} />
-                      <span className="w-full min-w-0 sm:w-auto">
+                      <span className={`w-full min-w-0 sm:w-auto ${reachable(p) ? "sm:pr-9" : ""}`}>
                         <span className={`${NAME} text-ink`}>
                           {p.full_name}
                           {p.id === me && <span className="ml-1.5 text-xs font-normal text-slate">(you)</span>}
@@ -271,6 +274,7 @@ export function NetworkDirectory({
                     </span>
                   </span>
                 </button>
+                {reachable(p) && <CardMessage p={p} variant="outline" />}
               </li>
             );
           })}
@@ -283,7 +287,7 @@ export function NetworkDirectory({
       <Drawer open={Boolean(selected)} onClose={close} label={selected ? `${selected.full_name}'s profile` : "Profile"}>
         {selected && (
           <>
-            <PersonDetail p={selected} me={me} logo={logos[uniKey(selected.institution)]} canMessage={canMessage.has(selected.id)} />
+            <PersonDetail p={selected} me={me} logo={logos[uniKey(selected.institution)]} canMessage={reachable(selected)} />
             {manage?.people[selected.id] && <ManagePerson key={selected.id} person={manage.people[selected.id]} rights={manage.rights} onRemoved={close} />}
           </>
         )}
@@ -303,7 +307,7 @@ const FOOT = "mt-auto flex flex-col items-center gap-2 pt-3 sm:flex-row sm:justi
  * The committee's cards stand out from delegates': the executive committee's
  * are gold, the rest of the team's are dark with a gold edge.
  */
-function CommitteeCard({ p, me, logo, onOpen }: { p: Delegate; me: string; logo?: string; onOpen: () => void }) {
+function CommitteeCard({ p, me, logo, onOpen, messageable }: { p: Delegate; me: string; logo?: string; onOpen: () => void; messageable?: boolean }) {
   const exec = isExec(p);
   const team = committeeRole(p);
   const c = exec
@@ -348,7 +352,7 @@ function CommitteeCard({ p, me, logo, onOpen }: { p: Delegate; me: string; logo?
       <span className="relative flex flex-1 flex-col p-3 sm:p-5">
         <span className={PERSON_ROW}>
           <Avatar url={p.avatar_url} name={p.full_name} className={`size-14 ring-2 transition-transform duration-300 group-hover:scale-105 sm:size-12 ${c.ring}`} fallbackClassName={c.fallback} />
-          <span className="w-full min-w-0 sm:w-auto">
+          <span className={`w-full min-w-0 sm:w-auto ${messageable ? "sm:pr-9" : ""}`}>
             <span className={NAME}>
               {p.full_name}
               {p.id === me && <span className={`ml-1.5 text-xs font-normal ${c.you}`}>(you)</span>}
@@ -376,6 +380,14 @@ function CommitteeCard({ p, me, logo, onOpen }: { p: Delegate; me: string; logo?
       </span>
     </button>
   );
+}
+
+/**
+ * The round Message button in a card's top corner. It sits beside the card's
+ * own button rather than inside it, so each stays a separate control.
+ */
+function CardMessage({ p, variant }: { p: Delegate; variant: "outline" | "gold" | "dark" }) {
+  return <MessageButton icon personId={p.id} name={p.full_name} variant={variant} className="absolute right-2 top-3.5 sm:right-3 sm:top-4" />;
 }
 
 function PersonDetail({ p, me, logo, canMessage }: { p: Delegate; me: string; logo?: string; canMessage?: boolean }) {
