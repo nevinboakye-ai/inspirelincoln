@@ -257,7 +257,7 @@ export default function PrivacyPage() {
               <li><strong>You</strong> see everything about yourself.</li>
               <li><strong>Supporting committee members</strong> see slides and posters with the presenter&apos;s name, so they can review them. They can&apos;t see anyone&apos;s email or profile.</li>
               <li><strong>The executive committee</strong>, vice president and president see account details to review accounts, manage the waitlist and run check-in.</li>
-              <li><strong>Other confirmed delegates</strong> see your name, university, year and account type on the delegate network, plus a photo, bio, LinkedIn link or email only if you add them. You can hide yourself from the network in My Hub. People whose account isn&apos;t confirmed see nothing.</li>
+              <li><strong>Other confirmed delegates</strong> see your name, university, year and account type on the delegate network, plus a photo, bio, LinkedIn link or email only if you add them. Every confirmed delegate is listed on the network. People whose account isn&apos;t confirmed see nothing.</li>
               <li><strong>Confirmed delegates who scan your Delegate Card</strong> see the same card, plus your presentation title if you&apos;re presenting, and can save it to their own list with a private note. You can turn this off in My Hub, and the committee can still scan your code to check you in.</li>
             </ul>
             <p>We won&apos;t share your data with anyone else unless the law requires it, for example if the police make a valid request.</p>

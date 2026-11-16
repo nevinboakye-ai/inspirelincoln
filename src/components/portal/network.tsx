@@ -38,7 +38,7 @@ export type Delegate = {
   joined: boolean;
 };
 
-type CardProfile = { bio: string | null; linkedinUrl: string | null; instagram: string | null; networkShowEmail: boolean; networkListed: boolean; email: string };
+type CardProfile = { bio: string | null; linkedinUrl: string | null; instagram: string | null; networkShowEmail: boolean; email: string };
 
 export function NetworkCardForm({ profile }: { profile: CardProfile }) {
   const [state, action, pending] = useActionState(saveNetworkCard, null);
@@ -97,10 +97,6 @@ export function NetworkCardForm({ profile }: { profile: CardProfile }) {
           <span>
             Show my email (<span className="break-all">{profile.email}</span>) to other delegates
           </span>
-        </label>
-        <label className="flex items-start gap-3 text-sm text-slate-700">
-          <input type="checkbox" name="listed" defaultChecked={profile.networkListed} className="mt-0.5 size-5 shrink-0 accent-navy" />
-          <span>List me on the delegate network. Untick to hide your card completely.</span>
         </label>
       </fieldset>
       <button type="submit" disabled={pending} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[3px] bg-navy px-6 font-ui font-semibold text-paper hover:bg-navy-700 disabled:opacity-60 sm:w-auto">

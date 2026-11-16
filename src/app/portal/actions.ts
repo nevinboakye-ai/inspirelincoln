@@ -80,7 +80,6 @@ const networkSchema = z.object({
       return handle;
     }),
   showEmail: z.boolean(),
-  listed: z.boolean(),
 });
 
 export async function saveNetworkCard(_: ActionResult, form: FormData): Promise<ActionResult> {
@@ -90,20 +89,19 @@ export async function saveNetworkCard(_: ActionResult, form: FormData): Promise<
     linkedin: form.get("linkedin") ?? "",
     instagram: form.get("instagram") ?? "",
     showEmail: form.get("showEmail") === "on",
-    listed: form.get("listed") === "on",
   });
   if (!parsed.success) return { ok: false, error: "Please check the highlighted answers.", fieldErrors: fieldErrors(parsed.error) };
   const v = parsed.data;
   const { error } = await db
     .from("profiles")
-    .update({ bio: v.bio || null, linkedin_url: v.linkedin || null, instagram: v.instagram || null, network_show_email: v.showEmail, network_listed: v.listed })
+    .update({ bio: v.bio || null, linkedin_url: v.linkedin || null, instagram: v.instagram || null, network_show_email: v.showEmail, network_listed: true })
     .eq("id", user.id);
   // Saving the card counts as answering the email question (ignored before setup SQL 28).
   if (!error) await db.from("profiles").update({ network_email_asked: true }).eq("id", user.id);
   if (error) return { ok: false, error: "We couldn't save your card. Please try again." };
   revalidatePath("/portal/network");
   revalidatePath("/portal/profile");
-  return { ok: true, message: v.listed ? "Saved. Your card is up to date." : "Saved. You're hidden from the network." };
+  return { ok: true, message: "Saved. Your card is up to date." };
 }
 
 /**

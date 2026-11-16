@@ -61,13 +61,13 @@ export function NetworkIntro({ canMessage }: { canMessage: boolean }) {
 
 /**
  * "Your card" folds down to one line with an Edit button, so the directory
- * starts near the top of the page. It says whether you're listed and nudges
- * you to add a bio if you haven't.
+ * starts near the top of the page. It nudges you to add a bio if you
+ * haven't.
  */
-export function YourCardPanel({ listed, hasBio, children }: { listed: boolean; hasBio: boolean; children: React.ReactNode }) {
+export function YourCardPanel({ hasBio, children }: { hasBio: boolean; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const id = useId();
-  const status = !listed ? "Hidden. Other delegates can't see your card." : hasBio ? "Listed on the network." : "Listed, but you haven't added a bio yet.";
+  const status = hasBio ? "Listed on the network." : "Listed, but you haven't added a bio yet.";
   return (
     <section className="overflow-hidden rounded-xl border border-navy/10 bg-white" aria-labelledby={`${id}-title`}>
       <div className="flex items-center gap-3 px-5 py-4 sm:gap-4 sm:px-6">
@@ -76,7 +76,7 @@ export function YourCardPanel({ listed, hasBio, children }: { listed: boolean; h
             Your card
           </h2>
           <p className="mt-0.5 flex items-start gap-2 text-sm leading-snug text-slate-700">
-            <span aria-hidden className={cn("mt-1.5 size-2 shrink-0 rounded-full", !listed ? "bg-slate" : hasBio ? "bg-success" : "bg-gold")} />
+            <span aria-hidden className={cn("mt-1.5 size-2 shrink-0 rounded-full", hasBio ? "bg-success" : "bg-gold")} />
             {status}
           </p>
         </div>
