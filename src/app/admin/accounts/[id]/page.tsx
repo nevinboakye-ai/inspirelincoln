@@ -8,13 +8,14 @@ import { loadEmailTemplates } from "@/lib/email/saved-templates";
 import { AccountTypePicker } from "@/components/admin/account-type-picker";
 import { AdminHeader, Panel } from "@/components/admin/ui";
 import { AccountReviewForm, DirectEmailForm } from "@/components/admin/committee-forms";
-import { PersonDetailsForm } from "@/components/admin/person-forms";
+import { PersonBioForm, PersonDetailsForm } from "@/components/admin/person-forms";
 import { ViewAsButton } from "@/components/admin/view-as";
 import { Badge } from "@/components/ui/badge";
 import { Notice } from "@/components/ui/notice";
 import { ACCOUNT_STATUS_LABEL, ACCOUNT_TYPE_LABEL, COMMITTEE_TYPES, EXEC_TYPES, SUBMISSION_LABEL, SUBMISSION_STATUS_LABEL, rolesLabel, rolesOf, submissionKindsFor } from "@/lib/accounts";
 import { PersonRequestForm, RemoveAccountPanel } from "@/components/admin/manage-person";
 import { emailConfigured } from "@/lib/email/resend";
+import { BIO_MIN_WORDS } from "@/lib/email/reminders";
 import type { AccountStatus, AccountType, SubmissionKind, SubmissionStatus } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Account" };
@@ -98,6 +99,7 @@ export default async function PersonPage({ params, searchParams }: { params: Pro
         <ul className="flex gap-2 text-sm">
           {[
             ["#details", "Details"],
+            ["#bio", "Bio"],
             ...(locked ? [] : [["#type", "Account type"]]),
             ["#decision", "Account decision"],
             ...(canEmail ? [["#email", "Email them"]] : []),
@@ -136,6 +138,16 @@ export default async function PersonPage({ params, searchParams }: { params: Pro
                   canChangeEmail={profile.access.owner}
                   committee={rolesOf(type, extra).some((t) => COMMITTEE_TYPES.includes(t))}
                 />
+              )}
+            </Panel>
+          </section>
+
+          <section id="bio" className="scroll-mt-28">
+            <Panel title="Bio">
+              {locked ? (
+                p.bio ? <p className="whitespace-pre-line text-sm text-ink">{p.bio}</p> : <p className="text-sm text-slate-700">No bio yet. Only the site owner can change it.</p>
+              ) : (
+                <PersonBioForm key={p.bio ?? ""} id={p.id} bio={p.bio} minWords={BIO_MIN_WORDS} />
               )}
             </Panel>
           </section>
@@ -236,9 +248,8 @@ export default async function PersonPage({ params, searchParams }: { params: Pro
             </dl>
           </Panel>
 
-          {(p.bio || p.linkedin_url || p.instagram) && (
-            <Panel title="Their bio">
-              {p.bio && <p className="whitespace-pre-line text-sm text-ink">{p.bio}</p>}
+          {(p.linkedin_url || p.instagram) && (
+            <Panel title="Their links">
               {p.linkedin_url && (
                 <a href={p.linkedin_url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-electric-600 underline underline-offset-4">
                   LinkedIn<span className="sr-only"> (opens in a new tab)</span>

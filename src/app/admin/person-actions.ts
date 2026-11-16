@@ -69,6 +69,33 @@ export async function updatePerson(_: ActionResult, form: FormData): Promise<Act
 }
 
 
+const bioSchema = z.object({
+  id: z.string().uuid(),
+  bio: z.string().trim().max(600, "Keep the bio to 600 characters.").optional().default(""),
+});
+
+/**
+ * The committee writing or correcting someone's bio. It saves to the same field
+ * people fill in themselves, so it shows on their network card, in the booklet
+ * and on certificates, and the deadline reminders stop chasing it.
+ */
+export async function updatePersonBio(_: ActionResult, form: FormData): Promise<ActionResult> {
+  const { db, profile } = await requireAccess("review_accounts", "/admin/accounts");
+  const parsed = bioSchema.safeParse({ id: form.get("id"), bio: form.get("bio") ?? "" });
+  if (!parsed.success) return { ok: false, error: "Please check the bio.", fieldErrors: errors(parsed.error) };
+  const v = parsed.data;
+
+  const { data: current } = await db.from("profiles").select("role").eq("id", v.id).maybeSingle();
+  if (!current) return { ok: false, error: "This account no longer exists." };
+  if (current.role === "admin" && !profile.access.owner) return { ok: false, error: "Only the site owner can change the site owner's account." };
+
+  const { error } = await db.from("profiles").update({ bio: v.bio || null }).eq("id", v.id);
+  if (error) return { ok: false, error: "Could not save their bio." };
+  revalidatePath(`/admin/accounts/${v.id}`);
+  revalidatePath("/portal", "layout");
+  return { ok: true, message: v.bio ? "Saved. Their bio is updated everywhere it appears." : "Saved. Their bio is now empty." };
+}
+
 const rosterSchema = z.object({
   id: z.string().uuid(),
   fullName: z.string().trim().min(2, "Enter their name.").max(120),
