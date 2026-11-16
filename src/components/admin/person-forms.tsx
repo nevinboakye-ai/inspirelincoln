@@ -1,7 +1,7 @@
 "use client";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { updatePerson, updateRosterPerson } from "@/app/admin/person-actions";
+import { updatePerson, updatePersonBio, updateRosterPerson } from "@/app/admin/person-actions";
 import { ResultBanner } from "@/components/portal/profile-forms";
 import { Field, describedBy, inputClass } from "@/components/forms/field";
 import { submitWithoutReset } from "@/lib/use-action-form";
@@ -79,6 +79,48 @@ export function PersonDetailsForm({ person, canChangeEmail, committee }: { perso
       {!committee && <input type="hidden" name="committeePosition" value={person.committeePosition ?? ""} />}
       <button type="submit" disabled={pending} className={btn.primary}>
         {pending && <Loader2 aria-hidden className="size-4 animate-spin" />} Save details
+      </button>
+    </form>
+  );
+}
+
+/**
+ * Write or edit someone's bio for them. It saves to the same field they fill in
+ * on their network card, so the booklet, certificates and reminders all see it.
+ */
+export function PersonBioForm({ id, bio, minWords }: { id: string; bio: string | null; minWords: number }) {
+  const [state, action, pending] = useActionState(updatePersonBio, null);
+  const [text, setText] = useState(bio ?? "");
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const short = words > 0 && words < minWords;
+  return (
+    <form onSubmit={submitWithoutReset(action)} noValidate className="space-y-4">
+      <ResultBanner state={state} />
+      <input type="hidden" name="id" value={id} />
+      <Field
+        id="p-bio"
+        label="Bio"
+        error={state?.fieldErrors?.bio}
+        hint={`This is the same bio they see and edit on their network card. It is printed in the booklet and on certificates, so aim for at least ${minWords} words.`}
+      >
+        <textarea
+          id="p-bio"
+          name="bio"
+          rows={6}
+          maxLength={600}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          aria-invalid={Boolean(state?.fieldErrors?.bio)}
+          aria-describedby={describedBy("p-bio", state?.fieldErrors?.bio, true) + " p-bio-count"}
+          className={inputClass}
+        />
+      </Field>
+      <p id="p-bio-count" aria-live="polite" className={`-mt-2 text-sm ${short ? "font-medium text-warning" : "text-slate"}`}>
+        {words} {words === 1 ? "word" : "words"} · {text.length}/600 characters
+        {short ? ` · Under ${minWords} words, so the reminders may still ask for a longer one.` : ""}
+      </p>
+      <button type="submit" disabled={pending} className={btn.primary}>
+        {pending && <Loader2 aria-hidden className="size-4 animate-spin" />} Save bio
       </button>
     </form>
   );
