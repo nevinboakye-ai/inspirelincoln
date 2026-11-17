@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { greetingName, judgeQueue, judgingError, markPercent, nextToMark, previewKind, rankResults, type BoardEntry, type Criterion, type Mark } from "@/lib/judging";
+import { MIN_JUDGES, greetingName, isDone, judgeQueue, judgesLabel, judgingError, markPercent, nextToMark, previewKind, rankResults, type BoardEntry, type Criterion, type Mark } from "@/lib/judging";
 
 const entry = (id: string, kind: "oral" | "poster", over: Partial<BoardEntry> = {}): BoardEntry => ({
   presenterId: id, kind, name: id, institution: null, title: null, avatarPath: null, label: null, sort: 0, attendance: null, checkedIn: false,
-  submission: null, assigned: false, myStatus: null, myTotal: null, myMax: null, marksIn: 0, ...over,
+  submission: null, assigned: false, myStatus: null, myTotal: null, myMax: null, marksIn: 0, closed: false, ...over,
 });
 const crit: Criterion[] = [
   { id: "c1", kind: "poster", label: "A", description: "", maxScore: 10, sort: 1 },
@@ -45,14 +45,48 @@ describe("judging", () => {
   it("ranks by average, ignores drafts, shares ranks on ties and flags disagreement", () => {
     const marks = [
       mark("x", "j1", { c1: 10, c2: 5 }), mark("x", "j2", { c1: 2, c2: 1 }),
-      mark("y", "j1", { c1: 9, c2: 4 }),
-      mark("z", "j1", { c1: 9, c2: 4 }),
-      mark("w", "j1", { c1: 10, c2: 5 }, "draft"),
+      mark("y", "j1", { c1: 9, c2: 4 }), mark("y", "j2", { c1: 9, c2: 4 }),
+      mark("z", "j1", { c1: 9, c2: 4 }), mark("z", "j3", { c1: 9, c2: 4 }), mark("z", "j4", { c1: 9, c2: 4 }),
+      mark("w", "j1", { c1: 10, c2: 5 }, "draft"), mark("w", "j2", { c1: 10, c2: 5 }),
     ];
     const rows = rankResults(["x", "y", "z", "w"].map((id) => entry(id, "poster")), marks, crit, "poster");
-    expect(rows.map((r) => [r.presenterId, r.rank])).toEqual([["y", 1], ["z", 1], ["x", 3], ["w", null]]);
+    expect(rows.map((r) => [r.presenterId, r.rank])).toEqual([["z", 1], ["y", 1], ["x", 3], ["w", null]]);
     expect(rows.find((r) => r.presenterId === "x")?.spread).toBeCloseTo(80);
     expect(rows.find((r) => r.presenterId === "w")?.drafts).toBe(1);
+  });
+
+  it("only ranks presenters marked by at least two judges, and allows more", () => {
+    expect(MIN_JUDGES).toBe(2);
+    const marks = [
+      mark("solo", "j1", { c1: 10, c2: 5 }),
+      mark("pair", "j1", { c1: 6, c2: 3 }), mark("pair", "j2", { c1: 6, c2: 3 }),
+      mark("trio", "j1", { c1: 8, c2: 4 }), mark("trio", "j2", { c1: 8, c2: 4 }), mark("trio", "j3", { c1: 8, c2: 4 }),
+      mark("drafty", "j1", { c1: 10, c2: 5 }), mark("drafty", "j2", { c1: 10, c2: 5 }, "draft"),
+    ];
+    const rows = rankResults(["solo", "pair", "trio", "drafty", "none"].map((id) => entry(id, "poster")), marks, crit, "poster");
+    // The single top mark doesn't beat fully marked presenters; it follows them unranked.
+    expect(rows.map((r) => [r.presenterId, r.rank, r.complete])).toEqual([
+      ["trio", 1, true],
+      ["pair", 2, true],
+      ["solo", null, false],
+      ["drafty", null, false],
+      ["none", null, false],
+    ]);
+    expect(rows.find((r) => r.presenterId === "solo")?.average).toBe(100);
+  });
+
+  it("describes progress towards two judges", () => {
+    expect(judgesLabel(0)).toBe("0 of 2 judges");
+    expect(judgesLabel(1)).toBe("1 of 2 judges");
+    expect(judgesLabel(2)).toBe("2 judges");
+    expect(judgesLabel(3)).toBe("3 judges");
+  });
+
+  it("treats a presenter with closed marking as nothing left to do", () => {
+    expect(isDone(entry("a", "poster", { closed: true }))).toBe(true);
+    const q = [entry("a", "poster"), entry("b", "poster", { closed: true }), entry("c", "poster")];
+    expect(nextToMark(q, { presenterId: "a", kind: "poster" })?.presenterId).toBe("c");
+    expect(judgingError("MARKING_CLOSED")).toMatch(/closed marking for this presenter/);
   });
 
   it("greets judges sensibly and explains database errors", () => {

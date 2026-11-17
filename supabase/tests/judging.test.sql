@@ -94,6 +94,26 @@ select pg_temp.as_user('00000000-0000-0000-0000-0000000000d1');
 select pg_temp.expect((select count(*) from public.judging_marks) = 1, 'executive committee sees every mark');
 select pg_temp.expect((select count(*) from public.judging_judges()) = 2, 'committee sees both judges');
 select pg_temp.expect(pg_temp.raises($$select public.save_judging_mark('00000000-0000-0000-0000-0000000000b2', 'poster', '{}'::jsonb, '', '', '', false)$$, 'NOT_ALLOWED'), 'managing judging is not judging');
+-- Closing marking for one presenter
+insert into public.judging_entries (presenter_id, kind, marking_closed, closed_at) values ('00000000-0000-0000-0000-0000000000b2', 'poster', true, now())
+on conflict (presenter_id, kind) do update set marking_closed = true, closed_at = now();
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.expect((select marking_closed from public.judging_board() where kind = 'poster') and not (select marking_closed from public.judging_board() where kind = 'oral'), 'board shows which presenters are closed');
+select pg_temp.expect(pg_temp.raises($$select public.save_judging_mark('00000000-0000-0000-0000-0000000000b2', 'poster', '{}'::jsonb, '', '', '', false)$$, 'MARKING_CLOSED'), 'no marking once marking is closed for that presenter');
+select pg_temp.expect((public.save_judging_mark('00000000-0000-0000-0000-0000000000b1', 'oral', pg_temp.scores('oral', 9), 'Clear aims', 'Slow down', '', false)) ->> 'status' = 'submitted', 'other presenters can still be marked');
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000a2');
+do $$ begin
+  update public.judging_entries set marking_closed = false;
+  if found then raise exception 'FAILED: judge reopened marking'; end if;
+  raise notice 'ok - judges cannot reopen marking';
+end $$;
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000d1');
+update public.judging_entries set marking_closed = false, closed_at = null where presenter_id = '00000000-0000-0000-0000-0000000000b2' and kind = 'poster';
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.expect((public.save_judging_mark('00000000-0000-0000-0000-0000000000b2', 'poster', '{}'::jsonb, '', '', '', false)) ->> 'status' = 'draft', 'marking works again once reopened');
+
+-- Closing judging for everyone
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000d1');
 update public.judging_settings set open = false where edition_id = public.current_edition_id();
 select pg_temp.as_user('00000000-0000-0000-0000-0000000000a1');
 select pg_temp.expect(pg_temp.raises($$select public.save_judging_mark('00000000-0000-0000-0000-0000000000b2', 'poster', '{}'::jsonb, '', '', '', false)$$, 'JUDGING_CLOSED'), 'no marking once judging closes');
@@ -103,9 +123,16 @@ update public.judging_settings set released = true, release_names = false, relea
 -- After release
 select pg_temp.as_user('00000000-0000-0000-0000-0000000000b1');
 select pg_temp.expect((public.my_judging_feedback()) ->> 'released' = 'true', 'feedback released');
-select pg_temp.expect(jsonb_array_length((public.my_judging_feedback()) -> 'items') = 1, 'presenter sees their one piece of feedback');
+select pg_temp.expect(jsonb_array_length((public.my_judging_feedback()) -> 'items') = 0, 'feedback from only one judge is held back');
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000d1');
+update public.judging_settings set open = true where edition_id = public.current_edition_id();
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000a2');
+select pg_temp.expect((public.save_judging_mark('00000000-0000-0000-0000-0000000000b1', 'oral', pg_temp.scores('oral', 7), 'Good data', 'Fewer slides', '', true)) ->> 'status' = 'submitted', 'a second judge submits');
+select pg_temp.expect((select marks_in from public.judging_board() where kind = 'oral') = 2, 'board counts both judges');
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000b1');
+select pg_temp.expect(jsonb_array_length((public.my_judging_feedback()) -> 'items') = 2, 'presenter sees feedback once two judges have submitted');
 select pg_temp.expect((public.my_judging_feedback()) -> 'items' -> 0 ->> 'judge' is null, 'judge name hidden when not released');
-select pg_temp.expect((public.my_judging_feedback()) -> 'items' -> 0 ->> 'total' = '45', 'marks shown when released');
+select pg_temp.expect(exists (select 1 from jsonb_array_elements((public.my_judging_feedback()) -> 'items') i where i ->> 'total' = '45'), 'marks shown when released');
 select pg_temp.expect(((public.my_judging_feedback()) -> 'items' -> 0) ? 'committee_note' = false, 'the committee note never reaches the presenter');
 select pg_temp.as_user('00000000-0000-0000-0000-0000000000b2');
 select pg_temp.expect(jsonb_array_length((public.my_judging_feedback()) -> 'items') = 0, 'other presenters see none of it');

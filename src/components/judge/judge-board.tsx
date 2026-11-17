@@ -1,10 +1,10 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, ChevronRight, CircleDashed, MapPin, PartyPopper, PencilLine, ScanLine, Search, UserCheck, X } from "lucide-react";
+import { CheckCircle2, ChevronRight, CircleDashed, Lock, MapPin, PartyPopper, PencilLine, ScanLine, Search, UserCheck, Users, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/cn";
-import { KIND_LABEL, isDone, type BoardEntry, type JudgingKind } from "@/lib/judging";
+import { KIND_LABEL, MIN_JUDGES, isComplete, isDone, judgesLabel, type BoardEntry, type JudgingKind } from "@/lib/judging";
 
 type Filter = "todo" | "done" | "all";
 const STORE = "judge-board-view";
@@ -49,6 +49,12 @@ function StatusPill({ e }: { e: BoardEntry }) {
         {e.myTotal ?? 0}/{e.myMax ?? 0}
       </span>
     );
+  if (e.closed)
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-paper-200 px-2.5 py-1 text-xs font-semibold text-slate-700">
+        <Lock aria-hidden className="size-3.5" /> Closed
+      </span>
+    );
   if (e.myStatus === "draft")
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2.5 py-1 text-xs font-semibold text-[#7a4a00]">
@@ -58,6 +64,20 @@ function StatusPill({ e }: { e: BoardEntry }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-paper-200 px-2.5 py-1 text-xs font-semibold text-slate-700">
       <CircleDashed aria-hidden className="size-3.5" /> To mark
+    </span>
+  );
+}
+
+/** How many judges have submitted marks for this presenter, against the minimum of two. */
+function JudgesCount({ e }: { e: BoardEntry }) {
+  const complete = isComplete(e.marksIn);
+  return (
+    <span
+      className={cn("inline-flex items-center gap-1 font-semibold", complete ? "text-success" : e.marksIn > 0 ? "text-[#7a4a00]" : "text-slate")}
+      title={complete ? "Marking complete. More judges can still mark them." : `Needs ${MIN_JUDGES - e.marksIn} more judge${MIN_JUDGES - e.marksIn === 1 ? "" : "s"}`}
+    >
+      <Users aria-hidden className="size-3" />
+      {judgesLabel(e.marksIn)}
     </span>
   );
 }
@@ -261,6 +281,7 @@ export function JudgeBoard({
                   </span>
                   {e.title && <span className="mt-0.5 line-clamp-2 text-sm leading-snug text-slate-700">{e.title}</span>}
                   <span className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-slate">
+                    <JudgesCount e={e} />
                     {e.institution && <span className="truncate">{e.institution}</span>}
                     {e.attendance === "unavailable" && <span className="font-semibold text-danger">Said they can&apos;t attend</span>}
                     {e.assigned && <span className="font-semibold text-electric-600">On your list</span>}

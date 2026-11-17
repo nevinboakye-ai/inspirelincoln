@@ -4,7 +4,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight, FileWarning, MapPin, UserCheck, U
 import { requireUser } from "@/lib/auth";
 import { signAvatar } from "@/lib/avatar";
 import { loadJudging } from "@/lib/judging-server";
-import { KIND_LABEL, isKind, judgeQueue, nextToMark, previewKind } from "@/lib/judging";
+import { KIND_LABEL, MIN_JUDGES, isComplete, isKind, judgeQueue, judgesLabel, nextToMark, previewKind } from "@/lib/judging";
 import { Avatar } from "@/components/ui/avatar";
 import { MarkForm } from "@/components/judge/mark-form";
 import { JudgingUnavailable } from "@/components/judge/judging-unavailable";
@@ -119,7 +119,13 @@ export default async function MarkPage({ params }: { params: Promise<{ presenter
                 <UserX aria-hidden className="size-3.5" /> Said they can&apos;t attend
               </span>
             ) : null}
-            {entry.marksIn > 0 && <span className="rounded-full bg-paper-200 px-2.5 py-1 font-medium text-slate-700">Marked by {entry.marksIn} judge{entry.marksIn === 1 ? "" : "s"}</span>}
+            <span
+              className={`rounded-full px-2.5 py-1 font-medium ${isComplete(entry.marksIn) ? "bg-success/10 text-success" : "bg-paper-200 text-slate-700"}`}
+              title={`Marking is complete once at least ${MIN_JUDGES} judges have submitted.`}
+            >
+              {isComplete(entry.marksIn) ? `Marked by ${judgesLabel(entry.marksIn)}` : `${judgesLabel(entry.marksIn)} so far`}
+            </span>
+            {entry.closed && <span className="rounded-full bg-paper-200 px-2.5 py-1 font-semibold text-slate-700">Marking closed</span>}
           </div>
           {file && downloadUrl ? (
             <FilePreview kind={view} url={showUrl ?? downloadUrl} downloadUrl={downloadUrl} name={file.name} noun={noun} who={entry.name} />
@@ -137,7 +143,8 @@ export default async function MarkPage({ params }: { params: Promise<{ presenter
         kind={kind}
         presenterName={entry.name}
         criteria={criteria}
-        open={j.settings.open}
+        open={j.settings.open && !entry.closed}
+        closedLabel={j.settings.open ? "Marking closed for this presenter" : "Judging closed"}
         canMark={canMark}
         initial={{
           scores: (mark?.scores as Record<string, number> | null) ?? {},

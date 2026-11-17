@@ -162,6 +162,7 @@ export function MarkForm({
   criteria,
   initial,
   open,
+  closedLabel = "Judging closed",
   canMark,
   next,
 }: {
@@ -171,6 +172,8 @@ export function MarkForm({
   criteria: Criterion[];
   initial: Initial;
   open: boolean;
+  /** What the lock says when `open` is false. */
+  closedLabel?: string;
   canMark: boolean;
   next: { href: string; name: string; label: string | null } | null;
 }) {
@@ -299,14 +302,14 @@ export function MarkForm({
   };
 
   const saveState = useMemo(() => {
-    if (locked) return { icon: Lock, text: !canMark ? "View only" : "Judging closed", tone: "text-slate" };
+    if (locked) return { icon: Lock, text: !canMark ? "View only" : closedLabel, tone: "text-slate" };
     if (offline) return { icon: CloudOff, text: "Offline: kept on this phone", tone: "text-warning" };
     if (saving || submitting) return { icon: Loader2, text: "Saving…", tone: "text-slate", spin: true };
     if (dirty) return { icon: PencilLine, text: status === "submitted" ? "Changes not sent" : "Editing", tone: "text-slate" };
     if (status === "submitted") return { icon: CheckCircle2, text: savedAt ? `Submitted ${time(savedAt)}` : "Submitted", tone: "text-success" };
     if (status === "draft") return { icon: Check, text: savedAt ? `Draft saved ${time(savedAt)}` : "Draft saved", tone: "text-slate" };
     return { icon: PencilLine, text: "Not started", tone: "text-slate" };
-  }, [locked, canMark, offline, saving, submitting, dirty, status, savedAt]);
+  }, [locked, canMark, closedLabel, offline, saving, submitting, dirty, status, savedAt]);
 
   return (
     <div className="space-y-3">

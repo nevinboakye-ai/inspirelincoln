@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAccess } from "@/lib/auth";
-import { isKind } from "@/lib/judging";
+import { isComplete, isKind } from "@/lib/judging";
 
 const RESULTS = "/admin/judging";
 const SETUP = "/admin/judging/setup";
@@ -12,8 +12,14 @@ function done(path: string, flash: string, error?: { message?: string } | null):
   revalidatePath(RESULTS);
   revalidatePath(SETUP);
   revalidatePath("/judge");
-  const msg = error ? (error.message?.includes("VIEW_AS") || error.message?.includes("read-only") ? "view_as" : "error") : flash;
-  redirect(`${path}?${error ? "error" : "saved"}=${msg}`);
+  const msg = error
+    ? error.message?.includes("VIEW_AS") || error.message?.includes("read-only")
+      ? "view_as"
+      : /marking_closed|closed_at/.test(error.message ?? "")
+        ? "needs_sql"
+        : "error"
+    : flash;
+  redirect(`${path}${path.includes("?") ? "&" : "?"}${error ? "error" : "saved"}=${msg}`);
 }
 
 async function currentEdition(db: Awaited<ReturnType<typeof requireAccess>>["db"]) {
@@ -105,6 +111,37 @@ export async function saveEntries(form: FormData) {
   }
   const { error } = rows.length ? await db.from("judging_entries").upsert(rows) : { error: null };
   done(SETUP, "entries", error);
+}
+
+/** Closes (or reopens) marking for one presenter, so judges can't add or change marks for them. */
+export async function setMarkingClosed(form: FormData) {
+  const { db } = await requireAccess("manage_judging", RESULTS);
+  const presenter = String(form.get("presenter_id") ?? "");
+  const kind = String(form.get("kind") ?? "");
+  if (!z.string().uuid().safeParse(presenter).success || !isKind(kind)) redirect(RESULTS);
+  const closed = form.get("closed") === "1";
+  const now = new Date().toISOString();
+  const { error } = await db
+    .from("judging_entries")
+    .upsert({ presenter_id: presenter, kind, marking_closed: closed, closed_at: closed ? now : null, updated_at: now }, { onConflict: "presenter_id,kind" });
+  done(`${RESULTS}?kind=${kind}`, closed ? "closed_one" : "reopened_one", error);
+}
+
+/** Closes marking for every presenter of one kind whose marking is complete (at least MIN_JUDGES submitted marks). */
+export async function closeCompleteMarking(form: FormData) {
+  const { db } = await requireAccess("manage_judging", RESULTS);
+  const kind = String(form.get("kind") ?? "");
+  if (!isKind(kind)) redirect(RESULTS);
+  const edition = await currentEdition(db);
+  if (!edition) done(RESULTS, "", { message: "no edition" });
+  const { data, error: readError } = await db.from("judging_marks").select("presenter_id").eq("edition_id", edition).eq("kind", kind).eq("status", "submitted");
+  if (readError) done(`${RESULTS}?kind=${kind}`, "", readError);
+  const counts = new Map<string, number>();
+  for (const r of (data ?? []) as { presenter_id: string }[]) counts.set(r.presenter_id, (counts.get(r.presenter_id) ?? 0) + 1);
+  const now = new Date().toISOString();
+  const rows = [...counts].filter(([, n]) => isComplete(n)).map(([presenter_id]) => ({ presenter_id, kind, marking_closed: true, closed_at: now, updated_at: now }));
+  const { error } = rows.length ? await db.from("judging_entries").upsert(rows, { onConflict: "presenter_id,kind" }) : { error: null };
+  done(`${RESULTS}?kind=${kind}`, "closed_complete", error);
 }
 
 export async function deleteMark(form: FormData) {
