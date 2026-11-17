@@ -1,12 +1,8 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { after } from "next/server";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
-import { newMessageEmail } from "@/lib/email/messages";
-import { sendBatch, sendEmail } from "@/lib/email/resend";
 import { DM_BODY_MAX, DM_MESSAGE_COLUMNS, type DmMessage } from "@/lib/messages";
-import { SITE_URL } from "@/lib/site";
 
 type Fail = { ok: false; error: string };
 
@@ -37,7 +33,10 @@ export async function startConversation(personId: string): Promise<Fail | { ok: 
   return { ok: true, id: data as string };
 }
 
-/** Sends a message, then (after replying) emails them if they haven't been around. */
+/**
+ * Sends a message. Nobody is emailed now: if it's still unopened after 24
+ * hours, the scheduled check in lib/message-emails.ts emails them then.
+ */
 export async function sendMessage(conversationId: string, body: string): Promise<Fail | { ok: true; message: DmMessage }> {
   if (!uuid.safeParse(conversationId).success) return { ok: false, error: "That conversation isn't available." };
   const text = cleanBody(body);
@@ -46,17 +45,6 @@ export async function sendMessage(conversationId: string, body: string): Promise
   const { data, error } = await db.rpc("dm_send", { p_conversation: conversationId, p_body: text }).select(DM_MESSAGE_COLUMNS).single();
   if (error || !data) return { ok: false, error: friendly(error, "That didn't send. Check your connection and try again.") };
   const message = data as DmMessage;
-  after(async () => {
-    try {
-      const { data: t } = await db.rpc("dm_notify_target", { p_message: message.id });
-      const target = ((t ?? []) as { email: string; full_name: string | null; sender_name: string }[])[0];
-      if (!target?.email) return;
-      const mail = newMessageEmail({ siteUrl: SITE_URL, name: target.full_name, sender: target.sender_name, conversationId });
-      await sendEmail({ to: target.email, ...mail });
-    } catch (e) {
-      console.error("[messages] notify failed", e);
-    }
-  });
   return { ok: true, message };
 }
 
@@ -72,27 +60,6 @@ export async function sendToMany(people: string[], body: string): Promise<Fail |
   if (!profile.access.owner && !profile.access.can.message_people) return { ok: false, error: "You can't send group messages." };
   const { data, error } = await db.rpc("dm_send_many", { p_people: [...new Set(parsed.data.people)], p_body: text });
   if (error) return { ok: false, error: friendly(error, "That didn't send. Please try again.") };
-  // Emails for anyone who hasn't been around: one per person, never more than one unread nudge.
-  after(async () => {
-    try {
-      const { data: rows } = await db.from("dm_messages").select("id, conversation_id").eq("sender_id", profile.id).gte("created_at", new Date(Date.now() - 120_000).toISOString()).limit(500);
-      const mails: { to: string; subject: string; html: string; text: string }[] = [];
-      const list = rows ?? [];
-      for (let i = 0; i < list.length; i += 20) {
-        const found = await Promise.all(
-          list.slice(i, i + 20).map(async (r) => {
-            const { data: t } = await db.rpc("dm_notify_target", { p_message: r.id });
-            const target = ((t ?? []) as { email: string; full_name: string | null; sender_name: string }[])[0];
-            return target?.email ? { to: target.email, ...newMessageEmail({ siteUrl: SITE_URL, name: target.full_name, sender: target.sender_name, conversationId: r.conversation_id }) } : null;
-          }),
-        );
-        for (const m of found) if (m) mails.push(m);
-      }
-      if (mails.length) await sendBatch(mails);
-    } catch (e) {
-      console.error("[messages] group notify failed", e);
-    }
-  });
   revalidatePath("/portal/messages");
   return { ok: true, sent: Number(data) || 0 };
 }

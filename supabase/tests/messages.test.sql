@@ -65,12 +65,30 @@ select pg_temp.expect((select count(*) from public.dm_contacts()) = 1, 'blocked 
 -- clear
 select public.dm_clear(current_setting('t.c2')::uuid);
 select pg_temp.expect((select count(*) from public.dm_inbox()) = 1, 'cleared conversation hidden');
--- notify
+-- notify: nothing is due until a message has sat unread for 24 hours
 select pg_temp.as_user('00000000-0000-0000-0000-0000000000a1');
-select set_config('t.m', (public.dm_send(current_setting('t.c1')::uuid, 'Thanks')).id::text, false);
-select pg_temp.expect((select count(*) from public.dm_notify_target(current_setting('t.m')::uuid)) = 1, 'notify first time');
-select set_config('t.m', (public.dm_send(current_setting('t.c1')::uuid, 'Again')).id::text, false);
-select pg_temp.expect((select count(*) from public.dm_notify_target(current_setting('t.m')::uuid)) = 0, 'no second notify');
+select public.dm_send(current_setting('t.c1')::uuid, 'Thanks');
+select public.dm_send(current_setting('t.c1')::uuid, 'Again');
+do $$ begin perform public.dm_due_emails(); raise exception 'FAILED: users can run dm_due_emails';
+exception when insufficient_privilege then raise notice 'ok - users cannot read due emails'; end $$;
+reset role;
+select pg_temp.expect((select count(*) from public.dm_due_emails()) = 0, 'nothing due straight away');
+-- Wind the clock back a day: Cat last read the chat 30 hours ago, and both new messages are 25 hours old.
+update public.dm_messages set created_at = created_at - interval '25 hours' where conversation_id = current_setting('t.c1')::uuid and body in ('Thanks', 'Again');
+update public.dm_members set last_read_at = now() - interval '30 hours' where conversation_id = current_setting('t.c1')::uuid and user_id = '00000000-0000-0000-0000-0000000000b3';
+select pg_temp.expect((select count(*) from public.dm_due_emails() where conversation_id = current_setting('t.c1')::uuid and user_id = '00000000-0000-0000-0000-0000000000b3' and unread = 4) = 1, 'emailed once, counting every unread message');
+select pg_temp.expect((select count(*) from public.dm_due_emails()) = 0, 'not emailed twice for the same unread stretch');
+update public.dm_members set notified_at = null where conversation_id = current_setting('t.c1')::uuid;
+update public.dm_email_sweep set last_run_at = now();
+select pg_temp.expect((select count(*) from public.dm_due_emails(p_gap => interval '15 minutes')) = 0, 'gap stops a second run');
+update public.dm_email_sweep set last_run_at = '-infinity';
+select pg_temp.expect((select count(*) from public.dm_due_emails(p_gap => interval '15 minutes')) >= 1, 'runs once the gap has passed');
+update public.dm_members set notified_at = null where conversation_id = current_setting('t.c1')::uuid;
+update public.dm_members set last_read_at = now() where conversation_id = current_setting('t.c1')::uuid and user_id = '00000000-0000-0000-0000-0000000000b3';
+select pg_temp.expect((select count(*) from public.dm_due_emails() where conversation_id = current_setting('t.c1')::uuid) = 0, 'read messages are never emailed');
+update public.profiles set dm_email = false where id = '00000000-0000-0000-0000-0000000000a1';
+select pg_temp.expect((select count(*) from public.dm_due_emails() where user_id = '00000000-0000-0000-0000-0000000000a1') = 0, 'emails off means none');
+update public.profiles set dm_email = true where id = '00000000-0000-0000-0000-0000000000a1';
 reset role;
 -- delete account cascades
 delete from public.profiles where id = '00000000-0000-0000-0000-0000000000b3';

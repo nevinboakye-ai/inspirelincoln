@@ -301,7 +301,7 @@ function MessageSettings({ prefs, owner, delegateMessages, judge }: { prefs: Pre
           </Toggle>
         )}
         <Toggle checked={p.email} onChange={(v) => save({ ...p, email: v })} title="Email me about new messages" disabled={pending}>
-          <BellRing aria-hidden className="mr-1 inline size-3.5 align-[-2px]" /> One short email when a message is waiting and you haven&apos;t been on the website. Never one per message.
+          <BellRing aria-hidden className="mr-1 inline size-3.5 align-[-2px]" /> One short email if a message is still unread a day after it was sent. Never one per message.
         </Toggle>
         {owner && (
           <div className="pt-4">
