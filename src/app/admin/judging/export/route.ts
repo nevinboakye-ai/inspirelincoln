@@ -3,7 +3,7 @@ import path from "node:path";
 import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { loadJudging, loadMarks } from "@/lib/judging-server";
-import { JUDGING_KINDS, KIND_LABEL, rankResults } from "@/lib/judging";
+import { JUDGING_KINDS, KIND_LABEL, MIN_JUDGES, judgesLabel, rankResults } from "@/lib/judging";
 import { buildWorkbook } from "@/lib/exports/xlsx";
 import { buildDocument } from "@/lib/exports/docx";
 import { ukDateTime, type Column, type ExportTable, type Row } from "@/lib/exports/table";
@@ -41,7 +41,8 @@ export async function GET(req: NextRequest) {
       { key: "title", label: "Title", width: 44, wordHidden: true },
       { key: "where", label: "Where", width: 14 },
       { key: "average", label: "Average %", width: 11 },
-      { key: "marks", label: "Marks", width: 8 },
+      { key: "marks", label: "Judges", width: 12 },
+      { key: "complete", label: "Marking complete", width: 10 },
       { key: "spread", label: "Spread (points)", width: 10, wordHidden: true },
       ...crit.map((c) => ({ key: `c_${c.id}`, label: `${c.label} (avg /${c.maxScore})`, width: 14, wordHidden: true })),
     ];
@@ -54,7 +55,8 @@ export async function GET(req: NextRequest) {
         title: e?.title ?? "",
         where: e?.label ?? "",
         average: r.average === null ? "" : Math.round(r.average * 10) / 10,
-        marks: r.submitted,
+        marks: judgesLabel(r.submitted),
+        complete: r.complete ? "Yes" : "No",
         spread: r.spread === null ? "" : Math.round(r.spread * 10) / 10,
       };
       for (const c of crit) row[`c_${c.id}`] = r.perCriterion[c.id] === undefined ? "" : Math.round(r.perCriterion[c.id] * 100) / 100;
@@ -62,7 +64,7 @@ export async function GET(req: NextRequest) {
     });
     tables.push({
       title: `${KIND_LABEL[k].many}: ranking`,
-      description: "Ranked by each presenter's average submitted mark across judges, as a percentage. Drafts aren't counted. A large spread means judges disagreed.",
+      description: `Ranked by each presenter's average submitted mark across judges, as a percentage. Only presenters with complete marking (at least ${MIN_JUDGES} judges) are ranked; the rest follow, unranked, with a provisional average. Drafts aren't counted. A large spread means judges disagreed.`,
       columns,
       rows,
     });

@@ -15,6 +15,23 @@ export const KIND_LABEL: Record<JudgingKind, { one: string; many: string; file: 
 
 export const isKind = (v: unknown): v is JudgingKind => v === "oral" || v === "poster";
 
+/**
+ * A presenter's marking is complete once at least this many judges have
+ * submitted marks and feedback. More judges can still mark them after that,
+ * until the committee closes marking for them (or for everyone). Only
+ * presenters with complete marking are ranked for prizes, and presenters
+ * only see released feedback once their marking is complete. The database
+ * uses the same number (supabase/migrations/20261215000000_two_judge_minimum.sql).
+ */
+export const MIN_JUDGES = 2;
+
+/** "1 of 2 judges", or "3 judges" once the minimum is reached. */
+export function judgesLabel(n: number, min = MIN_JUDGES) {
+  return n >= min ? `${n} judge${n === 1 ? "" : "s"}` : `${n} of ${min} judges`;
+}
+
+export const isComplete = (n: number, min = MIN_JUDGES) => n >= min;
+
 export type Criterion = { id: string; kind: JudgingKind; label: string; description: string; maxScore: number; sort: number };
 
 /** One row of public.judging_board(): a presenter and the kind of presentation. */
@@ -40,6 +57,8 @@ export type BoardEntry = {
   myMax: number | null;
   /** Submitted marks from every judge. */
   marksIn: number;
+  /** The committee has closed marking for this presenter, so no more marks can be added or changed. */
+  closed: boolean;
 };
 
 type BoardRow = {
@@ -63,6 +82,8 @@ type BoardRow = {
   my_total: number | null;
   my_max: number | null;
   marks_in: number | null;
+  /** Missing until the two-judge migration is run. */
+  marking_closed?: boolean | null;
 };
 
 export function toBoardEntry(r: BoardRow): BoardEntry {
@@ -86,6 +107,7 @@ export function toBoardEntry(r: BoardRow): BoardEntry {
     myTotal: r.my_total,
     myMax: r.my_max,
     marksIn: r.marks_in ?? 0,
+    closed: Boolean(r.marking_closed),
   };
 }
 
@@ -118,7 +140,8 @@ export function greetingName(full: string | null | undefined) {
   return parts[0];
 }
 
-export const isDone = (e: Pick<BoardEntry, "myStatus">) => e.myStatus === "submitted";
+/** Nothing left for this judge to do: they've submitted, or the committee has closed marking for this presenter. */
+export const isDone = (e: Pick<BoardEntry, "myStatus" | "closed">) => e.myStatus === "submitted" || e.closed;
 
 /** The next presentation still to mark after this one, wrapping round to the start. */
 export function nextToMark(queue: BoardEntry[], current: { presenterId: string; kind: JudgingKind }) {
@@ -176,14 +199,26 @@ export type ResultRow = {
   marks: Mark[];
   submitted: number;
   drafts: number;
-  /** 1 for the highest average; equal averages share a rank. */
+  /** At least MIN_JUDGES judges have submitted marks, so the presenter counts for results and prizes. */
+  complete: boolean;
+  /** 1 for the highest average among presenters with complete marking; equal averages share a rank. Null until marking is complete. */
   rank: number | null;
   /** The gap between the highest and lowest mark, in percentage points, to spot judges who disagree. */
   spread: number | null;
 };
 
-/** Ranks presenters of one kind by their average mark. */
-export function rankResults(entries: Pick<BoardEntry, "presenterId" | "kind">[], marks: Mark[], criteria: Criterion[], kind: JudgingKind): ResultRow[] {
+/**
+ * Ranks presenters of one kind by their average mark. Only presenters with
+ * complete marking (at least `minJudges` submitted marks) get a rank; the
+ * rest follow, unranked, with their provisional average.
+ */
+export function rankResults(
+  entries: Pick<BoardEntry, "presenterId" | "kind">[],
+  marks: Mark[],
+  criteria: Criterion[],
+  kind: JudgingKind,
+  minJudges = MIN_JUDGES,
+): ResultRow[] {
   const crit = criteria.filter((c) => c.kind === kind);
   const rows: ResultRow[] = entries
     .filter((e) => e.kind === kind)
@@ -204,15 +239,16 @@ export function rankResults(entries: Pick<BoardEntry, "presenterId" | "kind">[],
         marks: mine,
         submitted: done.length,
         drafts: mine.length - done.length,
+        complete: isComplete(done.length, minJudges),
         rank: null,
         spread: pcts.length > 1 ? Math.max(...pcts) - Math.min(...pcts) : null,
       };
     });
-  rows.sort((a, b) => (b.average ?? -1) - (a.average ?? -1));
+  rows.sort((a, b) => Number(b.complete) - Number(a.complete) || (b.average ?? -1) - (a.average ?? -1) || b.submitted - a.submitted);
   let rank = 0;
   let prev: number | null = null;
   rows.forEach((r, i) => {
-    if (r.average === null) return;
+    if (r.average === null || !r.complete) return;
     const rounded = Math.round(r.average * 10) / 10;
     if (prev === null || rounded !== prev) rank = i + 1;
     prev = rounded;
@@ -224,6 +260,7 @@ export function rankResults(entries: Pick<BoardEntry, "presenterId" | "kind">[],
 /** Plain-English messages for the database's judging errors. */
 export function judgingError(message: string | undefined | null) {
   const m = message ?? "";
+  if (m.includes("MARKING_CLOSED")) return "The committee has closed marking for this presenter, so marks can't be added or changed now.";
   if (m.includes("JUDGING_CLOSED")) return "Judging has been closed by the committee, so marks can't be changed now.";
   if (m.includes("INCOMPLETE_SCORES")) return "Give a mark for every criterion before submitting.";
   if (m.includes("INCOMPLETE_FEEDBACK")) return "Write what went well and what to improve before submitting.";

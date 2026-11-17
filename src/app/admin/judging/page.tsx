@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, Download, Eye, EyeOff, Gavel, Lock, Medal, Settings2, Smartphone, Trophy, Unlock } from "lucide-react";
+import { AlertTriangle, Download, Eye, EyeOff, Gavel, Lock, Medal, Settings2, Smartphone, Trophy, Unlock, Users } from "lucide-react";
 import { requireAccess } from "@/lib/auth";
 import { loadJudging, loadMarks } from "@/lib/judging-server";
-import { KIND_LABEL, JUDGING_KINDS, isKind, rankResults, type JudgingKind, type Mark } from "@/lib/judging";
+import { KIND_LABEL, JUDGING_KINDS, MIN_JUDGES, isComplete, isKind, judgesLabel, rankResults, type JudgingKind, type Mark } from "@/lib/judging";
 import { AdminHeader, Flash, Panel, btn } from "@/components/admin/ui";
 import { Badge } from "@/components/ui/badge";
 import { JudgingUnavailable } from "@/components/judge/judging-unavailable";
 import { cn } from "@/lib/cn";
-import { deleteMark, saveJudgingSettings } from "./actions";
+import { closeCompleteMarking, deleteMark, saveJudgingSettings, setMarkingClosed } from "./actions";
 
 export const metadata: Metadata = { title: "Judging" };
 export const dynamic = "force-dynamic";
@@ -16,6 +16,9 @@ export const dynamic = "force-dynamic";
 const FLASH: Record<string, string> = {
   settings: "Judging settings saved.",
   mark_removed: "Mark removed.",
+  closed_one: "Marking closed for that presenter. Judges can no longer add or change their marks.",
+  reopened_one: "Marking reopened for that presenter.",
+  closed_complete: "Marking closed for everyone with complete marking.",
 };
 
 const when = (iso: string | null) =>
@@ -105,8 +108,18 @@ export default async function JudgingResults({ searchParams }: { searchParams: P
 
   const stats = JUDGING_KINDS.map((k) => {
     const entries = j.entries.filter((e) => e.kind === k);
-    const covered = new Set(submitted.filter((m) => m.kind === k).map((m) => m.presenterId));
-    return { k, presenters: entries.length, marks: submitted.filter((m) => m.kind === k).length, unmarked: entries.filter((e) => !covered.has(e.presenterId)).length };
+    const count = new Map<string, number>();
+    for (const m of submitted) if (m.kind === k) count.set(m.presenterId, (count.get(m.presenterId) ?? 0) + 1);
+    const n = (id: string) => count.get(id) ?? 0;
+    return {
+      k,
+      presenters: entries.length,
+      marks: submitted.filter((m) => m.kind === k).length,
+      complete: entries.filter((e) => isComplete(n(e.presenterId))).length,
+      partial: entries.filter((e) => n(e.presenterId) > 0 && !isComplete(n(e.presenterId))).length,
+      unmarked: entries.filter((e) => n(e.presenterId) === 0).length,
+      closed: entries.filter((e) => e.closed).length,
+    };
   });
 
   return (
@@ -134,7 +147,11 @@ export default async function JudgingResults({ searchParams }: { searchParams: P
       {sp.saved && FLASH[sp.saved] && <Flash>{FLASH[sp.saved]}</Flash>}
       {sp.error && (
         <p role="alert" className="mb-6 rounded-md border border-danger/25 bg-danger/[0.06] p-4 text-sm font-medium text-danger">
-          {sp.error === "view_as" ? "You're viewing as someone else, so changes are switched off." : "That couldn't be saved. Please try again."}
+          {sp.error === "view_as"
+            ? "You're viewing as someone else, so changes are switched off."
+            : sp.error === "needs_sql"
+              ? "Closing marking for a presenter needs a database update first. Run supabase/migrations/20261215000000_two_judge_minimum.sql in the Supabase SQL editor, then try again."
+              : "That couldn't be saved. Please try again."}
         </p>
       )}
 
@@ -146,8 +163,11 @@ export default async function JudgingResults({ searchParams }: { searchParams: P
               {s.marks} <span className="text-base text-slate">marks</span>
             </p>
             <p className="mt-1 text-sm text-slate-700">
-              {s.presenters} presenters{s.unmarked ? `, ${s.unmarked} not marked yet` : ", all marked"}
+              {s.complete} of {s.presenters} fully marked
+              {s.partial ? `, ${s.partial} waiting for more judges` : ""}
+              {s.unmarked ? `, ${s.unmarked} not started` : ""}
             </p>
+            {s.closed > 0 && <p className="mt-0.5 text-xs text-slate">Marking closed for {s.closed}</p>}
           </div>
         ))}
         <div className="rounded-xl border border-navy/10 bg-white p-5">
@@ -168,7 +188,7 @@ export default async function JudgingResults({ searchParams }: { searchParams: P
       <Panel title="Settings" className="mt-6">
         <form action={saveJudgingSettings} className="space-y-3">
           <div className="grid gap-3 lg:grid-cols-2">
-            <Toggle name="open" defaultChecked={j.settings.open} icon={j.settings.open ? Unlock : Lock} label="Judging open" hint="Judges can add and change marks. Close it once prizes are decided so nothing changes." />
+            <Toggle name="open" defaultChecked={j.settings.open} icon={j.settings.open ? Unlock : Lock} label="Judging open" hint="Judges can add and change marks. Switch it off to close marking for everyone at once. To close one presenter, use “Close marking” on their result below." />
             <Toggle name="released" defaultChecked={j.settings.released} icon={Eye} label="Release feedback to presenters" hint="Each presenter sees the submitted feedback on their own presentation in My Hub. Your private notes are never shown." />
             <Toggle name="release_scores" defaultChecked={j.settings.releaseScores} icon={Medal} label="Include the marks" hint="Show each judge's marks for every criterion with their feedback." />
             <Toggle name="release_names" defaultChecked={j.settings.releaseNames} icon={Gavel} label="Include judges' names" hint="Off by default, so feedback reads as from the INSPIRE judging panel." />
@@ -190,17 +210,33 @@ export default async function JudgingResults({ searchParams }: { searchParams: P
         </div>
       </div>
       <p className="mt-2 text-sm text-slate-700">
-        Ranked by each presenter&apos;s average mark across judges, as a percentage. Drafts aren&apos;t counted. A wide spread means judges disagreed, so it may be worth a look.
+        Ranked by each presenter&apos;s average mark across judges, as a percentage. A presenter&apos;s marking is complete once at least {MIN_JUDGES} judges have submitted marks and feedback, and only
+        complete presenters are ranked for prizes. Anyone with fewer is listed after them, unranked, with a provisional average. Drafts aren&apos;t counted. A wide spread means judges disagreed, so it
+        may be worth a look.
       </p>
+      {results.some((r) => r.complete && !byId.get(`${r.presenterId}:${r.kind}`)?.closed) && (
+        <form action={closeCompleteMarking} className="mt-3">
+          <input type="hidden" name="kind" value={kind} />
+          <button type="submit" className={btn.secondary}>
+            <Lock aria-hidden className="size-4" /> Close marking for everyone fully marked
+          </button>
+        </form>
+      )}
 
       {results.length === 0 ? (
         <p className="mt-4 rounded-xl border border-navy/10 bg-white p-6 text-slate-700">No approved {KIND_LABEL[kind].many.toLowerCase()} yet.</p>
       ) : (
         <ol className="mt-4 space-y-2">
-          {results.map((r) => {
+          {results.map((r, i) => {
             const e = byId.get(`${r.presenterId}:${r.kind}`);
+            const firstPartial = !r.complete && (i === 0 || results[i - 1].complete);
             return (
               <li key={r.presenterId}>
+                {firstPartial && (
+                  <p className="mb-2 mt-5 flex items-center gap-2 text-sm font-semibold text-slate-700">
+                    <Users aria-hidden className="size-4" /> Waiting for at least {MIN_JUDGES} judges: not ranked yet
+                  </p>
+                )}
                 <details className="group rounded-xl border border-navy/10 bg-white open:shadow-[0_14px_34px_-24px_rgba(14,27,49,0.5)]">
                   <summary className="flex cursor-pointer list-none items-center gap-3 p-4 [&::-webkit-details-marker]:hidden">
                     <span
@@ -215,6 +251,12 @@ export default async function JudgingResults({ searchParams }: { searchParams: P
                       <span className="flex flex-wrap items-center gap-2">
                         <span className="font-semibold text-ink">{e?.name}</span>
                         {e?.label && <Badge tone="neutral">{e.label}</Badge>}
+                        {!r.complete && <Badge tone="warning">{judgesLabel(r.submitted)}</Badge>}
+                        {e?.closed && (
+                          <Badge tone="neutral">
+                            <Lock aria-hidden className="size-3" /> Marking closed
+                          </Badge>
+                        )}
                         {r.spread !== null && r.spread >= 20 && (
                           <Badge tone="warning">
                             <AlertTriangle aria-hidden className="size-3" /> Judges differ by {r.spread.toFixed(0)} points
@@ -224,14 +266,30 @@ export default async function JudgingResults({ searchParams }: { searchParams: P
                       <span className="mt-0.5 line-clamp-1 block text-sm text-slate-700">{e?.title ?? e?.institution ?? ""}</span>
                     </span>
                     <span className="shrink-0 text-right">
-                      <span className="block font-display text-xl text-ink">{pct(r.average)}</span>
+                      <span className={cn("block font-display text-xl", r.complete ? "text-ink" : "text-slate")}>{pct(r.average)}</span>
                       <span className="block text-xs text-slate">
-                        {r.submitted} mark{r.submitted === 1 ? "" : "s"}
+                        {r.complete ? judgesLabel(r.submitted) : r.average === null ? "No marks" : "Provisional"}
                         {r.drafts ? ` · ${r.drafts} draft` : ""}
                       </span>
                     </span>
                   </summary>
                   <div className="border-t border-navy/10 p-4">
+                    <form action={setMarkingClosed} className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-paper p-3 text-sm">
+                      <input type="hidden" name="presenter_id" value={r.presenterId} />
+                      <input type="hidden" name="kind" value={r.kind} />
+                      <input type="hidden" name="closed" value={e?.closed ? "0" : "1"} />
+                      <span className="text-slate-700">
+                        {e?.closed
+                          ? "Marking is closed. Judges can read their marks but can't add or change any."
+                          : r.complete
+                            ? `Marking is complete with ${judgesLabel(r.submitted)}. More judges can still mark until you close it.`
+                            : `${judgesLabel(r.submitted)} so far. Marking is complete once ${MIN_JUDGES} judges have submitted.`}
+                      </span>
+                      <button type="submit" className={btn.secondary}>
+                        {e?.closed ? <Unlock aria-hidden className="size-4" /> : <Lock aria-hidden className="size-4" />}
+                        {e?.closed ? "Reopen marking" : "Close marking"}
+                      </button>
+                    </form>
                     {crit.length > 0 && r.submitted > 0 && (
                       <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                         {crit.map((c) => {
