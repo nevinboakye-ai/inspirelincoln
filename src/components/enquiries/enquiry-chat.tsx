@@ -1,11 +1,13 @@
 "use client";
 import { ArrowDown, CheckCheck, Clock, Loader2, Lock, RotateCcw, SendHorizontal, ShieldCheck } from "lucide-react";
 import { Fragment, useCallback, useEffect, useId, useLayoutEffect, useRef, useState, useTransition, type ReactNode } from "react";
-import { sendEnquiryMessage, setEnquiryClosed } from "@/app/portal/enquiry-actions";
+import { reactToEnquiryMessage, sendEnquiryMessage, setEnquiryClosed } from "@/app/portal/enquiry-actions";
+import { Reactable } from "@/components/messages/reactions";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/cn";
 import { BODY_MAX, ENQUIRY_TOPICS, REPLY_PROMISE, dayLabel, memberStatus, needsReply, sameDay, timeOf, type EnquiryMessage, type EnquiryThread } from "@/lib/enquiries";
 import { Badge } from "@/components/ui/badge";
+import { reactionsByMessage, toggleReaction, type Reaction, type ReactionEmoji } from "@/lib/reactions";
 import { viewingAs } from "@/lib/view-as-client";
 
 type Viewer = "member" | "committee";
@@ -36,6 +38,7 @@ function linkify(text: string): ReactNode[] {
 export function EnquiryChat({
   thread: initialThread,
   messages: initialMessages,
+  reactions: initialReactions,
   viewer,
   me,
   memberName,
@@ -44,6 +47,8 @@ export function EnquiryChat({
 }: {
   thread: EnquiryThread;
   messages: EnquiryMessage[];
+  /** Every reaction in the conversation, or null if reactions aren't set up yet. */
+  reactions: Reaction[] | null;
   viewer: Viewer;
   me: string;
   memberName: string;
@@ -52,6 +57,10 @@ export function EnquiryChat({
 }) {
   const [thread, setThread] = useState(initialThread);
   const [messages, setMessages] = useState<Local[]>(initialMessages);
+  const [reactions, setReactions] = useState<Reaction[]>(initialReactions ?? []);
+  const [reactionsOn, setReactionsOn] = useState(initialReactions !== null);
+  // Bumped whenever I react, so a poll that started before then can't undo it on screen.
+  const reactVersion = useRef(0);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [announce, setAnnounce] = useState("");
@@ -103,6 +112,7 @@ export function EnquiryChat({
     let failures = 0;
     const poll = async () => {
       const visible = document.visibilityState === "visible";
+      const version = reactVersion.current;
       try {
         const qs = new URLSearchParams();
         if (lastAtRef.current) qs.set("after", lastAtRef.current);
@@ -110,8 +120,12 @@ export function EnquiryChat({
         const res = await fetch(`/api/enquiries/${thread.id}?${qs}`, { cache: "no-store" });
         if (res.ok) {
           failures = 0;
-          const data = (await res.json()) as { thread: EnquiryThread; messages: EnquiryMessage[] };
+          const data = (await res.json()) as { thread: EnquiryThread; messages: EnquiryMessage[]; reactions?: Reaction[] | null };
           setThread(data.thread);
+          if (data.reactions !== undefined) {
+            setReactionsOn(data.reactions !== null);
+            if (data.reactions && version === reactVersion.current) setReactions(data.reactions);
+          }
           if (data.messages.length) {
             setMessages((prev) => {
               const known = new Set(prev.map((m) => m.id));
@@ -195,6 +209,22 @@ export function EnquiryChat({
     box.current?.focus();
   };
 
+  const react = async (messageId: string, emoji: ReactionEmoji, on: boolean) => {
+    setError(null);
+    if (viewingAs()) return setError("You're viewing as someone else, so changes are switched off.");
+    const mineNow: Reaction = { message_id: messageId, user_id: me, emoji, user_name: "You", from_committee: viewer === "committee" };
+    reactVersion.current++;
+    setReactions((prev) => toggleReaction(prev, mineNow, on));
+    const res = await reactToEnquiryMessage(messageId, emoji, on).catch(() => ({ ok: false as const, error: "That reaction didn't save. Check your connection and try again." }));
+    reactVersion.current++;
+    if (!res.ok) {
+      setReactions((prev) => toggleReaction(prev, mineNow, !on));
+      setError(res.error);
+    }
+  };
+  const reactorName = (r: Reaction) =>
+    r.from_committee ? (viewer === "member" ? `${r.user_name ?? "INSPIRE"} (committee)` : (r.user_name ?? "Committee")) : viewer === "member" ? "You" : memberName;
+
   const toggleClosed = () =>
     startStatus(async () => {
       setError(null);
@@ -208,6 +238,7 @@ export function EnquiryChat({
   // The last of my sent messages, which carries the "Seen" note.
   const lastMine = [...messages].reverse().find((m) => mine(m) && !m.state);
   const remaining = BODY_MAX - draft.length;
+  const byMessage = reactionsByMessage(reactions);
 
   return (
     <section aria-labelledby="chat-subject" className="flex h-[calc(100dvh-13rem)] min-h-[28rem] flex-col overflow-hidden rounded-2xl border border-navy/10 bg-white shadow-[0_24px_60px_-40px_rgba(12,24,44,0.5)] sm:h-[min(78dvh,46rem)]">
@@ -282,6 +313,15 @@ export function EnquiryChat({
                     )}
                     <div className={cn("flex max-w-[85%] flex-col sm:max-w-[70%]", own ? "items-end" : "items-start")}>
                       {groupStart && <p className="mb-1 px-1 text-xs font-semibold text-slate-700">{committeeName}</p>}
+                      <Reactable
+                        reactions={m.state ? [] : (byMessage.get(m.id) ?? [])}
+                        me={me}
+                        own={own}
+                        enabled={reactionsOn && !m.state}
+                        onToggle={(emoji, on) => void react(m.id, emoji, on)}
+                        nameOf={reactorName}
+                        copyText={m.body}
+                      >
                       <div
                         className={cn(
                           "whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-[0.95rem] leading-relaxed [overflow-wrap:anywhere]",
@@ -294,6 +334,7 @@ export function EnquiryChat({
                         <span className="sr-only">{committeeName}: </span>
                         {linkify(m.body)}
                       </div>
+                      </Reactable>
                       {(groupEnd || m.state) && (
                         <p className="mt-1 flex items-center gap-1.5 px-1 text-[0.72rem] text-slate">
                           {m.state === "sending" ? (

@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BellRing, Loader2, MessageCirclePlus, MessagesSquare, Search, Settings2, ShieldCheck, UserX } from "lucide-react";
+import { BellRing, CheckCheck, Loader2, MessageCirclePlus, MessagesSquare, Search, Settings2, ShieldCheck, UserX } from "lucide-react";
 import { useDeferredValue, useEffect, useRef, useState, useTransition, type ReactNode } from "react";
-import { saveMessagePrefs, setDelegateMessages } from "@/app/portal/message-actions";
+import { saveMessagePrefs, setDelegateMessages, setReadReceipts } from "@/app/portal/message-actions";
 import { Avatar } from "@/components/ui/avatar";
 import { Drawer } from "@/components/ui/drawer";
 import { cn } from "@/lib/cn";
@@ -11,7 +11,8 @@ import { headlineRole, isCommitteeRole, previewLine, shortWhen, type InboxRow } 
 import { viewingAs } from "@/lib/view-as-client";
 import { useMessages } from "./messages-provider";
 
-type Prefs = { open: boolean; email: boolean };
+/** receipts is null when the person can't change it (only the committee can turn read receipts off). */
+type Prefs = { open: boolean; email: boolean; receipts: boolean | null };
 
 const POLL_VISIBLE = 30_000;
 const POLL_HIDDEN = 90_000;
@@ -280,6 +281,15 @@ function MessageSettings({ prefs, owner, delegateMessages, judge }: { prefs: Pre
       if (!res.ok) setP(p);
     });
   };
+  const saveReceipts = (on: boolean) => {
+    setP((cur) => ({ ...cur, receipts: on }));
+    start(async () => {
+      if (viewingAs()) return setNote({ ok: false, text: "You're viewing as someone else, so changes are switched off." });
+      const res = await setReadReceipts(on);
+      setNote(res.ok ? { ok: true, text: on ? "Read receipts are on." : "Read receipts are off. People won't see when you've read their messages." } : { ok: false, text: res.error });
+      if (!res.ok) setP((cur) => ({ ...cur, receipts: !on }));
+    });
+  };
   const flip = (on: boolean) => {
     setDm(on);
     start(async () => {
@@ -303,6 +313,11 @@ function MessageSettings({ prefs, owner, delegateMessages, judge }: { prefs: Pre
         <Toggle checked={p.email} onChange={(v) => save({ ...p, email: v })} title="Email me about new messages" disabled={pending}>
           <BellRing aria-hidden className="mr-1 inline size-3.5 align-[-2px]" /> One short email if a message is still unread a day after it was sent. Never one per message.
         </Toggle>
+        {p.receipts !== null && (
+          <Toggle checked={p.receipts} onChange={saveReceipts} title="Read receipts" disabled={pending}>
+            <CheckCheck aria-hidden className="mr-1 inline size-3.5 align-[-2px]" /> Let people see &ldquo;Seen&rdquo; when you&apos;ve read their direct messages and enquiries. Turn it off to read without them knowing. You&apos;ll still see when others have read yours. Only committee members have this setting.
+          </Toggle>
+        )}
         {owner && (
           <div className="pt-4">
             <p className="mb-2 font-ui text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Site owner</p>

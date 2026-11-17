@@ -8,6 +8,7 @@ import { EnquiryChat } from "@/components/enquiries/enquiry-chat";
 import { DeleteThread } from "@/components/enquiries/delete-thread";
 import { enquiryPeople } from "@/lib/enquiries-inbox";
 import { MESSAGE_COLUMNS, THREAD_COLUMNS, type EnquiryMessage, type EnquiryThread } from "@/lib/enquiries";
+import { ENQUIRY_REACTION_COLUMNS, type Reaction } from "@/lib/reactions";
 
 export const metadata: Metadata = { title: "Enquiry" };
 export const dynamic = "force-dynamic";
@@ -16,9 +17,10 @@ export default async function CommitteeEnquiryPage({ params }: { params: Promise
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const { db, user, profile } = await requireAccess("answer_enquiries", `/admin/enquiries/${id}`);
-  const [{ data: thread }, { data: messages }] = await Promise.all([
+  const [{ data: thread }, { data: messages }, reactions] = await Promise.all([
     db.from("enquiry_threads").select(THREAD_COLUMNS).eq("id", id).maybeSingle(),
     db.from("enquiry_messages").select(MESSAGE_COLUMNS).eq("thread_id", id).order("created_at").limit(500),
+    db.from("enquiry_reactions").select(ENQUIRY_REACTION_COLUMNS).eq("thread_id", id).limit(3000),
   ]);
   if (!thread) notFound();
   const t = thread as EnquiryThread;
@@ -38,6 +40,7 @@ export default async function CommitteeEnquiryPage({ params }: { params: Promise
         <EnquiryChat
           thread={t}
           messages={(messages ?? []) as EnquiryMessage[]}
+          reactions={reactions.error ? null : ((reactions.data ?? []) as Reaction[])}
           viewer="committee"
           me={user.id}
           memberName={name}

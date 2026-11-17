@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { DM_BODY_MAX, DM_MESSAGE_COLUMNS, type DmMessage } from "@/lib/messages";
+import { isReactionEmoji } from "@/lib/reactions";
 
 type Fail = { ok: false; error: string };
 
@@ -106,6 +107,28 @@ export async function reportConversation(conversationId: string, note: string): 
   if (error) return { ok: false, error: friendly(error, "We couldn't send your report. Please try again, or email the committee.") };
   revalidatePath("/portal", "layout");
   revalidatePath("/admin/enquiries");
+  return { ok: true };
+}
+
+/** Adds or takes back an emoji reaction on a message in one of your conversations. */
+export async function reactToMessage(messageId: string, emoji: string, on: boolean): Promise<Fail | { ok: true }> {
+  if (!uuid.safeParse(messageId).success) return { ok: false, error: "That message isn't available." };
+  if (!isReactionEmoji(emoji)) return { ok: false, error: "Choose one of the emoji shown." };
+  const { db } = await requireUser("/portal/messages");
+  const { error } = await db.rpc("dm_react", { p_message: messageId, p_emoji: emoji, p_on: Boolean(on) });
+  if (error) return { ok: false, error: friendly(error, "That reaction didn't save. Please try again.") };
+  return { ok: true };
+}
+
+/**
+ * Committee members can turn their read receipts off. Others then stop
+ * seeing "Seen" on their messages, in direct messages and enquiries. The
+ * website still notes what they've read, so unread emails stay accurate.
+ */
+export async function setReadReceipts(on: boolean): Promise<Fail | { ok: true }> {
+  const { db } = await requireUser("/portal/messages");
+  const { error } = await db.rpc("set_read_receipts", { p_on: Boolean(on) });
+  if (error) return { ok: false, error: friendly(error, "That didn't save. Please try again.") };
   return { ok: true };
 }
 

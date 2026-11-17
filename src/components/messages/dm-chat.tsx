@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowLeft, Ban, CheckCheck, Flag, Loader2, MoreVertical, SendHorizontal, ShieldCheck, Sparkles, Trash2, UserX } from "lucide-react";
 import { Fragment, useCallback, useEffect, useId, useLayoutEffect, useRef, useState, useTransition, type ReactNode } from "react";
-import { clearConversation, reportConversation, sendMessage, setBlocked } from "@/app/portal/message-actions";
+import { clearConversation, reactToMessage, reportConversation, sendMessage, setBlocked } from "@/app/portal/message-actions";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/cn";
 import {
@@ -18,8 +18,10 @@ import {
   type DmMessage,
   type Peer,
 } from "@/lib/messages";
+import { reactionsByMessage, toggleReaction, type Reaction, type ReactionEmoji } from "@/lib/reactions";
 import { viewingAs } from "@/lib/view-as-client";
 import { useMessages } from "./messages-provider";
+import { Reactable } from "./reactions";
 import { useFullScreenOnPhones } from "./use-full-screen";
 
 type Local = DmMessage & { state?: "sending" | "failed" };
@@ -45,12 +47,15 @@ export function DmChat({
   conversationId,
   messages: initialMessages,
   peer: initialPeer,
+  reactions: initialReactions,
   me,
   committee,
 }: {
   conversationId: string;
   messages: DmMessage[];
   peer: Peer;
+  /** Every reaction in the conversation, or null if reactions aren't set up yet. */
+  reactions: Reaction[] | null;
   me: string;
   /** The viewer has the "Direct messages" permission. */
   committee: boolean;
@@ -59,6 +64,10 @@ export function DmChat({
   const { refresh } = useMessages();
   const [peer, setPeer] = useState(initialPeer);
   const [messages, setMessages] = useState<Local[]>(initialMessages);
+  const [reactions, setReactions] = useState<Reaction[]>(initialReactions ?? []);
+  const [reactionsOn, setReactionsOn] = useState(initialReactions !== null);
+  // Bumped whenever I react, so a poll that started before then can't undo it on screen.
+  const reactVersion = useRef(0);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [announce, setAnnounce] = useState("");
@@ -117,6 +126,7 @@ export function DmChat({
     let failures = 0;
     const poll = async () => {
       const visible = document.visibilityState === "visible";
+      const version = reactVersion.current;
       try {
         const qs = new URLSearchParams();
         if (lastAtRef.current) qs.set("after", lastAtRef.current);
@@ -124,7 +134,11 @@ export function DmChat({
         const res = await fetch(`/api/messages/${conversationId}?${qs}`, { cache: "no-store" });
         if (res.ok) {
           failures = 0;
-          const data = (await res.json()) as { messages: DmMessage[]; otherReadAt: string | null; otherGone: boolean };
+          const data = (await res.json()) as { messages: DmMessage[]; otherReadAt: string | null; otherGone: boolean; reactions?: Reaction[] | null };
+          if (data.reactions !== undefined) {
+            setReactionsOn(data.reactions !== null);
+            if (data.reactions && version === reactVersion.current) setReactions(data.reactions);
+          }
           setPeer((p) => (p.other_read_at === data.otherReadAt && !(data.otherGone && p.other_id) ? p : { ...p, other_read_at: data.otherReadAt, ...(data.otherGone ? { other_id: null, can_send: false } : {}) }));
           if (data.messages.length) {
             setMessages((prev) => {
@@ -203,6 +217,20 @@ export function DmChat({
     box.current?.focus();
   };
 
+  const react = async (messageId: string, emoji: ReactionEmoji, on: boolean) => {
+    setError(null);
+    if (viewingAs()) return setError("You're viewing as someone else, so messages are read only.");
+    const mineNow: Reaction = { message_id: messageId, user_id: me, emoji };
+    reactVersion.current++;
+    setReactions((prev) => toggleReaction(prev, mineNow, on));
+    const res = await reactToMessage(messageId, emoji, on).catch(() => ({ ok: false as const, error: "That reaction didn't save. Check your connection and try again." }));
+    reactVersion.current++;
+    if (!res.ok) {
+      setReactions((prev) => toggleReaction(prev, mineNow, !on));
+      setError(res.error);
+    }
+  };
+
   const toggleBlock = () =>
     startBusy(async () => {
       setMenu(false);
@@ -229,6 +257,8 @@ export function DmChat({
   const lastMine = [...messages].reverse().find((m) => mine(m) && !m.state);
   const remaining = DM_BODY_MAX - draft.length;
   const canSend = peer.can_send && !(peer.blocked_by_me && !committee);
+  const byMessage = reactionsByMessage(reactions);
+  const canReact = reactionsOn && Boolean(peer.other_id) && !(peer.blocked_by_me && !committee);
 
   return (
     <section
@@ -347,6 +377,15 @@ export function DmChat({
                           <ShieldCheck aria-hidden className="size-3" /> INSPIRE committee
                         </p>
                       )}
+                      <Reactable
+                        reactions={m.state ? [] : (byMessage.get(m.id) ?? [])}
+                        me={me}
+                        own={own}
+                        enabled={canReact && !m.state}
+                        onToggle={(emoji, on) => void react(m.id, emoji, on)}
+                        nameOf={(r) => (r.user_id === peer.other_id ? peer.other_name : "Someone")}
+                        copyText={m.body}
+                      >
                       <div
                         className={cn(
                           "whitespace-pre-wrap break-words rounded-[1.25rem] px-3.5 py-2 text-[0.95rem] leading-relaxed [overflow-wrap:anywhere] motion-safe:animate-[dm-in_220ms_var(--ease-out-expo)]",
@@ -359,6 +398,7 @@ export function DmChat({
                         <span className="sr-only">{own ? "You" : m.sender_name}: </span>
                         {linkify(m.body)}
                       </div>
+                      </Reactable>
                       {(groupEnd || m.state) && (
                         <p className="mt-1 flex items-center gap-1.5 px-1 text-[0.7rem] text-slate">
                           {m.state === "sending" ? (
