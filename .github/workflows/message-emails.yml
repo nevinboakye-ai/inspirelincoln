@@ -1,0 +1,26 @@
+# Emails people about direct messages they still haven't opened 24 hours
+# after they were sent. Runs every 15 minutes and calls the website, which
+# does the work. Needs the repository secret CRON_SECRET, set to the same
+# value as CRON_SECRET in Vercel. Without it, this does nothing (the website
+# still runs the same check from ordinary page traffic).
+name: Unread message emails
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call the website
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://www.inspirelincoln.uk' }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then echo "CRON_SECRET isn't set, skipping."; exit 0; fi
+          curl -fsS --retry 3 --retry-delay 10 -m 60 -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/cron/message-emails"

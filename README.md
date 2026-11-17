@@ -150,10 +150,11 @@ Other commands: `npm run build`, `npm start`, `npm run lint`, `npm run typecheck
 | Service | What for | Required? | Where the credential goes |
 | --- | --- | --- | --- |
 | Supabase | Database, sign-in, file storage | Yes, for anything beyond static pages | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` in Vercel |
-| Supabase service role key | Faster account deletion (a database function covers it otherwise) | Optional | `SUPABASE_SERVICE_ROLE_KEY` in Vercel only (server-side) |
+| Supabase service role key | Faster account deletion (a database function covers it otherwise); emails about direct messages left unread for 24 hours | Optional, but needed for message emails | `SUPABASE_SERVICE_ROLE_KEY` in Vercel only (server-side) |
 | Vercel | Hosting | Yes | Not needed |
 | Spaceship | DNS for inspirelincoln.uk | Yes | DNS records only |
 | Resend | Sign-up and password emails (via Supabase SMTP), account decisions, feedback, group emails, contact form | Strongly recommended | `RESEND_API_KEY`, `EMAIL_FROM`, `CONTACT_TO_EMAIL` in Vercel; SMTP in Supabase |
+| Unread message emails | Calls `/api/cron/message-emails` every 15 minutes from GitHub Actions, so people hear about messages left unread for 24 hours even when the site is quiet (busy page traffic runs the same check without it) | Recommended | The same random value as `CRON_SECRET` in Vercel and as a GitHub repository secret |
 | Privacy notice | Shows where Supabase stores data | Recommended | `NEXT_PUBLIC_DATA_REGION` in Vercel, e.g. `London (eu-west-2)` |
 | External registration platform | Ticketing, if used | Optional | Paste the link in Admin → Conference settings |
 

@@ -172,21 +172,35 @@ export function rolesChangedEmail(opts: { siteUrl: string; name: string | null; 
   return { subject: types.length > 1 ? "Your INSPIRE roles have been updated" : `Your INSPIRE account is now ${ACCOUNT_TYPE_LABEL[types[0]]}`, ...m };
 }
 
-/** Someone has a message waiting on the website. The message itself stays on the website. */
-export function newMessageEmail(opts: { siteUrl: string; name: string | null; sender: string; conversationId: string }): Mail {
-  const sender = escapeHtml(opts.sender);
+/** One conversation someone hasn't opened, for the unread messages email. */
+export type UnreadConversation = { conversationId: string; sender: string; unread: number };
+
+/**
+ * Someone has had messages waiting on the website for a day without opening
+ * them. One email covers every such conversation. The messages stay on the website.
+ */
+export function unreadMessagesEmail(opts: { siteUrl: string; name: string | null; conversations: UnreadConversation[] }): Mail {
+  const list = opts.conversations;
+  const one = list.length === 1 ? list[0] : null;
+  const senders = list.map((c) => c.sender);
+  const who = senders.length === 1 ? senders[0] : senders.length === 2 ? `${senders[0]} and ${senders[1]}` : `${senders[0]} and ${senders.length - 1} others`;
+  const total = list.reduce((n, c) => n + Math.max(1, c.unread), 0);
+  const noun = total === 1 ? "message" : "messages";
   const m = renderEmail({
     siteUrl: opts.siteUrl,
-    preheader: `${opts.sender} sent you a message on INSPIRE.`,
-    eyebrow: "New message",
-    heading: "You have a new message",
+    preheader: `You have ${total} unread ${noun} on INSPIRE from ${who}.`,
+    eyebrow: "Unread messages",
+    heading: total === 1 ? "You have an unread message" : `You have ${total} unread messages`,
     paragraphs: [
       `Hello ${first(opts.name)},`,
-      `<strong>${sender}</strong> has sent you a message in My Hub.`,
+      one
+        ? `<strong>${escapeHtml(one.sender)}</strong> sent you ${total === 1 ? "a message" : `${total} messages`} in My Hub that you haven't read yet.`
+        : `You have messages in My Hub that you haven't read yet.`,
       "For your privacy, messages are only shown when you sign in. Reply there and they'll see it straight away.",
     ],
-    cta: { label: "Read the message", url: `${opts.siteUrl}/portal/messages/${opts.conversationId}` },
-    footnote: "We only email you about the first unread message, never every one. You can turn these emails off under Messages in My Hub.",
+    details: one ? undefined : list.slice(0, 10).map((c) => ({ label: c.sender, value: `${Math.max(1, c.unread)} unread ${c.unread === 1 ? "message" : "messages"}` })),
+    cta: { label: one ? "Read the message" : "Open your messages", url: `${opts.siteUrl}/portal/messages${one ? `/${one.conversationId}` : ""}` },
+    footnote: "We only email you about messages you haven't opened after a day, and only once until you've read them. You can turn these emails off under Messages in My Hub.",
   });
-  return { subject: `New message from ${opts.sender} on INSPIRE`, ...m };
+  return { subject: one ? `Unread message from ${one.sender} on INSPIRE` : `You have unread messages from ${who} on INSPIRE`, ...m };
 }
