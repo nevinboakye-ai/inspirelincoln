@@ -76,26 +76,6 @@ export function accountDecisionEmail(opts: {
   return null;
 }
 
-export function submissionReceivedEmail(opts: { siteUrl: string; name: string | null; kind: SubmissionKind; title: string; version: number }): Mail {
-  const noun = SUBMISSION_LABEL[opts.kind].noun;
-  const m = renderEmail({
-    siteUrl: opts.siteUrl,
-    preheader: `We've received your ${noun}. The committee will review it.`,
-    eyebrow: "Submission received",
-    heading: `We've got your ${noun}`,
-    paragraphs: [
-      `Hello ${first(opts.name)},`,
-      `Thank you. Your ${noun} is safely with the INSPIRE committee, who will review it and send feedback through your account.`,
-    ],
-    details: [
-      { label: "Title", value: opts.title },
-      { label: "Version", value: String(opts.version) },
-    ],
-    cta: { label: "View your submission", url: `${opts.siteUrl}/portal/submission` },
-  });
-  return { subject: `Your ${noun} has been received`, ...m };
-}
-
 export function feedbackEmail(opts: {
   siteUrl: string;
   name: string | null;

@@ -8,9 +8,6 @@ import { requireUser } from "@/lib/auth";
 import { getEdition } from "@/lib/data/content";
 import { abstractSchema, FILE_RULES } from "@/lib/validation/abstract";
 import { POLICY_VERSION, presenterKindOf, resolveFileType, rolesOf, SUBMISSION_FILES, submissionKindsFor } from "@/lib/accounts";
-import { sendEmail } from "@/lib/email/resend";
-import { submissionReceivedEmail } from "@/lib/email/messages";
-import { SITE_URL } from "@/lib/site";
 import { cookies } from "next/headers";
 import { PROFILE_PROMPT_COOKIE } from "@/lib/profile-prompt";
 import { cleanInstagram } from "@/lib/instagram";
@@ -308,9 +305,7 @@ export async function recordSubmission(input: z.input<typeof recordSchema>): Pro
     ({ data, error } = await db.from("presentation_submissions").insert(row).select("id, version").single());
   }
   if (error || !data) return { ok: false, error: "Your file uploaded but we couldn't record it. Please try again." };
-  if (user.email) {
-    await sendEmail({ to: user.email, ...submissionReceivedEmail({ siteUrl: SITE_URL, name: profile.fullName, kind: v.kind, title: v.title, version: data.version }) });
-  }
+  // No email on upload, to save email quota: the presenter sees the confirmation on screen, and is only emailed when the committee gives feedback or approves.
   revalidatePath("/portal", "layout");
   return { ok: true, message: data.version > 1 ? `Version ${data.version} submitted. The committee has been sent your update.` : "Submitted. The committee will review it and reply here." };
 }
