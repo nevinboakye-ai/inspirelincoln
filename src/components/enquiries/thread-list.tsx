@@ -5,6 +5,12 @@ import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/cn";
 import { ENQUIRY_TOPICS, memberStatus, needsReply, shortWhen, unreadForMember, type EnquiryThread } from "@/lib/enquiries";
 
+/** The committee hasn't opened it since the last message. Falls back to the receipt time before the database update. */
+const committeeUnread = (t: EnquiryThread) => {
+  const opened = t.committee_opened_at ?? t.committee_read_at;
+  return !opened || opened < t.last_message_at;
+};
+
 export type ThreadRow = EnquiryThread & { preview: string | null; previewFromCommittee: boolean; memberName?: string; memberPhoto?: string | null; memberMeta?: string };
 
 /** Conversations, newest activity first, as a member or the committee sees them. */
@@ -12,7 +18,7 @@ export function ThreadList({ threads, viewer, hrefBase }: { threads: ThreadRow[]
   return (
     <ul className="divide-y divide-navy/10 overflow-hidden rounded-xl border border-navy/10 bg-white">
       {threads.map((t) => {
-        const unread = viewer === "member" ? unreadForMember(t) : needsReply(t) && (!t.committee_read_at || t.committee_read_at < t.last_message_at);
+        const unread = viewer === "member" ? unreadForMember(t) : needsReply(t) && committeeUnread(t);
         const waiting = viewer === "committee" && needsReply(t);
         const status = memberStatus(t);
         return (

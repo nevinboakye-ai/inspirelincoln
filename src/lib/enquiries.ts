@@ -22,7 +22,10 @@ export type EnquiryThread = {
   last_from: "member" | "committee";
   last_message_at: string;
   member_read_at: string | null;
+  /** What the member sees as "Seen by the committee". Doesn't move for committee members with read receipts off. */
   committee_read_at: string | null;
+  /** When anyone on the committee last opened it. Committee only, loaded separately (enquiry_committee_opened). */
+  committee_opened_at?: string | null;
   created_at: string;
 };
 

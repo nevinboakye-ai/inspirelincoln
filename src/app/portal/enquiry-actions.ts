@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { BODY_MAX, ENQUIRY_TOPICS, MESSAGE_COLUMNS, SUBJECT_MAX, type EnquiryMessage } from "@/lib/enquiries";
+import { isReactionEmoji } from "@/lib/reactions";
 
 type Fail = { ok: false; error: string; fieldErrors?: Record<string, string> };
 
@@ -69,5 +70,15 @@ export async function deleteEnquiry(threadId: string): Promise<Fail | { ok: true
   const { error, count } = await db.from("enquiry_threads").delete({ count: "exact" }).eq("id", threadId);
   if (error || !count) return { ok: false, error: friendly(error, "That didn't delete. Please try again.") };
   revalidatePath("/admin/enquiries");
+  return { ok: true };
+}
+
+/** Adds or takes back an emoji reaction on a message, as the member or as the committee. */
+export async function reactToEnquiryMessage(messageId: string, emoji: string, on: boolean): Promise<Fail | { ok: true }> {
+  if (!z.string().uuid().safeParse(messageId).success) return { ok: false, error: "That message isn't available." };
+  if (!isReactionEmoji(emoji)) return { ok: false, error: "Choose one of the emoji shown." };
+  const { db } = await requireUser("/portal/enquiries");
+  const { error } = await db.rpc("enquiry_react", { p_message: messageId, p_emoji: emoji, p_on: Boolean(on) });
+  if (error) return { ok: false, error: friendly(error, "That reaction didn't save. Please try again.") };
   return { ok: true };
 }

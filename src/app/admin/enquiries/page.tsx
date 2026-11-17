@@ -39,6 +39,14 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
   if (canAnswer) {
     const { data } = await db.from("enquiry_threads").select(THREAD_COLUMNS).order("last_message_at", { ascending: false }).limit(500);
     const all = (data ?? []) as EnquiryThread[];
+    // When the committee last opened each one, for the unread dots. Kept from members, so it comes separately.
+    if (all.length) {
+      const { data: opened, error } = await db.rpc("enquiry_committee_opened", { p_ids: all.map((t) => t.id) });
+      if (!error) {
+        const at = new Map(((opened ?? []) as { id: string; committee_opened_at: string | null }[]).map((o) => [o.id, o.committee_opened_at]));
+        for (const t of all) t.committee_opened_at = at.get(t.id) ?? null;
+      }
+    }
     for (const t of all) {
       counts.all++;
       if (t.status === "open") counts.waiting++;

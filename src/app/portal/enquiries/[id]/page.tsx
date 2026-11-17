@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { signAvatar } from "@/lib/avatar";
 import { EnquiryChat } from "@/components/enquiries/enquiry-chat";
 import { MESSAGE_COLUMNS, THREAD_COLUMNS, type EnquiryMessage, type EnquiryThread } from "@/lib/enquiries";
+import { ENQUIRY_REACTION_COLUMNS, type Reaction } from "@/lib/reactions";
 
 export const metadata: Metadata = { title: "Enquiry" };
 export const dynamic = "force-dynamic";
@@ -14,9 +15,10 @@ export default async function EnquiryPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const { db, user, profile } = await requireUser(`/portal/enquiries/${id}`);
-  const [{ data: thread }, { data: messages }, photo] = await Promise.all([
+  const [{ data: thread }, { data: messages }, reactions, photo] = await Promise.all([
     db.from("enquiry_threads").select(THREAD_COLUMNS).eq("id", id).eq("user_id", user.id).maybeSingle(),
     db.from("enquiry_messages").select(MESSAGE_COLUMNS).eq("thread_id", id).order("created_at").limit(500),
+    db.from("enquiry_reactions").select(ENQUIRY_REACTION_COLUMNS).eq("thread_id", id).limit(3000),
     signAvatar(db, profile.avatarPath),
   ]);
   if (!thread) notFound();
@@ -30,6 +32,7 @@ export default async function EnquiryPage({ params }: { params: Promise<{ id: st
       <EnquiryChat
         thread={t}
         messages={(messages ?? []) as EnquiryMessage[]}
+        reactions={reactions.error ? null : ((reactions.data ?? []) as Reaction[])}
         viewer="member"
         me={user.id}
         memberName={profile.fullName ?? "You"}
