@@ -37,7 +37,7 @@ This gives every delegate a prompt they have to act on, which raises response ra
 
 Medical students' engagement with research is linked to later academic careers, and widening access to research opportunities is a stated priority for academic medicine. Student-led research conferences are now common in the UK: they give students a place to present, hear researchers and meet potential supervisors. They are also cheap to run and reach students who have no research on their course or no mentor. Whether they do more than leave students feeling enthused is not known.
 
-**Theoretical framework.** The study uses Social Cognitive Career Theory (SCCT) [1], which has been applied to clinical research careers and to medical students' research self-efficacy [2, 3]. In SCCT, self-efficacy (belief in one's ability to do research tasks) and contextual supports and barriers (here, perceived access to opportunities and mentors) shape goals (intentions), which shape actions. A conference could act on each link: talks and workshops may build self-efficacy, conversations with academics may make opportunities feel accessible, and both may turn intentions into action. The study measures each link, at each time point, in the same person.
+**Theoretical framework.** The study uses Social Cognitive Career Theory (SCCT) [1], which has been applied to clinical research careers and to medical students' research self-efficacy [2, 3]. In SCCT, self-efficacy (belief in one's ability to do research tasks) and contextual supports and barriers (here, perceived access to opportunities and mentors) shape goals (intentions), which shape actions. A conference could act on each link: talks and workshops may build self-efficacy, conversations with academics may make opportunities feel accessible, and both may turn intentions into action. The study measures self-efficacy, perceived access, career interest (as an indicator of goals) and actions in the same person over time.
 
 # 3. What is already known, and the gaps this study addresses
 
@@ -69,7 +69,7 @@ Reviews that frame the field:
 | Satisfaction rather than educational outcomes | **Real, partly addressed.** | Conference studies [4, 5] report satisfaction or interest; Lee et al. found 80% of research-teaching studies at Kirkpatrick level 1. Bligh et al. added a short knowledge check. |
 | Self-reported confidence without knowledge or behaviour | **Real.** | No conference study identified measured behaviour; knowledge checks were conference-specific and unvalidated [6]. Ali et al. name it as a limitation [7]. |
 | No matched pre and post data | **Partly addressed.** | Matched designs exist [6, 7] but are rare, small, single-conference or used unvalidated items; Falola et al. could not match [8]. Matching alone is not novel enough to be the headline. |
-| No longitudinal follow-up of whether intentions become actions | **The clearest gap. Primary contribution (Gap 1).** | The only conference study with follow-up kept 11% of participants and measured perceptions, not actions [6]. None of the studies identified compared research actions after a conference with the same person's actions before it. |
+| No longitudinal follow-up of whether students go on to act | **The clearest gap. Primary contribution (Gap 1).** | The only conference study with follow-up kept 11% of participants and measured perceptions, not actions [6]. None of the studies identified compared research actions after a conference with the same person's actions before it. |
 | Students without research experience or mentorship | **Real and under-studied. Second contribution (Gap 2).** | Prior experience is rarely assessed [9]; mentor access is a key barrier with no institutional enablers identified [10]; reviews call for equity-focused work [11]. No conference study identified tested whether these students change differently. |
 | Which conference activities matter most | **Under-studied but this design can answer it only weakly.** | Workshop places are allocated by preference, cells are small, and activities overlap. Kept as exploratory. |
 
@@ -95,9 +95,9 @@ The manuscript should frame INSPIRE as the setting and student-led research conf
 
 **Prespecified effect modification (Gap 2, estimation):** does the pre-to-post change differ between students with no previous research experience and those with some, and between students with and without a research mentor at baseline?
 
-**Further secondary outcomes:** perceived access to research opportunities; overall research confidence; interest in research as part of a future career; intentions; durability of changes at 8 weeks; current barriers; mentor status at 8 weeks.
+**Further secondary outcomes:** perceived access to research opportunities; interest in research as part of a future career; durability of changes at 8 weeks; current barriers; mentor status at 8 weeks.
 
-**Exploratory:** research literacy (5-item objective check), including a comparison of delegates who attended the critical-appraisal workshop with those who did not; programme activities and connections formed; response shift (then-test); free-text barriers.
+**Exploratory:** programme activities, workshops and connections formed on the day; contact since the conference; free-text barriers.
 
 # 5. Design
 
@@ -105,11 +105,11 @@ Prospective, multi-institutional, single-group observational cohort with three l
 
 | Questionnaire | Opens | Closes | Length |
 |---|---|---|---|
-| 1: Before | When the study is switched on | 09:00, 21 Nov 2026 (welcome session) | About 9 minutes |
-| 2: After | 15:15, 21 Nov 2026 (before closing and prizes) | 23:59, 5 Dec 2026 | About 7 minutes |
-| 3: Eight weeks on | 9 Jan 2027 (week 7) | 23:59, 30 Jan 2027 (week 10) | About 6 minutes |
+| 1: Before | When the study is switched on | 09:00, 21 Nov 2026 (welcome session) | About 5 minutes (33 questions) |
+| 2: After | 15:15, 21 Nov 2026 (before closing and prizes) | 23:59, 5 Dec 2026 | About 4 minutes (24 questions) |
+| 3: Eight weeks on | 9 Jan 2027 (week 7) | 23:59, 30 Jan 2027 (week 10) | About 5 minutes (29 questions) |
 
-All windows are editable on the Research study page. People can join only while questionnaire 1 is open, so every participant has a baseline. Questionnaire 2 is opened in the closing session so delegates can answer before they leave; it should be announced from the stage with a QR code to My Hub.
+Each questionnaire is kept to about five minutes (checked by an automated test), because length is one of the strongest predictors of attrition in online longitudinal surveys. Questions that did not serve a prespecified analysis were removed (see section 15, point 9). All windows are editable on the Research study page. People can join only while questionnaire 1 is open, so every participant has a baseline. Questionnaire 2 is opened in the closing session so delegates can answer before they leave; it should be announced from the stage with a QR code to My Hub.
 
 # 6. Participants
 
@@ -134,24 +134,20 @@ Every question has a stated purpose. Outcome questions are word-for-word identic
 | Construct | Measure | Items | Before | After | 8 weeks | Role |
 |---|---|---|---|---|---|---|
 | Research self-efficacy | **CRAI-12** [15], verbatim, 0 (no confidence) to 10 (total confidence) | 12 | ✓ | ✓ | ✓ | **Primary** |
-| Overall research confidence | Single item, 0 to 10 | 1 | ✓ | ✓ | ✓ | Secondary; anchor for then-test |
-| Then-test | Same item, "thinking back to the morning of the conference" [16] | 1 | | ✓ | | Exploratory (response shift) |
 | Interest in research career | Single item, 0 to 10 (comparable to [6]) | 1 | ✓ | ✓ | ✓ | Secondary |
 | Perceived access to research opportunities | 5 items developed for this study (finding opportunities, knowing someone to approach, "open to students like me", expecting to be taken seriously, knowing what to say), 5-point agreement | 5 | ✓ | ✓ | ✓ | Secondary |
-| Intentions | Likelihood of each of six research actions in the next 8 weeks, 5-point | 6 | ✓ | ✓ | | Secondary; intention to behaviour |
 | Research actions | Six actions (contacted an academic; applied for an opportunity; joined or started a project; found a mentor; worked on an output; submitted an abstract or paper), yes/no, for the last 8 weeks (before) and since the conference (8 weeks) | 6 | ✓ | | ✓ | **Key secondary** |
-| Research literacy | 5 multiple-choice questions with "I don't know" (absolute vs relative risk; before-and-after designs; confidence intervals; CONSORT; confounding), matched to workshop content | 5 | ✓ | ✓ | | Exploratory objective measure |
 | Barriers | Checklist of 10, informed by [10, 12] | 1 | ✓ | | ✓ | Secondary |
 | Mentor | Has someone who advises them on research | 1 | ✓ | | ✓ | Effect modifier; secondary outcome |
-| Baseline characteristics | Course, year, university (grouped), role, prior research experience, previous conferences, first in family at university, family member who is a doctor or researcher, gender, age group | 10 | ✓ | | | Description, confounders, effect modifiers |
-| The day | Attendance, programme parts, workshops attended, academics and students met, opportunity discussed, follow-up arranged, most relevant part | 8 | | ✓ | | Exploratory (activities) and H3 |
-| Since the conference | In touch with someone met there; whether anything from the conference contributed; other research events since (co-intervention); free text on what would help | 4 | | | ✓ | Exploratory, confounding |
+| Baseline characteristics | Course, year, university (grouped), role, prior research experience, first in family at university, gender | 7 | ✓ | | | Description, confounders, effect modifiers |
+| The day | Attendance, programme parts, workshops attended, academics met, opportunity discussed, follow-up arranged | 6 | | ✓ | | Exploratory (activities) and H3 |
+| Since the conference | In touch with someone met there; other research events since (co-intervention); optional free text on what would help | 3 | | | ✓ | Exploratory, confounding |
 
 **Notes on the instruments.**
 
 - **CRAI-12.** Chosen because it is validated, short, has been used with medical students [3, 8] and allows comparison with published work. Two of its six factors (funding; team planning) are less relevant to early-stage students and less likely to change after a one-day event, which could dilute the change. Prespecified sensitivity analysis: the 8-item score without the funding and planning factors. Report reliability (Cronbach's alpha and McDonald's omega) at each time point. **Before submission, confirm permission to use the CRAI-12** with the authors or through its listing in APA PsycTests, and cite it [15].
 - **Perceived access scale.** New, so: run 5 to 8 cognitive interviews with students (ideally including Year 1 and widening participation students) before launch, report its internal consistency and a one-factor check, and describe it as developed for the study.
-- **Literacy check.** Exposure differs: only delegates allocated to "Don't Believe the Headline" (critical appraisal) or "Get Published" received related teaching. That gives an internal comparison (section 10.6). Answers are scored, never shown.
+- **Not included, to keep each questionnaire to about five minutes:** a research literacy quiz, intention ratings, a single overall-confidence item and its retrospective "then-test", age group, previous conferences, a family link to medicine or research, number of students met, the most relevant part of the day, and whether the conference contributed to later actions. None was needed for H1 to H3 or the effect modification; most were exploratory or duplicated a retained measure, and the "did it contribute" item invites the attribution the design cannot support.
 
 # 9. Sample size and power
 
@@ -202,7 +198,6 @@ Sensitivity analyses: (a) paired t-test and Wilcoxon signed-rank test on complet
 
 - **H2:** proportion with at least one research action, 8 weeks before vs 8 weeks after, by McNemar's test, with the paired difference in proportions and its 95% confidence interval; number of actions (0 to 6) by Wilcoxon signed-rank. Sensitivity: excluding presenters (whose "before" window includes preparing their INSPIRE poster or talk), and excluding the two output items.
 - **H3:** logistic regression (Firth's correction if events are few) of any action at 8 weeks on the change in CRAI-12 (before to after) and arranging to follow up on the day, adjusted for any action in the 8 weeks before and prior experience. To avoid over-fitting, no more than about one predictor per 10 events.
-- **Intention to behaviour:** agreement between each intention (after the conference) and the matching action at 8 weeks.
 
 ## 10.4 Multiplicity
 
@@ -214,9 +209,8 @@ Add time × no prior research experience, and separately time × no mentor at ba
 
 ## 10.6 Exploratory analyses
 
-- **Literacy:** mixed model of literacy score ~ time × attended "Don't Believe the Headline" (a difference-in-differences within the cohort; both groups are re-tested, so the testing effect cancels). Workshop places followed ranking, so preference confounds this.
+- **Workshops:** change in CRAI-12 by workshop attended (for example the critical-appraisal workshop "Don't Believe the Headline"). Workshop places followed ranking, so preference confounds this.
 - **Programme parts and connections:** descriptive; associations with change are hypothesis-generating only.
-- **Response shift:** compare the then-test with the before score for overall confidence [16].
 - **Durability:** before vs 8-week contrast from the primary model.
 - **Free text:** content analysis by two coders.
 - **Non-attending waitlisted applicants:** descriptive only.
@@ -232,9 +226,9 @@ Questionnaires cannot be submitted incomplete (except optional items), so item-l
 | No control group | Changes may reflect time, term or other events | Within-person 8-week behaviour windows; co-intervention question; waitlisted non-attenders (descriptive); careful language ("associated with"). Strongest fix: repeat at further conferences. |
 | Self-selection of delegates | Attenders are already interested in research | Describe the cohort fully; study change within people, not levels; report prior experience. Generalise to students who attend such conferences, not all students. |
 | Self-selection of responders and attrition | Responders may change more | Attrition analysis; mixed models; multiple imputation; tipping-point analysis; reminders; short questionnaires. |
-| Social desirability and demand | Inflated "after" scores | Separate from feedback; committee cannot see answers; neutral wording; "there are no right answers"; objective literacy items. |
-| Response shift | People re-calibrate what "confident" means | Then-test item [16]. |
-| Testing and question-behaviour effects | Answering about intentions can itself prompt action | Present as a limitation; it affects every participant equally; within-cohort comparisons. |
+| Social desirability and demand | Inflated "after" scores | Separate from feedback; committee cannot see answers; neutral wording; "there are no right answers". |
+| Response shift | People re-calibrate what "confident" means | Not measured (a then-test was dropped to keep questionnaires short) [16]; state as a limitation; the behavioural outcome is not affected. |
+| Testing and question-behaviour effects | Answering about research actions can itself prompt action | Present as a limitation; it affects every participant equally; within-cohort comparisons. |
 | Recall of the 8 weeks before | Under- or over-reporting | Specific, concrete actions; a defined window. |
 | Season | The 8 weeks after include the Christmas break, which would reduce actions | Biases H2 towards no difference (conservative); state this. |
 | Presenters | Their "before" window includes preparing for INSPIRE | Sensitivity analysis excluding presenters. |
@@ -278,7 +272,7 @@ Reviewers in medical education commonly judge quantitative studies against domai
 |---|---|---|
 | Design | Single-group, three time points: better than one-group pre-post, below a controlled design | A comparison group (non-attending applicants in larger numbers, or a matched cohort from one medical school); replication at a second conference |
 | Sampling | Multi-institutional, but one conference; response unknown until launch | Aim for at least 50% baseline response; report response at every stage |
-| Data | Self-report plus a brief objective literacy check and self-reported behaviour | Verify a subset of reported actions |
+| Data | Self-reported confidence and self-reported behaviour | Verify a subset of reported actions |
 | Instrument validity | CRAI-12 validated; new access scale needs evidence | Cognitive interviews; report reliability and structure |
 | Analysis | Prespecified, mixed models, sensitivity analyses | Preregister before launch |
 | Outcome level | Reaches behaviour (Kirkpatrick level 3) | Longer follow-up in a later round |
@@ -288,11 +282,12 @@ Reviewers in medical education commonly judge quantitative studies against domai
 1. *A long list of conference-specific outcomes would have read as an evaluation.* Narrowed to one primary outcome, a behavioural key secondary outcome and one prespecified effect modification, all framed around conferences in general.
 2. *Self-efficacy alone would repeat what is known.* Added the 8-week behaviour windows (same person, before and after), which is the clearest gap.
 3. *A 6-month follow-up would likely repeat Bligh et al.'s attrition.* Chose 8 weeks, in-portal, with consented reminders.
-4. *Pre-test scores may be inflated before people understand the tasks.* Added a then-test item.
-5. *Literacy items could reflect re-testing.* Analysed as a within-cohort comparison by workshop attendance, so re-testing affects both groups.
+4. *Pre-test scores may be inflated before people understand the tasks.* A then-test was considered, then dropped for length; response shift is stated as a limitation.
+5. *A literacy quiz would add an objective measure.* Dropped: exposure differed by workshop, re-testing confounds it, and it added two minutes for an exploratory outcome.
 6. *Presenters bias the "before" behaviour window.* Added a sensitivity analysis.
 7. *"Required" could invalidate consent.* Changed to "required to answer, free to decline".
 8. *The sample could be oversold.* The protocol and dashboard state the power realistically.
+9. *Long questionnaires lose participants, above all at follow-up.* Cut to about 5, 4 and 5 minutes (33, 24 and 29 questions) by removing every item that did not serve a prespecified analysis (listed in section 8). The primary outcome, behaviour, mechanism and effect-modifier questions are unchanged.
 
 # 16. How the study is built into the website
 

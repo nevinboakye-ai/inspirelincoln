@@ -49,7 +49,7 @@ function answerCells(stage: Stage, a: Answers | null): Record<string, string | n
   return out;
 }
 
-const BASELINE = ["discipline", "stage", "university", "role", "first_gen", "family_link", "gender", "age", "conferences"] as const;
+const BASELINE = ["discipline", "stage", "university", "role", "first_gen", "gender"] as const;
 
 type Participant = { code: string; linkage: boolean; sharing: boolean; withdrawn: boolean; checkedIn: boolean | null; stages: Partial<Record<Stage, ExportRow>> };
 

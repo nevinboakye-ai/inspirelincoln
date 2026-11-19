@@ -35,8 +35,8 @@ export function participantInformation(s: StudySettings): InfoSection[] {
     {
       heading: "What would I do?",
       body: [
-        `Answer three online questionnaires here in My Hub: one before the conference (about 9 minutes, open until ${formatWhen(s.preClosesAt)}), one just after it (about 7 minutes, ${formatWhen(s.postOpensAt, false)} to ${formatWhen(s.postClosesAt, false)}) and one about eight weeks later (about 6 minutes, ${formatWhen(s.followupOpensAt, false)} to ${formatWhen(s.followupClosesAt, false)}).`,
-        "The questions ask how confident you feel about research tasks, how easy you find it to find research opportunities, a few short questions about reading research, and which research activities you have done. There are no right answers, and it's fine to answer \"no\" or choose low numbers.",
+        `Answer three online questionnaires here in My Hub: one before the conference (about 5 minutes, open until ${formatWhen(s.preClosesAt)}), one just after it (about 4 minutes, ${formatWhen(s.postOpensAt, false)} to ${formatWhen(s.postClosesAt, false)}) and one about eight weeks later (about 5 minutes, ${formatWhen(s.followupOpensAt, false)} to ${formatWhen(s.followupClosesAt, false)}).`,
+        "The questions ask how confident you feel about research tasks, how easy you find it to find research opportunities, and which research activities you have done. There are no right answers, and it's fine to answer \"no\" or choose low numbers.",
       ],
     },
     {

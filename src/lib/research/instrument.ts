@@ -18,9 +18,9 @@ export const STAGES = ["pre", "post", "followup"] as const;
 export type Stage = (typeof STAGES)[number];
 
 export const STAGE_LABEL: Record<Stage, { title: string; short: string; minutes: number; prefix: string }> = {
-  pre: { title: "Before the conference", short: "Questionnaire 1 of 3", minutes: 9, prefix: "pre" },
-  post: { title: "After the conference", short: "Questionnaire 2 of 3", minutes: 7, prefix: "post" },
-  followup: { title: "Eight weeks on", short: "Questionnaire 3 of 3", minutes: 6, prefix: "fu" },
+  pre: { title: "Before the conference", short: "Questionnaire 1 of 3", minutes: 5, prefix: "pre" },
+  post: { title: "After the conference", short: "Questionnaire 2 of 3", minutes: 4, prefix: "post" },
+  followup: { title: "Eight weeks on", short: "Questionnaire 3 of 3", minutes: 5, prefix: "fu" },
 };
 
 export type Option = { value: string; label: string };
@@ -61,14 +61,6 @@ const AGREE: Option[] = [
   { value: "3", label: "Neither agree nor disagree" },
   { value: "4", label: "Agree" },
   { value: "5", label: "Strongly agree" },
-];
-
-const LIKELY: Option[] = [
-  { value: "1", label: "Very unlikely" },
-  { value: "2", label: "Unlikely" },
-  { value: "3", label: "Neither likely nor unlikely" },
-  { value: "4", label: "Likely" },
-  { value: "5", label: "Very likely" },
 ];
 
 const YES_NO: Option[] = [
@@ -125,8 +117,7 @@ export const ACCESS_ITEMS: { id: string; text: string }[] = [
 ];
 
 /**
- * The research actions measured as behaviour. Asked as intentions (pre and
- * post: "in the next 8 weeks") and as behaviour (pre: "in the last 8 weeks",
+ * The research actions measured as behaviour (pre: "in the last 8 weeks",
  * follow-up: "since the conference"), so each person's 8 weeks after can be
  * compared with their own 8 weeks before.
  */
@@ -147,65 +138,6 @@ const PAST: Record<string, string> = {
   a5: "Worked on a research output (an abstract, poster, presentation or manuscript)",
   a6: "Submitted an abstract or manuscript to a conference or journal",
 };
-
-/** Exploratory: a brief objective check of research literacy, written to match the workshop content. Answers are scored, not shown. */
-export const LITERACY_ITEMS: { id: string; text: string; options: Option[] }[] = [
-  {
-    id: "lit_01",
-    text: "A news story says a new medicine \"halves the risk\" of a disease, from 2 in 1,000 people to 1 in 1,000. What is the absolute risk reduction?",
-    options: [
-      { value: "a", label: "50%" },
-      { value: "b", label: "1 in 1,000" },
-      { value: "c", label: "2 in 1,000" },
-      { value: "d", label: "1 in 2" },
-      { value: "dk", label: "I don't know" },
-    ],
-  },
-  {
-    id: "lit_02",
-    text: "A GP practice compares missed appointments in the 3 months before and the 3 months after it started sending text reminders. Missed appointments fell. Which conclusion is best supported?",
-    options: [
-      { value: "a", label: "The reminders caused the fall" },
-      { value: "b", label: "The fall is consistent with the reminders helping, but other changes over time could explain it" },
-      { value: "c", label: "The reminders had no effect" },
-      { value: "d", label: "Every practice should now send reminders" },
-      { value: "dk", label: "I don't know" },
-    ],
-  },
-  {
-    id: "lit_03",
-    text: "A study reports an odds ratio of 0.85 (95% confidence interval 0.62 to 1.16). Which statement is correct?",
-    options: [
-      { value: "a", label: "The odds were clearly reduced" },
-      { value: "b", label: "15% of patients benefited" },
-      { value: "c", label: "The result is compatible with no difference" },
-      { value: "d", label: "The odds were clearly increased" },
-      { value: "dk", label: "I don't know" },
-    ],
-  },
-  {
-    id: "lit_04",
-    text: "Which reporting guideline was written for randomised controlled trials?",
-    options: [
-      { value: "a", label: "STROBE" },
-      { value: "b", label: "PRISMA" },
-      { value: "c", label: "CONSORT" },
-      { value: "d", label: "CARE" },
-      { value: "dk", label: "I don't know" },
-    ],
-  },
-  {
-    id: "lit_05",
-    text: "A survey finds that students who go to more lectures get higher exam marks. What is the main reason this does not show that going to lectures causes higher marks?",
-    options: [
-      { value: "a", label: "The sample was too small" },
-      { value: "b", label: "Something else, such as motivation, could lead to both" },
-      { value: "c", label: "Exam marks are not a reliable measure" },
-      { value: "d", label: "Surveys can never show anything useful" },
-      { value: "dk", label: "I don't know" },
-    ],
-  },
-];
 
 export const WORKSHOPS: Option[] = [
   { value: "w1", label: "Get Published: From First Draft to Accepted Paper" },
@@ -318,33 +250,10 @@ export const SECTIONS: Section[] = [
         ],
       },
       {
-        id: "conferences",
-        kind: "single",
-        label: "Research conferences attended before",
-        text: "How many research conferences had you attended before this one?",
-        options: [
-          { value: "0", label: "None" },
-          { value: "1", label: "1" },
-          { value: "2-3", label: "2 or 3" },
-          { value: "4+", label: "4 or more" },
-        ],
-      },
-      {
         id: "first_gen",
         kind: "single",
         label: "First in immediate family to attend university",
         text: "Are you the first person in your immediate family to go to university?",
-        options: [
-          { value: "yes", label: "Yes" },
-          { value: "no", label: "No" },
-          { value: "pnts", label: "Prefer not to say" },
-        ],
-      },
-      {
-        id: "family_link",
-        kind: "single",
-        label: "Immediate family member is a doctor or academic researcher",
-        text: "Does anyone in your immediate family work as a doctor or in academic research?",
         options: [
           { value: "yes", label: "Yes" },
           { value: "no", label: "No" },
@@ -360,19 +269,6 @@ export const SECTIONS: Section[] = [
           { value: "woman", label: "Woman" },
           { value: "man", label: "Man" },
           { value: "other", label: "Non-binary, or in another way" },
-          { value: "pnts", label: "Prefer not to say" },
-        ],
-      },
-      {
-        id: "age",
-        kind: "single",
-        label: "Age group",
-        text: "How old are you?",
-        options: [
-          { value: "18-20", label: "18 to 20" },
-          { value: "21-23", label: "21 to 23" },
-          { value: "24-26", label: "24 to 26" },
-          { value: "27+", label: "27 or over" },
           { value: "pnts", label: "Prefer not to say" },
         ],
       },
@@ -406,30 +302,9 @@ export const SECTIONS: Section[] = [
   },
   {
     id: "overall",
-    title: "Overall",
+    title: "Research and your career",
     stages: STAGES,
     items: [
-      {
-        id: "se_global",
-        kind: "scale",
-        label: "Overall confidence to contribute to a research project",
-        text: "Overall, how confident are you, today, that you could contribute meaningfully to a research project?",
-        min: 0,
-        max: 10,
-        minLabel: "Not at all",
-        maxLabel: "Completely",
-      },
-      {
-        id: "se_global_then",
-        kind: "scale",
-        label: "Retrospective (then-test): overall confidence before the conference",
-        text: "Thinking back to the morning of the conference, before it started: how confident were you then that you could contribute meaningfully to a research project?",
-        hint: "Only this questionnaire asks this. It helps us check how people's sense of the scale changes.",
-        min: 0,
-        max: 10,
-        minLabel: "Not at all",
-        maxLabel: "Completely",
-      },
       {
         id: "career_interest",
         kind: "scale",
@@ -448,13 +323,6 @@ export const SECTIONS: Section[] = [
     intro: "How much do you agree or disagree with each statement?",
     stages: STAGES,
     items: ACCESS_ITEMS.map((q) => ({ id: q.id, kind: "single" as const, label: `Access: ${q.text}`, text: q.text, options: AGREE })),
-  },
-  {
-    id: "intentions",
-    title: "The next eight weeks",
-    intro: "How likely is it that you will do each of these in the next 8 weeks?",
-    stages: ["pre", "post"],
-    items: ACTIONS.map((a) => ({ id: `int_${a.id}`, kind: "single" as const, label: `Intention (next 8 weeks): ${a.text}`, text: a.text, options: LIKELY })),
   },
   {
     id: "actions",
@@ -503,13 +371,6 @@ export const SECTIONS: Section[] = [
         options: COUNT,
       },
       {
-        id: "peer_contacts",
-        kind: "single",
-        label: "Students exchanged contact details with",
-        text: "How many students from other universities did you swap contact details with?",
-        options: COUNT,
-      },
-      {
         id: "opportunity_discussed",
         kind: "single",
         label: "Someone discussed a specific research opportunity",
@@ -523,29 +384,7 @@ export const SECTIONS: Section[] = [
         text: "Did you arrange to follow up with anyone about research?",
         options: YES_NO,
       },
-      {
-        id: "most_relevant",
-        kind: "single",
-        label: "Part of the day most relevant to research plans",
-        text: "Which part of the day, if any, was most relevant to your own research plans?",
-        options: [
-          { value: "keynotes", label: "Keynote talks" },
-          { value: "orals", label: "Oral presentations" },
-          { value: "posters", label: "The poster exhibition" },
-          { value: "workshops", label: "Workshops" },
-          { value: "conversations", label: "Informal conversations" },
-          { value: "presenting", label: "Presenting my own work" },
-          { value: "none", label: "None of it" },
-        ],
-      },
     ],
-  },
-  {
-    id: "literacy",
-    title: "Five quick questions",
-    intro: "These check how research findings are read. It isn't a test of you, and \"I don't know\" is a good answer if you don't know. Please don't look anything up.",
-    stages: ["pre", "post"],
-    items: LITERACY_ITEMS.map((q) => ({ id: q.id, kind: "single" as const, label: `Literacy: ${q.text}`, text: q.text, options: q.options })),
   },
   {
     id: "context",
@@ -576,18 +415,6 @@ export const SECTIONS: Section[] = [
         options: [...YES_NO, { value: "na", label: "I didn't attend" }],
       },
       {
-        id: "inspire_contributed",
-        kind: "single",
-        label: "Participant view: did anything from INSPIRE contribute to research activity",
-        text: "Did anything from the conference (a person, a session or an idea) contribute to any research activity since?",
-        options: [
-          { value: "yes", label: "Yes" },
-          { value: "no", label: "No" },
-          { value: "unsure", label: "Not sure" },
-          { value: "na", label: "I haven't done any research activity, or didn't attend" },
-        ],
-      },
-      {
         id: "other_event",
         kind: "single",
         label: "Attended another research conference or research-skills event since",
@@ -608,11 +435,7 @@ export const SECTIONS: Section[] = [
 
 /** The sections a stage asks, in order. */
 export function sectionsFor(stage: Stage): Section[] {
-  return SECTIONS.filter((s) => s.stages.includes(stage)).map((s) => ({
-    ...s,
-    // The then-test is asked only after the conference.
-    items: s.items.filter((i) => i.id !== "se_global_then" || stage === "post"),
-  }));
+  return SECTIONS.filter((s) => s.stages.includes(stage));
 }
 
 export function sectionTitle(s: Section, stage: Stage) {

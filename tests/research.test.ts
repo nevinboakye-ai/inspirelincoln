@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ACTIONS, CRAI12, LITERACY_ITEMS, STAGES, itemsFor, sectionsFor, validateAnswers, type Answers, type Stage } from "@/lib/research/instrument";
-import { LITERACY_KEY, experienceLevel, scoreStage } from "@/lib/research/scoring";
+import { CRAI12, STAGES, STAGE_LABEL, itemsFor, sectionsFor, validateAnswers, type Answers, type Stage } from "@/lib/research/instrument";
+import { experienceLevel, scoreStage } from "@/lib/research/scoring";
 import { DEFAULT_SETTINGS, canEnrol, dueStage, launchBlockers, nextStage, type StudySettings } from "@/lib/research/schedule";
 import { answerColumns, buildCodebook, buildLong, buildWide, daysFromEvent, toAnalysisCsv, type ExportRow } from "@/lib/research/export";
 
@@ -26,12 +26,11 @@ describe("research questionnaires", () => {
       expect(post.get(q.id)).toBe(q.text);
       expect(fu.get(q.id)).toBe(q.text);
     }
-    for (const id of ["se_global", "career_interest", "acc_01", "acc_05"]) {
+    for (const id of ["mentor", "barriers", "beh_a1", "beh_a6"]) expect(fu.get(id)).toBe(pre.get(id));
+    for (const id of ["career_interest", "acc_01", "acc_05"]) {
       expect(post.get(id)).toBe(pre.get(id));
       expect(fu.get(id)).toBe(pre.get(id));
     }
-    for (const q of LITERACY_ITEMS) expect(post.get(q.id)).toBe(pre.get(q.id));
-    for (const a of ACTIONS) expect(post.get(`int_${a.id}`)).toBe(pre.get(`int_${a.id}`));
   });
 
   it("never asks the same question twice in one questionnaire", () => {
@@ -41,10 +40,13 @@ describe("research questionnaires", () => {
     }
   });
 
-  it("asks the then-test only after the conference and baseline details only before", () => {
-    expect(itemsFor("post").some(({ item }) => item.id === "se_global_then")).toBe(true);
-    expect(itemsFor("pre").some(({ item }) => item.id === "se_global_then")).toBe(false);
-    expect(itemsFor("followup").some(({ item }) => item.id === "se_global_then")).toBe(false);
+  it("keeps each questionnaire to about five minutes", () => {
+    // About 7 seconds a question, plus time to read the section introductions.
+    for (const s of STAGES) expect(itemsFor(s).length * 7 + sectionsFor(s).length * 8).toBeLessThanOrEqual(STAGE_LABEL[s].minutes * 60 + 30);
+    for (const s of STAGES) expect(STAGE_LABEL[s].minutes).toBeLessThanOrEqual(5);
+  });
+
+  it("asks baseline details only before", () => {
     expect(sectionsFor("pre").some((s) => s.id === "about")).toBe(true);
     expect(sectionsFor("post").some((s) => s.id === "about")).toBe(false);
   });
@@ -84,21 +86,16 @@ describe("research questionnaires", () => {
 });
 
 describe("research scoring", () => {
-  it("scores the CRAI-12 mean, access, intentions, literacy and actions", () => {
+  it("scores the CRAI-12 mean, access and actions", () => {
     const a = fill("pre");
     for (const [i, q] of CRAI12.entries()) a[q.id] = String(i < 6 ? 2 : 4);
-    for (const q of LITERACY_ITEMS) a[q.id] = LITERACY_KEY[q.id];
-    a.lit_05 = "dk";
     a.beh_a1 = "yes";
     a.beh_a2 = "no";
-    a.int_a1 = "5";
     const s = scoreStage("pre", a);
     expect(s.crai_mean).toBe(3);
-    expect(s.literacy_score).toBe(4);
     expect(s.actions_any).toBe(1);
     expect(s.actions_count).toBeGreaterThanOrEqual(1);
     expect(s.access_mean).not.toBeNull();
-    expect(s.intent_mean).not.toBeNull();
   });
 
   it("leaves a scale missing if any item is missing", () => {
@@ -109,8 +106,7 @@ describe("research scoring", () => {
 
   it("doesn't score things a stage doesn't ask", () => {
     const f = scoreStage("followup", fill("followup"));
-    expect(f.literacy_score).toBeNull();
-    expect(f.intent_mean).toBeNull();
+    expect(f.crai_mean).not.toBeNull();
     expect(scoreStage("post", fill("post")).actions_any).toBeNull();
   });
 
