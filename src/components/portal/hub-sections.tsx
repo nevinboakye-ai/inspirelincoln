@@ -15,6 +15,7 @@ import {
   Pin,
   ShieldCheck,
   Sparkles,
+  FlaskConical,
   UploadCloud,
   type LucideIcon,
 } from "lucide-react";
@@ -32,6 +33,7 @@ function stepLook(href: string | null): { icon: LucideIcon; tone: string } {
   if (href.includes("travel")) return { icon: Car, tone: "tone-teal" };
   if (href.includes("submission")) return { icon: UploadCloud, tone: "tone-gold" };
   if (href.includes("workshops")) return { icon: ListOrdered, tone: "tone-rose" };
+  if (href.includes("research")) return { icon: FlaskConical, tone: "tone-teal" };
   return { icon: IdCard, tone: "tone-navy" };
 }
 

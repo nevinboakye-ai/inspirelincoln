@@ -19,6 +19,7 @@ import {
   NotebookPen,
   Users,
   Trophy,
+  FlaskConical,
 } from "lucide-react";
 
 import { signOut } from "@/app/auth/actions";
@@ -35,6 +36,7 @@ export function PortalNav({
   showNetwork,
   showPeople,
   showMyDay = false,
+  showResearch = false,
   unreadEnquiries = 0,
 }: {
   name: string;
@@ -45,6 +47,7 @@ export function PortalNav({
   showNetwork: boolean;
   showPeople: boolean;
   showMyDay?: boolean;
+  showResearch?: boolean;
   unreadEnquiries?: number;
 }) {
   const path = usePathname();
@@ -109,6 +112,15 @@ export function PortalNav({
             href: "/portal/people",
             label: "People I've met",
             icon: NotebookPen,
+          },
+        ]
+      : []),
+    ...(showResearch
+      ? [
+          {
+            href: "/portal/research",
+            label: "Research study",
+            icon: FlaskConical,
           },
         ]
       : []),

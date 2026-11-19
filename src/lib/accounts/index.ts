@@ -182,6 +182,7 @@ export const CAPABILITIES = [
   "edit_settings",
   "edit_website",
   "manage_platform",
+  "research_data",
 ] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
@@ -216,6 +217,7 @@ export const CAPABILITY_LABEL: Record<Capability, { label: string; description: 
   edit_faqs: { label: "FAQs", description: "Questions and answers on the website." },
   edit_settings: { label: "Conference settings", description: "Conference status, dates, registration, deadlines, modes and editions." },
   edit_website: { label: "Other website pages", description: "History timeline, gallery, resources and opportunities." },
+  research_data: { label: "Research study", description: "Run the research study: its settings and switch, response numbers, reminders and the de-identified data export. Give it only to the named research team." },
   manage_platform: { label: "Platform dashboard", description: "Site switches, who can do what, individual access, sign-in activity and website metrics. Site roles and View as stay with the site owner." },
 };
 
@@ -243,6 +245,7 @@ export const CAPABILITY_GROUPS: { title: string; hint: string; caps: Capability[
     caps: ["edit_programme", "edit_speakers", "edit_workshops", "edit_announcements", "edit_committee", "edit_map", "edit_sponsors", "edit_faqs", "edit_settings", "edit_website"],
   },
   { title: "Platform", hint: "Who can do what, site switches and site activity", caps: ["manage_platform"] },
+  { title: "Research", hint: "The research study and its data. Off for everyone until you give it to the research team", caps: ["research_data"] },
 ];
 
 /** Every part of the public website someone might be able to edit. */
@@ -267,6 +270,7 @@ export const CAPABILITY_PARENT: Partial<Record<Capability, Capability[]>> = {
   view_audit_log: ["manage_people"],
   remove_accounts: [],
   manage_platform: [],
+  research_data: [],
 };
 
 /** Returned by public.my_access() once the area permissions are in the database. */
@@ -304,8 +308,9 @@ export const DEFAULT_RULES: Record<AccountType, Capability[]> = {
   // Removing accounts starts with the site owner only.
   // Judging presentations is for judges; leadership sees results through manage_judging.
   // The platform dashboard starts with the president only.
-  vice_president: CAPABILITIES.filter((c) => c !== "remove_accounts" && c !== "judge_presentations" && c !== "manage_platform"),
-  president: CAPABILITIES.filter((c) => c !== "remove_accounts" && c !== "judge_presentations"),
+  // Research data starts with the site owner only: the research team is given it by name.
+  vice_president: CAPABILITIES.filter((c) => c !== "remove_accounts" && c !== "judge_presentations" && c !== "manage_platform" && c !== "research_data"),
+  president: CAPABILITIES.filter((c) => c !== "remove_accounts" && c !== "judge_presentations" && c !== "research_data"),
 };
 
 export interface Access {

@@ -11,6 +11,10 @@ import { VIEW_AS_COOKIE } from "@/lib/view-as-seal";
 import { signAvatar } from "@/lib/avatar";
 import { unreadForMember } from "@/lib/enquiries";
 import { MessagesProvider } from "@/components/messages/messages-provider";
+import { ResearchPrompt } from "@/components/research/research-prompt";
+import { RESEARCH_LATER_COOKIE, getMyResearch, needsDecision } from "@/lib/research/server";
+import { STAGE_LABEL } from "@/lib/research/instrument";
+import { formatWhen, windowOf } from "@/lib/research/schedule";
 
 export const metadata: Metadata = {
   title: "My conference",
@@ -35,7 +39,7 @@ export default async function PortalLayout({
   const askEmail = prompting && !profile.networkEmailAsked;
 
   // Fetch data concurrently to reduce loading time.
-  const [promptPhoto, { data: mine }, switches] = await Promise.all([
+  const [promptPhoto, { data: mine }, switches, research] = await Promise.all([
     gaps.length || askEmail
       ? signAvatar(db, profile.avatarPath)
       : null,
@@ -50,7 +54,22 @@ export default async function PortalLayout({
 
     // Hide networking until enabled by the site owner.
     getSwitches(),
+
+    // The research study, if it's running and they're invited.
+    getMyResearch(db, profile),
   ]);
+
+  // The research invitation (or "your questionnaire is open"), until they
+  // answer, never on top of the profile prompt or while viewing as someone.
+  const researchMode =
+    jar.has(VIEW_AS_COOKIE) || jar.has(RESEARCH_LATER_COOKIE) || gaps.length > 0 || askEmail
+      ? null
+      : needsDecision(research)
+        ? ("invite" as const)
+        : research.due
+          ? ("due" as const)
+          : null;
+  const showResearch = research.eligible && (research.decision !== "declined" || research.canJoin);
 
   const unreadEnquiries = (mine ?? []).filter(unreadForMember).length;
 
@@ -86,6 +105,7 @@ export default async function PortalLayout({
             showNetwork={showNetwork}
             showPeople={showPeople}
             showMyDay={showMyDay}
+            showResearch={showResearch}
             unreadEnquiries={unreadEnquiries}
           />
 
@@ -99,6 +119,16 @@ export default async function PortalLayout({
               name={profile.fullName}
               photo={promptPhoto}
               email={askEmail ? profile.email : null}
+            />
+          )}
+
+          {researchMode && (
+            <ResearchPrompt
+              mode={researchMode}
+              href={researchMode === "due" ? `/portal/research/${research.due}` : "/portal/research"}
+              closes={formatWhen(researchMode === "due" ? windowOf(research.settings, research.due!).closes : research.settings.preClosesAt)}
+              stageTitle={research.due ? STAGE_LABEL[research.due].title : undefined}
+              minutes={research.due ? STAGE_LABEL[research.due].minutes : undefined}
             />
           )}
         </div>

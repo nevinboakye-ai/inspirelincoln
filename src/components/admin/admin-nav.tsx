@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   CalendarCog, ClipboardCheck, Eye, FileStack, Gauge, HelpCircle, Inbox, Mail, MapPin, Megaphone, Mic, QrCode, ScrollText, Settings2,
-  Ticket, UserCheck, MessageCircle, BellRing, GraduationCap, ListOrdered, CalendarCheck2, Users, Wrench, DoorOpen, Trophy, ShieldCheck, UserRound, LayoutDashboard, Activity, BarChart3, HandHeart, Car, FileDown, LayoutGrid, X, History,
+  Ticket, UserCheck, MessageCircle, BellRing, GraduationCap, ListOrdered, CalendarCheck2, Users, Wrench, DoorOpen, Trophy, ShieldCheck, UserRound, LayoutDashboard, Activity, BarChart3, HandHeart, Car, FileDown, LayoutGrid, X, History, FlaskConical,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Access, Capability } from "@/lib/accounts";
@@ -70,6 +70,7 @@ const GROUPS: { title: string; links: LinkDef[] }[] = [
       { href: "/admin/abstracts", label: "Abstracts", icon: ClipboardCheck, need: "manage_people" },
       { href: "/admin/users", label: "Site roles", icon: ShieldCheck, need: "owner" },
       { href: "/admin/audit", label: "Audit log", icon: ScrollText, need: "view_audit_log" },
+      { href: "/admin/research", label: "Research study", icon: FlaskConical, need: "research_data" },
     ],
   },
 ];

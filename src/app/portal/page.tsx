@@ -56,6 +56,9 @@ import {
   isJudgeOnly,
 } from "@/lib/accounts";
 import type { AccountType, SubmissionStatus } from "@/lib/types";
+import { getMyResearch, needsDecision } from "@/lib/research/server";
+import { STAGE_LABEL } from "@/lib/research/instrument";
+import { formatWhen } from "@/lib/research/schedule";
 
 export const dynamic = "force-dynamic";
 
@@ -150,6 +153,7 @@ export default async function PortalHome({
     photo,
     uniLogo,
     choices,
+    research,
   ] = await Promise.all([
     switchesP,
     contentP,
@@ -204,6 +208,8 @@ export default async function PortalHome({
     cardShownP.then(async (shown) => (shown && profile.institution ? ((await getLogoMap())[uniKey(profile.institution)] ?? null) : null)),
     // Workshop choices: shown to anyone with a confirmed place once ranking has opened.
     wantChoices ? contentP.then(([b]) => loadWorkshopChoices(db, user.id, UUID.test(b.edition.id) ? b.edition.id : undefined)) : null,
+    // The research study: invited delegates are asked to answer the invitation, either way.
+    getMyResearch(db, profile),
   ]);
   const showCard = switches.delegate_card || profile.access.owner;
   // While the website is closed, delegates only use My Hub for their profile and their slides or poster.
@@ -244,6 +250,9 @@ export default async function PortalHome({
         }]
       : []),
   ];
+  if (needsDecision(research)) steps.push({ label: `Answer the research study invitation (yes or no) by ${formatWhen(research.settings.preClosesAt)}`, done: false, href: "/portal/research" });
+  else if (research.due) steps.push({ label: `Research study: ${STAGE_LABEL[research.due].title.toLowerCase()} questionnaire`, done: false, href: `/portal/research/${research.due}` });
+  else if (research.eligible && research.decision && research.settings.enabled) steps.push({ label: "Research study invitation answered", done: true, href: "/portal/research" });
   const rankOpen = choices ? rankingIsOpen(choices.settings) : false;
   const rankWorkshops: RankWorkshop[] = (choices?.workshops ?? []).map((w) => ({
     number: w.number,
