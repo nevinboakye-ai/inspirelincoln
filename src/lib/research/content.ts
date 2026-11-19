@@ -25,7 +25,7 @@ export function participantInformation(s: StudySettings): InfoSection[] {
     },
     {
       heading: "Why have I been invited?",
-      body: ["You have a place, or a place on the waiting list, as a delegate or presenter at INSPIRE 2026. Everyone in that group is invited, whatever their experience of research. You must be 18 or over to take part."],
+      body: ["You have an INSPIRE 2026 account, as a delegate, presenter, committee member, speaker or judge, or a place on the waiting list. Everyone is invited, whatever their experience of research. You must be 18 or over to take part."],
     },
     {
       heading: "Do I have to take part?",

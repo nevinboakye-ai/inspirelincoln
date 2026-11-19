@@ -71,6 +71,16 @@ export default async function ResearchQuestionnaires() {
                           <span className="font-ui text-slate">{n}. </span>
                           {textFor(it.text, stage)}
                           {it.optional && <span className="text-slate"> (optional)</span>}
+                          {it.showIf && (
+                            <span className="text-slate">
+                              {" "}
+                              (only if they chose &ldquo;
+                              {it.showIf.in
+                                .map((v) => sec.items.flatMap((x) => (x.id === it.showIf!.item && x.kind === "single" ? x.options : [])).find((o) => o.value === v)?.label ?? v)
+                                .join(", ")}
+                              &rdquo;)
+                            </span>
+                          )}
                           <span className="ml-2 font-mono text-[0.7rem] text-slate">[{it.id}]</span>
                         </p>
                         <p className="mt-0.5 pl-5 text-slate-700">

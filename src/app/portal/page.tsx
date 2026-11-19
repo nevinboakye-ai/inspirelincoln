@@ -250,9 +250,9 @@ export default async function PortalHome({
         }]
       : []),
   ];
-  if (needsDecision(research)) steps.push({ label: `Answer the research study invitation (yes or no) by ${formatWhen(research.settings.preClosesAt)}`, done: false, href: "/portal/research" });
+  if (needsDecision(research)) steps.push({ label: `Research study: take part or opt out by ${formatWhen(research.settings.preClosesAt)}`, done: false, href: "/portal/research" });
   else if (research.due) steps.push({ label: `Research study: ${STAGE_LABEL[research.due].title.toLowerCase()} questionnaire`, done: false, href: `/portal/research/${research.due}` });
-  else if (research.eligible && research.decision && research.settings.enabled) steps.push({ label: "Research study invitation answered", done: true, href: "/portal/research" });
+  else if (research.eligible && research.decision && research.settings.enabled) steps.push({ label: research.decision === "declined" ? "Research study: you opted out" : "Research study", done: true, href: "/portal/research" });
   const rankOpen = choices ? rankingIsOpen(choices.settings) : false;
   const rankWorkshops: RankWorkshop[] = (choices?.workshops ?? []).map((w) => ({
     number: w.number,
