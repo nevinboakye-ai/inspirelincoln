@@ -1,14 +1,14 @@
 "use client";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState, useTransition } from "react";
-import { ArrowRight, FlaskConical, Loader2, X } from "lucide-react";
-import { decideResearch, researchLater } from "@/app/portal/research/actions";
+import { useEffect, useId, useRef, useState } from "react";
+import { ArrowRight, FlaskConical, X } from "lucide-react";
+import { researchLater } from "@/app/portal/research/actions";
 
 /**
- * The research invitation, put in front of invited delegates in My Hub until
- * they answer it. Answering means choosing to read about it and take part,
- * or "No thanks" (one tap, never asked again). "Ask me later" brings it back
- * on their next visit. Once someone is taking part, the same card tells
+ * The research invitation, put in front of invited people in My Hub until
+ * they answer it on the Research study page (take part, or the small opt-out
+ * there). Closing it or "Remind me later" brings it back after a few hours,
+ * and it stays as a pending task in the hub checklist. Once someone is taking part, the same card tells
  * them when a questionnaire is open.
  */
 export function ResearchPrompt({ mode, closes, stageTitle, minutes, href }: { mode: "invite" | "due"; closes: string; stageTitle?: string; minutes?: number; href: string }) {
@@ -16,8 +16,6 @@ export function ResearchPrompt({ mode, closes, stageTitle, minutes, href }: { mo
   const router = useRouter();
   const dialog = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [pending, start] = useTransition();
   const titleId = useId();
   const descId = useId();
   const here = path.startsWith("/portal/research");
@@ -41,13 +39,6 @@ export function ResearchPrompt({ mode, closes, stageTitle, minutes, href }: { mo
     close();
     router.push(href);
   };
-  const decline = () =>
-    start(async () => {
-      const r = await decideResearch({ decision: "declined" });
-      if (!r.ok) return setError(r.error ?? "We couldn't save that. Please try again.");
-      close();
-      router.refresh();
-    });
 
   return (
     <dialog
@@ -62,7 +53,7 @@ export function ResearchPrompt({ mode, closes, stageTitle, minutes, href }: { mo
     >
       <div className="relative overflow-hidden bg-midnight px-6 pb-6 pt-7 text-paper sm:px-7">
         <div aria-hidden className="lanyard-grid pointer-events-none absolute inset-0 opacity-20" />
-        <button type="button" onClick={later} className="absolute right-3 top-3 grid size-11 place-items-center rounded-full text-paper/70 hover:bg-white/10 hover:text-paper focus-visible:outline-2 focus-visible:outline-gold" aria-label="Ask me later">
+        <button type="button" onClick={later} className="absolute right-3 top-3 grid size-11 place-items-center rounded-full text-paper/70 hover:bg-white/10 hover:text-paper focus-visible:outline-2 focus-visible:outline-gold" aria-label="Remind me later">
           <X aria-hidden className="size-5" />
         </button>
         <span className="relative grid size-12 place-items-center rounded-xl bg-cyan/15 text-cyan">
@@ -70,7 +61,7 @@ export function ResearchPrompt({ mode, closes, stageTitle, minutes, href }: { mo
         </span>
         <p className="eyebrow relative mt-4 text-cyan">Research study · not conference feedback</p>
         <h2 id={titleId} className="relative mt-1 font-display text-2xl leading-tight">
-          {mode === "invite" ? "Before the conference: will you take part in a research study?" : `${stageTitle}: your questionnaire is open`}
+          {mode === "invite" ? "Before the conference: your research study task" : `${stageTitle}: your questionnaire is open`}
         </h2>
       </div>
       <div className="px-6 py-6 sm:px-7">
@@ -79,7 +70,7 @@ export function ResearchPrompt({ mode, closes, stageTitle, minutes, href }: { mo
             <>
               <p>We&apos;re studying whether student-led research conferences change students&apos; research confidence and what they go on to do. It&apos;s three short questionnaires: before the conference, just after and eight weeks later.</p>
               <p>
-                <strong className="text-ink">Please give us an answer either way.</strong> Taking part is voluntary, and saying no changes nothing about your place, presentation, prizes or certificate. You can join until {closes}.
+                <strong className="text-ink">Please complete it by {closes}.</strong> It takes about 5 minutes. Your answers are confidential and make no difference to your place, presentation, prizes or certificate.
               </p>
             </>
           ) : (
@@ -88,22 +79,12 @@ export function ResearchPrompt({ mode, closes, stageTitle, minutes, href }: { mo
             </p>
           )}
         </div>
-        {error && (
-          <p role="alert" className="mt-3 text-sm font-medium text-danger">
-            {error}
-          </p>
-        )}
         <div className="mt-5 grid gap-2">
           <button type="button" onClick={go} className="tap inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-navy px-5 font-ui text-sm font-semibold text-paper">
-            {mode === "invite" ? "Read about it and decide" : "Start now"} <ArrowRight aria-hidden className="size-4" />
+            {mode === "invite" ? "Start the research study" : "Start now"} <ArrowRight aria-hidden className="size-4" />
           </button>
-          {mode === "invite" && (
-            <button type="button" onClick={decline} disabled={pending} className="tap inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-navy/20 px-5 font-ui text-sm font-semibold text-ink">
-              {pending && <Loader2 aria-hidden className="size-4 animate-spin" />} No thanks
-            </button>
-          )}
           <button type="button" onClick={later} className="tap inline-flex min-h-11 items-center justify-center rounded-full px-5 font-ui text-sm font-semibold text-slate-700">
-            Ask me later
+            Remind me later
           </button>
         </div>
       </div>

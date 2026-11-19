@@ -150,7 +150,7 @@ export default async function ResearchAdmin({ searchParams }: { searchParams: Pr
 
       <Panel title="Invitations and reminders">
         {!emailConfigured() && <Notice tone="warning">Email isn&apos;t set up on this website, so these buttons won&apos;t send anything.</Notice>}
-        <p className="text-sm text-slate-700">Invitations go to everyone invited who hasn&apos;t answered yet. Reminders go only to participants who agreed to them and haven&apos;t done the open questionnaire, at most once every two days.</p>
+        <p className="text-sm text-slate-700">These go automatically while the study is on: the invitation to everyone who hasn&apos;t answered it every 2 days (every 12 hours in the last day before the first questionnaire closes), and questionnaire reminders to participants who agreed to them, every 2 days. Use these buttons to send one now as well.</p>
         <div className="mt-3 flex flex-wrap gap-2">
           <form action={sendResearchEmails}>
             <input type="hidden" name="kind" value="invite" />

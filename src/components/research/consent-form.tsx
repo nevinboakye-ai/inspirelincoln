@@ -60,7 +60,7 @@ export function ConsentForm({ statements, preview = false, declinedBefore = fals
           {error}
         </p>
       )}
-      <div className="mt-5 grid gap-2 sm:grid-cols-2">
+      <div className="mt-5 grid gap-2">
         <button
           type="button"
           onClick={() => decide("consented")}
@@ -71,14 +71,16 @@ export function ConsentForm({ statements, preview = false, declinedBefore = fals
           {pending && choice === "consented" ? <Loader2 aria-hidden className="size-4 animate-spin" /> : <Check aria-hidden className="size-4" />}
           Take part
         </button>
-        {!declinedBefore && (
-          <button type="button" onClick={() => decide("declined")} disabled={pending} className="tap inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-navy/20 px-5 font-ui text-sm font-semibold text-ink">
-            {pending && choice === "declined" && <Loader2 aria-hidden className="size-4 animate-spin" />}
-            No thanks
-          </button>
-        )}
       </div>
-      <p className="mt-3 text-xs text-slate">Either answer is fine and nothing else about your place changes.</p>
+      {!declinedBefore && (
+        <p className="mt-4 text-xs text-slate">
+          Privacy: taking part is voluntary and nothing else about your place changes if you don&apos;t.{" "}
+          <button type="button" onClick={() => decide("declined")} disabled={pending} className="inline-flex min-h-6 items-center gap-1 underline underline-offset-2 hover:text-ink">
+            {pending && choice === "declined" && <Loader2 aria-hidden className="size-3 animate-spin" />}
+            Opt out of the study
+          </button>
+        </p>
+      )}
     </section>
   );
 }
