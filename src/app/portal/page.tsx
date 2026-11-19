@@ -58,7 +58,8 @@ import {
 import type { AccountType, SubmissionStatus } from "@/lib/types";
 import { getMyResearch, needsDecision } from "@/lib/research/server";
 import { STAGE_LABEL } from "@/lib/research/instrument";
-import { formatWhen } from "@/lib/research/schedule";
+import { formatWhen, windowOf } from "@/lib/research/schedule";
+import { ResearchTaskCard } from "@/components/research/research-task-card";
 
 export const dynamic = "force-dynamic";
 
@@ -427,6 +428,22 @@ export default async function PortalHome({
           </div>
         </header>
       )}
+
+      {needsDecision(research) ? (
+        <ResearchTaskCard
+          title="Complete the research study"
+          detail={`Three short questionnaires about research confidence and opportunities, about 5 minutes each. Please complete the first by ${formatWhen(research.settings.preClosesAt)}.`}
+          href="/portal/research"
+          cta="Start now"
+        />
+      ) : research.due ? (
+        <ResearchTaskCard
+          title={`${STAGE_LABEL[research.due].title}: your questionnaire is open`}
+          detail={`About ${STAGE_LABEL[research.due].minutes} minutes. Open until ${formatWhen(windowOf(research.settings, research.due).closes)}.`}
+          href={`/portal/research/${research.due}`}
+          cta="Start now"
+        />
+      ) : null}
 
       <HubStagger className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20.5rem] xl:grid-rows-[auto_1fr] xl:items-start">
         {/* Side column on wide screens; on phones the card folds into a bar and the to-do list comes first. */}
