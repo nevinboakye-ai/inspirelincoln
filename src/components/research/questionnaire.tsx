@@ -25,9 +25,12 @@ function isAnswered(item: Item, v: Answers[string] | undefined) {
 }
 
 /**
- * One questionnaire, a section at a time. Answers are kept on this device
- * until submitted (so a closed tab loses nothing) and only leave it on
- * submit, when the server checks every answer again.
+ * One questionnaire, one question per screen so there is next to no
+ * scrolling on a phone. Choosing an answer to a one-choice question or a
+ * scale moves on by itself; "choose all that apply" and free text have a
+ * Next button. Answers are kept on this device until submitted (so a closed
+ * tab loses nothing) and only leave it on submit, when the server checks
+ * every answer again.
  */
 export function Questionnaire({ stage, code, preview = false }: { stage: Stage; code: string | null; preview?: boolean }) {
   const router = useRouter();
@@ -35,11 +38,12 @@ export function Questionnaire({ stage, code, preview = false }: { stage: Stage; 
   const [answers, setAnswers] = useState<Answers>({});
   const [startedAt, setStartedAt] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
-  const [missing, setMissing] = useState<string[]>([]);
+  const [flagged, setFlagged] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, startSaving] = useTransition();
-  const heading = useRef<HTMLHeadingElement>(null);
+  const top = useRef<HTMLDivElement>(null);
   const moved = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Restore a draft after hydration (localStorage isn't available on the server).
   useEffect(() => {
@@ -57,37 +61,38 @@ export function Questionnaire({ stage, code, preview = false }: { stage: Stage; 
     } catch {}
   }, [answers, startedAt, key, preview]);
 
-  const sections = useMemo(() => sectionsFor(stage).filter((s) => sectionApplies(s, answers)), [stage, answers]);
-  const at = Math.min(index, sections.length - 1);
-  const section = sections[at];
-  const last = at === sections.length - 1;
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
+
+  // Every question that applies, given the answers so far, in order.
+  const steps = useMemo(
+    () =>
+      sectionsFor(stage)
+        .filter((sec) => sectionApplies(sec, answers))
+        .flatMap((sec) => sec.items.filter((item) => itemApplies(item, answers)).map((item) => ({ section: sec, item }))),
+    [stage, answers],
+  );
+  const at = Math.min(index, steps.length - 1);
+  const step = steps[at];
+  const last = at === steps.length - 1;
 
   useEffect(() => {
     if (!moved.current) return;
-    heading.current?.focus();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    top.current?.focus({ preventScroll: true });
+    const y = (top.current?.getBoundingClientRect().top ?? 0) + window.scrollY - 80;
+    if (window.scrollY > y) window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
   }, [at]);
 
-  const set = (id: string, v: Answers[string]) => {
-    setAnswers((a) => ({ ...a, [id]: v }));
-    setMissing((m) => m.filter((x) => x !== id));
-  };
-
   const go = (to: number) => {
+    if (timer.current) clearTimeout(timer.current);
     moved.current = true;
+    setFlagged(false);
+    setError(null);
     setIndex(to);
   };
 
-  const next = () => {
-    const gaps = section.items.filter((i) => itemApplies(i, answers) && !isAnswered(i, answers[i.id])).map((i) => i.id);
-    if (gaps.length) {
-      setMissing(gaps);
-      setError(gaps.length === 1 ? "Please answer the highlighted question." : `Please answer the ${gaps.length} highlighted questions.`);
-      document.getElementById(`q-${gaps[0]}`)?.focus();
-      return;
-    }
-    setError(null);
-    if (!last) return go(at + 1);
+  const submit = () => {
     if (preview) {
       setError("This is a preview, so nothing was saved.");
       return;
@@ -97,10 +102,11 @@ export function Questionnaire({ stage, code, preview = false }: { stage: Stage; 
       if (!r.ok) {
         setError(r.error ?? "We couldn't save your answers. Please try again.");
         if (r.item) {
-          const back = sections.findIndex((s) => s.items.some((i) => i.id === r.item));
+          const back = steps.findIndex((x) => x.item.id === r.item);
           if (back >= 0) {
-            setMissing([r.item]);
             go(back);
+            setFlagged(true);
+            setError(r.error ?? null);
           }
         }
         return;
@@ -112,52 +118,73 @@ export function Questionnaire({ stage, code, preview = false }: { stage: Stage; 
     });
   };
 
-  if (!section) return null;
-  const intro = section.intro ? textFor(section.intro, stage) : null;
-  const pct = Math.round((at / sections.length) * 100);
+  const next = () => {
+    if (!isAnswered(step.item, answers[step.item.id])) {
+      setFlagged(true);
+      setError("Please answer this question to carry on.");
+      return;
+    }
+    if (last) return submit();
+    go(at + 1);
+  };
+
+  const set = (v: Answers[string], advance: boolean) => {
+    setAnswers((a) => ({ ...a, [step.item.id]: v }));
+    setFlagged(false);
+    setError(null);
+    // One tap answers a one-choice question or a scale: move on after a beat, so the choice is seen.
+    if (advance && !last) {
+      if (timer.current) clearTimeout(timer.current);
+      const from = at;
+      timer.current = setTimeout(() => go(from + 1), 260);
+    }
+  };
+
+  if (!step) return null;
+  const { section, item } = step;
+  const firstOfSection = at === 0 || steps[at - 1].section.id !== section.id;
+  const intro = section.intro && firstOfSection ? textFor(section.intro, stage) : null;
+  const pct = Math.round(((at + (isAnswered(item, answers[item.id]) ? 1 : 0)) / steps.length) * 100);
+  const needsButton = item.kind === "multi" || item.kind === "text" || last || isAnswered(item, answers[item.id]);
 
   return (
-    <div className="space-y-4">
-      <div className="app-card overflow-hidden">
-        <div className="flex items-center justify-between gap-3 px-4 pt-4 sm:px-6">
+    <div ref={top} tabIndex={-1} className="space-y-3 outline-none">
+      <div className="app-card px-4 py-3 sm:px-5">
+        <div className="flex items-center justify-between gap-3">
           <p className="eyebrow text-slate">
-            {STAGE_LABEL[stage].short} · Part {at + 1} of {sections.length}
+            <span className="hidden sm:inline">{STAGE_LABEL[stage].short} · </span>Question {at + 1} of {steps.length}
           </p>
           <p className="flex items-center gap-1.5 text-xs text-slate">
-            <Lock aria-hidden className="size-3.5" /> Stored under your study code
+            <Lock aria-hidden className="size-3.5" /> <span className="hidden sm:inline">Stored under your study code</span>
+            <span className="sm:hidden">Private</span>
           </p>
         </div>
-        <div className="mx-4 mt-3 h-1.5 overflow-hidden rounded-full bg-navy/10 sm:mx-6" role="progressbar" aria-label="Progress" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-navy/10" role="progressbar" aria-label="Progress" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
           <div className="h-full rounded-full bg-gold transition-[width] duration-500" style={{ width: `${pct}%` }} />
-        </div>
-        <div className="px-4 pb-5 pt-4 sm:px-6">
-          <h2 ref={heading} tabIndex={-1} className="font-display text-2xl text-ink outline-none">
-            {sectionTitle(section, stage)}
-          </h2>
-          {intro && <p className="mt-1.5 max-w-2xl text-sm text-slate-700">{intro}</p>}
         </div>
       </div>
 
-      <ol className="space-y-3">
-        {section.items.filter((item) => itemApplies(item, answers)).map((item, n) => (
-          <li key={item.id}>
-            <Question item={item} stage={stage} number={n + 1} value={answers[item.id]} onChange={(v) => set(item.id, v)} flagged={missing.includes(item.id)} />
-          </li>
-        ))}
-      </ol>
+      <div key={item.id} className="animate-[enter-pop_0.35s_var(--ease-out-expo)] motion-reduce:animate-none">
+        <p className="px-1 font-ui text-xs font-semibold uppercase tracking-[0.14em] text-electric-600">{sectionTitle(section, stage)}</p>
+        {intro && <p className="mt-1 px-1 text-sm text-slate-700">{intro}</p>}
+        <div className="mt-2">
+          <Question item={item} stage={stage} number={at + 1} value={answers[item.id]} onChange={set} flagged={flagged} />
+        </div>
+      </div>
 
-      <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] z-10 lg:bottom-4">
-        <div className="app-card flex flex-wrap items-center gap-3 p-3">
-          {error && (
-            <p role="alert" className="w-full text-sm font-medium text-danger">
-              {error}
-            </p>
-          )}
-          {at > 0 && (
-            <button type="button" onClick={() => go(at - 1)} className="tap inline-flex min-h-12 items-center gap-2 rounded-full border border-navy/15 px-5 font-ui text-sm font-semibold text-ink">
-              <ArrowLeft aria-hidden className="size-4" /> Back
-            </button>
-          )}
+      {error && (
+        <p role="alert" className="px-1 text-sm font-medium text-danger">
+          {error}
+        </p>
+      )}
+
+      <div className="flex items-center gap-3">
+        {at > 0 && (
+          <button type="button" onClick={() => go(at - 1)} className="tap inline-flex min-h-12 items-center gap-2 rounded-full border border-navy/15 px-5 font-ui text-sm font-semibold text-ink">
+            <ArrowLeft aria-hidden className="size-4" /> Back
+          </button>
+        )}
+        {needsButton && (
           <button
             type="button"
             onClick={next}
@@ -165,16 +192,16 @@ export function Questionnaire({ stage, code, preview = false }: { stage: Stage; 
             className="tap ml-auto inline-flex min-h-12 items-center gap-2 rounded-full bg-navy px-6 font-ui text-sm font-semibold text-paper disabled:opacity-60"
           >
             {saving ? <Loader2 aria-hidden className="size-4 animate-spin" /> : last ? <Check aria-hidden className="size-4" /> : null}
-            {last ? (preview ? "Finish preview" : "Submit answers") : "Next"}
+            {last ? (preview ? "Finish preview" : "Submit answers") : item.optional && !isAnswered({ ...item, optional: false }, answers[item.id]) ? "Skip" : "Next"}
             {!last && <ArrowRight aria-hidden className="size-4" />}
           </button>
-        </div>
+        )}
       </div>
     </div>
   );
 }
 
-function Question({ item, stage, number, value, onChange, flagged }: { item: Item; stage: Stage; number: number; value: Answers[string] | undefined; onChange: (v: Answers[string]) => void; flagged: boolean }) {
+function Question({ item, stage, number, value, onChange, flagged }: { item: Item; stage: Stage; number: number; value: Answers[string] | undefined; onChange: (v: Answers[string], advance: boolean) => void; flagged: boolean }) {
   const id = useId();
   const text = textFor(item.text, stage);
   const hintId = `${id}-hint`;
@@ -201,14 +228,14 @@ function Question({ item, stage, number, value, onChange, flagged }: { item: Ite
       )}
       <div className="mt-3">
         {item.kind === "scale" ? (
-          <ScaleInput item={item} value={typeof value === "string" ? value : undefined} onChange={onChange} name={id} />
+          <ScaleInput item={item} value={typeof value === "string" ? value : undefined} onChange={(v) => onChange(v, true)} name={id} />
         ) : item.kind === "single" ? (
           <div className="grid gap-2">
             {item.options.map((o) => {
               const on = value === o.value;
               return (
                 <label key={o.value} className={cn("tap flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border px-3.5 py-2.5 text-sm", on ? "border-navy bg-navy/[0.04] text-ink" : "border-navy/12 text-slate-700 hover:border-navy/30")}>
-                  <input type="radio" name={id} value={o.value} checked={on} onChange={() => onChange(o.value)} className="size-4 shrink-0 accent-[var(--color-navy)]" />
+                  <input type="radio" name={id} value={o.value} checked={on} onChange={() => onChange(o.value, true)} className="size-4 shrink-0 accent-[var(--color-navy)]" />
                   <span>{o.label}</span>
                 </label>
               );
@@ -220,9 +247,9 @@ function Question({ item, stage, number, value, onChange, flagged }: { item: Ite
               const list = Array.isArray(value) ? value : [];
               const on = list.includes(o.value);
               const toggle = () => {
-                if (on) return onChange(list.filter((x) => x !== o.value));
-                if (o.value === item.exclusive) return onChange([o.value]);
-                onChange([...list.filter((x) => x !== item.exclusive), o.value]);
+                if (on) return onChange(list.filter((x) => x !== o.value), false);
+                if (o.value === item.exclusive) return onChange([o.value], false);
+                onChange([...list.filter((x) => x !== item.exclusive), o.value], false);
               };
               return (
                 <label key={o.value} className={cn("tap flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border px-3.5 py-2.5 text-sm", on ? "border-navy bg-navy/[0.04] text-ink" : "border-navy/12 text-slate-700 hover:border-navy/30")}>
@@ -237,7 +264,7 @@ function Question({ item, stage, number, value, onChange, flagged }: { item: Ite
             aria-label={text}
             value={typeof value === "string" ? value : ""}
             maxLength={item.maxLength}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => onChange(e.target.value, false)}
             rows={4}
             className="w-full rounded-xl border border-navy/15 p-3 text-sm text-ink focus-visible:outline-2 focus-visible:outline-electric-600"
             placeholder="Please don't include names or anything that could identify you or anyone else."
