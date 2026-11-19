@@ -19,8 +19,8 @@ export function LinkedInMark({ className = "size-4" }: { className?: string }) {
 export function roleStripe(roles: CardData["roles"]) {
   const attending = ["delegate", "oral_presenter", "poster_presenter", "oral_waitlist"];
   if (roles.some((r) => !attending.includes(r))) return "bg-midnight";
-  if (roles.includes("oral_presenter")) return "bg-cyan";
-  if (roles.includes("poster_presenter")) return "bg-gold";
+  if (roles.includes("oral_presenter")) return "bg-gold";
+  if (roles.includes("poster_presenter")) return "bg-cyan";
   return "bg-navy";
 }
 

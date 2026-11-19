@@ -14,8 +14,8 @@ export type { LanyardTone };
 
 const BAND: Record<LanyardTone, string> = {
   delegate: "bg-navy text-paper",
-  poster: "bg-gold text-midnight",
-  oral: "bg-cyan text-midnight",
+  poster: "bg-cyan text-midnight",
+  oral: "bg-gold text-midnight",
   waitlist: "bg-violet text-midnight",
   // Speakers and judges: ivory with a gold edge, set apart from delegates and the committee.
   guest: "bg-ivory text-midnight border-y-[3px] border-gold-600",
