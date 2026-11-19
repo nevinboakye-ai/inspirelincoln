@@ -22,8 +22,8 @@ export default async function ResearchStagePage({ params, searchParams }: { para
   if (!preview && r.due !== stage) redirect("/portal/research");
 
   return (
-    <div className="space-y-4">
-      <Link href="/portal/research" className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-ink">
+    <div className="space-y-3">
+      <Link href="/portal/research" className="inline-flex min-h-10 items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-ink">
         <ArrowLeft aria-hidden className="size-4" /> Research study
       </Link>
       {preview && (
@@ -32,10 +32,11 @@ export default async function ResearchStagePage({ params, searchParams }: { para
         </Notice>
       )}
       <header>
-        <p className="eyebrow text-electric-600">Research study · {STAGE_LABEL[stage].short}</p>
-        <h1 className="mt-1 font-display text-3xl text-ink">{STAGE_LABEL[stage].title}</h1>
-        <p className="mt-1 max-w-2xl text-slate-700">
-          About {STAGE_LABEL[stage].minutes} minutes. Answer honestly: there are no right answers, and low numbers and &quot;no&quot; are just as useful. Your answers save on this device as you go, and you can come back to finish.
+        <h1 className="sr-only">
+          Research study: {STAGE_LABEL[stage].title}
+        </h1>
+        <p className="text-sm text-slate-700">
+          About {STAGE_LABEL[stage].minutes} minutes. There are no right answers, and your progress saves as you go.
         </p>
       </header>
       <Questionnaire stage={stage} code={r.code} preview={preview} />

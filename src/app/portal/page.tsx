@@ -431,14 +431,14 @@ export default async function PortalHome({
 
       {needsDecision(research) ? (
         <ResearchTaskCard
-          title="Complete the research study"
-          detail={`Three short questionnaires about research confidence and opportunities, about 5 minutes each. Please complete the first by ${formatWhen(research.settings.preClosesAt)}.`}
+          title="Research study"
+          detail={`About 5 minutes. Please complete by ${formatWhen(research.settings.preClosesAt)}.`}
           href="/portal/research"
-          cta="Start now"
+          cta="Start"
         />
       ) : research.due ? (
         <ResearchTaskCard
-          title={`${STAGE_LABEL[research.due].title}: your questionnaire is open`}
+          title={`Research study: ${STAGE_LABEL[research.due].title.toLowerCase()}`}
           detail={`About ${STAGE_LABEL[research.due].minutes} minutes. Open until ${formatWhen(windowOf(research.settings, research.due).closes)}.`}
           href={`/portal/research/${research.due}`}
           cta="Start now"

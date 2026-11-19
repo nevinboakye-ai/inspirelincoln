@@ -24,16 +24,20 @@ export default async function ResearchPage({ searchParams }: { searchParams: Pro
   const running = r.ready && s.enabled;
 
   const header = (
-    <header className="relative overflow-hidden rounded-2xl bg-midnight p-6 text-paper sm:p-8">
+    <header className="relative overflow-hidden rounded-2xl bg-midnight px-5 py-4 text-paper sm:px-6 sm:py-5">
       <div aria-hidden className="lanyard-grid pointer-events-none absolute inset-0 opacity-15" />
-      <div aria-hidden className="pointer-events-none absolute -right-12 -top-12 size-48 rounded-full bg-cyan/20 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -right-12 -top-12 size-40 rounded-full bg-plum/40 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-16 left-10 size-40 rounded-full bg-teal/30 blur-3xl" />
       <p className="eyebrow relative flex items-center gap-2 text-cyan">
-        <FlaskConical aria-hidden className="size-4" /> Research study · separate from conference feedback
+        <FlaskConical aria-hidden className="size-4" /> Research study
       </p>
-      <h1 className="relative mt-2 max-w-3xl font-display text-2xl leading-tight sm:text-3xl">{STUDY_TITLE}</h1>
-      <p className="relative mt-2 max-w-2xl text-paper/75">
-        Three short questionnaires: before the conference, just after it and eight weeks later. Voluntary, and nothing about your place depends on it.
-      </p>
+      <h1 className="relative mt-1 max-w-3xl font-display text-xl leading-tight sm:text-2xl">{STUDY_TITLE}</h1>
+      <ul className="relative mt-3 flex flex-wrap gap-1.5 font-ui text-xs font-semibold">
+        <li className="rounded-full bg-sky-100 px-2.5 py-1 text-sky">3 short questionnaires</li>
+        <li className="rounded-full bg-gold/25 px-2.5 py-1 text-gold-300">About 5 minutes each</li>
+        <li className="rounded-full bg-teal-100 px-2.5 py-1 text-teal">Confidential</li>
+        <li className="rounded-full bg-plum-100 px-2.5 py-1 text-plum">Not conference feedback</li>
+      </ul>
     </header>
   );
   const back = (
@@ -42,14 +46,14 @@ export default async function ResearchPage({ searchParams }: { searchParams: Pro
     </Link>
   );
   const info = (open = false) => (
-    <section aria-labelledby="pis-h" className="app-card p-4 sm:p-6">
-      <h2 id="pis-h" className="font-display text-xl text-ink">
-        Participant information <span className="font-ui text-xs font-semibold text-slate">version {s.infoVersion}</span>
+    <section aria-labelledby="pis-h" className="app-card px-4 py-3 sm:px-6 sm:py-4">
+      <h2 id="pis-h" className="font-display text-lg text-ink">
+        About the study <span className="font-ui text-xs font-semibold text-slate">· tap a heading to read · v{s.infoVersion}</span>
       </h2>
-      <div className="mt-3 divide-y divide-navy/10">
-        {participantInformation(s).map((sec, i) => (
-          <details key={sec.heading} open={open || i < 3} className="group py-3">
-            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 font-semibold text-ink">
+      <div className="mt-1 divide-y divide-navy/10">
+        {participantInformation(s).map((sec) => (
+          <details key={sec.heading} open={open} className="group py-1">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-ink">
               {sec.heading}
               <span aria-hidden className="text-slate transition-transform group-open:rotate-45">+</span>
             </summary>

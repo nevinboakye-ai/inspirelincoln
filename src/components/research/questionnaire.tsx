@@ -6,6 +6,44 @@ import { submitResearch } from "@/app/portal/research/actions";
 import { STAGE_LABEL, itemApplies, sectionApplies, sectionTitle, sectionsFor, textFor, type Answers, type Item, type Stage } from "@/lib/research/instrument";
 import { cn } from "@/lib/cn";
 
+/** A colour for each part of the questionnaire, so moving between parts is easy to see. */
+type Tone = { chip: string; card: string; on: string; bar: string };
+const TONE: Record<string, Tone> = {
+  sky: { chip: "bg-sky-100 text-sky", card: "border-t-sky", on: "border-sky bg-sky-100 text-ink", bar: "bg-sky" },
+  plum: { chip: "bg-plum-100 text-plum", card: "border-t-plum", on: "border-plum bg-plum-100 text-ink", bar: "bg-plum" },
+  teal: { chip: "bg-teal-100 text-teal", card: "border-t-teal", on: "border-teal bg-teal-100 text-ink", bar: "bg-teal" },
+  coral: { chip: "bg-coral-100 text-coral", card: "border-t-coral", on: "border-coral bg-coral-100 text-ink", bar: "bg-coral" },
+  rose: { chip: "bg-rose-100 text-rose", card: "border-t-rose", on: "border-rose bg-rose-100 text-ink", bar: "bg-rose" },
+  gold: { chip: "bg-gold/20 text-gold-700", card: "border-t-gold", on: "border-gold bg-gold/15 text-ink", bar: "bg-gold" },
+};
+const SECTION_TONE: Record<string, keyof typeof TONE> = {
+  about: "sky",
+  attended: "teal",
+  crai: "plum",
+  overall: "gold",
+  access: "teal",
+  actions: "coral",
+  connections: "rose",
+  context: "sky",
+  since: "gold",
+};
+const toneOf = (sectionId: string) => TONE[SECTION_TONE[sectionId] ?? "sky"];
+
+/** 0 to 10 tinted from cool to warm, so the scale reads at a glance without suggesting an answer. */
+const SCALE_TINT = [
+  "bg-rose-100",
+  "bg-rose-100/80",
+  "bg-coral-100",
+  "bg-coral-100/80",
+  "bg-gold/15",
+  "bg-gold/20",
+  "bg-gold/25",
+  "bg-teal-100/70",
+  "bg-teal-100",
+  "bg-sky-100",
+  "bg-sky-100/90",
+];
+
 const draftKey = (stage: Stage, code: string | null) => `inspire-research:${code ?? "preview"}:${stage}`;
 
 function readDraft(key: string): { answers: Answers; startedAt: string } | null {
@@ -145,14 +183,15 @@ export function Questionnaire({ stage, code, preview = false }: { stage: Stage; 
   const firstOfSection = at === 0 || steps[at - 1].section.id !== section.id;
   const intro = section.intro && firstOfSection ? textFor(section.intro, stage) : null;
   const pct = Math.round(((at + (isAnswered(item, answers[item.id]) ? 1 : 0)) / steps.length) * 100);
+  const tone = toneOf(section.id);
   const needsButton = item.kind === "multi" || item.kind === "text" || last || isAnswered(item, answers[item.id]);
 
   return (
     <div ref={top} tabIndex={-1} className="space-y-3 outline-none">
       <div className="app-card px-4 py-3 sm:px-5">
         <div className="flex items-center justify-between gap-3">
-          <p className="eyebrow text-slate">
-            <span className="hidden sm:inline">{STAGE_LABEL[stage].short} · </span>Question {at + 1} of {steps.length}
+          <p className="font-ui text-sm font-semibold text-ink">
+            {STAGE_LABEL[stage].title} <span className="font-normal text-slate">· {at + 1} of {steps.length}</span>
           </p>
           <p className="flex items-center gap-1.5 text-xs text-slate">
             <Lock aria-hidden className="size-3.5" /> <span className="hidden sm:inline">Stored under your study code</span>
@@ -160,15 +199,15 @@ export function Questionnaire({ stage, code, preview = false }: { stage: Stage; 
           </p>
         </div>
         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-navy/10" role="progressbar" aria-label="Progress" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-          <div className="h-full rounded-full bg-gold transition-[width] duration-500" style={{ width: `${pct}%` }} />
+          <div className={cn("h-full rounded-full transition-[width,background-color] duration-500", tone.bar)} style={{ width: `${pct}%` }} />
         </div>
       </div>
 
       <div key={item.id} className="animate-[enter-pop_0.35s_var(--ease-out-expo)] motion-reduce:animate-none">
-        <p className="px-1 font-ui text-xs font-semibold uppercase tracking-[0.14em] text-electric-600">{sectionTitle(section, stage)}</p>
-        {intro && <p className="mt-1 px-1 text-sm text-slate-700">{intro}</p>}
+        <p className={cn("inline-flex rounded-full px-3 py-1 font-ui text-xs font-semibold", tone.chip)}>{sectionTitle(section, stage)}</p>
+        {intro && <p className="mt-1.5 px-1 text-xs leading-relaxed text-slate-700 sm:text-sm">{intro}</p>}
         <div className="mt-2">
-          <Question item={item} stage={stage} number={at + 1} value={answers[item.id]} onChange={set} flagged={flagged} />
+          <Question item={item} stage={stage} number={at + 1} value={answers[item.id]} onChange={set} flagged={flagged} tone={tone} />
         </div>
       </div>
 
@@ -201,7 +240,7 @@ export function Questionnaire({ stage, code, preview = false }: { stage: Stage; 
   );
 }
 
-function Question({ item, stage, number, value, onChange, flagged }: { item: Item; stage: Stage; number: number; value: Answers[string] | undefined; onChange: (v: Answers[string], advance: boolean) => void; flagged: boolean }) {
+function Question({ item, stage, number, value, onChange, flagged, tone }: { item: Item; stage: Stage; number: number; value: Answers[string] | undefined; onChange: (v: Answers[string], advance: boolean) => void; flagged: boolean; tone: Tone }) {
   const id = useId();
   const text = textFor(item.text, stage);
   const hintId = `${id}-hint`;
@@ -211,7 +250,7 @@ function Question({ item, stage, number, value, onChange, flagged }: { item: Ite
       tabIndex={-1}
       aria-describedby={item.hint ? hintId : undefined}
       aria-invalid={flagged || undefined}
-      className={cn("app-card min-w-0 p-4 outline-none sm:p-5", flagged && "ring-2 ring-danger/60")}
+      className={cn("app-card min-w-0 border-t-4 p-4 outline-none sm:p-5", tone.card, flagged && "ring-2 ring-danger/60")}
     >
       <legend className="sr-only">{text}</legend>
       <p aria-hidden className="flex gap-2 text-[0.95rem] font-semibold leading-snug text-ink">
@@ -234,7 +273,7 @@ function Question({ item, stage, number, value, onChange, flagged }: { item: Ite
             {item.options.map((o) => {
               const on = value === o.value;
               return (
-                <label key={o.value} className={cn("tap flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border px-3.5 py-2.5 text-sm", on ? "border-navy bg-navy/[0.04] text-ink" : "border-navy/12 text-slate-700 hover:border-navy/30")}>
+                <label key={o.value} className={cn("tap flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border-2 px-3.5 py-2 text-sm font-medium", on ? tone.on : "border-navy/10 bg-white text-slate-700 hover:border-navy/30")}>
                   <input type="radio" name={id} value={o.value} checked={on} onChange={() => onChange(o.value, true)} className="size-4 shrink-0 accent-[var(--color-navy)]" />
                   <span>{o.label}</span>
                 </label>
@@ -252,7 +291,7 @@ function Question({ item, stage, number, value, onChange, flagged }: { item: Ite
                 onChange([...list.filter((x) => x !== item.exclusive), o.value], false);
               };
               return (
-                <label key={o.value} className={cn("tap flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border px-3.5 py-2.5 text-sm", on ? "border-navy bg-navy/[0.04] text-ink" : "border-navy/12 text-slate-700 hover:border-navy/30")}>
+                <label key={o.value} className={cn("tap flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border-2 px-3.5 py-2 text-sm font-medium", on ? tone.on : "border-navy/10 bg-white text-slate-700 hover:border-navy/30")}>
                   <input type="checkbox" checked={on} onChange={toggle} className="size-4 shrink-0 accent-[var(--color-navy)]" />
                   <span>{o.label}</span>
                 </label>
@@ -284,7 +323,7 @@ function ScaleInput({ item, value, onChange, name }: { item: Extract<Item, { kin
         {points.map((p) => {
           const on = value === p;
           return (
-            <label key={p} className={cn("tap relative grid min-h-11 cursor-pointer place-items-center rounded-lg border font-ui text-sm font-semibold has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-electric-600", on ? "border-navy bg-navy text-paper" : "border-navy/15 text-ink hover:border-navy/40")}>
+            <label key={p} className={cn("tap relative grid min-h-12 cursor-pointer place-items-center rounded-lg border-2 font-ui text-sm font-semibold transition-transform has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-electric-600", on ? "scale-110 border-navy bg-navy text-paper shadow-md" : cn("border-transparent text-ink hover:border-navy/30", SCALE_TINT[Number(p) - item.min] ?? "bg-paper-200"))}>
               <input type="radio" name={name} value={p} checked={on} onChange={() => onChange(p)} className="sr-only" aria-label={`${p}${p === String(item.min) ? `, ${item.minLabel}` : p === String(item.max) ? `, ${item.maxLabel}` : ""}`} />
               {p}
             </label>
