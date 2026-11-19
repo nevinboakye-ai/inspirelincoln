@@ -1,0 +1,27 @@
+# Emails research study reminders: the invitation to anyone who hasn't
+# answered it yet, and "your questionnaire is open" to participants who
+# agreed to reminders. Runs hourly; the website decides who is due (at most
+# every 2 days each, every 12 hours in the last day before the first
+# questionnaire closes) and sends nothing while the study is switched off.
+# Needs the repository secret CRON_SECRET, the same value as in Vercel.
+name: Research study reminders
+
+on:
+  schedule:
+    - cron: "7 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call the website
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://www.inspirelincoln.uk' }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then echo "CRON_SECRET isn't set, skipping."; exit 0; fi
+          curl -fsS --retry 3 --retry-delay 10 -m 60 -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/cron/research-reminders"

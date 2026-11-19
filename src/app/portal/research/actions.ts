@@ -40,9 +40,17 @@ export async function decideResearch(input: { decision: "consented" | "declined"
   return { ok: true, code: typeof data === "string" ? data : undefined };
 }
 
-/** "Ask me later": hides the invitation until their next visit (12 hours). */
+/**
+ * "Remind me later" (or closing the prompt): hides it for 6 hours, or 2
+ * hours in the last day before the first questionnaire closes. The hub
+ * checklist keeps showing it as a pending task meanwhile.
+ */
 export async function researchLater() {
-  (await cookies()).set(RESEARCH_LATER_COOKIE, "1", { path: "/", httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: 60 * 60 * 12 });
+  const { db } = await requireUser("/portal");
+  const { settings: s } = await getStudySettings(db);
+  const left = s.preClosesAt ? new Date(s.preClosesAt).getTime() - Date.now() : Infinity;
+  const hours = left <= 24 * 60 * 60 * 1000 ? 2 : 6;
+  (await cookies()).set(RESEARCH_LATER_COOKIE, "1", { path: "/", httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: 60 * 60 * hours });
 }
 
 /** Submit one questionnaire. Every answer is checked against the questionnaire before it is stored. */

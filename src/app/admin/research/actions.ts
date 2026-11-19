@@ -5,12 +5,10 @@ import { z } from "zod";
 import { requireAccess } from "@/lib/auth";
 import { getViewAs } from "@/lib/supabase/server";
 import { fromZonedInputValue } from "@/lib/time";
-import { STAGES, STAGE_LABEL, type Stage } from "@/lib/research/instrument";
-import { formatWhen, launchBlockers, settingsFromRow, windowOf } from "@/lib/research/schedule";
-import { STUDY_TITLE } from "@/lib/research/content";
+import { STAGES, type Stage } from "@/lib/research/instrument";
+import { launchBlockers, settingsFromRow, windowOf } from "@/lib/research/schedule";
+import { researchEmail } from "@/lib/research/emails";
 import { emailConfigured, sendBatch } from "@/lib/email/resend";
-import { escapeHtml, renderEmail } from "@/lib/email/template";
-import { SITE_URL } from "@/lib/site";
 
 const PAGE = "/admin/research";
 
@@ -100,30 +98,8 @@ export async function sendResearchEmails(form: FormData) {
     list = (data ?? []) as typeof list;
   } else redirect(`${PAGE}?error=settings`);
 
-  const closes = formatWhen(windowOf(s, stage).closes);
-  const messages = list.map((p) => {
-    const first = p.full_name?.split(" ")[0];
-    const invite = kind === "invite";
-    const { html, text: body } = renderEmail({
-      siteUrl: SITE_URL,
-      preheader: invite ? `Please answer yes or no by ${closes}` : `Open until ${closes}`,
-      eyebrow: "INSPIRE research study",
-      heading: invite ? "Will you take part in our research study?" : `${STAGE_LABEL[stage].title}: your questionnaire is open`,
-      paragraphs: [
-        first ? `Hi ${escapeHtml(first)},` : "Hello,",
-        invite
-          ? `Before INSPIRE we're inviting every delegate to a research study: ${STUDY_TITLE}. It is three short questionnaires (before, just after and eight weeks after the conference). Please let us know either way in My Hub by ${closes}.`
-          : `Thank you for taking part. The ${STAGE_LABEL[stage].title.toLowerCase()} questionnaire takes about ${STAGE_LABEL[stage].minutes} minutes and is open until ${closes}.`,
-        "Taking part is voluntary, separate from conference feedback, and makes no difference to your place, presentation, prizes or certificate.",
-      ],
-      cta: { label: invite ? "Read about it and decide" : "Open the questionnaire", url: `${SITE_URL}/portal/research${invite ? "" : `/${stage}`}` },
-      footnote: invite
-        ? "You're receiving this because you have a place at INSPIRE 2026. If you say no thanks, we won't ask again."
-        : "You're receiving this because you agreed to reminders. You can turn them off on the Research study page in My Hub.",
-      closing: s.leadName && s.leadEmail ? [`Questions? Contact the lead researcher, ${escapeHtml(s.leadName)}, at ${escapeHtml(s.leadEmail)}.`] : [],
-    });
-    return { to: p.email, subject: invite ? "INSPIRE research study: will you take part?" : "INSPIRE research study: your questionnaire is open", text: body, html, replyTo: s.leadEmail ?? undefined };
-  });
+  const closesAt = windowOf(s, stage).closes;
+  const messages = list.map((p) => researchEmail({ kind: kind === "invite" ? "invite" : stage, to: p.email, name: p.full_name, closesAt, settings: s }));
   const sent = messages.length ? await sendBatch(messages) : 0;
   redirect(`${PAGE}?sent=${sent}&of=${messages.length}`);
 }
