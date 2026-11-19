@@ -2,10 +2,10 @@ import type { StudySettings } from "@/lib/research/schedule";
 import { formatWhen } from "@/lib/research/schedule";
 
 /**
- * The participant information and consent wording. Ethics committees
- * approve this text, so it carries the version number set in the study
- * settings, and every consent records the version that was shown.
- * Change it only with an approved amendment.
+ * The participant information and consent wording. It carries the version
+ * number set in the study settings, and every consent records the version
+ * that was shown. If an ethics approval is recorded, the text says so;
+ * otherwise it makes no claim about review.
  */
 
 export const STUDY_TITLE = "Research confidence, opportunities and what happens next: a study of student-led research conferences";
@@ -13,7 +13,8 @@ export const STUDY_TITLE = "Research confidence, opportunities and what happens 
 export type InfoSection = { heading: string; body: string[] };
 
 export function participantInformation(s: StudySettings): InfoSection[] {
-  const lead = s.leadName && s.leadEmail ? `${s.leadName} (${s.leadEmail})` : "the lead researcher (named once the study is approved)";
+  const lead = s.leadName && s.leadEmail ? `${s.leadName} (${s.leadEmail})` : s.leadName ?? "the INSPIRE 2026 research team";
+  const approved = Boolean(s.ethicsCommittee && s.ethicsReference);
   return [
     {
       heading: "What is the study about?",
@@ -62,13 +63,15 @@ export function participantInformation(s: StudySettings): InfoSection[] {
     {
       heading: "Data protection",
       body: [
-        "We process your answers for research in the public interest (UK GDPR Article 6(1)(e)), and any information about your background as part of scientific research (Article 9(2)(j)), under the data protection policy of the sponsoring university. You can contact the university's data protection officer, or complain to the Information Commissioner's Office (ico.org.uk).",
+        approved
+          ? "We process your answers for research in the public interest (UK GDPR Article 6(1)(e)), and any information about your background as part of scientific research (Article 9(2)(j)), under the data protection policy of the sponsoring university. You can contact the university's data protection officer, or complain to the Information Commissioner's Office (ico.org.uk)."
+          : "We process your answers on the basis of your consent, which you can withdraw at any time (UK GDPR Articles 6(1)(a) and 9(2)(a)), as set out in the website's privacy notice. You can complain to the Information Commissioner's Office (ico.org.uk).",
       ],
     },
     {
       heading: "Who is running the study?",
       body: [
-        `The study is led by ${lead}.${s.ethicsCommittee && s.ethicsReference ? ` It has been reviewed and approved by ${s.ethicsCommittee} (reference ${s.ethicsReference}).` : " It will not start until a university research ethics committee has approved it."} If you have questions or concerns, contact the lead researcher.`,
+        `The study is run by ${lead}.${approved ? ` It has been reviewed and approved by ${s.ethicsCommittee} (reference ${s.ethicsReference}).` : ""} If you have questions or concerns, ${s.leadEmail ? "contact the lead researcher" : "contact the INSPIRE team through the website"}.`,
       ],
     },
   ];

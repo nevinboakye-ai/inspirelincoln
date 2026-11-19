@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 const ERRORS: Record<string, string> = {
   view_as: "You're viewing as someone else, so changes are switched off.",
   settings: "That couldn't be saved. Check the dates and email address and try again.",
-  running: "While the study is running, the ethics and governance details and the order of the windows have to stay complete. Switch it off first to change them.",
+  running: "While the study is running, the questionnaire windows have to stay in order: before, after, then eight weeks on. Switch it off first to change them.",
   blocked: "The study can't be switched on yet. Clear everything in the list first.",
   email: "Email isn't set up on this website (Resend), so nothing was sent.",
   off: "Switch the study on before sending emails.",
@@ -91,7 +91,7 @@ export default async function ResearchAdmin({ searchParams }: { searchParams: Pr
               <Eye aria-hidden className="size-4" /> Preview as a delegate
             </Link>
             <Link href="/admin/research/questionnaires" className={btn.secondary}>
-              <FileText aria-hidden className="size-4" /> Questionnaires for the ethics application
+              <FileText aria-hidden className="size-4" /> Printable questionnaires
             </Link>
           </>
         }
@@ -113,7 +113,7 @@ export default async function ResearchAdmin({ searchParams }: { searchParams: Pr
             <p className="mt-1 text-sm text-slate-700">
               {s.enabled
                 ? "Invited delegates and presenters see the invitation until they answer it, and participants see each questionnaire while it's open."
-                : "Nobody sees the study. It stays off until the ethics approval and data governance are recorded below; the database refuses to switch it on before then."}
+                : "Nobody sees the study. Switch it on to invite delegates."}
             </p>
             {!s.enabled && blockers.length > 0 && (
               <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700">
@@ -171,7 +171,7 @@ export default async function ResearchAdmin({ searchParams }: { searchParams: Pr
 
       <Panel title="Data">
         <p className="text-sm text-slate-700">
-          De-identified CSV files: every row carries a random study code, never a name, email or account id. Dates are given as days from the conference. Each export is written to the audit log. Store downloads only where the ethics approval allows.
+          De-identified CSV files: every row carries a random study code, never a name, email or account id. Dates are given as days from the conference. Each export is written to the audit log. Store downloads securely and share them only with the research team.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <a href="/admin/research/export?file=wide" className={btn.primary}>
@@ -186,24 +186,15 @@ export default async function ResearchAdmin({ searchParams }: { searchParams: Pr
         </div>
       </Panel>
 
-      <Panel title="Ethics, governance and dates">
+      <Panel title="Contact and dates">
         <form action={saveStudySettings} className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
-            {field("ethics_committee", "Ethics committee", { def: s.ethicsCommittee, hint: "For example, University of Lincoln Human Research Ethics Committee" })}
-            {field("ethics_reference", "Approval reference", { def: s.ethicsReference })}
-            {field("ethics_approved_on", "Date approved", { type: "date", def: s.ethicsApprovedOn })}
             {field("event_date", "Conference date", { type: "date", def: s.eventDate, required: true })}
-            {field("lead_name", "Lead researcher (shown to participants)", { def: s.leadName })}
-            {field("lead_email", "Lead researcher's email", { type: "email", def: s.leadEmail })}
-            {field("info_version", "Participant information version", { def: s.infoVersion, required: true, hint: "Recorded with every consent. Change it only with an approved amendment." })}
+            {field("lead_name", "Lead researcher (optional, shown to participants)", { def: s.leadName })}
+            {field("lead_email", "Lead researcher's email (optional)", { type: "email", def: s.leadEmail })}
+            {field("info_version", "Participant information version", { def: s.infoVersion, required: true, hint: "Recorded with every consent. Change it whenever the participant information changes." })}
             {field("protocol_version", "Protocol version", { def: s.protocolVersion, required: true })}
           </div>
-          <label className="flex min-h-11 items-start gap-3 rounded-xl border border-navy/12 p-3 text-sm text-slate-700">
-            <input type="checkbox" name="governance_confirmed" defaultChecked={s.governanceConfirmed} className="mt-0.5 size-4 accent-[var(--color-navy)]" />
-            <span>
-              <strong className="text-ink">Data governance confirmed.</strong> The sponsor has agreed the data management plan, the lawful basis and the retention period, and the people given the Research study permission are named on the approved application.
-            </span>
-          </label>
           <fieldset>
             <legend className="text-sm font-semibold text-ink">Questionnaire windows (UK time)</legend>
             <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

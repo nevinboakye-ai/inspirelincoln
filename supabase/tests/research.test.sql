@@ -23,17 +23,17 @@ begin perform set_config('request.jwt.claim.sub', coalesce(uid, ''), false);
 create or replace function pg_temp.expect(ok boolean, msg text) returns void language plpgsql as $$
 begin if not ok then raise exception 'FAILED: %', msg; end if; raise notice 'ok - %', msg; end $$;
 
--- 1. Off by default, and can't be switched on without approval
+-- 1. Off by default, and can't be switched on with windows out of order
 select pg_temp.as_user('00000000-0000-0000-0000-0000000000f0');
 select pg_temp.expect(not (select enabled from public.research_study), 'study is off by default');
 select pg_temp.expect(public.can_run_research(), 'site owner has the research permission');
-do $$ begin update public.research_study set enabled = true where id = 1; raise exception 'FAILED: switched on without approval';
-exception when check_violation then raise notice 'ok - cannot switch on without ethics approval'; end $$;
+do $$ begin update public.research_study set enabled = true, post_opens_at = pre_closes_at - interval '1 day' where id = 1; raise exception 'FAILED: switched on with windows out of order';
+exception when check_violation then raise notice 'ok - cannot switch on with windows out of order'; end $$;
 
 select pg_temp.as_user('00000000-0000-0000-0000-0000000000f1');
 select pg_temp.expect(not public.can_run_research(), 'president does not have the research permission by default');
-update public.research_study set ethics_reference = 'HACK' where id = 1;
-select pg_temp.expect((select ethics_reference from public.research_study) is null, 'president cannot change study settings');
+update public.research_study set lead_name = 'HACK' where id = 1;
+select pg_temp.expect((select lead_name from public.research_study) is null, 'president cannot change study settings');
 do $$ begin perform public.research_summary(); raise exception 'FAILED: president read summary';
 exception when insufficient_privilege then raise notice 'ok - president cannot see the summary'; end $$;
 
@@ -42,14 +42,13 @@ select pg_temp.as_user('00000000-0000-0000-0000-0000000000f2');
 do $$ begin perform public.research_decide('consented', '1.0', true, false, false); raise exception 'FAILED: consent while off';
 exception when sqlstate 'P0001' then raise notice 'ok - no consent while off: %', sqlerrm; end $$;
 
--- 2. The owner records approval and switches on (windows moved so the first questionnaire is open now)
+-- 2. The owner switches on with no ethics details recorded (windows moved so the first questionnaire is open now)
 select pg_temp.as_user('00000000-0000-0000-0000-0000000000f0');
-update public.research_study set ethics_committee = 'University REC', ethics_reference = 'REC-123', ethics_approved_on = current_date,
-  governance_confirmed = true, lead_name = 'Dr Lead', lead_email = 'lead@uni.test',
+update public.research_study set
   pre_closes_at = now() + interval '1 day', post_opens_at = now() + interval '2 days', post_closes_at = now() + interval '3 days',
   followup_opens_at = now() + interval '4 days', followup_closes_at = now() + interval '5 days' where id = 1;
 update public.research_study set enabled = true where id = 1;
-select pg_temp.expect((select enabled from public.research_study), 'owner switches the study on after approval');
+select pg_temp.expect((select enabled from public.research_study), 'owner switches the study on without ethics details');
 
 -- 3. Eligibility
 select pg_temp.as_user('00000000-0000-0000-0000-0000000000f6');

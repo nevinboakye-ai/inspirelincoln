@@ -70,11 +70,6 @@ export function settingsFromRow(r: Record<string, unknown> | null | undefined): 
 /** What still stops the study being switched on. Empty when it can be. */
 export function launchBlockers(s: StudySettings): string[] {
   const out: string[] = [];
-  if (!s.ethicsCommittee) out.push("Name the ethics committee that approved the study");
-  if (!s.ethicsReference) out.push("Add the ethics approval reference");
-  if (!s.ethicsApprovedOn) out.push("Add the date of ethics approval");
-  if (!s.governanceConfirmed) out.push("Confirm the data governance arrangements are in place");
-  if (!s.leadName || !s.leadEmail) out.push("Add the lead researcher's name and email for participants");
   if (!s.preClosesAt || !s.postOpensAt || !s.postClosesAt || !s.followupOpensAt || !s.followupClosesAt) out.push("Set every questionnaire window");
   else {
     const t = (x: string) => new Date(x).getTime();

@@ -119,10 +119,10 @@ describe("research scoring", () => {
 });
 
 describe("research schedule", () => {
-  const approved: StudySettings = { ...DEFAULT_SETTINGS, enabled: true, ethicsCommittee: "REC", ethicsReference: "R1", ethicsApprovedOn: "2026-11-01", governanceConfirmed: true, leadName: "Dr L", leadEmail: "l@x.test" };
+  const approved: StudySettings = { ...DEFAULT_SETTINGS, enabled: true };
 
-  it("lists what blocks switching on, and nothing once approved", () => {
-    expect(launchBlockers(DEFAULT_SETTINGS).length).toBeGreaterThanOrEqual(4);
+  it("can be switched on without ethics details, but not with windows out of order", () => {
+    expect(launchBlockers(DEFAULT_SETTINGS)).toEqual([]);
     expect(launchBlockers(approved)).toEqual([]);
     expect(launchBlockers({ ...approved, postOpensAt: "2026-11-20T00:00:00Z" })).toContain("Put the questionnaire windows in order: before, after, then eight weeks on");
   });

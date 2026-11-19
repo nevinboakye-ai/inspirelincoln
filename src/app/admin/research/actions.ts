@@ -22,15 +22,11 @@ async function gate() {
 
 const text = (max: number) => z.string().trim().max(max).transform((v) => (v ? v : null));
 
-/** Ethics, governance, contact details and the questionnaire windows. */
+/** Contact details, versions and the questionnaire windows. */
 export async function saveStudySettings(form: FormData) {
   const { db, user } = await gate();
   const v = z
     .object({
-      ethics_committee: text(200),
-      ethics_reference: text(100),
-      ethics_approved_on: z.string().trim().regex(/^(\d{4}-\d{2}-\d{2})?$/).transform((v) => v || null),
-      governance_confirmed: z.boolean(),
       lead_name: text(120),
       lead_email: z.union([z.literal(""), z.string().trim().email().max(200)]).transform((v) => v || null),
       info_version: z.string().trim().min(1).max(20),
@@ -38,10 +34,6 @@ export async function saveStudySettings(form: FormData) {
       event_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     })
     .safeParse({
-      ethics_committee: String(form.get("ethics_committee") ?? ""),
-      ethics_reference: String(form.get("ethics_reference") ?? ""),
-      ethics_approved_on: String(form.get("ethics_approved_on") ?? ""),
-      governance_confirmed: form.get("governance_confirmed") === "on",
       lead_name: String(form.get("lead_name") ?? ""),
       lead_email: String(form.get("lead_email") ?? ""),
       info_version: String(form.get("info_version") ?? "1.0"),
