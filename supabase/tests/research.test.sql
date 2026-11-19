@@ -52,7 +52,7 @@ select pg_temp.expect((select enabled from public.research_study), 'owner switch
 
 -- 3. Eligibility
 select pg_temp.as_user('00000000-0000-0000-0000-0000000000f6');
-select pg_temp.expect(not (public.research_my_status() ->> 'eligible')::boolean, 'committee member presenting a poster is not invited');
+select pg_temp.expect((public.research_my_status() ->> 'eligible')::boolean, 'committee member is invited too');
 select pg_temp.as_user('00000000-0000-0000-0000-0000000000f5');
 select pg_temp.expect(not (public.research_my_status() ->> 'eligible')::boolean, 'pending account is not invited');
 select pg_temp.as_user('00000000-0000-0000-0000-0000000000f4');
@@ -94,7 +94,7 @@ select pg_temp.expect((public.research_summary() ->> 'consented')::int = 2 and (
 select pg_temp.expect((select count(*) from public.research_export()) = 2, 'export has a row per participant (and per questionnaire)');
 select pg_temp.expect((select bool_and(participant_code like 'IN-%') from public.research_export()), 'export carries study codes');
 select pg_temp.expect((select count(*) from public.audit_events where entity = 'research_responses' and action = 'export') >= 1, 'export is logged');
-select pg_temp.expect((select count(*) from public.research_invite_list()) = 1, 'one eligible person still to decide (the waitlisted delegate)');
+select pg_temp.expect((select count(*) from public.research_invite_list()) = 4, 'everyone approved or waitlisted who has not decided is on the invite list (two presidents, the committee member, the waitlisted delegate)');
 select pg_temp.expect((select count(*) from public.research_reminder_list('pre')) = 0, 'Pat did not agree to reminders and Dana has done it');
 -- Give the president the permission for one person, then check it works
 reset role;

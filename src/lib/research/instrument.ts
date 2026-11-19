@@ -12,7 +12,7 @@
  * repeats them, so answers can be paired person by person.
  */
 
-export const INSTRUMENT_VERSION = "1.0";
+export const INSTRUMENT_VERSION = "1.1";
 
 export const STAGES = ["pre", "post", "followup"] as const;
 export type Stage = (typeof STAGES)[number];
@@ -33,6 +33,8 @@ type Base = {
   optional?: boolean;
   /** Short label for the codebook. */
   label: string;
+  /** Only asked when an earlier answer in the same section is one of these. */
+  showIf?: { item: string; in: string[] };
 };
 
 export type Item =
@@ -223,6 +225,14 @@ export const SECTIONS: Section[] = [
         ],
       },
       {
+        id: "university_other",
+        kind: "text",
+        label: "University, if another (free text; may identify, group before sharing)",
+        text: "Which university?",
+        maxLength: 120,
+        showIf: { item: "university", in: ["other"] },
+      },
+      {
         id: "role",
         kind: "single",
         label: "Role at the conference",
@@ -232,6 +242,7 @@ export const SECTIONS: Section[] = [
           { value: "poster", label: "Yes, a poster" },
           { value: "oral", label: "Yes, an oral presentation" },
           { value: "not_attending", label: "I'm not attending (for example, I'm on the waiting list)" },
+          { value: "organiser", label: "I'm on the organising committee, or a speaker or judge" },
         ],
       },
       {
@@ -449,6 +460,13 @@ export function sectionApplies(s: Section, answers: Answers): boolean {
   return typeof v === "string" && !s.when.notIn.includes(v);
 }
 
+/** Whether an item is asked, given the answers so far. */
+export function itemApplies(item: Item, answers: Answers): boolean {
+  if (!item.showIf) return true;
+  const v = answers[item.showIf.item];
+  return typeof v === "string" && item.showIf.in.includes(v);
+}
+
 export type Answer = string | string[];
 export type Answers = Record<string, Answer>;
 
@@ -468,6 +486,7 @@ export function validateAnswers(stage: Stage, raw: unknown): { ok: true; answers
   for (const section of sectionsFor(stage)) {
     if (!sectionApplies(section, out)) continue;
     for (const item of section.items) {
+      if (!itemApplies(item, out)) continue;
       const v = input[item.id];
       const missing = v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0);
       if (missing) {

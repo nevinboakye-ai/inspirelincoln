@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CRAI12, STAGES, STAGE_LABEL, itemsFor, sectionsFor, validateAnswers, type Answers, type Stage } from "@/lib/research/instrument";
+import { CRAI12, STAGES, STAGE_LABEL, itemApplies, itemsFor, sectionsFor, validateAnswers, type Answers, type Stage } from "@/lib/research/instrument";
 import { experienceLevel, scoreStage } from "@/lib/research/scoring";
 import { DEFAULT_SETTINGS, canEnrol, dueStage, launchBlockers, nextStage, type StudySettings } from "@/lib/research/schedule";
 import { answerColumns, buildCodebook, buildLong, buildWide, daysFromEvent, toAnalysisCsv, type ExportRow } from "@/lib/research/export";
@@ -9,6 +9,7 @@ function fill(stage: Stage, overrides: Answers = {}): Answers {
   const a: Answers = {};
   for (const { section, item } of itemsFor(stage)) {
     if (section.when && overrides[section.when.item] && section.when.notIn.includes(overrides[section.when.item] as string)) continue;
+    if (item.showIf && !itemApplies(item, { ...a, ...overrides })) continue;
     if (item.kind === "scale") a[item.id] = "5";
     else if (item.kind === "single") a[item.id] = item.options[0].value;
     else if (item.kind === "multi") a[item.id] = [item.options[0].value];
@@ -76,6 +77,16 @@ describe("research questionnaires", () => {
     const b = fill("post", { attended: "all" });
     delete b.workshops;
     expect(validateAnswers("post", b)).toMatchObject({ ok: false, item: "workshops" });
+  });
+
+  it("asks which university only when they choose another one", () => {
+    const home = validateAnswers("pre", fill("pre", { university: "lincoln", university_other: "Leeds" }));
+    expect(home.ok && "university_other" in home.answers).toBe(false);
+    const blank = fill("pre", { university: "other" });
+    delete blank.university_other;
+    expect(validateAnswers("pre", blank)).toMatchObject({ ok: false, item: "university_other" });
+    const r = validateAnswers("pre", fill("pre", { university: "other", university_other: " Leeds " }));
+    expect(r).toMatchObject({ ok: true, answers: { university_other: "Leeds" } });
   });
 
   it("allows the optional free text to be left blank", () => {

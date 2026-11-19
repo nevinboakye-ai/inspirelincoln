@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState, useTransition } from "react";
 import { ArrowLeft, ArrowRight, Check, Loader2, Lock } from "lucide-react";
 import { submitResearch } from "@/app/portal/research/actions";
-import { STAGE_LABEL, sectionApplies, sectionTitle, sectionsFor, textFor, type Answers, type Item, type Stage } from "@/lib/research/instrument";
+import { STAGE_LABEL, itemApplies, sectionApplies, sectionTitle, sectionsFor, textFor, type Answers, type Item, type Stage } from "@/lib/research/instrument";
 import { cn } from "@/lib/cn";
 
 const draftKey = (stage: Stage, code: string | null) => `inspire-research:${code ?? "preview"}:${stage}`;
@@ -79,7 +79,7 @@ export function Questionnaire({ stage, code, preview = false }: { stage: Stage; 
   };
 
   const next = () => {
-    const gaps = section.items.filter((i) => !isAnswered(i, answers[i.id])).map((i) => i.id);
+    const gaps = section.items.filter((i) => itemApplies(i, answers) && !isAnswered(i, answers[i.id])).map((i) => i.id);
     if (gaps.length) {
       setMissing(gaps);
       setError(gaps.length === 1 ? "Please answer the highlighted question." : `Please answer the ${gaps.length} highlighted questions.`);
@@ -139,7 +139,7 @@ export function Questionnaire({ stage, code, preview = false }: { stage: Stage; 
       </div>
 
       <ol className="space-y-3">
-        {section.items.map((item, n) => (
+        {section.items.filter((item) => itemApplies(item, answers)).map((item, n) => (
           <li key={item.id}>
             <Question item={item} stage={stage} number={n + 1} value={answers[item.id]} onChange={(v) => set(item.id, v)} flagged={missing.includes(item.id)} />
           </li>
