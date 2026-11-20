@@ -122,5 +122,70 @@ select public.oral_rooms_save(jsonb_build_array(jsonb_build_object('session_id',
 reset role;
 select pg_temp.expect((select capacity from public.oral_rooms where session_id = pg_temp.room('lms')::uuid) is null, 'number of talks can be cleared');
 
+
+-- The audience ----------------------------------------------------------------
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('00000000-0000-0000-0000-00000000e0c2', 'plain2@example.test', '{"full_name":"Plain Two"}'),
+  ('00000000-0000-0000-0000-00000000e0e1', 'judgeo@example.test', '{"full_name":"Judge O"}');
+update public.profiles set account_status = 'approved', account_type = 'poster_presenter' where id = '00000000-0000-0000-0000-00000000e0c2';
+update public.profiles set account_status = 'approved', account_type = 'judge' where id = '00000000-0000-0000-0000-00000000e0e1';
+
+select pg_temp.as_user('00000000-0000-0000-0000-00000000e0c1');
+select pg_temp.expect((select count(*) from public.oral_audience_people()) = 0, 'a delegate sees no audience list');
+select pg_temp.expect(pg_temp.raises($$select public.oral_audience_set('plain@example.test', null, true)$$, 'NOT_ALLOWED'), 'a delegate cannot move anyone');
+reset role;
+
+select pg_temp.as_user('00000000-0000-0000-0000-00000000e0d1');
+select pg_temp.expect((select grp from public.oral_audience_people() where email = 'plain@example.test') = 'delegate', 'delegates are grouped');
+select pg_temp.expect((select grp from public.oral_audience_people() where email = 'plain2@example.test') = 'poster', 'poster presenters are grouped');
+select pg_temp.expect((select grp from public.oral_audience_people() where email = 'judgeo@example.test') = 'judge', 'judges are grouped');
+select pg_temp.expect((select grp from public.oral_audience_people() where email = 'execo@example.test') = 'committee', 'committee is grouped');
+select pg_temp.expect(not exists (select 1 from public.oral_audience_people() where email = 'oral1@example.test'), 'oral presenters are not in the audience');
+select pg_temp.expect(pg_temp.raises($$select public.oral_audience_publish(true)$$, 'NOTHING_TO_PUBLISH'), 'cannot show an empty audience');
+select pg_temp.expect(public.oral_audience_save(0, jsonb_build_array(
+  jsonb_build_object('email', 'plain@example.test', 'session_id', pg_temp.room('lms'), 'locked', false),
+  jsonb_build_object('email', 'plain2@example.test', 'session_id', pg_temp.room('inb'), 'locked', false),
+  jsonb_build_object('email', 'judgeo@example.test', 'session_id', pg_temp.room('inb'), 'locked', false)
+)) = 1, 'audience saved');
+select pg_temp.expect(pg_temp.raises($$select public.oral_audience_save(0, '[]'::jsonb)$$, 'STALE'), 'an out-of-date audience is refused');
+reset role;
+
+-- The judge was placed by hand on the On the day page: that wins.
+insert into public.programme_assignments (edition_id, user_id, session_id, role)
+values (public.current_edition_id(), '00000000-0000-0000-0000-00000000e0e1', pg_temp.room('lms')::uuid, 'judging');
+
+select pg_temp.as_user('00000000-0000-0000-0000-00000000e0c1');
+select pg_temp.expect(public.my_oral_room() is null, 'room hidden until shown');
+reset role;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000e0d1');
+select public.oral_audience_publish(true);
+reset role;
+select pg_temp.expect((select session_id::text from public.programme_assignments where user_id = '00000000-0000-0000-0000-00000000e0c1' and role = 'attending') = pg_temp.room('lms'), 'delegate placed in their room for the day');
+select pg_temp.expect((select count(*) from public.programme_assignments where user_id = '00000000-0000-0000-0000-00000000e0e1') = 1, 'a hand-made place (the judge) is kept and not doubled');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000e0c1');
+select pg_temp.expect(public.my_oral_room()->>'session_id' = pg_temp.room('lms'), 'delegate sees their room');
+reset role;
+
+select pg_temp.as_user('00000000-0000-0000-0000-00000000e0d1');
+select public.oral_audience_set('PLAIN@example.test', pg_temp.room('inb')::uuid, true);
+reset role;
+select pg_temp.expect((select locked from public.oral_audience where email = 'plain@example.test'), 'moved by hand is locked');
+select pg_temp.expect((select session_id::text from public.programme_assignments where user_id = '00000000-0000-0000-0000-00000000e0c1' and role = 'attending') = pg_temp.room('inb'), 'their day follows the move');
+select pg_temp.expect((select count(*) from public.programme_assignments where user_id = '00000000-0000-0000-0000-00000000e0c1') = 1, 'and they''re in one room only');
+
+select pg_temp.as_user('00000000-0000-0000-0000-00000000e0d1');
+select public.oral_audience_set('plain@example.test', null, true);
+reset role;
+select pg_temp.expect(not exists (select 1 from public.programme_assignments where user_id = '00000000-0000-0000-0000-00000000e0c1'), 'out of the rooms: out of their day');
+
+select pg_temp.as_user('00000000-0000-0000-0000-00000000e0d1');
+select public.oral_audience_publish(false);
+select public.oral_rooms_save(jsonb_build_array(jsonb_build_object('session_id', pg_temp.room('inb'), 'capacity', 5, 'seats', 120)));
+select public.oral_rooms_save(jsonb_build_array(jsonb_build_object('session_id', pg_temp.room('inb'), 'capacity', 5)));
+reset role;
+select pg_temp.expect(not exists (select 1 from public.programme_assignments where note = 'Your room for all the oral presentations'), 'hidden again: out of every day');
+select pg_temp.expect(exists (select 1 from public.programme_assignments where user_id = '00000000-0000-0000-0000-00000000e0e1' and role = 'judging'), 'the judge''s own place is never touched');
+select pg_temp.expect((select seats from public.oral_rooms where session_id = pg_temp.room('inb')::uuid) = 120, 'seats saved, and kept when not sent');
+
 select 'ALL ORAL ROOM TESTS PASSED';
 rollback;

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireAccess } from "@/lib/auth";
 import { AdminHeader, Panel } from "@/components/admin/ui";
 import { OralBoardEditor, OralPublishForm, OralRoomsForm } from "@/components/admin/oral-board";
+import { AudiencePublishForm, OralAudienceEditor } from "@/components/admin/oral-audience";
 import { Notice } from "@/components/ui/notice";
 import { loadOralBoard } from "@/lib/orals/admin";
 
@@ -50,7 +51,7 @@ export default async function OralRoomsPage() {
     <div className="space-y-6">
       <AdminHeader
         title="Oral presentation rooms"
-        description="The oral presentations run in two rooms at the same time. Allocate the presenters at random, then move anyone you like with the menu on their card, the arrows, or by dragging. Anyone you place by hand is locked, so allocating at random again keeps them where you put them."
+        description="The oral presentations run in two rooms at the same time, in buildings too far apart to swap between talks. Share the speakers and then the audience between the rooms at random, and move anyone you like. Anyone you place by hand is locked, so sharing out at random again keeps them where you put them."
       />
 
       {b.rooms.length < 2 && (
@@ -82,7 +83,7 @@ export default async function OralRoomsPage() {
         </Notice>
       )}
 
-      <Panel title="Allocation">
+      <Panel title="Speakers">
         {b.presenters.length === 0 ? (
           <p className="text-sm text-slate-700">
             No oral presenters yet. People show here once their account (or their entry on the selected list) has the Oral presenter role.
@@ -98,13 +99,37 @@ export default async function OralRoomsPage() {
         )}
       </Panel>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <Panel title="Show presenters their room">
-          <OralPublishForm published={b.published} hasPlaces={inRooms > 0} />
-        </Panel>
+      <Panel title="Show presenters their room">
+        <OralPublishForm published={b.published} hasPlaces={inRooms > 0} />
+      </Panel>
+
+      <Panel title="Audience">
+        {!b.audience ? (
+          <Notice tone="warning" title="Not set up yet">
+            Run the setup file <code>20261221000000_oral_rooms_audience.sql</code> in the Supabase SQL editor, then refresh this page.
+          </Notice>
+        ) : (
+          <>
+            <p className="mb-4 max-w-3xl text-sm text-slate-700">
+              Everyone else attending stays in one room for all the oral presentations. Choose who to share out, split them at random, then tap a room beside anyone&apos;s name to move them.
+            </p>
+            <OralAudienceEditor
+              rooms={b.rooms.map((r) => ({ id: r.id, name: r.name, building: r.building, time: r.time, capacity: r.capacity, seats: r.seats }))}
+              people={b.audience.people}
+              board={b.audience.board}
+              version={b.audience.version}
+            />
+            <div className="mt-6 border-t border-navy/10 pt-6">
+              <AudiencePublishForm published={b.audience.published} hasPlaces={b.audience.board.some((p) => p.roomId)} />
+            </div>
+          </>
+        )}
+      </Panel>
+
+      <div className="grid gap-6">
         <Panel title="Rooms">
           <p className="mb-4 text-sm text-slate-700">
-            How many talks each room takes. The rooms, times and buildings come from the programme
+            How many talks each room takes{b.audience ? ", and how many seats it has for the audience (the audience is shared out in proportion to the seats, or evenly if they're left empty)" : ""}. The rooms, times and buildings come from the programme
             {canProgramme ? (
               <>
                 {" "}
@@ -117,7 +142,7 @@ export default async function OralRoomsPage() {
             ) : null}
             .
           </p>
-          <OralRoomsForm rooms={b.rooms.map((r) => ({ id: r.id, name: r.name, building: r.building, time: r.time, capacity: r.capacity }))} />
+          <OralRoomsForm withSeats={Boolean(b.audience)} rooms={b.rooms.map((r) => ({ id: r.id, name: r.name, building: r.building, time: r.time, capacity: r.capacity, seats: r.seats }))} />
         </Panel>
       </div>
     </div>

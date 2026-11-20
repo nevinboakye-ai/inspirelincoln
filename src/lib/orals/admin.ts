@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { formatTime } from "@/lib/time";
 import { cleanRoomName } from "@/lib/orals/room-name";
+import { AUDIENCE_GROUPS, type AudienceGroup, type AudiencePerson } from "@/lib/orals/groups";
 import type { OralPlacement } from "@/lib/orals/allocate";
 
 export type OralBoardRoom = {
@@ -12,6 +13,8 @@ export type OralBoardRoom = {
   name: string;
   building: string | null;
   capacity: number | null;
+  /** Audience seats, for sharing out the audience. */
+  seats: number | null;
   time: string | null;
   startsAt: string | null;
 };
@@ -34,11 +37,14 @@ const fromTitle = (t: string) => t.split(/:\s/).slice(1).join(": ").trim() || t;
 
 /** Everything the committee's oral rooms page needs. Null when setup hasn't been run. */
 export async function loadOralBoard(db: SupabaseClient) {
-  const [ids, people, places, settings] = await Promise.all([
+  // "*" so this still loads before the audience setup file adds its columns.
+  const [ids, people, places, settings, audPeople, audPlaces] = await Promise.all([
     db.rpc("oral_sessions"),
     db.rpc("oral_presenter_people"),
     db.from("oral_allocations").select("email, session_id, position, locked"),
-    db.from("oral_room_settings").select("published, version, last_run, updated_at").maybeSingle(),
+    db.from("oral_room_settings").select("*").maybeSingle(),
+    db.rpc("oral_audience_people"),
+    db.from("oral_audience").select("email, session_id, locked").limit(5000),
   ]);
   const error = ids.error ?? people.error ?? places.error ?? settings.error;
   if (error) return { ready: false as const, error: error.message };
@@ -48,10 +54,12 @@ export async function loadOralBoard(db: SupabaseClient) {
     sessionIds.length
       ? db.from("sessions").select("id, title, starts_at, ends_at, sort, rooms(name, building)").in("id", sessionIds)
       : Promise.resolve({ data: [] }),
-    sessionIds.length ? db.from("oral_rooms").select("session_id, capacity").in("session_id", sessionIds) : Promise.resolve({ data: [] }),
+    sessionIds.length ? db.from("oral_rooms").select("*").in("session_id", sessionIds) : Promise.resolve({ data: [] }),
   ]);
   type S = { id: string; title: string; starts_at: string | null; ends_at: string | null; sort: number; rooms: { name: string; building: string | null } | null };
-  const capOf = new Map(((caps ?? []) as { session_id: string; capacity: number | null }[]).map((c) => [c.session_id, c.capacity]));
+  const capRows = (caps ?? []) as { session_id: string; capacity: number | null; seats?: number | null }[];
+  const capOf = new Map(capRows.map((c) => [c.session_id, c.capacity]));
+  const seatsOf = new Map(capRows.map((c) => [c.session_id, c.seats ?? null]));
   const rooms: OralBoardRoom[] = ((sessions ?? []) as unknown as S[])
     .sort((a, b) => (a.starts_at ?? "").localeCompare(b.starts_at ?? "") || a.sort - b.sort)
     .map((s) => ({
@@ -60,6 +68,7 @@ export async function loadOralBoard(db: SupabaseClient) {
       name: s.rooms?.name ? cleanRoomName(s.rooms.name) : fromTitle(s.title),
       building: s.rooms?.building ?? null,
       capacity: capOf.get(s.id) ?? null,
+      seats: seatsOf.get(s.id) ?? null,
       time: s.starts_at ? `${formatTime(s.starts_at)}${s.ends_at ? ` to ${formatTime(s.ends_at)}` : ""}` : null,
       startsAt: s.starts_at,
     }));
@@ -91,7 +100,34 @@ export async function loadOralBoard(db: SupabaseClient) {
     position: p.position,
     locked: p.locked,
   }));
-  const s = settings.data as { published: boolean; version: number; last_run: OralLastRun; updated_at: string } | null;
+  const s = settings.data as {
+    published: boolean;
+    version: number;
+    last_run: OralLastRun;
+    updated_at: string;
+    audience_published?: boolean;
+    audience_version?: number;
+    audience_last_run?: OralLastRun;
+  } | null;
+
+  // The audience: null until the audience setup file has been run.
+  const audienceReady = !audPeople.error && !audPlaces.error;
+  type A = { email: string; user_id: string | null; full_name: string | null; institution: string | null; grp: string };
+  const seenA = new Set<string>();
+  const audience: AudiencePerson[] = [];
+  for (const p of (audPeople.data ?? []) as A[]) {
+    const key = p.email.toLowerCase();
+    if (seenA.has(key) || seen.has(key)) continue;
+    seenA.add(key);
+    audience.push({ key, hasAccount: Boolean(p.user_id), name: p.full_name || p.email, institution: p.institution, group: (AUDIENCE_GROUPS as readonly string[]).includes(p.grp) ? (p.grp as AudienceGroup) : "delegate" });
+  }
+  audience.sort((a, b) => a.name.localeCompare(b.name));
+  const audienceBoard: OralPlacement[] = ((audPlaces.data ?? []) as { email: string; session_id: string | null; locked: boolean }[]).map((p) => ({
+    key: p.email,
+    roomId: p.session_id && roomIds.has(p.session_id) ? p.session_id : null,
+    position: 0,
+    locked: p.locked,
+  }));
   return {
     ready: true as const,
     rooms,
@@ -101,6 +137,15 @@ export async function loadOralBoard(db: SupabaseClient) {
     version: s?.version ?? 0,
     lastRun: s?.last_run ?? null,
     updatedAt: s?.updated_at ?? null,
+    audience: audienceReady
+      ? {
+          people: audience,
+          board: audienceBoard,
+          published: Boolean(s?.audience_published),
+          version: s?.audience_version ?? 0,
+          lastRun: s?.audience_last_run ?? null,
+        }
+      : null,
   };
 }
 export type OralBoard = Extract<Awaited<ReturnType<typeof loadOralBoard>>, { ready: true }>;
