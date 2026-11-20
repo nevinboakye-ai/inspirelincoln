@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { PortalNav } from "@/components/portal/portal-nav";
 import { requireUser } from "@/lib/auth";
 import { getSwitches } from "@/lib/switches";
-import { presenterKindOf, rolesLabel, rolesOf } from "@/lib/accounts";
+import { isStaffOnly, presenterKindOf, rolesLabel, rolesOf } from "@/lib/accounts";
 import { cookies } from "next/headers";
 import { ProfilePrompt } from "@/components/portal/profile-prompt";
 import { PROFILE_PROMPT_COOKIE, profileGaps } from "@/lib/profile-prompt";
@@ -73,8 +73,9 @@ export default async function PortalLayout({
 
   const unreadEnquiries = (mine ?? []).filter(unreadForMember).length;
 
+  // Staff (speakers, workshop leads, judges) don't get the network list.
   const showNetwork =
-    profile.access.owner || switches.network_open;
+    profile.access.owner || (switches.network_open && !isStaffOnly(profile.accountType, profile.extraTypes));
 
   // People I've Met requires Delegate Card access and approval.
   const showPeople =

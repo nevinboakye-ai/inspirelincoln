@@ -55,7 +55,7 @@ import {
   rolesLabel,
   rolesOf,
   EXEC_TYPES,
-  isJudgeOnly,
+  isStaffOnly,
 } from "@/lib/accounts";
 import type { AccountType, SubmissionStatus } from "@/lib/types";
 import { getMyResearch, needsDecision } from "@/lib/research/server";
@@ -132,9 +132,9 @@ export default async function PortalHome({
   const status = profile.accountStatus;
   // Approved oral and poster presenters confirm whether they'll be there to present.
   const presenting = Boolean(kind) && status === "approved";
-  // Judges come to judge: no workshop ranking, and only a car registration if they're driving.
-  const judgeOnly = isJudgeOnly(profile.accountType, profile.extraTypes);
-  const wantChoices = !judgeOnly && (status === "approved" || profile.access.owner || profile.access.can.allocate_workshops);
+  // Staff (speakers, workshop leads, judges) skip delegate tasks: no checklist, workshop ranking or travel question.
+  const staffOnly = isStaffOnly(profile.accountType, profile.extraTypes);
+  const wantChoices = !staffOnly && (status === "approved" || profile.access.owner || profile.access.can.allocate_workshops);
   // One code for everything: delegates scan it to see the card, the check-in desk scans it on the day.
   const cardCode = status === "approved" ? profile.cardCode : null;
 
@@ -250,7 +250,7 @@ export default async function PortalHome({
           href: "#attend-h",
         }]
       : []),
-    ...(status === "approved" && !judgeOnly
+    ...(status === "approved" && !staffOnly
       ? [{ label: "Tell us how you're getting here", done: Boolean(travelAnswer), href: "#travel" }]
       : []),
     ...(kind
@@ -303,7 +303,7 @@ export default async function PortalHome({
   const whatsapp = switches.whatsapp_group ? status === "approved" || profile.access.committee || profile.access.owner : canSwitch;
 
   const attendPending = presenting && !answer;
-  const travelPending = status === "approved" && !travelAnswer && !judgeOnly;
+  const travelPending = status === "approved" && !travelAnswer && !staffOnly;
 
   // Where an oral presenter gives their talk.
   const talk = oralTalk as { session_id: string; position?: number; of?: number } | null;
@@ -343,8 +343,8 @@ export default async function PortalHome({
     presenting && !attendPending && (
       <AttendanceCard key="attend" answer={answer} kind={kind!} dateLabel={formatEventDate(edition.date)} venue={edition.venueName} />
     ),
-    status === "approved" && !travelPending && !judgeOnly && <TravelCard key="travel" answer={travelAnswer} />,
-    status === "approved" && judgeOnly && (
+    status === "approved" && !travelPending && !staffOnly && <TravelCard key="travel" answer={travelAnswer} />,
+    status === "approved" && staffOnly && (
       <ParkingCard key="parking" registration={travelAnswer?.mode === "car" ? travelAnswer.carRegistration : null} />
     ),
     kind && (
@@ -520,9 +520,11 @@ export default async function PortalHome({
             </HubItem>
           )}
 
-          <HubItem>
-            <HubChecklist steps={steps} needsGiven={needsGiven} />
-          </HubItem>
+          {!staffOnly && (
+            <HubItem>
+              <HubChecklist steps={steps} needsGiven={needsGiven} />
+            </HubItem>
+          )}
 
           {whatsapp && (
             <HubItem>
