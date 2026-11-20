@@ -22,7 +22,7 @@ export const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
   oral_presenter: "Oral presenter",
   poster_presenter: "Poster presenter",
   oral_waitlist: "Oral waiting list",
-  speaker: "Speaker",
+  speaker: "Speaker or workshop lead",
   judge: "Judge",
   supporting_committee: "Supporting committee",
   academic_team: "Academic Team",
@@ -72,7 +72,7 @@ export const GUEST_TYPES: AccountType[] = ["speaker", "judge"];
 /** Account types grouped the way the committee thinks about them, for pickers. */
 export const ACCOUNT_TYPE_GROUPS: { title: string; hint: string; types: AccountType[] }[] = [
   { title: "Attending", hint: "Delegates and presenters", types: ["delegate", "oral_presenter", "poster_presenter", "oral_waitlist"] },
-  { title: "Guests on the day", hint: "Speakers and judges", types: GUEST_TYPES },
+  { title: "Staff", hint: "Keynote speakers, workshop leads and judges", types: GUEST_TYPES },
   { title: "Supporting committee", hint: "Can edit the website and review slides and posters", types: SUPPORTING_TYPES },
   { title: "Executive committee", hint: "Can also review accounts and email groups", types: EXEC_TYPES },
 ];
@@ -120,6 +120,16 @@ export function hasRole(p: { accountType: AccountType; extraTypes?: readonly Acc
 export function isJudgeOnly(main: AccountType, extra?: readonly AccountType[] | null) {
   const roles = rolesOf(main, extra);
   return roles.includes("judge") && roles.every((t) => GUEST_TYPES.includes(t));
+}
+
+/**
+ * Staff only: keynote speakers, workshop leads (speaker accounts) and judges
+ * with no delegate, presenter or committee role alongside. They skip the
+ * delegate tasks and the network list, but keep the scanner, judging portal
+ * and their Delegate Card.
+ */
+export function isStaffOnly(main: AccountType, extra?: readonly AccountType[] | null) {
+  return rolesOf(main, extra).every((t) => GUEST_TYPES.includes(t));
 }
 
 /** "Vice president · Academic Team" */
@@ -301,8 +311,8 @@ export const DEFAULT_RULES: Record<AccountType, Capability[]> = {
   oral_presenter: [],
   poster_presenter: [],
   oral_waitlist: [],
-  speaker: [],
-  judge: ["judge_presentations"],
+  speaker: ["judge_presentations", "day_scanner"],
+  judge: ["judge_presentations", "day_scanner"],
   supporting_committee: SUPPORTING_DEFAULT,
   academic_team: SUPPORTING_DEFAULT,
   publicity_team: SUPPORTING_DEFAULT,

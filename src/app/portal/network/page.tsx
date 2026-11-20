@@ -22,7 +22,7 @@ import type {
   ManagedPerson,
   ManageRights,
 } from "@/components/admin/manage-person";
-import { submissionKindsFor } from "@/lib/accounts";
+import { isStaffOnly, submissionKindsFor } from "@/lib/accounts";
 
 export const metadata: Metadata = {
   title: "Delegate network",
@@ -32,6 +32,8 @@ export const dynamic = "force-dynamic";
 
 export default async function NetworkPage() {
   const { profile, db } = await requireUser("/portal/network");
+  // Staff (speakers, workshop leads, judges) don't get the network list.
+  if (!profile.access.owner && isStaffOnly(profile.accountType, profile.extraTypes)) redirect("/portal");
 
   const owner = profile.access.owner;
   const staff = profile.access.exec || profile.access.owner;
