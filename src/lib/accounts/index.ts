@@ -162,6 +162,7 @@ export const CAPABILITIES = [
   "check_in",
   "answer_enquiries",
   "allocate_workshops",
+  "allocate_orals",
   "day_scanner",
   "live_alerts",
   "review_submissions",
@@ -198,6 +199,7 @@ export const CAPABILITY_LABEL: Record<Capability, { label: string; description: 
   check_in: { label: "Check-in desk", description: "Scan tickets and check people in on the day." },
   answer_enquiries: { label: "Member enquiries", description: "Read and reply to the questions and requests delegates send from My Hub." },
   allocate_workshops: { label: "Workshop places", description: "Open and close workshop ranking, set room sizes, run the allocation and publish it." },
+  allocate_orals: { label: "Oral presentation rooms", description: "Share the oral presenters between the two oral presentation rooms, set the running order and show presenters their room." },
   day_scanner: { label: "On-the-day scanner", description: "Scan Delegate Cards from My Hub to see someone's programme for the day and mark them at a workshop." },
   live_alerts: { label: "On-screen alerts", description: "Turn the \"where to go next\" alerts on or off, place people in sessions, and send an alert to every screen." },
   message_people: { label: "Direct messages", description: "Message anyone with an account from My Hub, whatever their status, and send one message to several people at once." },
@@ -231,7 +233,7 @@ export const CAPABILITY_GROUPS: { title: string; hint: string; caps: Capability[
   {
     title: "On the day and people",
     hint: "Lists of delegates and presenters, and the check-in desk",
-    caps: ["view_attendance", "view_travel", "check_in", "day_scanner", "live_alerts", "answer_enquiries", "message_people", "allocate_workshops", "review_submissions", "send_email"],
+    caps: ["view_attendance", "view_travel", "check_in", "day_scanner", "live_alerts", "answer_enquiries", "message_people", "allocate_workshops", "allocate_orals", "review_submissions", "send_email"],
   },
   {
     title: "Judging",
@@ -271,6 +273,7 @@ export const CAPABILITY_PARENT: Partial<Record<Capability, Capability[]>> = {
   remove_accounts: [],
   manage_platform: [],
   research_data: [],
+  allocate_orals: ["allocate_workshops"],
 };
 
 /** Returned by public.my_access() once the area permissions are in the database. */
@@ -286,6 +289,7 @@ const EXEC_DEFAULT: Capability[] = [
   "view_audit_log",
   "answer_enquiries",
   "allocate_workshops",
+  "allocate_orals",
   "check_in",
   "live_alerts",
   "manage_judging",

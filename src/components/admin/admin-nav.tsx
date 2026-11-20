@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   CalendarCog, ClipboardCheck, Eye, FileStack, Gauge, HelpCircle, Inbox, Mail, MapPin, Megaphone, Mic, QrCode, ScrollText, Settings2,
-  Ticket, UserCheck, MessageCircle, BellRing, GraduationCap, ListOrdered, CalendarCheck2, Users, Wrench, DoorOpen, Trophy, ShieldCheck, UserRound, LayoutDashboard, Activity, BarChart3, HandHeart, Car, FileDown, LayoutGrid, X, History, FlaskConical,
+  Ticket, UserCheck, MessageCircle, BellRing, GraduationCap, ListOrdered, CalendarCheck2, Users, Wrench, DoorOpen, Trophy, ShieldCheck, UserRound, LayoutDashboard, Activity, BarChart3, HandHeart, Car, FileDown, LayoutGrid, X, History, FlaskConical, Presentation,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Access, Capability } from "@/lib/accounts";
@@ -38,6 +38,7 @@ const GROUPS: { title: string; links: LinkDef[] }[] = [
       { href: "/admin/attendance", label: "Presenter attendance", icon: CalendarCheck2, need: ["view_attendance", "review_accounts"] },
       { href: "/admin/travel", label: "Travel and parking", icon: Car, need: "view_travel" },
       { href: "/admin/workshops", label: "Workshop places", icon: ListOrdered, need: "allocate_workshops" },
+      { href: "/admin/orals", label: "Oral presentation rooms", icon: Presentation, need: "allocate_orals" },
       { href: "/admin/submissions", label: "Slides and posters", icon: FileStack, need: "review_submissions" },
       { href: "/admin/judging", label: "Judging", icon: Trophy, need: "manage_judging" },
       { href: "/admin/enquiries", label: "Enquiries", icon: Inbox, need: ["answer_enquiries", "manage_people"] },
