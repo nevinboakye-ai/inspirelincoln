@@ -118,7 +118,8 @@ export default async function OnTheDayPage() {
         <Panel title="Who goes where">
           <p className="mb-4 max-w-3xl text-sm text-slate-700">
             When two things run at once (like the oral presentations in two rooms), delegates see both and can pick. Put presenters, judges, chairs and helpers in the one they&apos;re needed in, and it shows in their day and their alerts. Workshops come from{" "}
-            <Link href="/admin/workshops" className="font-semibold text-electric-600 underline underline-offset-4">Workshop places</Link>.
+            <Link href="/admin/workshops" className="font-semibold text-electric-600 underline underline-offset-4">Workshop places</Link>, and oral presenters&apos; rooms from{" "}
+            <Link href="/admin/orals" className="font-semibold text-electric-600 underline underline-offset-4">Oral presentation rooms</Link> once they&apos;re shown to presenters.
           </p>
           <div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
             <div className="rounded-lg border border-navy/10 p-4">

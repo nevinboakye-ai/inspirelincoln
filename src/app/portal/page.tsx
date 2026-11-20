@@ -10,6 +10,7 @@ import {
   Hourglass,
   LayoutDashboard,
   MapPin,
+  Presentation,
   Ticket,
   UploadCloud,
   XCircle,
@@ -22,7 +23,8 @@ import { PRESENTING, cardPath, formatCode, sortedRoles } from "@/lib/card";
 import { SITE_URL } from "@/lib/site";
 import { getSwitches } from "@/lib/switches";
 import { getConferenceBundle, getSponsors } from "@/lib/data/content";
-import { formatEventDate } from "@/lib/time";
+import { formatEventDate, formatTime } from "@/lib/time";
+import { cleanRoomName } from "@/lib/orals/room-name";
 import { Badge } from "@/components/ui/badge";
 import { Notice } from "@/components/ui/notice";
 import { SavedAgenda } from "@/components/portal/saved-agenda";
@@ -143,7 +145,7 @@ export default async function PortalHome({
   const cardShownP = switchesP.then((sw) => sw.delegate_card || profile.access.owner);
   const [
     switches,
-    [{ edition, sessions, workshops }, sponsors],
+    [{ edition, sessions, workshops, rooms }, sponsors],
     { data: registration },
     { data: latestSub },
     { data: announcements },
@@ -155,6 +157,7 @@ export default async function PortalHome({
     uniLogo,
     choices,
     research,
+    { data: oralTalk },
   ] = await Promise.all([
     switchesP,
     contentP,
@@ -211,6 +214,10 @@ export default async function PortalHome({
     wantChoices ? contentP.then(([b]) => loadWorkshopChoices(db, user.id, UUID.test(b.edition.id) ? b.edition.id : undefined)) : null,
     // The research study: invited delegates are asked to answer the invitation, either way.
     getMyResearch(db, profile),
+    // An oral presenter's room, once the committee shows it. Nothing before the oral rooms setup file is run.
+    presenting && kind === "slides"
+      ? Promise.resolve(db.rpc("my_oral_talk")).then((r) => (r.error ? { data: null } : r), () => ({ data: null }))
+      : Promise.resolve({ data: null }),
   ]);
   const showCard = switches.delegate_card || profile.access.owner;
   // While the website is closed, delegates only use My Hub for their profile and their slides or poster.
@@ -295,8 +302,41 @@ export default async function PortalHome({
   const attendPending = presenting && !answer;
   const travelPending = status === "approved" && !travelAnswer && !judgeOnly;
 
+  // Where an oral presenter gives their talk.
+  const talk = oralTalk as { session_id: string; position: number; of: number } | null;
+  const talkSession = talk ? sessions.find((x) => x.id === talk.session_id) : undefined;
+  const talkRoom = talkSession?.roomId ? rooms.find((r) => r.id === talkSession.roomId) : undefined;
+  const talkPlace = talkSession ? (talkRoom ? cleanRoomName(talkRoom.name) : talkSession.title.split(/:\s/).slice(1).join(": ") || talkSession.title) : null;
+
   // Short answers (travel, attendance, slides) sit side by side as slim tiles.
   const tiles = [
+    talk && talkSession && (
+      <section key="talk" aria-labelledby="talk-h" className="app-card flex items-center gap-3 p-3 pr-2 sm:p-4 sm:pr-3">
+        <span className="icon-chip tone-gold">
+          <Presentation aria-hidden className="size-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 id="talk-h" className="font-ui text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-slate">
+            Your talk
+          </h2>
+          <p className="text-sm font-semibold leading-snug text-ink">
+            {talkPlace}, talk {talk.position} of {talk.of}
+          </p>
+          <p className="text-xs leading-snug text-slate-700">
+            {[talkRoom?.building, talkSession.startsAt ? `Session ${formatTime(talkSession.startsAt)}${talkSession.endsAt ? ` to ${formatTime(talkSession.endsAt)}` : ""}` : null].filter(Boolean).join(" · ")}
+          </p>
+        </div>
+        {talkRoom && (
+          <Link
+            href={`/map?room=${talkRoom.id}`}
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-4 font-ui text-sm font-semibold text-electric-600 tap hover:bg-paper-200"
+          >
+            Map
+            <ArrowRight aria-hidden className="size-4" />
+          </Link>
+        )}
+      </section>
+    ),
     presenting && !attendPending && (
       <AttendanceCard key="attend" answer={answer} kind={kind!} dateLabel={formatEventDate(edition.date)} venue={edition.venueName} />
     ),
