@@ -7,7 +7,7 @@ import { inputClass } from "@/components/forms/field";
 import { cn } from "@/lib/cn";
 import { lockOral, moveOral, type OralPlacement } from "@/lib/orals/allocate";
 
-export type BoardRoom = { id: string; name: string; building: string | null; time: string | null; capacity: number | null };
+export type BoardRoom = { id: string; name: string; building: string | null; time: string | null; capacity: number | null; seats?: number | null };
 export type BoardPerson = {
   key: string;
   name: string;
@@ -37,16 +37,16 @@ function Result({ r }: { r: OralResult }) {
 }
 
 /** How many talks each room takes. */
-export function OralRoomsForm({ rooms }: { rooms: BoardRoom[] }) {
+export function OralRoomsForm({ rooms, withSeats = false }: { rooms: BoardRoom[]; withSeats?: boolean }) {
   const [r, action, pending] = useActionState(saveOralRooms, null);
   return (
     <form action={action} className="space-y-4">
       <ul className="grid gap-3">
         {rooms.map((room, i) => (
-          <li key={room.id} className="flex items-center gap-3 rounded-xl border border-navy/10 p-3">
+          <li key={room.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-navy/10 p-3">
             <input type="hidden" name="id" value={room.id} />
             <span aria-hidden className="size-3 shrink-0 rounded-full" style={{ background: roomColour(i).solid }} />
-            <span className="min-w-0 flex-1">
+            <span className="min-w-0 flex-1 basis-40">
               <span className="block font-semibold text-ink">{room.name}</span>
               <span className="block text-xs text-slate-700">{[room.building, room.time].filter(Boolean).join(" · ")}</span>
             </span>
@@ -64,12 +64,28 @@ export function OralRoomsForm({ rooms }: { rooms: BoardRoom[] }) {
                 className={cn(inputClass.replace("w-full", "w-20"), "px-3 py-2")}
               />
             </label>
+            {withSeats && (
+              <label className="flex shrink-0 items-center gap-2 text-sm">
+                <span className="text-slate-700">Seats</span>
+                <input
+                  name={`seats_${room.id}`}
+                  aria-label={`Audience seats in ${room.name}`}
+                  type="number"
+                  min={1}
+                  max={2000}
+                  inputMode="numeric"
+                  placeholder="Any"
+                  defaultValue={room.seats ?? ""}
+                  className={cn(inputClass.replace("w-full", "w-24"), "px-3 py-2")}
+                />
+              </label>
+            )}
           </li>
         ))}
       </ul>
       <div className="flex flex-wrap items-center gap-3">
         <button className={btn.secondary} disabled={pending}>
-          {pending && <Loader2 aria-hidden className="size-4 animate-spin" />} Save numbers of talks
+          {pending && <Loader2 aria-hidden className="size-4 animate-spin" />} {withSeats ? "Save talks and seats" : "Save numbers of talks"}
         </button>
         <Result r={r} />
       </div>

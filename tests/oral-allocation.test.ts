@@ -163,3 +163,29 @@ describe("moving people by hand", () => {
     expect(lockOral(board, "zz", true)).toHaveLength(6);
   });
 });
+
+describe("sharing out the audience", () => {
+  const crowd = Array.from({ length: 200 }, (_, i) => `d${i}@x.test`);
+  it("shares in proportion to the seats", () => {
+    const r = allocateOrals([{ id: "inb", capacity: 150 }, { id: "lms", capacity: 50 }], crowd, [], { seed: "seats" });
+    expect(r.rooms.get("inb")!.length).toBe(150);
+    expect(r.rooms.get("lms")!.length).toBe(50);
+  });
+  it("splits evenly when seats aren't set", () => {
+    const r = allocateOrals([{ id: "inb", capacity: null }, { id: "lms", capacity: null }], crowd, [], { seed: "even" });
+    expect(r.rooms.get("inb")!.length).toBe(100);
+    expect(r.rooms.get("lms")!.length).toBe(100);
+  });
+  it("keeps proportions when there are more people than seats", () => {
+    const r = allocateOrals([{ id: "inb", capacity: 90 }, { id: "lms", capacity: 30 }], crowd, [], { seed: "over" });
+    expect(r.rooms.get("inb")!.length).toBe(150);
+    expect(r.rooms.get("lms")!.length).toBe(50);
+  });
+  it("leaves out groups not chosen, but keeps their locked places", () => {
+    const current = [{ key: "d0@x.test", roomId: "lms", position: 0, locked: true }];
+    const leaveOut = new Set(crowd.slice(0, 100));
+    const r = allocateOrals([{ id: "inb", capacity: null }, { id: "lms", capacity: null }], crowd, current, { seed: "g", leaveOut });
+    expect(r.rooms.get("lms")).toContain("d0@x.test");
+    expect(r.unplaced).toHaveLength(99);
+  });
+});

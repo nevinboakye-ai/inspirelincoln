@@ -215,9 +215,12 @@ export default async function PortalHome({
     // The research study: invited delegates are asked to answer the invitation, either way.
     getMyResearch(db, profile),
     // An oral presenter's room, once the committee shows it. Nothing before the oral rooms setup file is run.
+    // Everyone else: their room for all the oral presentations, once shown.
     presenting && kind === "slides"
       ? Promise.resolve(db.rpc("my_oral_talk")).then((r) => (r.error ? { data: null } : r), () => ({ data: null }))
-      : Promise.resolve({ data: null }),
+      : status === "approved"
+        ? Promise.resolve(db.rpc("my_oral_room")).then((r) => (r.error ? { data: null } : r), () => ({ data: null }))
+        : Promise.resolve({ data: null }),
   ]);
   const showCard = switches.delegate_card || profile.access.owner;
   // While the website is closed, delegates only use My Hub for their profile and their slides or poster.
@@ -303,7 +306,7 @@ export default async function PortalHome({
   const travelPending = status === "approved" && !travelAnswer && !judgeOnly;
 
   // Where an oral presenter gives their talk.
-  const talk = oralTalk as { session_id: string; position: number; of: number } | null;
+  const talk = oralTalk as { session_id: string; position?: number; of?: number } | null;
   const talkSession = talk ? sessions.find((x) => x.id === talk.session_id) : undefined;
   const talkRoom = talkSession?.roomId ? rooms.find((r) => r.id === talkSession.roomId) : undefined;
   const talkPlace = talkSession ? (talkRoom ? cleanRoomName(talkRoom.name) : talkSession.title.split(/:\s/).slice(1).join(": ") || talkSession.title) : null;
@@ -317,10 +320,10 @@ export default async function PortalHome({
         </span>
         <div className="min-w-0 flex-1">
           <h2 id="talk-h" className="font-ui text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-slate">
-            Your talk
+            {talk.position ? "Your talk" : "Your oral presentations room"}
           </h2>
           <p className="text-sm font-semibold leading-snug text-ink">
-            {talkPlace}, talk {talk.position} of {talk.of}
+            {talk.position ? `${talkPlace}, talk ${talk.position} of ${talk.of}` : `${talkPlace}, for all the talks`}
           </p>
           <p className="text-xs leading-snug text-slate-700">
             {[talkRoom?.building, talkSession.startsAt ? `Session ${formatTime(talkSession.startsAt)}${talkSession.endsAt ? ` to ${formatTime(talkSession.endsAt)}` : ""}` : null].filter(Boolean).join(" · ")}

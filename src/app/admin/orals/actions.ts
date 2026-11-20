@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAccess } from "@/lib/auth";
 import { allocateOrals, toPlacements, type OralPlacement } from "@/lib/orals/allocate";
 import { loadOralBoard } from "@/lib/orals/admin";
+import { AUDIENCE_GROUPS } from "@/lib/orals/groups";
 
 export type OralResult = { ok: boolean; message?: string; error?: string; version?: number; board?: OralPlacement[] } | null;
 
@@ -102,12 +103,17 @@ export async function saveOralRooms(_: OralResult, form: FormData): Promise<Oral
   const ids = form.getAll("id").map(String);
   const rows = ids.map((id) => {
     const raw = String(form.get(`capacity_${id}`) ?? "").trim();
-    return { session_id: id, capacity: raw ? Number(raw) : null };
+    const seatsRaw = form.has(`seats_${id}`) ? String(form.get(`seats_${id}`) ?? "").trim() : undefined;
+    return { session_id: id, capacity: raw ? Number(raw) : null, seats: seatsRaw === undefined ? undefined : seatsRaw ? Number(seatsRaw) : null };
   });
   if (rows.some((r) => !UUID.test(r.session_id))) return { ok: false, error: "Something went wrong. Please refresh and try again." };
   if (rows.some((r) => r.capacity !== null && (!Number.isInteger(r.capacity) || r.capacity < 1 || r.capacity > 50)))
     return { ok: false, error: "The number of talks must be a whole number from 1 to 50, or left empty." };
-  const { error } = await db.rpc("oral_rooms_save", { p: rows.map((r) => ({ session_id: r.session_id, capacity: r.capacity ?? "" })) });
+  if (rows.some((r) => r.seats != null && (!Number.isInteger(r.seats) || r.seats < 1 || r.seats > 2000)))
+    return { ok: false, error: "Seats must be a whole number from 1 to 2000, or left empty." };
+  const { error } = await db.rpc("oral_rooms_save", {
+    p: rows.map((r) => ({ session_id: r.session_id, capacity: r.capacity ?? "", ...(r.seats === undefined ? {} : { seats: r.seats ?? "" }) })),
+  });
   if (error) return { ok: false, error: friendly(error.message, "We couldn't save that. Please try again.") };
   revalidatePath(PATH);
   return { ok: true, message: "Saved." };
@@ -124,4 +130,62 @@ export async function saveOralSettings(_: OralResult, form: FormData): Promise<O
     ok: true,
     message: publish ? "Presenters can now see their room and talk number in My Hub and in their day." : "Saved. Presenters no longer see their room.",
   };
+}
+
+// The audience ----------------------------------------------------------------
+
+/**
+ * Splits the audience between the rooms at random, in proportion to their
+ * seats (evenly when seats aren't set). Locked people stay where they are.
+ */
+export async function runAudienceSplit(_: OralResult, form: FormData): Promise<OralResult> {
+  const { db } = await requireAccess("allocate_orals", PATH);
+  const b = await loadOralBoard(db);
+  if (!b.ready) return { ok: false, error: friendly(b.error, "We couldn't load the audience. Please try again.") };
+  if (!b.audience) return { ok: false, error: "This isn't set up yet: run the oral rooms audience setup file in Supabase." };
+  if (b.rooms.length < 2) return { ok: false, error: "The programme needs two oral presentation sessions, one for each room." };
+  const groups = new Set(form.getAll("group").map(String).filter((g) => (AUDIENCE_GROUPS as readonly string[]).includes(g)));
+  if (!groups.size) return { ok: false, error: "Choose at least one group to share out." };
+  const version = Number(form.get("version"));
+  const included = b.audience.people.filter((p) => groups.has(p.group)).map((p) => p.key);
+  const seed = randomUUID();
+  const result = allocateOrals(
+    b.rooms.map((r) => ({ id: r.id, capacity: r.seats })),
+    b.audience.people.map((p) => p.key),
+    b.audience.board,
+    { seed, leaveOut: new Set(b.audience.people.map((p) => p.key).filter((k) => !included.includes(k))) },
+  );
+  // Positions don't matter for the audience; only the room.
+  const locked = new Set(b.audience.board.filter((p) => p.locked).map((p) => p.key));
+  const rows = toPlacements(result, locked).map((p) => ({ email: p.key, session_id: p.roomId ?? "", locked: p.locked }));
+  const { error } = await db.rpc("oral_audience_save", {
+    p_version: Number.isInteger(version) ? version : null,
+    p_rows: rows,
+    p_run: { at: new Date().toISOString(), seed, leftOut: b.audience.people.length - included.length },
+  });
+  refresh();
+  if (error) return { ok: false, error: friendly(error.message, "We couldn't save the split. Please try again.") };
+  const counts = b.rooms.map((r) => `${result.rooms.get(r.id)?.length ?? 0} in ${r.name}`).join(", ");
+  return { ok: true, message: `Done: ${counts}.${result.over.length ? " One room has more people than its seats." : ""}` };
+}
+
+/** Moves, locks or unlocks one member of the audience. Moving someone locks them. */
+export async function setAudiencePlace(email: string, roomId: string | null, locked: boolean): Promise<OralResult> {
+  const { db } = await requireAccess("allocate_orals", PATH);
+  if (typeof email !== "string" || !email.includes("@") || email.length > 320 || (roomId !== null && !UUID.test(roomId)) || typeof locked !== "boolean")
+    return { ok: false, error: "Something went wrong. Please refresh and try again." };
+  const { error } = await db.rpc("oral_audience_set", { p_email: email, p_session: roomId, p_locked: locked });
+  if (error) return { ok: false, error: friendly(error.message, "We couldn't save that. Please try again.") };
+  refresh();
+  return { ok: true, message: "Saved." };
+}
+
+/** Shows or hides each member of the audience's room in My Hub and their day. */
+export async function saveAudiencePublish(_: OralResult, form: FormData): Promise<OralResult> {
+  const { db } = await requireAccess("allocate_orals", PATH);
+  const publish = form.get("publish") === "on";
+  const { error } = await db.rpc("oral_audience_publish", { p_published: publish });
+  if (error) return { ok: false, error: friendly(error.message, "We couldn't save that. Please try again.").replace("Put presenters in rooms", "Share out the audience") };
+  refresh();
+  return { ok: true, message: publish ? "Everyone placed can now see their room in My Hub and in their day." : "Saved. The audience no longer sees their room." };
 }
