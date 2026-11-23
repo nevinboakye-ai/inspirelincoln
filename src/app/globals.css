@@ -680,3 +680,12 @@ dialog.gate.is-leaving { background: transparent; }
 @keyframes dm-in {
   from { opacity: 0; transform: translateY(6px) scale(0.98); }
 }
+
+/* Gallery slideshow: each photo slides in from the side it came from. */
+@keyframes gallery-from-right { from { opacity: 0; transform: translate3d(28px, 0, 0); } }
+@keyframes gallery-from-left { from { opacity: 0; transform: translate3d(-28px, 0, 0); } }
+.gallery-next { animation: gallery-from-right 0.45s var(--ease-out-expo) backwards; }
+.gallery-prev { animation: gallery-from-left 0.45s var(--ease-out-expo) backwards; }
+@media (prefers-reduced-motion: reduce) {
+  .gallery-next, .gallery-prev { animation: enter-fade 0.2s linear backwards; }
+}

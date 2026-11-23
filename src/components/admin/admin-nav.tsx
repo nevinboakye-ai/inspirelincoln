@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   CalendarCog, ClipboardCheck, Eye, FileStack, Gauge, HelpCircle, Inbox, Mail, MapPin, Megaphone, Mic, QrCode, ScrollText, Settings2,
-  Ticket, UserCheck, MessageCircle, BellRing, GraduationCap, ListOrdered, CalendarCheck2, Users, Wrench, DoorOpen, Trophy, ShieldCheck, UserRound, LayoutDashboard, Activity, BarChart3, HandHeart, Car, FileDown, LayoutGrid, X, History, FlaskConical, Presentation,
+  Ticket, UserCheck, MessageCircle, BellRing, GraduationCap, ListOrdered, CalendarCheck2, Users, Wrench, DoorOpen, Trophy, ShieldCheck, UserRound, LayoutDashboard, Activity, BarChart3, HandHeart, Car, FileDown, LayoutGrid, X, History, FlaskConical, Presentation, Images, MessageSquareHeart,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Access, Capability } from "@/lib/accounts";
@@ -44,6 +44,13 @@ const GROUPS: { title: string; links: LinkDef[] }[] = [
       { href: "/admin/enquiries", label: "Enquiries", icon: Inbox, need: ["answer_enquiries", "manage_people"] },
       { href: "/admin/email", label: "Group email", icon: Mail, need: "send_email" },
       { href: "/portal/messages", label: "Messages", icon: MessageCircle, need: "message_people" },
+    ],
+  },
+  {
+    title: "After the conference",
+    links: [
+      { href: "/admin/gallery", label: "Photo gallery", icon: Images, need: "moderate_gallery" },
+      { href: "/admin/feedback", label: "Conference feedback", icon: MessageSquareHeart, need: "view_feedback" },
     ],
   },
   {

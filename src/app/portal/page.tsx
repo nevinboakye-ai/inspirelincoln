@@ -62,6 +62,8 @@ import { getMyResearch, needsDecision } from "@/lib/research/server";
 import { STAGE_LABEL } from "@/lib/research/instrument";
 import { formatWhen, windowOf } from "@/lib/research/schedule";
 import { ResearchTaskCard } from "@/components/research/research-task-card";
+import { getPostConference } from "@/lib/post-conference/server";
+import { PartyPopper } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -222,6 +224,8 @@ export default async function PortalHome({
         ? Promise.resolve(db.rpc("my_oral_room")).then((r) => (r.error ? { data: null } : r), () => ({ data: null }))
         : Promise.resolve({ data: null }),
   ]);
+  // Same request as the layout, so this is already loaded.
+  const after = await getPostConference(db, profile);
   const showCard = switches.delegate_card || profile.access.owner;
   // While the website is closed, delegates only use My Hub for their profile and their slides or poster.
   const focus =
@@ -470,6 +474,23 @@ export default async function PortalHome({
             <Countdown date={edition.date} time={edition.startTime} />
           </div>
         </header>
+      )}
+
+      {after.member && (after.done || profile.access.owner) && (
+        <Link
+          href="/portal/after"
+          className="group relative isolate flex items-center gap-3 overflow-hidden rounded-2xl bg-gradient-to-br from-navy to-navy-600 p-4 text-paper shadow-[var(--shadow-soft)] tap sm:p-5"
+        >
+          <span aria-hidden className="hub-orb -right-10 -top-16 size-44 bg-gold/30" />
+          <span className="icon-chip bg-gold/20 text-gold-300">
+            <PartyPopper aria-hidden className="size-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-lg leading-tight">Post-conference hub</span>
+            <span className="block text-sm text-paper/75">Photos from the day, certificates, the booklet{kind ? " and judges' feedback" : ""}</span>
+          </span>
+          <ArrowRight aria-hidden className="size-5 shrink-0 transition-transform group-hover:translate-x-1" />
+        </Link>
       )}
 
       {needsDecision(research) ? (

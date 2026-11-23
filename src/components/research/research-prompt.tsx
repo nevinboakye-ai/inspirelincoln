@@ -18,7 +18,8 @@ export function ResearchPrompt({ mode, closes, stageTitle, minutes, href }: { mo
   const [open, setOpen] = useState(true);
   const titleId = useId();
   const descId = useId();
-  const here = path.startsWith("/portal/research");
+  // The post-conference hub has the study on it already.
+  const here = path.startsWith("/portal/research") || path.startsWith("/portal/after");
 
   useEffect(() => {
     const d = dialog.current;

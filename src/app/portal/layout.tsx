@@ -15,6 +15,8 @@ import { ResearchPrompt } from "@/components/research/research-prompt";
 import { RESEARCH_LATER_COOKIE, getMyResearch, needsDecision } from "@/lib/research/server";
 import { STAGE_LABEL } from "@/lib/research/instrument";
 import { formatWhen, windowOf } from "@/lib/research/schedule";
+import { getPostConference } from "@/lib/post-conference/server";
+import { PostConferenceGate } from "@/components/post-conference/feedback-gate";
 
 export const metadata: Metadata = {
   title: "My conference",
@@ -39,7 +41,7 @@ export default async function PortalLayout({
   const askEmail = prompting && !profile.networkEmailAsked;
 
   // Fetch data concurrently to reduce loading time.
-  const [promptPhoto, { data: mine }, switches, research] = await Promise.all([
+  const [promptPhoto, { data: mine }, switches, research, after] = await Promise.all([
     gaps.length || askEmail
       ? signAvatar(db, profile.avatarPath)
       : null,
@@ -57,12 +59,18 @@ export default async function PortalLayout({
 
     // The research study, if it's running and they're invited.
     getMyResearch(db, profile),
+
+    // The post-conference hub, and whether they still owe feedback.
+    getPostConference(db, profile),
   ]);
+
+  // Feedback comes first once the hub opens (never while viewing as someone).
+  const feedbackFirst = after.required && !jar.has(VIEW_AS_COOKIE);
 
   // The research invitation (or "your questionnaire is open"), until they
   // answer, never on top of the profile prompt or while viewing as someone.
   const researchMode =
-    jar.has(VIEW_AS_COOKIE) || jar.has(RESEARCH_LATER_COOKIE) || gaps.length > 0 || askEmail
+    jar.has(VIEW_AS_COOKIE) || jar.has(RESEARCH_LATER_COOKIE) || gaps.length > 0 || askEmail || feedbackFirst
       ? null
       : needsDecision(research)
         ? ("invite" as const)
@@ -107,14 +115,17 @@ export default async function PortalLayout({
             showPeople={showPeople}
             showMyDay={showMyDay}
             showResearch={showResearch}
+            showAfter={after.member}
             unreadEnquiries={unreadEnquiries}
           />
 
           <div className="min-w-0">
-            {children}
+            <PostConferenceGate required={feedbackFirst} presenter={Boolean(presenterKindOf(profile))} firstName={profile.fullName?.split(" ")[0] ?? null}>
+              {children}
+            </PostConferenceGate>
           </div>
 
-          {(gaps.length > 0 || askEmail) && (
+          {(gaps.length > 0 || askEmail) && !feedbackFirst && (
             <ProfilePrompt
               gaps={gaps}
               name={profile.fullName}

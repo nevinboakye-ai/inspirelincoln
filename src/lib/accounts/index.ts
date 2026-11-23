@@ -194,6 +194,8 @@ export const CAPABILITIES = [
   "edit_website",
   "manage_platform",
   "research_data",
+  "moderate_gallery",
+  "view_feedback",
 ] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
@@ -230,6 +232,8 @@ export const CAPABILITY_LABEL: Record<Capability, { label: string; description: 
   edit_settings: { label: "Conference settings", description: "Conference status, dates, registration, deadlines, modes and editions." },
   edit_website: { label: "Other website pages", description: "History timeline, gallery, resources and opportunities." },
   research_data: { label: "Research study", description: "Run the research study: its settings and switch, response numbers, reminders and the de-identified data export. Give it only to the named research team." },
+  moderate_gallery: { label: "Photo gallery", description: "Accept or reject the photos people add to the gallery in My Hub, and take photos down." },
+  view_feedback: { label: "Conference feedback", description: "Read everyone's conference feedback, without names, and download it." },
   manage_platform: { label: "Platform dashboard", description: "Site switches, who can do what, individual access, sign-in activity and website metrics. Site roles and View as stay with the site owner." },
 };
 
@@ -250,6 +254,7 @@ export const CAPABILITY_GROUPS: { title: string; hint: string; caps: Capability[
     hint: "The judging portal and its results",
     caps: ["judge_presentations", "manage_judging"],
   },
+  { title: "After the conference", hint: "The photo gallery and conference feedback", caps: ["moderate_gallery", "view_feedback"] },
   { title: "Records", hint: "Personal data and the history of changes", caps: ["manage_people", "view_audit_log"] },
   {
     title: "Website",
@@ -284,12 +289,14 @@ export const CAPABILITY_PARENT: Partial<Record<Capability, Capability[]>> = {
   manage_platform: [],
   research_data: [],
   allocate_orals: ["allocate_workshops"],
+  moderate_gallery: [],
+  view_feedback: [],
 };
 
 /** Returned by public.my_access() once the area permissions are in the database. */
 export const AREAS_MARKER = "areas_v1";
 
-const SUPPORTING_DEFAULT: Capability[] = [...WEBSITE_CAPABILITIES, "review_submissions", "message_people", "day_scanner"];
+const SUPPORTING_DEFAULT: Capability[] = [...WEBSITE_CAPABILITIES, "review_submissions", "message_people", "day_scanner", "moderate_gallery"];
 const EXEC_DEFAULT: Capability[] = [
   ...SUPPORTING_DEFAULT,
   "review_accounts",
@@ -303,6 +310,7 @@ const EXEC_DEFAULT: Capability[] = [
   "check_in",
   "live_alerts",
   "manage_judging",
+  "view_feedback",
 ];
 
 /** The defaults the database starts with, used only if the access tables aren't set up yet. */
