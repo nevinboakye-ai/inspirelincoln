@@ -15,7 +15,7 @@ import { ResearchPrompt } from "@/components/research/research-prompt";
 import { RESEARCH_LATER_COOKIE, getMyResearch, needsDecision } from "@/lib/research/server";
 import { STAGE_LABEL } from "@/lib/research/instrument";
 import { formatWhen, windowOf } from "@/lib/research/schedule";
-import { getPostConference } from "@/lib/post-conference/server";
+import { getPostConference, loadFeedbackWorkshops } from "@/lib/post-conference/server";
 import { PostConferenceGate } from "@/components/post-conference/feedback-gate";
 
 export const metadata: Metadata = {
@@ -66,6 +66,9 @@ export default async function PortalLayout({
 
   // Feedback comes first once the hub opens (never while viewing as someone).
   const feedbackFirst = after.required && !jar.has(VIEW_AS_COOKIE);
+  // After the conference, My Hub becomes the post-conference hub (the site owner sees it once the switch is on).
+  const afterMode = after.open && after.member && (after.done || profile.access.owner);
+  const formWorkshops = feedbackFirst ? await loadFeedbackWorkshops(db, profile.id) : undefined;
 
   // The research invitation (or "your questionnaire is open"), until they
   // answer, never on top of the profile prompt or while viewing as someone.
@@ -100,7 +103,8 @@ export default async function PortalLayout({
     <MessagesProvider>
       <div
         data-app-shell
-        className="min-h-screen bg-paper pb-28 pt-[var(--header-h)] lg:pb-24 lg:pt-28"
+        data-after={afterMode ? "" : undefined}
+        className="min-h-screen bg-paper pb-28 data-[after]:bg-[linear-gradient(180deg,#fbf6ea_0%,var(--color-paper)_420px)] pt-[var(--header-h)] lg:pb-24 lg:pt-28"
       >
         <div className="container-page grid gap-4 lg:grid-cols-[15rem_1fr] lg:gap-12">
           <PortalNav
@@ -116,16 +120,17 @@ export default async function PortalLayout({
             showMyDay={showMyDay}
             showResearch={showResearch}
             showAfter={after.member}
+            afterMode={afterMode}
             unreadEnquiries={unreadEnquiries}
           />
 
           <div className="min-w-0">
-            <PostConferenceGate required={feedbackFirst} presenter={Boolean(presenterKindOf(profile))} firstName={profile.fullName?.split(" ")[0] ?? null}>
+            <PostConferenceGate required={feedbackFirst} presenter={Boolean(presenterKindOf(profile))} firstName={profile.fullName?.split(" ")[0] ?? null} workshops={formWorkshops}>
               {children}
             </PostConferenceGate>
           </div>
 
-          {(gaps.length > 0 || askEmail) && !feedbackFirst && (
+          {(gaps.length > 0 || askEmail) && !feedbackFirst && !afterMode && (
             <ProfilePrompt
               gaps={gaps}
               name={profile.fullName}
@@ -137,6 +142,7 @@ export default async function PortalLayout({
           {researchMode && (
             <ResearchPrompt
               mode={researchMode}
+              onHub={afterMode}
               href={researchMode === "due" ? `/portal/research/${research.due}` : "/portal/research"}
               closes={formatWhen(researchMode === "due" ? windowOf(research.settings, research.due!).closes : research.settings.preClosesAt)}
               stageTitle={research.due ? STAGE_LABEL[research.due].title : undefined}

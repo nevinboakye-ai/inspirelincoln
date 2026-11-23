@@ -2,6 +2,9 @@
 import { usePathname } from "next/navigation";
 import { Award, BookOpen, Images, MessageSquareQuote, Sparkles } from "lucide-react";
 import { FeedbackForm } from "@/components/post-conference/feedback-form";
+import type { FeedbackWorkshop } from "@/lib/post-conference/feedback";
+
+type Workshops = { workshops: FeedbackWorkshop[]; mine: string[] };
 
 /** Pages that stay open before feedback: privacy and account rights, contacting the committee, and the research study. */
 const OPEN = /^\/portal\/(profile|enquiries|research)(\/|$)/;
@@ -11,14 +14,26 @@ const OPEN = /^\/portal\/(profile|enquiries|research)(\/|$)/;
  * quick feedback before using My Hub again. Every other My Hub page shows
  * the form in its place until they've sent it.
  */
-export function PostConferenceGate({ required, presenter, firstName, children }: { required: boolean; presenter: boolean; firstName: string | null; children: React.ReactNode }) {
+export function PostConferenceGate({
+  required,
+  presenter,
+  firstName,
+  workshops,
+  children,
+}: {
+  required: boolean;
+  presenter: boolean;
+  firstName: string | null;
+  workshops?: Workshops;
+  children: React.ReactNode;
+}) {
   const path = usePathname();
   if (!required || OPEN.test(path)) return <>{children}</>;
-  return <FeedbackUnlock presenter={presenter} firstName={firstName} />;
+  return <FeedbackUnlock presenter={presenter} firstName={firstName} workshops={workshops} />;
 }
 
 /** The feedback form under a header that says what it unlocks. */
-export function FeedbackUnlock({ presenter, firstName, preview = false }: { presenter: boolean; firstName: string | null; preview?: boolean }) {
+export function FeedbackUnlock({ presenter, firstName, workshops, preview = false }: { presenter: boolean; firstName: string | null; workshops?: Workshops; preview?: boolean }) {
   const unlocks = [
     { icon: Images, label: "Conference photos" },
     { icon: Award, label: "Certificates" },
@@ -53,7 +68,7 @@ export function FeedbackUnlock({ presenter, firstName, preview = false }: { pres
           </ul>
         </div>
       </header>
-      <FeedbackForm presenter={presenter} preview={preview} />
+      <FeedbackForm presenter={presenter} workshops={workshops?.workshops} myWorkshops={workshops?.mine} preview={preview} />
     </div>
   );
 }

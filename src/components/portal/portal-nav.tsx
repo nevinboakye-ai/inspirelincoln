@@ -40,6 +40,7 @@ export function PortalNav({
   showMyDay = false,
   showResearch = false,
   showAfter = false,
+  afterMode = false,
   unreadEnquiries = 0,
 }: {
   name: string;
@@ -53,6 +54,8 @@ export function PortalNav({
   showResearch?: boolean;
   /** The post-conference hub and gallery. */
   showAfter?: boolean;
+  /** The conference is over: My Hub is the post-conference hub, and the menu changes with it. */
+  afterMode?: boolean;
   unreadEnquiries?: number;
 }) {
   const path = usePathname();
@@ -61,10 +64,18 @@ export function PortalNav({
   const links = [
     {
       href: "/portal",
-      label: "My conference",
-      icon: Ticket,
+      label: afterMode ? "Post-conference hub" : "My conference",
+      icon: afterMode ? PartyPopper : Ticket,
     },
-    ...(showAfter
+    ...(afterMode
+      ? [
+          {
+            href: "/portal/gallery",
+            label: "Gallery",
+            icon: Images,
+          },
+        ]
+      : showAfter
       ? [
           {
             href: "/portal/after",
@@ -107,7 +118,7 @@ export function PortalNav({
         "conversations with new messages",
       ],
     },
-    ...(showMyDay
+    ...(showMyDay && !afterMode
       ? [
           {
             href: "/portal/my-day",
@@ -213,8 +224,18 @@ export function PortalNav({
       aria-label="My account"
       className="sticky top-[var(--header-h)] z-30 -mx-5 min-w-0 border-b border-navy/[0.07] bg-paper/90 backdrop-blur-xl sm:-mx-8 lg:top-28 lg:mx-0 lg:self-start lg:border-0 lg:bg-transparent lg:backdrop-blur-none"
     >
-      <div className="mb-4 hidden items-center gap-3 rounded-2xl bg-midnight p-3 text-paper lg:flex">
-        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-gold-300 to-gold-600 font-ui text-sm font-bold text-midnight">
+      <div
+        className={cn(
+          "mb-4 hidden items-center gap-3 rounded-2xl p-3 lg:flex",
+          afterMode ? "bg-gradient-to-br from-[#fbf3df] to-[#f3e3d3] text-ink ring-1 ring-gold/30" : "bg-midnight text-paper"
+        )}
+      >
+        <span
+          className={cn(
+            "grid size-11 shrink-0 place-items-center rounded-full font-ui text-sm font-bold",
+            afterMode ? "bg-ink text-gold-300" : "bg-gradient-to-br from-gold-300 to-gold-600 text-midnight"
+          )}
+        >
           {initials(name)}
         </span>
 
@@ -222,8 +243,8 @@ export function PortalNav({
           <span className="block truncate font-semibold">
             {name}
           </span>
-          <span className="block truncate text-xs text-paper/65">
-            {typeLabel}
+          <span className={cn("block truncate text-xs", afterMode ? "text-slate-700" : "text-paper/65")}>
+            {afterMode ? "After the conference" : typeLabel}
           </span>
         </span>
       </div>
@@ -252,7 +273,9 @@ export function PortalNav({
                 className={cn(
                   "tap flex min-h-10 items-center gap-2 whitespace-nowrap rounded-full px-3.5 text-[0.8125rem] font-semibold lg:min-h-11 lg:rounded-xl lg:px-3 lg:text-sm lg:font-medium",
                   active
-                    ? "bg-navy text-paper shadow-[0_6px_16px_-8px_rgba(12,24,44,0.7)]"
+                    ? afterMode
+                      ? "bg-ink text-paper shadow-[0_6px_16px_-8px_rgba(12,24,44,0.7)]"
+                      : "bg-navy text-paper shadow-[0_6px_16px_-8px_rgba(12,24,44,0.7)]"
                     : "bg-white text-slate-700 ring-1 ring-navy/[0.08] hover:bg-paper-200 lg:bg-transparent lg:ring-0"
                 )}
               >
@@ -262,7 +285,9 @@ export function PortalNav({
                     "size-4",
                     active
                       ? "text-gold-300"
-                      : "text-electric-600"
+                      : afterMode
+                        ? "text-gold-600"
+                        : "text-electric-600"
                   )}
                 />
 

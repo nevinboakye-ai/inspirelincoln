@@ -64,6 +64,7 @@ import { formatWhen, windowOf } from "@/lib/research/schedule";
 import { ResearchTaskCard } from "@/components/research/research-task-card";
 import { getPostConference } from "@/lib/post-conference/server";
 import { PartyPopper } from "lucide-react";
+import { AfterHome } from "@/components/post-conference/after-home";
 
 export const dynamic = "force-dynamic";
 
@@ -126,10 +127,22 @@ export default async function PortalHome({
     denied?: string;
     password?: string;
     welcome?: string;
+    thanks?: string;
   }>;
 }) {
   const sp = await searchParams;
   const { profile, db, user } = await requireUser("/portal");
+  // Once the conference is over, My Hub becomes the post-conference hub. Same request as the layout, so this is already loaded.
+  const after = await getPostConference(db, profile);
+  if (after.open && after.member && (after.done || profile.access.owner)) {
+    return (
+      <div className="space-y-4">
+        {sp.denied && <Notice tone="warning">You don&apos;t have access to that area.</Notice>}
+        {sp.password && <Notice>Your password has been updated.</Notice>}
+        <AfterHome db={db} profile={profile} after={after} thanks={Boolean(sp.thanks)} />
+      </div>
+    );
+  }
   const kind = presenterKindOf(profile);
   const status = profile.accountStatus;
   // Approved oral and poster presenters confirm whether they'll be there to present.
@@ -224,8 +237,6 @@ export default async function PortalHome({
         ? Promise.resolve(db.rpc("my_oral_room")).then((r) => (r.error ? { data: null } : r), () => ({ data: null }))
         : Promise.resolve({ data: null }),
   ]);
-  // Same request as the layout, so this is already loaded.
-  const after = await getPostConference(db, profile);
   const showCard = switches.delegate_card || profile.access.owner;
   // While the website is closed, delegates only use My Hub for their profile and their slides or poster.
   const focus =
@@ -486,7 +497,7 @@ export default async function PortalHome({
             <PartyPopper aria-hidden className="size-5" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block font-display text-lg leading-tight">Post-conference hub</span>
+            <span className="block font-display text-lg leading-tight">Preview the post-conference hub</span>
             <span className="block text-sm text-paper/75">Photos from the day, certificates, the booklet{kind ? " and judges' feedback" : ""}</span>
           </span>
           <ArrowRight aria-hidden className="size-5 shrink-0 transition-transform group-hover:translate-x-1" />

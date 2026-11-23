@@ -10,6 +10,7 @@ const ERRORS: Record<string, string> = {
   signed_out: "Your session has expired. Please sign in again.",
   not_approved: "Feedback opens once your place is confirmed.",
   no_edition: "Feedback isn't open yet.",
+  invalid: "Please check your answers.",
 };
 
 /** Sends someone's conference feedback. Once only: the database keeps the first answer. */
@@ -40,6 +41,10 @@ export async function submitFeedback(input: FeedbackInput): Promise<FeedbackResu
     p_improve_note: v.improveNote,
     p_comments: v.comments,
     p_quote_ok: v.quoteOk,
+    // The database keeps only this edition's published workshops.
+    p_workshops: v.workshops,
+    p_research: v.research,
+    p_research_contact: v.researchContact,
   });
   if (error) {
     if (/VIEW_AS/.test(error.message)) return { ok: false, error: "You're viewing as someone else, so nothing was sent." };

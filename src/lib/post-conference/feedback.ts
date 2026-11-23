@@ -5,9 +5,11 @@ import { z } from "zod";
  * the server check and the committee's summary, so the words people tap are
  * exactly the words the committee reads back.
  *
- * Kept deliberately short: one tap for the overall rating, optional quick
- * ratings for each part of the day, two sets of tap-to-pick phrases (with
- * room to write more), and how likely they are to recommend INSPIRE.
+ * Kept deliberately short: one tap for the overall rating, optional 1 to 5
+ * sliders for each part of the day, the workshop(s) they went to (scoring
+ * the workshop and the doctor who led it), two sets of tap-to-pick phrases
+ * (with room to write more), how likely they are to recommend INSPIRE, and
+ * whether they'd like help doing their own research.
  */
 
 export const OVERALL = [
@@ -18,12 +20,34 @@ export const OVERALL = [
   { value: 5, label: "Excellent" },
 ] as const;
 
-export const PART_RATINGS = [
-  { value: "great", label: "Great" },
-  { value: "ok", label: "OK" },
-  { value: "poor", label: "Poor" },
+/** The 1 to 5 scale used for each part of the day and for workshops. */
+export const SCALE = [
+  { value: 1, label: "Poor" },
+  { value: 2, label: "Fair" },
+  { value: 3, label: "Good" },
+  { value: 4, label: "Very good" },
+  { value: 5, label: "Excellent" },
 ] as const;
-export type PartRating = (typeof PART_RATINGS)[number]["value"];
+export const scaleLabel = (v: number) => SCALE.find((s) => s.value === v)?.label ?? "";
+
+/** Answers from the first version of the form (great / OK / poor) read as 5 / 3 / 1. */
+const LEGACY: Record<string, number> = { great: 5, ok: 3, poor: 1 };
+export function partScore(v: unknown): number | null {
+  if (typeof v === "number" && Number.isInteger(v) && v >= 1 && v <= 5) return v;
+  if (typeof v === "string" && v in LEGACY) return LEGACY[v];
+  return null;
+}
+
+/** The last question: would they like to do their own research with INSPIRE's support? */
+export const RESEARCH_INTEREST = [
+  { value: "yes", label: "Yes, I'd love to" },
+  { value: "maybe", label: "Maybe, tell me more" },
+  { value: "no", label: "Not right now" },
+] as const;
+export type ResearchInterest = (typeof RESEARCH_INTEREST)[number]["value"];
+
+/** At most this many workshops can be rated (there are only a few slots in a day). */
+export const MAX_WORKSHOPS = 6;
 
 export type Part = { id: string; label: string; presentersOnly?: boolean };
 export const PARTS: Part[] = [
@@ -79,12 +103,23 @@ const note = z
   .optional()
   .transform((v) => (v ? v : null));
 
+const score = z.coerce.number().int().min(1).max(5);
+
+const workshopAnswer = z.object({
+  id: z.uuid(),
+  workshop: score.nullable().optional().transform((v) => v ?? null),
+  lead: score.nullable().optional().transform((v) => v ?? null),
+  note,
+});
+export type WorkshopAnswer = z.output<typeof workshopAnswer>;
+
 const ids = (list: Phrase[]) => z.array(z.enum(list.map((p) => p.id) as [string, ...string[]])).max(list.length);
 
 export const feedbackSchema = z
   .object({
     overall: z.coerce.number().int().min(1, "Choose a rating for the day.").max(5),
-    parts: z.partialRecord(z.enum(PARTS.map((p) => p.id) as [string, ...string[]]), z.enum(["great", "ok", "poor"])).default({}),
+    parts: z.partialRecord(z.enum(PARTS.map((p) => p.id) as [string, ...string[]]), score).default({}),
+    workshops: z.array(workshopAnswer).max(MAX_WORKSHOPS).default([]),
     highlights: ids(HIGHLIGHTS).default([]),
     highlightNote: note,
     improvements: ids(IMPROVEMENTS).default([]),
@@ -92,10 +127,16 @@ export const feedbackSchema = z
     recommend: z.coerce.number().int().min(0, "Choose a number from 0 to 10.").max(10, "Choose a number from 0 to 10."),
     comments: note,
     quoteOk: z.boolean().default(false),
+    research: z.enum(["yes", "maybe", "no"]).nullable().optional().transform((v) => v ?? null),
+    researchContact: z.boolean().default(false),
   })
   .transform((v) => ({
     ...v,
     highlights: [...new Set(v.highlights)],
+    // Each workshop once.
+    workshops: v.workshops.filter((w, i, all) => all.findIndex((x) => x.id === w.id) === i),
+    // Only someone who said yes or maybe can ask to be contacted.
+    researchContact: v.researchContact && (v.research === "yes" || v.research === "maybe"),
     // "Nothing, it was great" on its own, or not at all.
     improvements: v.improvements.includes(IMPROVE_NOTHING) && v.improvements.length > 1 ? [...new Set(v.improvements.filter((x) => x !== IMPROVE_NOTHING))] : [...new Set(v.improvements)],
   }));
@@ -123,7 +164,10 @@ export type FeedbackRow = {
   roles: string[];
   overall: number;
   recommend: number;
-  parts: Record<string, PartRating>;
+  /** 1 to 5, or great / ok / poor from the first version of the form. */
+  parts: Record<string, number | string>;
+  workshops?: { id: string; workshop?: number; lead?: number; note?: string }[];
+  research?: ResearchInterest | null;
   highlights: string[];
   highlight_note: string | null;
   improvements: string[];
@@ -144,7 +188,12 @@ export function groupOf(roles: string[]): "Presenter" | "Delegate" | "Committee 
 }
 
 /** Everything the committee's feedback page shows, worked out from the answers. */
-export function summarise(rows: FeedbackRow[]) {
+export type FeedbackWorkshop = { id: string; number: number; title: string; facilitator: string | null };
+
+const mean = (xs: number[]) => (xs.length ? Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 10) / 10 : null);
+const spread = (xs: number[]) => SCALE.map((s) => ({ value: s.value, n: xs.filter((x) => x === s.value).length }));
+
+export function summarise(rows: FeedbackRow[], workshops: FeedbackWorkshop[] = []) {
   const count = (list: Phrase[], pick: (r: FeedbackRow) => string[]) =>
     list
       .map((p) => ({ id: p.id, label: p.label, n: rows.filter((r) => pick(r).includes(p.id)).length }))
@@ -157,9 +206,22 @@ export function summarise(rows: FeedbackRow[]) {
     nps: netPromoter(rows.map((r) => r.recommend)),
     recommend: Array.from({ length: 11 }, (_, v) => ({ value: v, n: rows.filter((r) => r.recommend === v).length })),
     parts: PARTS.map((p) => {
-      const rated = rows.map((r) => r.parts?.[p.id]).filter((x): x is PartRating => Boolean(x));
-      return { id: p.id, label: p.label, great: rated.filter((x) => x === "great").length, ok: rated.filter((x) => x === "ok").length, poor: rated.filter((x) => x === "poor").length, n: rated.length };
+      const rated = rows.map((r) => partScore(r.parts?.[p.id])).filter((x): x is number => x !== null);
+      return { id: p.id, label: p.label, average: mean(rated), spread: spread(rated), n: rated.length };
     }).filter((p) => p.n > 0 || !PARTS.find((x) => x.id === p.id)?.presentersOnly),
+    workshops: workshops.map((w) => {
+      const answers = rows.flatMap((r) => (r.workshops ?? []).filter((a) => a.id === w.id));
+      const ws = answers.map((a) => partScore(a.workshop)).filter((x): x is number => x !== null);
+      const lead = answers.map((a) => partScore(a.lead)).filter((x): x is number => x !== null);
+      return {
+        ...w,
+        went: answers.length,
+        workshop: { average: mean(ws), spread: spread(ws), n: ws.length },
+        lead: { average: mean(lead), spread: spread(lead), n: lead.length },
+        notes: answers.map((a) => a.note).filter((x): x is string => Boolean(x)),
+      };
+    }),
+    research: RESEARCH_INTEREST.map((o) => ({ ...o, n: rows.filter((r) => r.research === o.value).length })),
     highlights: count(HIGHLIGHTS, (r) => r.highlights ?? []),
     improvements: count(IMPROVEMENTS, (r) => r.improvements ?? []),
     groups: (["Delegate", "Presenter", "Committee or staff"] as const).map((g) => {

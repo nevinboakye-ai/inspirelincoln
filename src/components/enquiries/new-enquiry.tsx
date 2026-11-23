@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { Accessibility, CircleHelp, Loader2, Mic2, MoreHorizontal, SendHorizontal, Wrench, HandHelping } from "lucide-react";
+import { Accessibility, CircleHelp, FlaskConical, Loader2, Mic2, MoreHorizontal, SendHorizontal, Wrench, HandHelping } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
 import { openEnquiry } from "@/app/portal/enquiry-actions";
 import { Field, describedBy, inputClass } from "@/components/forms/field";
@@ -15,6 +15,7 @@ const ICONS: Record<EnquiryTopic, typeof CircleHelp> = {
   technical: Wrench,
   access: Accessibility,
   presenting: Mic2,
+  research: FlaskConical,
   other: MoreHorizontal,
 };
 

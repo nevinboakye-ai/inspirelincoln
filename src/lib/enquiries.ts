@@ -6,6 +6,7 @@ export const ENQUIRY_TOPICS = {
   technical: { label: "Technical help", hint: "Signing in, uploads or something not working" },
   access: { label: "Access or dietary needs", hint: "Adjustments that would help you on the day" },
   presenting: { label: "Presenting", hint: "Your slides, poster or presentation slot" },
+  research: { label: "Your own research", hint: "Help starting a research project with INSPIRE" },
   other: { label: "Something else", hint: "Anything that doesn't fit above" },
 } as const;
 export type EnquiryTopic = keyof typeof ENQUIRY_TOPICS;
