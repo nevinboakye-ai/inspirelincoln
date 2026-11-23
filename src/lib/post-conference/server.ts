@@ -44,3 +44,21 @@ export const getPostConference = cache(async (db: SupabaseClient, profile: Profi
     moderator,
   };
 });
+
+import type { FeedbackWorkshop as FormWorkshop } from "@/lib/post-conference/feedback";
+
+/**
+ * The workshops people can rate in their feedback, with who led each one,
+ * and the ones this person had a place in (ticked for them to start with).
+ */
+export const loadFeedbackWorkshops = cache(async (db: SupabaseClient, userId: string): Promise<{ workshops: FormWorkshop[]; mine: string[] }> => {
+  const ed = (await db.from("editions").select("id").eq("is_current", true).maybeSingle()).data?.id as string | undefined;
+  if (!ed) return { workshops: [], mine: [] };
+  const [ws, places] = await Promise.all([
+    db.from("workshops").select("id, number, title, facilitator").eq("edition_id", ed).eq("published", true).order("number"),
+    db.from("workshop_allocations").select("workshop_id").eq("user_id", userId).eq("edition_id", ed),
+  ]);
+  const workshops = (ws.data ?? []).map((w) => ({ id: w.id as string, number: w.number as number, title: w.title as string, facilitator: (w.facilitator as string | null)?.trim() || null }));
+  const ids = new Set(workshops.map((w) => w.id));
+  return { workshops, mine: [...new Set((places.data ?? []).map((p) => p.workshop_id as string))].filter((id) => ids.has(id)) };
+});

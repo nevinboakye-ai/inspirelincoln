@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, Eye, MessageSquareQuote, Quote, Star } from "lucide-react";
+import { Download, Eye, FlaskConical, MessageSquareQuote, Quote, Star } from "lucide-react";
 import { requireAccess } from "@/lib/auth";
 import { AdminHeader, Panel, btn } from "@/components/admin/ui";
 import { Notice } from "@/components/ui/notice";
 import { Badge } from "@/components/ui/badge";
 import { BarChart } from "@/components/admin/bar-chart";
-import { summarise, type FeedbackRow } from "@/lib/post-conference/feedback";
+import { SCALE, summarise, type FeedbackRow, type FeedbackWorkshop } from "@/lib/post-conference/feedback";
+import { ResearchInterestList, type InterestRow } from "@/components/admin/research-interest-list";
 
 export const metadata: Metadata = { title: "Conference feedback" };
 export const dynamic = "force-dynamic";
@@ -17,6 +18,27 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
       <p className="text-xs font-semibold uppercase tracking-wider text-slate">{label}</p>
       <p className="mt-1 font-display text-3xl text-ink">{value}</p>
       {sub && <p className="text-xs text-slate-700">{sub}</p>}
+    </div>
+  );
+}
+
+/** Low scores warm, high scores cool, from 1 to 5. */
+const SCORE_TONE = ["", "bg-coral", "bg-coral/60", "bg-gold", "bg-teal/60", "bg-teal"];
+
+/** An average out of 5, with how the scores spread from 1 to 5 underneath. */
+function Score({ average, spread, n }: { average: number | null; spread: { value: number; n: number }[]; n: number }) {
+  if (!n) return <span className="text-sm text-slate">No scores</span>;
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-12 shrink-0 font-display text-xl tabular-nums text-ink">{average}</span>
+      <div className="min-w-0 flex-1">
+        <div className="flex h-3 overflow-hidden rounded-full bg-navy/[0.07]" role="img" aria-label={spread.map((x) => `${x.n} scored ${x.value}`).join(", ")}>
+          {spread.map((x) => (
+            <span key={x.value} className={SCORE_TONE[x.value]} style={{ width: `${(x.n / n) * 100}%` }} />
+          ))}
+        </div>
+        <p className="mt-1 text-xs tabular-nums text-slate-700">{spread.map((x) => `${x.value}: ${x.n}`).join(" · ")}</p>
+      </div>
     </div>
   );
 }
@@ -46,7 +68,10 @@ function Bars({ items, total, tone }: { items: { id: string; label: string; n: n
 /** Everyone's conference feedback, without names: the numbers, what people picked, and what they wrote. */
 export default async function FeedbackAdmin() {
   const { db } = await requireAccess("view_feedback", "/admin/feedback");
-  const { data, error } = await db.rpc("conference_feedback_summary");
+  const [{ data, error }, interest] = await Promise.all([
+    db.rpc("conference_feedback_summary"),
+    Promise.resolve(db.rpc("research_interest_list")).then((r) => (r.error ? null : ((r.data ?? []) as InterestRow[])), () => null),
+  ]);
 
   if (error) {
     return (
@@ -58,8 +83,9 @@ export default async function FeedbackAdmin() {
       </div>
     );
   }
-  const raw = (data ?? { accounts: 0, rows: [] }) as { accounts: number; rows: FeedbackRow[] };
-  const s = summarise(raw.rows ?? []);
+  const raw = (data ?? { accounts: 0, rows: [] }) as { accounts: number; rows: FeedbackRow[]; workshops?: FeedbackWorkshop[] };
+  const s = summarise(raw.rows ?? [], raw.workshops ?? []);
+  const researchAnswers = s.research.reduce((a, r) => a + r.n, 0);
   const rate = raw.accounts ? Math.round((s.responses / raw.accounts) * 100) : 0;
 
   return (
@@ -130,14 +156,21 @@ export default async function FeedbackAdmin() {
             </Panel>
           </div>
 
-          <Panel title="Each part of the day">
+          <Panel title="Each part of the day (out of 5)">
+            <p className="-mt-1 mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-700">
+              {SCALE.map((x) => (
+                <span key={x.value} className="inline-flex items-center gap-1.5">
+                  <span className={`size-2.5 rounded-full ${SCORE_TONE[x.value]}`} /> {x.value} {x.label}
+                </span>
+              ))}
+            </p>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[520px] text-sm">
                 <thead className="text-left text-xs uppercase tracking-wider text-slate">
                   <tr>
                     <th scope="col" className="py-2 pr-3 font-semibold">Part</th>
-                    <th scope="col" className="py-2 font-semibold">Great · OK · Poor</th>
-                    <th scope="col" className="py-2 pl-3 text-right font-semibold">Rated by</th>
+                    <th scope="col" className="py-2 font-semibold">Average and spread</th>
+                    <th scope="col" className="py-2 pl-3 text-right font-semibold">Scored by</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-navy/10">
@@ -147,20 +180,7 @@ export default async function FeedbackAdmin() {
                         {p.label}
                       </th>
                       <td className="py-2.5">
-                        {p.n ? (
-                          <div className="flex h-3 overflow-hidden rounded-full bg-navy/[0.07]" role="img" aria-label={`${p.great} great, ${p.ok} OK, ${p.poor} poor`}>
-                            <span className="bg-teal" style={{ width: `${(p.great / p.n) * 100}%` }} />
-                            <span className="bg-gold" style={{ width: `${(p.ok / p.n) * 100}%` }} />
-                            <span className="bg-coral" style={{ width: `${(p.poor / p.n) * 100}%` }} />
-                          </div>
-                        ) : (
-                          <span className="text-slate">No ratings</span>
-                        )}
-                        {p.n > 0 && (
-                          <p className="mt-1 text-xs text-slate-700">
-                            {p.great} great · {p.ok} OK · {p.poor} poor
-                          </p>
-                        )}
+                        <Score average={p.average} spread={p.spread} n={p.n} />
                       </td>
                       <td className="py-2.5 pl-3 text-right tabular-nums text-ink">{p.n}</td>
                     </tr>
@@ -170,6 +190,45 @@ export default async function FeedbackAdmin() {
             </div>
           </Panel>
 
+          {s.workshops.length > 0 && (
+            <Panel title="Workshops and the doctors who led them (out of 5)">
+              <ul className="grid gap-3 md:grid-cols-2">
+                {s.workshops.map((w) => (
+                  <li key={w.id} className="rounded-xl border border-navy/10 p-3.5">
+                    <p className="font-ui text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-slate">
+                      Workshop {w.number} · {w.went} {w.went === 1 ? "person" : "people"} went
+                    </p>
+                    <p className="font-semibold leading-snug text-ink">{w.title}</p>
+                    <div className="mt-2 space-y-2">
+                      <div>
+                        <p className="text-xs font-semibold text-slate-700">The workshop</p>
+                        <Score {...w.workshop} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-700">{w.facilitator ? `${w.facilitator}, who led it` : "The doctor who led it"}</p>
+                        <Score {...w.lead} />
+                      </div>
+                    </div>
+                    {w.notes.length > 0 && (
+                      <details className="mt-2 text-sm">
+                        <summary className="cursor-pointer font-semibold text-electric-600">
+                          {w.notes.length} comment{w.notes.length === 1 ? "" : "s"}
+                        </summary>
+                        <ul className="mt-2 space-y-2">
+                          {w.notes.map((n, i) => (
+                            <li key={i} className="whitespace-pre-line rounded-lg bg-paper/60 p-2.5 text-ink">
+                              {n}
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </Panel>
+          )}
+
           <div className="grid gap-4 lg:grid-cols-2">
             <Panel title="What stood out">
               <Bars items={s.highlights} total={s.responses} tone="bg-teal" />
@@ -178,6 +237,25 @@ export default async function FeedbackAdmin() {
               <Bars items={s.improvements} total={s.responses} tone="bg-coral" />
             </Panel>
           </div>
+
+          <Panel title="Doing their own research with INSPIRE">
+            <div className="grid gap-5 lg:grid-cols-[18rem_minmax(0,1fr)]">
+              <div>
+                <p className="mb-2 flex items-center gap-2 text-sm text-slate-700">
+                  <FlaskConical aria-hidden className="size-4 text-teal" /> Answers, without names
+                </p>
+                <Bars items={s.research.map((r) => ({ id: r.value, label: r.label, n: r.n }))} total={researchAnswers} tone="bg-teal" />
+              </div>
+              <div>
+                <p className="mb-2 text-sm text-slate-700">People who asked the committee to get in touch. They chose to share their name for this.</p>
+                {interest === null ? (
+                  <p className="text-sm text-slate">Run the latest database file to see this list.</p>
+                ) : (
+                  <ResearchInterestList rows={interest} />
+                )}
+              </div>
+            </div>
+          </Panel>
 
           <Panel title={`What people wrote (${s.comments.length})`}>
             {s.comments.length === 0 ? (

@@ -1,15 +1,18 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState, useTransition } from "react";
-import { ArrowLeft, ArrowRight, Check, Loader2, Lock, Meh, PencilLine, Star, ThumbsDown, ThumbsUp, X } from "lucide-react";
+import { useEffect, useId, useMemo, useRef, useState, useTransition } from "react";
+import { ArrowLeft, ArrowRight, Check, FlaskConical, Loader2, Lock, MessageCircle, PencilLine, Star, X } from "lucide-react";
 import { submitFeedback } from "@/app/portal/after/actions";
-import { HIGHLIGHTS, IMPROVEMENTS, IMPROVE_NOTHING, NOTE_MAX, OVERALL, partsFor, type Phrase, type PartRating } from "@/lib/post-conference/feedback";
+import { HIGHLIGHTS, IMPROVEMENTS, IMPROVE_NOTHING, MAX_WORKSHOPS, NOTE_MAX, OVERALL, RESEARCH_INTEREST, partScore, partsFor, type FeedbackWorkshop as FormWorkshop, type Phrase, type ResearchInterest } from "@/lib/post-conference/feedback";
+import { ScoreSlider } from "@/components/post-conference/score-slider";
 import { cn } from "@/lib/cn";
 import { viewingAs } from "@/lib/view-as-client";
 
+type WorkshopDraft = { id: string; workshop: number | null; lead: number | null; note: string };
 type Draft = {
   overall: number | null;
-  parts: Record<string, PartRating>;
+  parts: Record<string, number>;
+  workshops: WorkshopDraft[];
   highlights: string[];
   highlightNote: string;
   improvements: string[];
@@ -17,24 +20,57 @@ type Draft = {
   recommend: number | null;
   comments: string;
   quoteOk: boolean;
+  research: ResearchInterest | null;
+  researchContact: boolean;
 };
-const EMPTY: Draft = { overall: null, parts: {}, highlights: [], highlightNote: "", improvements: [], improveNote: "", recommend: null, comments: "", quoteOk: false };
+const EMPTY: Draft = {
+  overall: null,
+  parts: {},
+  workshops: [],
+  highlights: [],
+  highlightNote: "",
+  improvements: [],
+  improveNote: "",
+  recommend: null,
+  comments: "",
+  quoteOk: false,
+  research: null,
+  researchContact: true,
+};
 
-const STEPS = ["overall", "parts", "highlights", "improvements", "recommend"] as const;
+/** A saved draft, tidied: older drafts held great / OK / poor, and workshops may have changed since. */
+function restore(raw: string, workshops: FormWorkshop[], start: Draft): Draft {
+  const saved = JSON.parse(raw) as Partial<Draft> & { parts?: Record<string, unknown> };
+  const parts = Object.fromEntries(
+    Object.entries(saved.parts ?? {}).flatMap(([k, v]) => {
+      const n = partScore(v);
+      return n === null ? [] : [[k, n]];
+    }),
+  );
+  const known = new Set(workshops.map((w) => w.id));
+  const ws = Array.isArray(saved.workshops) ? saved.workshops.filter((w) => w && known.has(w.id)) : start.workshops;
+  return { ...start, ...saved, parts, workshops: ws };
+}
+
+const STEPS = ["overall", "parts", "workshops", "highlights", "improvements", "recommend", "research"] as const;
 type Step = (typeof STEPS)[number];
 const STEP_TONE: Record<Step, { chip: string; bar: string; card: string }> = {
   overall: { chip: "bg-gold/20 text-gold-700", bar: "bg-gold", card: "border-t-gold" },
   parts: { chip: "bg-sky-100 text-sky", bar: "bg-sky", card: "border-t-sky" },
+  workshops: { chip: "bg-plum-100 text-plum", bar: "bg-plum", card: "border-t-plum" },
   highlights: { chip: "bg-teal-100 text-teal", bar: "bg-teal", card: "border-t-teal" },
   improvements: { chip: "bg-coral-100 text-coral", bar: "bg-coral", card: "border-t-coral" },
-  recommend: { chip: "bg-plum-100 text-plum", bar: "bg-plum", card: "border-t-plum" },
+  recommend: { chip: "bg-cyan-300 text-electric-600", bar: "bg-electric", card: "border-t-electric" },
+  research: { chip: "bg-gold/20 text-gold-700", bar: "bg-navy", card: "border-t-navy" },
 };
 const STEP_LABEL: Record<Step, string> = {
   overall: "The day",
   parts: "Each part",
+  workshops: "Your workshop",
   highlights: "Best bits",
   improvements: "Next year",
-  recommend: "Last one",
+  recommend: "Almost done",
+  research: "Last one",
 };
 
 /** 0 to 10 tinted from cool to warm, matching the research questionnaires. */
@@ -44,14 +80,33 @@ const DRAFT_KEY = "inspire-feedback-draft";
 
 /**
  * The post-conference feedback, one short screen at a time: a star rating
- * (one tap moves on), optional thumbs for each part of the day, tap-to-pick
+ * (one tap moves on), optional 1 to 5 sliders for each part of the day, the
+ * workshop they went to (the workshop and the doctor who led it), tap-to-pick
  * phrases for the best bits and what to change (each with room to write
- * more), then 0 to 10 for recommending INSPIRE. Answers are kept on this
- * device until sent, so closing the tab loses nothing.
+ * more), 0 to 10 for recommending INSPIRE, and whether they'd like help with
+ * their own research. Answers are kept on this device until sent, so closing
+ * the tab loses nothing.
  */
-export function FeedbackForm({ presenter, preview = false }: { presenter: boolean; preview?: boolean }) {
+export function FeedbackForm({
+  presenter,
+  workshops = [],
+  myWorkshops = [],
+  preview = false,
+}: {
+  presenter: boolean;
+  /** This year's workshops, to say which one they went to. */
+  workshops?: FormWorkshop[];
+  /** The workshops they had a place in, ticked to start with. */
+  myWorkshops?: string[];
+  preview?: boolean;
+}) {
   const router = useRouter();
-  const [d, setD] = useState<Draft>(EMPTY);
+  const initial = useMemo<Draft>(
+    () => ({ ...EMPTY, workshops: myWorkshops.slice(0, MAX_WORKSHOPS).map((id) => ({ id, workshop: null, lead: null, note: "" })) }),
+    [myWorkshops],
+  );
+  const steps = useMemo(() => STEPS.filter((s) => s !== "workshops" || workshops.length > 0), [workshops.length]);
+  const [d, setD] = useState<Draft>(initial);
   const [at, setAt] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [flagged, setFlagged] = useState(false);
@@ -59,8 +114,8 @@ export function FeedbackForm({ presenter, preview = false }: { presenter: boolea
   const top = useRef<HTMLDivElement>(null);
   const moved = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const step = STEPS[at];
-  const last = at === STEPS.length - 1;
+  const step = steps[at];
+  const last = at === steps.length - 1;
   const tone = STEP_TONE[step];
 
   useEffect(() => {
@@ -68,8 +123,10 @@ export function FeedbackForm({ presenter, preview = false }: { presenter: boolea
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
       // eslint-disable-next-line react-hooks/set-state-in-effect -- browser-only state, read once after hydration
-      if (raw) setD({ ...EMPTY, ...JSON.parse(raw) });
+      if (raw) setD(restore(raw, workshops, initial));
     } catch {}
+    // Read the saved draft once, when the form first appears.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preview]);
   useEffect(() => {
     if (preview) return;
@@ -113,6 +170,7 @@ export function FeedbackForm({ presenter, preview = false }: { presenter: boolea
       return setError("Choose a rating for the day.");
     }
     if (d.recommend === null) {
+      go(steps.indexOf("recommend"));
       setFlagged(true);
       return setError("Choose a number from 0 to 10.");
     }
@@ -129,9 +187,13 @@ export function FeedbackForm({ presenter, preview = false }: { presenter: boolea
         improveNote: d.improveNote,
         comments: d.comments,
         quoteOk: d.quoteOk,
+        workshops: d.workshops.map((w) => ({ id: w.id, workshop: w.workshop, lead: w.lead, note: w.note })),
+        research: d.research,
+        researchContact: d.researchContact,
       });
       if (!r.ok) {
         if (r.step === "overall") go(0);
+        if (r.step === "recommend") go(steps.indexOf("recommend"));
         setFlagged(Boolean(r.step));
         return setError(r.error ?? "We couldn't send your feedback. Please try again.");
       }
@@ -148,15 +210,20 @@ export function FeedbackForm({ presenter, preview = false }: { presenter: boolea
       setFlagged(true);
       return setError("Tap a star to rate the day.");
     }
+    if (step === "recommend" && d.recommend === null) {
+      setFlagged(true);
+      return setError("Choose a number from 0 to 10.");
+    }
     if (last) return send();
     go(at + 1);
   };
 
   const optionalEmpty =
     (step === "parts" && !Object.keys(d.parts).length) ||
+    (step === "workshops" && !d.workshops.length) ||
     (step === "highlights" && !d.highlights.length && !d.highlightNote.trim()) ||
     (step === "improvements" && !d.improvements.length && !d.improveNote.trim());
-  const pct = Math.round(((at + (step === "overall" ? (d.overall ? 1 : 0) : 1)) / STEPS.length) * 100);
+  const pct = Math.round(((at + (step === "overall" ? (d.overall ? 1 : 0) : 1)) / steps.length) * 100);
   const showButton = step !== "overall" || d.overall !== null;
 
   return (
@@ -164,7 +231,7 @@ export function FeedbackForm({ presenter, preview = false }: { presenter: boolea
       <div className="app-card px-4 py-3 sm:px-5">
         <div className="flex items-center justify-between gap-3">
           <p className="font-ui text-sm font-semibold text-ink">
-            Your feedback <span className="font-normal text-slate">· {at + 1} of {STEPS.length}</span>
+            Your feedback <span className="font-normal text-slate">· {at + 1} of {steps.length}</span>
           </p>
           <p className="flex items-center gap-1.5 text-xs text-slate">
             <Lock aria-hidden className="size-3.5" /> <span className="hidden sm:inline">The committee reads it without your name</span>
@@ -189,6 +256,7 @@ export function FeedbackForm({ presenter, preview = false }: { presenter: boolea
             />
           )}
           {step === "parts" && <Parts presenter={presenter} value={d.parts} onChange={(parts) => update({ parts })} />}
+          {step === "workshops" && <Workshops list={workshops} mine={myWorkshops} value={d.workshops} onChange={(ws) => update({ workshops: ws })} />}
           {step === "highlights" && (
             <Phrases
               title="What stood out for you?"
@@ -224,6 +292,14 @@ export function FeedbackForm({ presenter, preview = false }: { presenter: boolea
               onComments={(comments) => update({ comments })}
               quoteOk={d.quoteOk}
               onQuoteOk={(quoteOk) => update({ quoteOk })}
+            />
+          )}
+          {step === "research" && (
+            <Research
+              value={d.research}
+              onChange={(research) => update({ research, researchContact: research === "no" ? false : d.research === "no" || d.research === null ? true : d.researchContact })}
+              contact={d.researchContact}
+              onContact={(researchContact) => update({ researchContact })}
             />
           )}
         </div>
@@ -309,64 +385,191 @@ function Overall({ value, onChange }: { value: number | null; onChange: (v: numb
   );
 }
 
-const RATING_ICON = { great: ThumbsUp, ok: Meh, poor: ThumbsDown } as const;
-const RATING_ON = { great: "bg-teal text-white", ok: "bg-gold text-midnight", poor: "bg-coral text-white" } as const;
-const RATING_WORD = { great: "Great", ok: "OK", poor: "Poor" } as const;
-
-function Parts({ presenter, value, onChange }: { presenter: boolean; value: Record<string, PartRating>; onChange: (v: Record<string, PartRating>) => void }) {
+function Parts({ presenter, value, onChange }: { presenter: boolean; value: Record<string, number>; onChange: (v: Record<string, number>) => void }) {
   const id = useId();
   return (
     <div>
-      <Question id={id} hint="Only the parts you went to. Tap again to clear.">
+      <Question id={id} hint="Slide or tap a number, from 1 (poor) to 5 (excellent). Leave out anything you missed.">
         How was each part of the day?
       </Question>
-      <p aria-hidden className="mb-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate">
-        {(["great", "ok", "poor"] as const).map((r) => {
-          const Icon = RATING_ICON[r];
-          return (
-            <span key={r} className="inline-flex items-center gap-1">
-              <Icon className="size-3.5" /> {RATING_WORD[r]}
-            </span>
-          );
-        })}
-      </p>
-      <ul className="divide-y divide-navy/[0.07]">
+      <ul role="group" aria-labelledby={id} className="divide-y divide-navy/[0.07]">
         {partsFor(presenter).map((p) => (
-          <li key={p.id} className="flex items-center justify-between gap-3 py-2">
-            <span id={`${id}-${p.id}`} className="min-w-0 text-sm font-medium leading-snug text-ink">
-              {p.label}
-              {value[p.id] && <span className="sr-only">: {RATING_WORD[value[p.id]]}</span>}
-            </span>
-            <span role="radiogroup" aria-labelledby={`${id}-${p.id}`} className="flex shrink-0 gap-1 rounded-full bg-paper-200 p-1">
-              {(["great", "ok", "poor"] as const).map((r) => {
-                const Icon = RATING_ICON[r];
-                const on = value[p.id] === r;
-                return (
-                  <button
-                    key={r}
-                    type="button"
-                    role="radio"
-                    aria-checked={on}
-                    aria-label={RATING_WORD[r]}
-                    onClick={() => {
-                      const nextVal = { ...value };
-                      if (on) delete nextVal[p.id];
-                      else nextVal[p.id] = r;
-                      onChange(nextVal);
-                    }}
-                    className={cn(
-                      "tap grid size-10 place-items-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-electric-600",
-                      on ? cn(RATING_ON[r], "shadow-sm") : "text-slate-700 hover:bg-white",
-                    )}
-                  >
-                    <Icon aria-hidden className="size-[1.1rem]" />
-                  </button>
-                );
-              })}
-            </span>
+          <li key={p.id}>
+            <ScoreSlider
+              label={p.label}
+              value={value[p.id] ?? null}
+              onChange={(v) => {
+                const nextVal = { ...value };
+                if (v === null) delete nextVal[p.id];
+                else nextVal[p.id] = v;
+                onChange(nextVal);
+              }}
+            />
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function Workshops({ list, mine, value, onChange }: { list: FormWorkshop[]; mine: string[]; value: WorkshopDraft[]; onChange: (v: WorkshopDraft[]) => void }) {
+  const id = useId();
+  const picked = new Set(value.map((w) => w.id));
+  const toggle = (wid: string) =>
+    onChange(picked.has(wid) ? value.filter((w) => w.id !== wid) : [...value, { id: wid, workshop: null, lead: null, note: "" }].slice(0, MAX_WORKSHOPS));
+  const patch = (wid: string, p: Partial<WorkshopDraft>) => onChange(value.map((w) => (w.id === wid ? { ...w, ...p } : w)));
+  const chosen = list.filter((w) => picked.has(w.id));
+  return (
+    <div>
+      <Question id={id} hint={mine.length ? "We've ticked the one you had a place in. Change it if you went to a different one." : "Tap the one you went to, or skip if you didn't go to one."}>
+        Which workshop did you go to?
+      </Question>
+      <div role="group" aria-labelledby={id} className="grid gap-2">
+        {list.map((w) => {
+          const on = picked.has(w.id);
+          return (
+            <button
+              key={w.id}
+              type="button"
+              aria-pressed={on}
+              onClick={() => toggle(w.id)}
+              className={cn(
+                "tap flex min-h-12 items-center gap-3 rounded-xl border-2 px-3 py-2 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600",
+                on ? "border-plum bg-plum-100/60" : "border-navy/10 bg-white hover:border-navy/30",
+              )}
+            >
+              <span className={cn("grid size-7 shrink-0 place-items-center rounded-full font-ui text-xs font-bold", on ? "bg-plum text-white" : "bg-paper-200 text-slate-700")}>
+                {on ? <Check aria-hidden className="size-4" /> : w.number}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold leading-snug text-ink">{w.title}</span>
+                {w.facilitator && <span className="block text-xs text-slate-700">Led by {w.facilitator}</span>}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {chosen.map((w) => {
+        const a = value.find((x) => x.id === w.id)!;
+        return (
+          <section key={w.id} aria-label={`Your scores for ${w.title}`} className="mt-4 rounded-2xl bg-plum-100/40 p-3 ring-1 ring-plum/15 sm:p-4">
+            <p className="font-ui text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-plum">Workshop {w.number}</p>
+            <p className="font-display text-lg leading-tight text-ink">{w.title}</p>
+            <div className="mt-1 divide-y divide-plum/10">
+              <ScoreSlider tone="plum" label="The workshop" sub="What you did and learned" value={a.workshop} onChange={(v) => patch(w.id, { workshop: v })} />
+              <ScoreSlider
+                tone="plum"
+                label={w.facilitator ?? "The doctor who led it"}
+                sub={w.facilitator ? "Who led it: their teaching and how they ran it" : "Their teaching and how they ran it"}
+                value={a.lead}
+                onChange={(v) => patch(w.id, { lead: v })}
+              />
+            </div>
+            <WorkshopNote value={a.note} onChange={(note) => patch(w.id, { note })} />
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
+function WorkshopNote({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const id = useId();
+  const [open, setOpen] = useState(Boolean(value));
+  if (!open)
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="tap mt-1 inline-flex min-h-11 items-center gap-2 rounded-full px-2 text-sm font-semibold text-electric-600 hover:bg-white/60">
+        <PencilLine aria-hidden className="size-4" /> Add a comment for the workshop or its lead
+      </button>
+    );
+  return (
+    <div className="mt-2">
+      <label htmlFor={id} className="text-sm font-semibold text-ink">
+        Your comment <span className="font-normal text-slate">(optional)</span>
+      </label>
+      <textarea
+        id={id}
+        value={value}
+        autoFocus={!value}
+        maxLength={NOTE_MAX}
+        onChange={(e) => onChange(e.target.value)}
+        rows={2}
+        placeholder="What worked, what could be better…"
+        className="mt-1.5 w-full rounded-xl border border-navy/15 bg-white p-3 text-sm text-ink focus-visible:outline-2 focus-visible:outline-electric-600"
+      />
+    </div>
+  );
+}
+
+function Research({
+  value,
+  onChange,
+  contact,
+  onContact,
+}: {
+  value: ResearchInterest | null;
+  onChange: (v: ResearchInterest | null) => void;
+  contact: boolean;
+  onContact: (v: boolean) => void;
+}) {
+  const id = useId();
+  const keen = value === "yes" || value === "maybe";
+  return (
+    <div>
+      <div className="mb-3 flex items-start gap-3">
+        <span className="icon-chip-sm shrink-0 bg-gold/20 text-gold-700">
+          <FlaskConical aria-hidden className="size-4" />
+        </span>
+        <Question id={id} hint="INSPIRE helps students start their own projects, from a first idea to a poster or paper.">
+          Would you like to do your own research with INSPIRE&apos;s support?
+        </Question>
+      </div>
+      <div role="radiogroup" aria-labelledby={id} className="grid gap-2 sm:grid-cols-3">
+        {RESEARCH_INTEREST.map((o) => {
+          const on = value === o.value;
+          return (
+            <button
+              key={o.value}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => onChange(on ? null : o.value)}
+              className={cn(
+                "tap min-h-12 rounded-xl border-2 px-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600",
+                on ? "border-navy bg-navy text-paper shadow-md" : "border-navy/10 bg-white text-ink hover:border-navy/30",
+              )}
+            >
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+      {keen && (
+        <div className="pop-in mt-4 rounded-2xl bg-midnight p-4 text-paper">
+          <p className="font-display text-lg leading-tight">Brilliant. Here&apos;s how to start.</p>
+          <ol className="mt-2 space-y-1.5 text-sm text-paper/80">
+            <li className="flex gap-2">
+              <span className="grid size-5 shrink-0 place-items-center rounded-full bg-gold font-ui text-[0.7rem] font-bold text-midnight">1</span>
+              Take part in the INSPIRE research study, so you see how a real study runs.
+            </li>
+            <li className="flex gap-2">
+              <span className="grid size-5 shrink-0 place-items-center rounded-full bg-gold font-ui text-[0.7rem] font-bold text-midnight">2</span>
+              Get in touch with us, and we&apos;ll help you turn an idea into a project.
+            </li>
+          </ol>
+          <p className="mt-2 flex items-center gap-1.5 text-xs text-paper/65">
+            <MessageCircle aria-hidden className="size-3.5" /> Both links are waiting in your hub once you send this.
+          </p>
+          <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl bg-white/10 p-3 text-sm ring-1 ring-white/15">
+            <input type="checkbox" checked={contact} onChange={(e) => onContact(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[var(--color-gold)]" />
+            <span>
+              <span className="font-semibold">Ask the committee to get in touch with me</span>
+              <span className="block text-paper/70">This shares your name with them, kept apart from your feedback, which stays without your name.</span>
+            </span>
+          </label>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HIGHLIGHTS, IMPROVEMENTS, IMPROVE_NOTHING, PARTS, feedbackSchema, groupOf, netPromoter, partsFor, summarise, type FeedbackRow } from "@/lib/post-conference/feedback";
+import { HIGHLIGHTS, IMPROVEMENTS, IMPROVE_NOTHING, PARTS, feedbackSchema, groupOf, netPromoter, partScore, partsFor, summarise, type FeedbackRow } from "@/lib/post-conference/feedback";
 import { GALLERY_PATH, fitWithin, swipeDirection, wrapIndex } from "@/lib/post-conference/photos";
 
 const base = { overall: 5, recommend: 9 };
@@ -13,6 +13,9 @@ describe("post-conference feedback", () => {
       expect(r.data.highlights).toEqual([]);
       expect(r.data.comments).toBeNull();
       expect(r.data.quoteOk).toBe(false);
+      expect(r.data.workshops).toEqual([]);
+      expect(r.data.research).toBeNull();
+      expect(r.data.researchContact).toBe(false);
     }
     expect(feedbackSchema.safeParse({ recommend: 9 }).success).toBe(false);
     expect(feedbackSchema.safeParse({ overall: 4 }).success).toBe(false);
@@ -22,14 +25,42 @@ describe("post-conference feedback", () => {
     expect(feedbackSchema.safeParse({ ...base, overall: 6 }).success).toBe(false);
     expect(feedbackSchema.safeParse({ ...base, recommend: 11 }).success).toBe(false);
     expect(feedbackSchema.safeParse({ ...base, parts: { keynotes: "amazing" } }).success).toBe(false);
-    expect(feedbackSchema.safeParse({ ...base, parts: { lunch_queue: "poor" } }).success).toBe(false);
+    expect(feedbackSchema.safeParse({ ...base, parts: { keynotes: 6 } }).success).toBe(false);
+    expect(feedbackSchema.safeParse({ ...base, parts: { keynotes: 0 } }).success).toBe(false);
+    expect(feedbackSchema.safeParse({ ...base, parts: { keynotes: 3.5 } }).success).toBe(false);
+    expect(feedbackSchema.safeParse({ ...base, parts: { lunch_queue: 4 } }).success).toBe(false);
+    expect(feedbackSchema.safeParse({ ...base, research: "definitely" }).success).toBe(false);
     expect(feedbackSchema.safeParse({ ...base, highlights: ["free_pizza"] }).success).toBe(false);
     expect(feedbackSchema.safeParse({ ...base, comments: "x".repeat(1001) }).success).toBe(false);
   });
 
-  it("lets people rate only some parts of the day", () => {
-    const r = feedbackSchema.safeParse({ ...base, parts: { keynotes: "great", venue: "poor" } });
-    expect(r.success && r.data.parts).toEqual({ keynotes: "great", venue: "poor" });
+  it("lets people score only some parts of the day, from 1 to 5", () => {
+    const r = feedbackSchema.safeParse({ ...base, parts: { keynotes: 5, venue: 2 } });
+    expect(r.success && r.data.parts).toEqual({ keynotes: 5, venue: 2 });
+  });
+
+  it("reads answers from the first version of the form as 5, 3 and 1", () => {
+    expect([partScore("great"), partScore("ok"), partScore("poor")]).toEqual([5, 3, 1]);
+    expect(partScore(4)).toBe(4);
+    expect(partScore(9)).toBeNull();
+    expect(partScore("amazing")).toBeNull();
+  });
+
+  it("takes each workshop once, with either score left blank", () => {
+    const id = "6f1c2c8e-2a55-4a3a-9b7e-0c1d2e3f4a5b";
+    const r = feedbackSchema.safeParse({ ...base, workshops: [{ id, workshop: 4, lead: null, note: "  Great  " }, { id, workshop: 1 }] });
+    expect(r.success && r.data.workshops).toEqual([{ id, workshop: 4, lead: null, note: "Great" }]);
+    expect(feedbackSchema.safeParse({ ...base, workshops: [{ id, workshop: 6 }] }).success).toBe(false);
+    expect(feedbackSchema.safeParse({ ...base, workshops: [{ id: "workshop-1", workshop: 3 }] }).success).toBe(false);
+  });
+
+  it("only asks the committee to get in touch when someone said yes or maybe", () => {
+    const yes = feedbackSchema.safeParse({ ...base, research: "yes", researchContact: true });
+    expect(yes.success && yes.data.researchContact).toBe(true);
+    const no = feedbackSchema.safeParse({ ...base, research: "no", researchContact: true });
+    expect(no.success && no.data.researchContact).toBe(false);
+    const blank = feedbackSchema.safeParse({ ...base, researchContact: true });
+    expect(blank.success && blank.data.researchContact).toBe(false);
   });
 
   it("never keeps 'Nothing, it was great' alongside a suggestion, and drops repeats", () => {
@@ -84,14 +115,19 @@ describe("post-conference feedback", () => {
       ...o,
     });
     const s = summarise([
-      row({ overall: 4, parts: { keynotes: "great" }, highlights: ["people", "keynotes"], comments: "Thank you" }),
-      row({ overall: 5, parts: { keynotes: "ok", presenting: "great" }, highlights: ["people"], roles: ["oral_presenter"], quote_ok: true, improve_note: "Signs" }),
-    ]);
+      row({ overall: 4, parts: { keynotes: "great" }, highlights: ["people", "keynotes"], comments: "Thank you", workshops: [{ id: "w1", workshop: 5, lead: 4, note: "Loved the cases" }], research: "yes" }),
+      row({ overall: 5, parts: { keynotes: 2, presenting: 4 }, highlights: ["people"], roles: ["oral_presenter"], quote_ok: true, improve_note: "Signs", workshops: [{ id: "w1", workshop: 3 }], research: "no" }),
+    ], [{ id: "w1", number: 1, title: "Suturing", facilitator: "Dr Rao" }, { id: "w2", number: 2, title: "Ultrasound", facilitator: null }]);
     expect(s.responses).toBe(2);
     expect(s.overallAverage).toBe(4.5);
     expect(s.nps).toBe(100);
     expect(s.highlights[0]).toMatchObject({ id: "people", n: 2 });
-    expect(s.parts.find((p) => p.id === "keynotes")).toMatchObject({ great: 1, ok: 1, poor: 0, n: 2 });
+    // An old "great" (5) and a new 2.
+    expect(s.parts.find((p) => p.id === "keynotes")).toMatchObject({ average: 3.5, n: 2 });
+    expect(s.parts.find((p) => p.id === "keynotes")?.spread.map((x) => x.n)).toEqual([0, 1, 0, 0, 1]);
+    expect(s.workshops[0]).toMatchObject({ went: 2, workshop: { average: 4, n: 2 }, lead: { average: 4, n: 1 }, notes: ["Loved the cases"] });
+    expect(s.workshops[1]).toMatchObject({ went: 0, workshop: { average: null, n: 0 } });
+    expect(s.research.map((r) => r.n)).toEqual([1, 0, 1]);
     expect(s.parts.find((p) => p.id === "presenting")?.n).toBe(1);
     expect(s.comments.map((c) => c.kind)).toEqual(["Anything else", "To change"]);
     expect(s.comments[1]).toMatchObject({ quoteOk: true, group: "Presenter" });

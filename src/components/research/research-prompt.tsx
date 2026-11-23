@@ -11,7 +11,22 @@ import { researchLater } from "@/app/portal/research/actions";
  * and it stays as a pending task in the hub checklist. Once someone is taking part, the same card tells
  * them when a questionnaire is open.
  */
-export function ResearchPrompt({ mode, closes, stageTitle, minutes, href }: { mode: "invite" | "due"; closes: string; stageTitle?: string; minutes?: number; href: string }) {
+export function ResearchPrompt({
+  mode,
+  closes,
+  stageTitle,
+  minutes,
+  href,
+  onHub = false,
+}: {
+  mode: "invite" | "due";
+  closes: string;
+  stageTitle?: string;
+  minutes?: number;
+  href: string;
+  /** My Hub already shows this task (after the conference), so don't pop up there. */
+  onHub?: boolean;
+}) {
   const path = usePathname();
   const router = useRouter();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -19,7 +34,7 @@ export function ResearchPrompt({ mode, closes, stageTitle, minutes, href }: { mo
   const titleId = useId();
   const descId = useId();
   // The post-conference hub has the study on it already.
-  const here = path.startsWith("/portal/research") || path.startsWith("/portal/after");
+  const here = path.startsWith("/portal/research") || path.startsWith("/portal/after") || (onHub && path === "/portal");
 
   useEffect(() => {
     const d = dialog.current;
