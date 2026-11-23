@@ -143,7 +143,7 @@ export async function deleteAccount(_: ActionResult, form: FormData): Promise<Ac
   const { user, db } = await requireUser("/portal/profile");
   if (form.get("confirm") !== "DELETE") return { ok: false, fieldErrors: { confirm: "Type DELETE to confirm." } };
   // Remove uploaded files first; the database rows go with the account.
-  for (const bucket of ["submissions", "posters", "abstracts", "avatars"]) {
+  for (const bucket of ["submissions", "posters", "abstracts", "avatars", "gallery"]) {
     const folders = bucket === "submissions" ? [`${user.id}/slides`, `${user.id}/poster`] : [user.id];
     for (const folder of folders) {
       const { data } = await db.storage.from(bucket).list(folder, { limit: 1000 });

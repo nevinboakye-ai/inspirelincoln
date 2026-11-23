@@ -33,7 +33,7 @@ type Person = {
 /** Someone with an account, or someone on the selected list who hasn't set one up yet. */
 const target = z.object({ kind: z.enum(["account", "list"]), id: z.string().uuid() });
 
-const PRIVATE_BUCKETS = ["submissions", "posters", "abstracts", "avatars"] as const;
+const PRIVATE_BUCKETS = ["submissions", "posters", "abstracts", "avatars", "gallery"] as const;
 
 /** Every file in someone's private folders (their own folder and one level of subfolders). */
 async function filesOf(store: SupabaseClient, bucket: string, id: string) {

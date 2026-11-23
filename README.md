@@ -35,6 +35,18 @@ choices, a full data download and account deletion. Oral presenters upload slide
 PowerPoint or Keynote) and poster presenters upload posters (PDF, PNG or JPG), up to 50 MB, with
 versions and committee feedback.
 
+**After the conference (`/portal/after`, `/portal/gallery`).** While the *Post-conference hub*
+switch is on, everyone with a confirmed place gives quick feedback the next time they open My Hub
+(a star rating, optional thumbs for each part of the day, tap-to-pick phrases with room to write
+more, and 0 to 10 for recommending INSPIRE). Sending it unlocks the post-conference hub: the photo
+gallery, certificates and the booklet (shown as coming soon until they're added), judges' feedback
+for presenters, and the post-conference research study. The gallery is a slideshow (arrows, arrow
+keys, swipe, play, full screen) where people can add their own photos; each one waits for the
+committee in *Photo gallery* (`/admin/gallery`) unless a moderator added it, and anyone can ask
+for a photo to be taken down. The committee reads the answers without names in *Conference
+feedback* (`/admin/feedback`). Setup file:
+`supabase/migrations/20261223000000_post_conference_feedback_and_gallery.sql`.
+
 **Committee dashboard (`/admin`).** What each person sees depends on their permissions. The
 defaults by account type are:
 
@@ -45,6 +57,8 @@ defaults by account type are:
 | Review accounts (approve, waitlist or decline) | Executive committee and above |
 | Delegate records (registrations, abstracts, enquiries, audit log) | Executive committee and above |
 | Check-in desk | Executive committee and above |
+| Photo gallery (accept or reject photos) | Supporting committee and above |
+| Conference feedback (read answers without names) | Executive committee and above |
 | Approve committee accounts | President and vice president |
 | Group emails | President and vice president |
 

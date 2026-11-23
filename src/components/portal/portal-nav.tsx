@@ -20,6 +20,8 @@ import {
   Users,
   Trophy,
   FlaskConical,
+  Images,
+  PartyPopper,
 } from "lucide-react";
 
 import { signOut } from "@/app/auth/actions";
@@ -37,6 +39,7 @@ export function PortalNav({
   showPeople,
   showMyDay = false,
   showResearch = false,
+  showAfter = false,
   unreadEnquiries = 0,
 }: {
   name: string;
@@ -48,6 +51,8 @@ export function PortalNav({
   showPeople: boolean;
   showMyDay?: boolean;
   showResearch?: boolean;
+  /** The post-conference hub and gallery. */
+  showAfter?: boolean;
   unreadEnquiries?: number;
 }) {
   const path = usePathname();
@@ -59,6 +64,20 @@ export function PortalNav({
       label: "My conference",
       icon: Ticket,
     },
+    ...(showAfter
+      ? [
+          {
+            href: "/portal/after",
+            label: "Post-conference hub",
+            icon: PartyPopper,
+          },
+          {
+            href: "/portal/gallery",
+            label: "Gallery",
+            icon: Images,
+          },
+        ]
+      : []),
     // Judges come to My Hub mainly to mark, so the judging portal sits right after it.
     ...(access.judging
       ? [

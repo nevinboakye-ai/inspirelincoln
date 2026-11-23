@@ -47,6 +47,8 @@ export function ProfilePrompt({ gaps, name, photo, email }: { gaps: ProfileGap[]
   };
   // They're already on the profile page, so there's nothing to point them to.
   const here = path === "/portal/profile";
+  // Not on top of the post-conference hub, which has the study to point to; it waits for the next page.
+  const waiting = path.startsWith("/portal/after");
 
   useEffect(() => {
     if (here) {
@@ -54,10 +56,10 @@ export function ProfilePrompt({ gaps, name, photo, email }: { gaps: ProfileGap[]
       return;
     }
     const d = dialog.current;
-    if (open && d && !d.open) d.showModal();
-  }, [open, here]);
+    if (open && !waiting && d && !d.open) d.showModal();
+  }, [open, here, waiting]);
 
-  if (here || !open) return null;
+  if (here || waiting || !open) return null;
 
   const close = () => {
     setOpen(false);
