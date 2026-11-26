@@ -11,6 +11,7 @@ const PAGES: SearchItem[] = [
   { id: "p-conf", kind: "Page", title: "Conference 2026", href: "/conference", keywords: "venue travel accessibility faq registration date theme" },
   { id: "p-prog", kind: "Page", title: "Programme", href: "/programme", keywords: "schedule timetable agenda sessions times" },
   { id: "p-today", kind: "Page", title: "Conference day", href: "/today", keywords: "event day live now next today" },
+  { id: "p-presenters", kind: "Page", title: "Presenters", href: "/presenters", keywords: "oral presenters student research talks" },
   { id: "p-speakers", kind: "Page", title: "Speakers", href: "/speakers", keywords: "keynote faculty" },
   { id: "p-workshops", kind: "Page", title: "Workshops", href: "/workshops" },
   { id: "p-sponsors", kind: "Page", title: "Sponsors", href: "/sponsors", keywords: "sponsor sponsors prizes partners supporters royal college glasgow rcpsg geeky medics" },

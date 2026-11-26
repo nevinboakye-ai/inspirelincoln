@@ -1,31 +1,27 @@
 "use client";
-import { Mic } from "lucide-react";
+import Link from "next/link";
+import { Info, Mic } from "lucide-react";
 import { useState } from "react";
 import { initials } from "@/lib/card";
 import type { OralPresenter } from "@/lib/types";
 
 /**
- * The delegates who presented their own research in the oral sessions. Kept
- * visibly apart from the invited speakers: its own section, heading and
- * card style, a round photo instead of a portrait, and no speaker page.
+ * The delegates who presented their own research in the oral sessions, on
+ * their own Presenters page. Kept visibly apart from the invited speakers:
+ * its own page, card style, a round photo instead of a portrait, and no
+ * speaker page.
  */
 export function OralPresenters({ presenters }: { presenters: OralPresenter[] }) {
   return (
-    <section id="oral-presenters" aria-labelledby="oral-presenters-title" className="scroll-mt-24 border-t-4 border-gold bg-paper-200 py-16 sm:py-24">
+    <section aria-label="Oral presenters" className="bg-paper py-16 sm:py-24">
       <div className="container-page">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-end">
-          <div>
-            <p className="eyebrow text-gold-700">Student research</p>
-            <h2 id="oral-presenters-title" className="mt-3 text-display-md font-normal text-ink">
-              Oral <span className="italic">presenters</span>
-            </h2>
-          </div>
-          <div className="rounded-[3px] border border-gold/50 bg-white/70 p-5 text-slate-700">
-            <p className="leading-relaxed">
-              Medical students selected through our abstract review to present their own research in the oral presentation sessions.
-            </p>
-            <p className="mt-3 text-sm font-semibold text-gold-700">
-              They are delegates presenting their own work. They are not invited speakers and are not connected to the invited speaker programme.
+        <div className="flex gap-4 rounded-[3px] border border-gold/50 border-l-4 border-l-gold bg-white p-5 sm:p-6">
+          <Info aria-hidden className="mt-0.5 size-5 shrink-0 text-gold-700" />
+          <div className="text-slate-700">
+            <p className="font-semibold text-ink">Not invited speakers</p>
+            <p className="mt-1 leading-relaxed">
+              These are delegates who presented their own research in the oral presentation sessions. They are not invited speakers and are not connected to the invited speaker programme, which is on the{" "}
+              <Link href="/speakers" className="font-semibold text-electric-600 underline underline-offset-4">Speakers page</Link>.
             </p>
           </div>
         </div>

@@ -124,10 +124,10 @@ export function SiteHeader({
               : "border-transparent bg-transparent",
           )}
         >
-          <div className="container-page flex h-[var(--header-h)] items-center gap-6 text-paper">
+          <div className="container-page flex h-[var(--header-h)] items-center gap-3 text-paper 2xl:gap-6">
             <Link
               href={closed ? (member ? "/portal" : "/login") : "/"}
-              className="rounded-sm"
+              className="shrink-0 rounded-sm"
               aria-label={closed ? "INSPIRE" : "INSPIRE home"}
             >
               <Logo />
@@ -146,7 +146,7 @@ export function SiteHeader({
                         href={item.href}
                         aria-current={active ? "page" : undefined}
                         className={cn(
-                          "relative flex min-h-11 items-center whitespace-nowrap px-[0.45rem] text-[0.85rem] font-medium transition-colors xl:px-3.5 xl:text-[0.9rem]",
+                          "relative flex min-h-11 items-center whitespace-nowrap px-[0.25rem] text-[0.78rem] font-medium transition-colors xl:px-2 xl:text-[0.85rem] 2xl:px-3.5 2xl:text-[0.9rem]",
                           active
                             ? "text-paper"
                             : "text-paper/70 hover:text-paper",
@@ -156,7 +156,7 @@ export function SiteHeader({
                         {active && (
                           <m.span
                             layoutId="nav-indicator"
-                            className="absolute inset-x-[0.45rem] -bottom-0.5 h-px bg-cyan xl:inset-x-3.5"
+                            className="absolute inset-x-[0.25rem] -bottom-0.5 h-px bg-cyan xl:inset-x-2 2xl:inset-x-3.5"
                           />
                         )}
                       </Link>
