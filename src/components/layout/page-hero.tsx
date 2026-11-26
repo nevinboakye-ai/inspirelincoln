@@ -21,10 +21,11 @@ export function PageHero({
   children?: ReactNode;
   visual?: ReactNode;
   className?: string;
-  size?: "sm" | "md" | "lg";
+  /** "compact" keeps the title and what follows on a phone's first screen. */
+  size?: "compact" | "sm" | "md" | "lg";
 }) {
   return (
-    <section className={cn("surface-midnight noise relative isolate overflow-hidden", size === "lg" ? "pt-40 pb-24 sm:pb-32" : size === "sm" ? "pt-32 pb-12 sm:pt-36 sm:pb-16" : "pt-36 pb-16 sm:pt-44 sm:pb-24", className)}>
+    <section className={cn("surface-midnight noise relative isolate overflow-hidden", size === "lg" ? "pt-40 pb-24 sm:pb-32" : size === "compact" ? "pt-24 pb-8 sm:pt-36 sm:pb-16" : size === "sm" ? "pt-32 pb-12 sm:pt-36 sm:pb-16" : "pt-36 pb-16 sm:pt-44 sm:pb-24", className)}>
       <div aria-hidden className="absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_80%_at_85%_0%,rgba(58,95,148,0.32),transparent_60%)]" />
         <div className="quarter-lattice absolute inset-0 [mask-image:linear-gradient(to_bottom,black,transparent)]" />
@@ -44,14 +45,14 @@ export function PageHero({
           <span aria-hidden className="font-display text-base normal-case italic tracking-normal text-paper/60">INSPIRE</span>
           {eyebrow}
         </p>
-        <h1 className={cn("mt-8 max-w-5xl font-normal", size === "lg" ? "text-display-xl" : "text-display-lg")}>
+        <h1 className={cn("max-w-5xl font-normal", size === "compact" ? "mt-4 text-[2.35rem] leading-[1.02] tracking-[-0.02em] sm:mt-8 sm:text-display-lg" : "mt-8", size === "lg" ? "text-display-xl" : size !== "compact" && "text-display-lg")}>
           <span className="block overflow-hidden pb-[0.1em]">
             <span className="enter-rise block [animation-delay:100ms]">{title}</span>
           </span>
         </h1>
         {(intro || children) && (
           <div className="enter-up [animation-delay:260ms]">
-            {intro && <div className="mt-6 max-w-2xl text-lg leading-relaxed text-paper/70 sm:text-xl">{intro}</div>}
+            {intro && <div className={cn("max-w-2xl leading-relaxed text-paper/70 sm:mt-6 sm:text-xl", size === "compact" ? "mt-3 text-base" : "mt-6 text-lg")}>{intro}</div>}
             {children}
           </div>
         )}
