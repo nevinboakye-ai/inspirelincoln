@@ -112,8 +112,8 @@ export function NetworkCardForm({ profile }: { profile: CardProfile }) {
             <input type="hidden" name="publicOralAsked" value="on" />
             <input type="checkbox" name="publicOral" defaultChecked={profile.publicOralListed} className="mt-0.5 size-5 shrink-0 accent-navy" />
             <span>
-              Show my photo, bio and talk title in the <strong className="text-ink">Oral presenters</strong> section of the public{" "}
-              <Link href="/speakers#oral-presenters" className="font-semibold text-electric-600 underline underline-offset-4">Speakers page</Link>. Untick to hide yourself there.
+              Show my photo, bio and talk title on the public{" "}
+              <Link href="/presenters" className="font-semibold text-electric-600 underline underline-offset-4">Presenters page</Link>. Untick to hide yourself there.
             </span>
           </label>
         )}

@@ -100,7 +100,7 @@ export async function saveNetworkCard(_: ActionResult, form: FormData): Promise<
   if (form.get("publicOralAsked") === "on") {
     await db.from("profiles").update({ public_oral_listed: form.get("publicOral") === "on" }).eq("id", user.id);
   }
-  revalidatePath("/speakers");
+  revalidatePath("/presenters");
   revalidatePath("/portal/network");
   revalidatePath("/portal/profile");
   return { ok: true, message: "Saved. Your card is up to date." };

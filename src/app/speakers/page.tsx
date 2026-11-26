@@ -1,20 +1,19 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/layout/page-hero";
-import { OralPresenters } from "@/components/speakers/oral-presenters";
 import { SpeakerDirectory } from "@/components/speakers/speaker-directory";
 import { SpeakersSoon } from "@/components/speakers/speakers-soon";
-import { getOralPresenters, getSpeakers } from "@/lib/data/content";
+import { getSpeakers } from "@/lib/data/content";
 
 export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Speakers",
-  description: "Invited speakers and workshop facilitators at the INSPIRE National Medical Research Conference, and the medical students who presented their research as oral presenters.",
+  description: "Invited speakers and workshop facilitators at the INSPIRE National Medical Research Conference.",
   alternates: { canonical: "/speakers" },
 };
 
 export default async function SpeakersPage() {
-  const [speakers, presenters] = await Promise.all([getSpeakers(), getOralPresenters()]);
+  const speakers = await getSpeakers();
   return (
     <>
       <PageHero
@@ -32,13 +31,7 @@ export default async function SpeakersPage() {
             ))}
           </div>
         }
-      >
-        {presenters.length > 0 && (
-          <a href="#oral-presenters" className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-[3px] border border-gold/60 px-4 text-sm font-semibold text-gold-300 hover:bg-gold/10">
-            Jump to the student oral presenters
-          </a>
-        )}
-      </PageHero>
+      />
       <section className="bg-paper py-16 sm:py-24">
         <div className="container-page">
           {speakers.length === 0 ? (
@@ -55,7 +48,6 @@ export default async function SpeakersPage() {
           )}
         </div>
       </section>
-      {presenters.length > 0 && <OralPresenters presenters={presenters} />}
     </>
   );
 }

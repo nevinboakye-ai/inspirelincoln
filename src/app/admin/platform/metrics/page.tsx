@@ -40,6 +40,7 @@ const PAGE_NAMES: Record<string, string> = {
   "/about": "About",
   "/programme": "Programme",
   "/speakers": "Speakers",
+  "/presenters": "Presenters",
   "/workshops": "Workshops",
   "/map": "Venue and map",
   "/conference": "Conference",
