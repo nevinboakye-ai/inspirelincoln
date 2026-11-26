@@ -125,16 +125,16 @@ export interface Speaker {
   links: { label: string; url: string }[];
 }
 
-/** A delegate who presented their own research in an oral presentation session. Not an invited speaker. */
-export interface OralPresenter {
+/** A delegate who presented their own research, as a talk or a poster. Not an invited speaker. */
+export interface StudentPresenter {
   id: string;
+  kind: "oral" | "poster";
   fullName: string;
   institution: string | null;
   yearOfStudy: string | null;
   presentationTitle: string | null;
   bio: string | null;
   photoUrl: string | null;
-  sessionTitle: string | null;
   roomName: string | null;
   talk: number | null;
 }

@@ -45,7 +45,7 @@ type CardProfile = {
   instagram: string | null;
   networkShowEmail: boolean;
   email: string;
-  /** Oral presenters only: whether they're shown on the public Speakers page. */
+  /** Oral and poster presenters only: whether they're shown on the public Presenters page. */
   publicOralListed?: boolean;
 };
 
@@ -112,7 +112,7 @@ export function NetworkCardForm({ profile }: { profile: CardProfile }) {
             <input type="hidden" name="publicOralAsked" value="on" />
             <input type="checkbox" name="publicOral" defaultChecked={profile.publicOralListed} className="mt-0.5 size-5 shrink-0 accent-navy" />
             <span>
-              Show my photo, bio and talk title on the public{" "}
+              Show my photo, bio and presentation title on the public{" "}
               <Link href="/presenters" className="font-semibold text-electric-600 underline underline-offset-4">Presenters page</Link>. Untick to hide yourself there.
             </span>
           </label>
