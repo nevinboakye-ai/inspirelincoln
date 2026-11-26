@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/layout/page-hero";
+import { PresenterStats } from "@/components/speakers/presenter-stats";
 import { StudentPresenters } from "@/components/speakers/student-presenters";
 import { getStudentPresenters } from "@/lib/data/content";
 
@@ -16,6 +17,7 @@ export default async function PresentersPage() {
   return (
     <>
       <PageHero
+        size="compact"
         eyebrow="Presenters"
         title={
           <>
@@ -24,7 +26,7 @@ export default async function PresentersPage() {
         }
         intro={
           presenters.length
-            ? "Medical students selected through our abstract review to present their own research, as talks in the oral presentation sessions and as posters."
+            ? "Medical students who presented their own research, as talks and posters."
             : "This year's presenters will be listed here soon."
         }
         visual={
@@ -34,7 +36,9 @@ export default async function PresentersPage() {
             ))}
           </div>
         }
-      />
+      >
+        {presenters.length > 0 && <PresenterStats presenters={presenters} />}
+      </PageHero>
       {presenters.length > 0 && <StudentPresenters presenters={presenters} />}
     </>
   );
