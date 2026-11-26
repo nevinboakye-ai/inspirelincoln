@@ -17,6 +17,7 @@ import type {
   Room,
   Session,
   ShowcaseItem,
+  OralPresenter,
   Speaker,
   Sponsor,
   TimelineEvent,
@@ -179,6 +180,9 @@ export const seedSessions: Session[] = [
 
 /** No speakers have been supplied yet. The UI shows labelled placeholders. */
 export const seedSpeakers: Speaker[] = [];
+
+/** Accepted oral presenters come from accounts, so there are none without Supabase. */
+export const seedOralPresenters: OralPresenter[] = [];
 
 export const seedWorkshops: Workshop[] = [
   {

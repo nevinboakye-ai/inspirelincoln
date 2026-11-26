@@ -96,6 +96,11 @@ export async function saveNetworkCard(_: ActionResult, form: FormData): Promise<
   // Saving the card counts as answering the email question (ignored before setup SQL 28).
   if (!error) await db.from("profiles").update({ network_email_asked: true }).eq("id", user.id);
   if (error) return { ok: false, error: "We couldn't save your card. Please try again." };
+  // Oral presenters choose whether they're on the public Speakers page (ignored before the oral presenters setup SQL).
+  if (form.get("publicOralAsked") === "on") {
+    await db.from("profiles").update({ public_oral_listed: form.get("publicOral") === "on" }).eq("id", user.id);
+  }
+  revalidatePath("/speakers");
   revalidatePath("/portal/network");
   revalidatePath("/portal/profile");
   return { ok: true, message: "Saved. Your card is up to date." };

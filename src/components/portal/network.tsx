@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useActionState, useCallback, useDeferredValue, useMemo, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { ArrowRight, Loader2, Mail, Search } from "lucide-react";
@@ -38,7 +39,15 @@ export type Delegate = {
   joined: boolean;
 };
 
-type CardProfile = { bio: string | null; linkedinUrl: string | null; instagram: string | null; networkShowEmail: boolean; email: string };
+type CardProfile = {
+  bio: string | null;
+  linkedinUrl: string | null;
+  instagram: string | null;
+  networkShowEmail: boolean;
+  email: string;
+  /** Oral presenters only: whether they're shown on the public Speakers page. */
+  publicOralListed?: boolean;
+};
 
 export function NetworkCardForm({ profile }: { profile: CardProfile }) {
   const [state, action, pending] = useActionState(saveNetworkCard, null);
@@ -98,6 +107,16 @@ export function NetworkCardForm({ profile }: { profile: CardProfile }) {
             Show my email (<span className="break-all">{profile.email}</span>) to other delegates
           </span>
         </label>
+        {profile.publicOralListed !== undefined && (
+          <label className="flex items-start gap-3 text-sm text-slate-700">
+            <input type="hidden" name="publicOralAsked" value="on" />
+            <input type="checkbox" name="publicOral" defaultChecked={profile.publicOralListed} className="mt-0.5 size-5 shrink-0 accent-navy" />
+            <span>
+              Show my photo, bio and talk title in the <strong className="text-ink">Oral presenters</strong> section of the public{" "}
+              <Link href="/speakers#oral-presenters" className="font-semibold text-electric-600 underline underline-offset-4">Speakers page</Link>. Untick to hide yourself there.
+            </span>
+          </label>
+        )}
       </fieldset>
       <button type="submit" disabled={pending} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[3px] bg-navy px-6 font-ui font-semibold text-paper hover:bg-navy-700 disabled:opacity-60 sm:w-auto">
         {pending && <Loader2 aria-hidden className="size-4 animate-spin" />} Save my card
