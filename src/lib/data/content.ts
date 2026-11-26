@@ -12,7 +12,7 @@ import type {
   GalleryAsset,
   MapPlace,
   MapPlaceKind,
-  OralPresenter,
+  StudentPresenter,
   Opportunity,
   Partner,
   Resource,
@@ -189,43 +189,46 @@ export const getSpeakers = cache(async (): Promise<Speaker[]> => {
   return (data ?? []).map(mapSpeaker);
 });
 
+type PresenterRow = {
+  id: string;
+  kind?: "oral" | "poster";
+  full_name: string;
+  institution: string | null;
+  year_of_study: string | null;
+  presentation_title: string | null;
+  bio: string | null;
+  avatar_path: string | null;
+  room_name: string | null;
+  talk: number | null;
+};
+
 /**
- * Accepted oral presenters for the public Speakers page, in running order.
- * The database decides who is shown (accepted, placed in a room, not hidden
- * by themselves or the site owner switch) and only lets visitors open those
- * people's photos, through links that last an hour.
+ * Accepted oral and poster presenters for the public Presenters page: orals
+ * in running order, then posters by name. The database decides who is shown
+ * (accepted, not hidden by themselves or the site owner's switch) and only
+ * lets visitors open those people's photos, through links that last an hour.
  */
-export const getOralPresenters = cache(async (): Promise<OralPresenter[]> => {
+export const getStudentPresenters = cache(async (): Promise<StudentPresenter[]> => {
   const db = createPublicClient();
-  if (!db) return seed.seedOralPresenters;
-  const { data, error } = await db.rpc("public_oral_presenters");
-  // Before the setup SQL is run the function doesn't exist yet: show nothing.
+  if (!db) return seed.seedStudentPresenters;
+  let { data, error } = await db.rpc("public_student_presenters");
+  // Before the poster setup SQL is run, fall back to the oral presenters only.
+  if (error?.code === "PGRST202") ({ data, error } = await db.rpc("public_oral_presenters"));
   if (error) {
-    if (error.code !== "PGRST202") logError("oral presenters", error);
+    if (error.code !== "PGRST202") logError("presenters", error);
     return [];
   }
-  const rows = (data ?? []) as {
-    id: string;
-    full_name: string;
-    institution: string | null;
-    year_of_study: string | null;
-    presentation_title: string | null;
-    bio: string | null;
-    avatar_path: string | null;
-    session_title: string | null;
-    room_name: string | null;
-    talk: number | null;
-  }[];
+  const rows = (data ?? []) as PresenterRow[];
   const photos = await signAvatars(db, rows.map((r) => r.avatar_path));
   return rows.map((r) => ({
     id: String(r.id),
+    kind: r.kind ?? "oral",
     fullName: r.full_name,
     institution: r.institution,
     yearOfStudy: r.year_of_study,
     presentationTitle: r.presentation_title,
     bio: r.bio,
     photoUrl: r.avatar_path ? (photos.get(r.avatar_path) ?? null) : null,
-    sessionTitle: r.session_title,
     roomName: r.room_name,
     talk: r.talk,
   }));

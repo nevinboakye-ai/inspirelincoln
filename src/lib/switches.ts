@@ -10,7 +10,7 @@ export const SWITCHES = {
   delegate_messages: { label: "Delegate messages", on: "Confirmed delegates can message each other (while the network is open)", off: "Only the committee can start conversations. Delegates can still reply" },
   whatsapp_group: { label: "WhatsApp group", on: "QR code and join link shown in My Hub", off: "Hidden from delegates. You can still preview it in My Hub" },
   post_conference: { label: "Post-conference hub", on: "Everyone with a confirmed place gives quick feedback on their next visit, which unlocks the post-conference hub and gallery", off: "Hidden from delegates. You can still preview it from My Hub" },
-  oral_presenters_public: { label: "Oral presenters on the website", on: "Accepted oral presenters are shown with their photo, bio and talk title in their own section of the Speakers page (each can hide themselves in My Hub)", off: "Hidden from the public website" },
+  oral_presenters_public: { label: "Presenters page", on: "Accepted oral and poster presenters are shown on the public Presenters page with their photo, bio and presentation title (each can hide themselves in My Hub)", off: "Hidden from the public website" },
   presenting_public: { label: "Who's presenting", on: "Shown on cards and the delegate network", off: "Hidden: presenters show as delegates to everyone but themselves and the committee" },
 } as const;
 export type SwitchKey = keyof typeof SWITCHES;

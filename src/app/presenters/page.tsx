@@ -1,31 +1,31 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/layout/page-hero";
-import { OralPresenters } from "@/components/speakers/oral-presenters";
-import { getOralPresenters } from "@/lib/data/content";
+import { StudentPresenters } from "@/components/speakers/student-presenters";
+import { getStudentPresenters } from "@/lib/data/content";
 
 export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Presenters",
-  description: "The medical students who presented their own research as oral presenters at the INSPIRE National Medical Research Conference.",
+  description: "The medical students who presented their own research as oral and poster presenters at the INSPIRE National Medical Research Conference.",
   alternates: { canonical: "/presenters" },
 };
 
 export default async function PresentersPage() {
-  const presenters = await getOralPresenters();
+  const presenters = await getStudentPresenters();
   return (
     <>
       <PageHero
         eyebrow="Presenters"
         title={
           <>
-            Student research. <span className="italic text-gold-300">Their own work.</span>
+            Our INSPIRE Lincoln 2026 <span className="italic text-gold-300">Student Presenters</span>
           </>
         }
         intro={
           presenters.length
-            ? "Medical students selected through our abstract review to present their own research in the oral presentation sessions."
-            : "This year's oral presenters will be listed here soon."
+            ? "Medical students selected through our abstract review to present their own research, as talks in the oral presentation sessions and as posters."
+            : "This year's presenters will be listed here soon."
         }
         visual={
           <div aria-hidden className="absolute -right-10 bottom-0 hidden h-full w-1/2 lg:block">
@@ -35,7 +35,7 @@ export default async function PresentersPage() {
           </div>
         }
       />
-      {presenters.length > 0 && <OralPresenters presenters={presenters} />}
+      {presenters.length > 0 && <StudentPresenters presenters={presenters} />}
     </>
   );
 }

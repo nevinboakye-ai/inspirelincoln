@@ -33,7 +33,7 @@ export interface Profile {
   networkShowEmail: boolean;
   /** They've answered whether to show their email to other delegates. */
   networkEmailAsked: boolean;
-  /** Oral presenters: shown in the Oral presenters section of the public Speakers page. */
+  /** Oral and poster presenters: shown on the public Presenters page. */
   publicOralListed: boolean;
   /** Appear on the delegate network at all. */
   /** Private code in their Delegate Card QR (null until the card code migration is run). */
