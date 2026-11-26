@@ -33,6 +33,8 @@ export interface Profile {
   networkShowEmail: boolean;
   /** They've answered whether to show their email to other delegates. */
   networkEmailAsked: boolean;
+  /** Oral presenters: shown in the Oral presenters section of the public Speakers page. */
+  publicOralListed: boolean;
   /** Appear on the delegate network at all. */
   /** Private code in their Delegate Card QR (null until the card code migration is run). */
   cardCode: string | null;
@@ -116,6 +118,7 @@ export const getCurrentUser = cache(async () => {
     networkShowEmail: Boolean(p?.network_show_email),
     // Before setup SQL 28 the column is missing: treat sharers as asked, so nobody is asked twice once it runs.
     networkEmailAsked: Boolean(p?.network_email_asked ?? p?.network_show_email),
+    publicOralListed: p?.public_oral_listed ?? true,
     cardCode: p?.card_code ?? null,
     cardShared: p?.card_shared ?? true,
     avatarPath: p?.avatar_path ?? null,

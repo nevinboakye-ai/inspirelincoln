@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { createPublicClient } from "@/lib/supabase/server";
 import * as seed from "@/content/seed";
+import { signAvatars } from "@/lib/avatar";
 import type {
   AbstractConfig,
   Announcement,
@@ -11,6 +12,7 @@ import type {
   GalleryAsset,
   MapPlace,
   MapPlaceKind,
+  OralPresenter,
   Opportunity,
   Partner,
   Resource,
@@ -185,6 +187,48 @@ export const getSpeakers = cache(async (): Promise<Speaker[]> => {
   const { data, error } = await db.from("speakers").select("*").eq("published", true).order("sort").order("full_name");
   if (error) logError("speakers", error);
   return (data ?? []).map(mapSpeaker);
+});
+
+/**
+ * Accepted oral presenters for the public Speakers page, in running order.
+ * The database decides who is shown (accepted, placed in a room, not hidden
+ * by themselves or the site owner switch) and only lets visitors open those
+ * people's photos, through links that last an hour.
+ */
+export const getOralPresenters = cache(async (): Promise<OralPresenter[]> => {
+  const db = createPublicClient();
+  if (!db) return seed.seedOralPresenters;
+  const { data, error } = await db.rpc("public_oral_presenters");
+  // Before the setup SQL is run the function doesn't exist yet: show nothing.
+  if (error) {
+    if (error.code !== "PGRST202") logError("oral presenters", error);
+    return [];
+  }
+  const rows = (data ?? []) as {
+    id: string;
+    full_name: string;
+    institution: string | null;
+    year_of_study: string | null;
+    presentation_title: string | null;
+    bio: string | null;
+    avatar_path: string | null;
+    session_title: string | null;
+    room_name: string | null;
+    talk: number | null;
+  }[];
+  const photos = await signAvatars(db, rows.map((r) => r.avatar_path));
+  return rows.map((r) => ({
+    id: String(r.id),
+    fullName: r.full_name,
+    institution: r.institution,
+    yearOfStudy: r.year_of_study,
+    presentationTitle: r.presentation_title,
+    bio: r.bio,
+    photoUrl: r.avatar_path ? (photos.get(r.avatar_path) ?? null) : null,
+    sessionTitle: r.session_title,
+    roomName: r.room_name,
+    talk: r.talk,
+  }));
 });
 
 export const getWorkshops = cache(async (): Promise<Workshop[]> => {

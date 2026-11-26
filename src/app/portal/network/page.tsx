@@ -238,6 +238,7 @@ export default async function NetworkPage() {
                 instagram: profile.instagram,
                 networkShowEmail: profile.networkShowEmail,
                 email: profile.email,
+                publicOralListed: [profile.accountType, ...profile.extraTypes].includes("oral_presenter") ? profile.publicOralListed : undefined,
               }}
             />
           </YourCardPanel>
